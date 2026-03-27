@@ -435,7 +435,7 @@ useEffect(() => {
               </div>
               <div>
                 <h2 className="text-xl font-black text-slate-800">Daily Quests 🎯</h2>
-                <p className="text-sm text-slate-500 font-medium">Small Win วันนี้ที่จัดมาให้ตรงกับสไตล์คุณ (รีเซ็ตทุกเที่ยงคืน)</p>
+                <p className="text-sm text-slate-500 font-medium">Small Win วันนี้ที่จัดมาให้ตรงกับสไตล์คุณ (Reset ทุกเที่ยงคืน)</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-100 w-fit">
