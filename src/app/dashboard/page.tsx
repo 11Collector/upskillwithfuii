@@ -17,7 +17,7 @@ const MONEY_MAP: Record<string, { title: string, concept: string }> = {
   LOW_RISK_HIGH_DISC: { title: "ผู้พิทักษ์เงินต้น", concept: "มองเงินเป็นปราสาทที่ต้องรักษา" },
   HIGH_RISK_MID_DISC: { title: "ล่าเทรนด์(ติดดอย)", concept: "มองเงินเป็นคลื่นต้องรีบขี่" },
   MID_RISK_MID_DISC: { title: "มนุษย์สุดสมดุล", concept: "มองเงินเป็นจิ๊กซอว์ของชีวิต" },
-  LOW_RISK_LOW_DISC: { title: "สายโคตรเซฟโซน", concept: "มองเงินเป็นชูชีพยามฉุกเฉิน" },
+  LOW_RISK_MID_DISC: { title: "สายโคตรเซฟโซน", concept: "มองเงินเป็นชูชีพยามฉุกเฉิน" },
   HIGH_RISK_LOW_DISC: { title: "ดมกาวสุดกราฟ", concept: "มองเงินเป็นตั๋วเปลี่ยนชีวิต" },
   MID_RISK_LOW_DISC: { title: "ตัวตึงสายเปย์", concept: "มองเงินเป็นรางวัลการใช้ชีวิต" },
   LOW_RISK_LOW_DISC: { title: "ผู้ประสบภัยวัยกลางคน", concept: "มองเงินเป็นเกราะประคองชีวิต" },
