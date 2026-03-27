@@ -197,14 +197,14 @@ const saveResultToFirebase = async () => {
       const finalResult = getFinalResult();
       const percentages = getPercentages();
       
-      // ตรวจสอบก่อนว่ามี User ไหม ถ้าไม่มีให้เตือน (กันพลาด)
-      if (!currentUser) {
-        console.error("หาตัวคนเล่นไม่เจอ! ข้อมูลจะถูกเซฟเป็น Guest");
-      }
+    // ✅ แบบใหม่: ยอมรับสถานะ Guest แบบหล่อๆ
+const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
+const finalUserName = currentUser ? currentUser.displayName : "Guest User";
 
       await addDoc(collection(db, "discResults"), {
         // 🚨 บรรทัดเจ้าปัญหา! ต้องมีบรรทัดนี้ ข้อมูลถึงจะไปโชว์ที่ Dashboard ครับ
-        userId: currentUser?.uid || "guest", 
+userId: finalUserId,
+  userName: finalUserName,
         
         // 🚨 เพิ่มฟิลด์ result เพื่อให้โค้ด Dashboard ดึงไปใช้ง่ายๆ
         result: finalResult, 

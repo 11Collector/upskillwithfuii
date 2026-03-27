@@ -130,7 +130,7 @@ export default function Home() {
             <ul className="space-y-3 mb-8">
               <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> บันทึกผลทดสอบของทุก App</li>
               <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> สะสม XP พัฒนา Level การเรียนรู้ของคุณ</li>
-              <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> รับคำแนะนำจาก AI จากผลวิเคราะห์ล่าสุด</li>
+              <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> วิเคราะห์จุดที่ควรโฟกัสในการอัพสกิล</li>
             </ul>
             <button onClick={handleLogin} className="bg-white text-slate-900 px-8 py-3 rounded-full font-black text-sm hover:bg-amber-50 transition-colors">
               เข้าสู่ระบบด้วย Google
