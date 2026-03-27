@@ -132,7 +132,7 @@ export default function Home() {
               <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> รับคำแนะนำจาก AI จากผลวิเคราะห์ล่าสุด</li>
             </ul>
             <button onClick={handleLogin} className="bg-white text-slate-900 px-8 py-3 rounded-full font-black text-sm hover:bg-amber-50 transition-colors">
-              สมัครสมาชิกฟรี
+              เข้าสู่ระบบด้วย Google
             </button>
           </div>
           <div className="absolute top-10 -right-20 opacity-20 rotate-12 hidden md:block">
