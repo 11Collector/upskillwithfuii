@@ -1,5 +1,5 @@
 "use client";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp ,doc,setDoc,getDoc,increment} from "firebase/firestore";
 import { useState, useRef, useMemo, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -14,6 +14,17 @@ import { resultData } from "@/data/moneyResult";
 import DisclaimerFooter from '@/app/components/DisclaimerFooter';
 import { auth, db } from "@/lib/firebase"; 
 import { onAuthStateChanged } from "firebase/auth";
+
+// 💡 กำหนดโครงสร้างข้อมูลให้ชัดเจน
+interface PersonaScore {
+  id: string;
+  matchPercentage: number;
+}
+
+interface CalculationResult {
+  primary: PersonaScore;
+  secondary: PersonaScore;
+}
 
 const loadingQuotes = [
   {
@@ -226,33 +237,28 @@ const profileCenters = [
   { id: "LOW_RISK_LOW_DISC", risk: 0, disc: 0 },
 ];
 
-const calculatePersona = (riskScore: number, discScore: number) => {
+// 💡 เติม : CalculationResult เข้าไป
+const calculatePersona = (riskScore: number, discScore: number): CalculationResult => {
     const results = profileCenters.map((profile) => {
-      // หาความต่างของคะแนน (Euclidean Distance)
       const distance = Math.hypot(riskScore - profile.risk, discScore - profile.disc);
       return { id: profile.id, distance, profileRisk: profile.risk, profileDisc: profile.disc };
     });
 
-    // เรียงลำดับตัวที่ใกล้ที่สุด
     results.sort((a, b) => {
       if (a.distance === b.distance) {
-        // Tie-breaker 1: ถ้าดึงดูดเท่ากัน ให้ปัดลงไปหาวินัย (Disc) ต่ำกว่าก่อน (เพราะคนเราหย่อนยานง่าย)
-        if (a.profileDisc !== b.profileDisc) {
-           return a.profileDisc - b.profileDisc; 
-        }
-        // Tie-breaker 2: ถ้าวินัยเท่ากันอีก ให้ปัดลงไปหาความเสี่ยง (Risk) ต่ำกว่า เพื่อความปลอดภัย
+        if (a.profileDisc !== b.profileDisc) return a.profileDisc - b.profileDisc; 
         return a.profileRisk - b.profileRisk;
       }
       return a.distance - b.distance;
     });
     
-  const maxDist = 14.14; // ระยะไกลสุดที่เป็นไปได้ในกราฟ 10x10
-  const calculateMatch = (dist: number) => Math.max(0, Math.round(((maxDist - dist) / maxDist) * 100));
+    const maxDist = 14.14;
+    const calculateMatch = (dist: number) => Math.max(0, Math.round(((maxDist - dist) / maxDist) * 100));
 
-  return {
-    primary: { id: results[0].id, matchPercentage: calculateMatch(results[0].distance) },
-    secondary: { id: results[1].id, matchPercentage: calculateMatch(results[1].distance) },
-  };
+    return {
+      primary: { id: results[0].id, matchPercentage: calculateMatch(results[0].distance) },
+      secondary: { id: results[1].id, matchPercentage: calculateMatch(results[1].distance) },
+    };
 };
 
 // --- 3. DATA & CONSTANTS ---
@@ -467,12 +473,26 @@ export default function Home() {
 
 const [currentUser, setCurrentUser] = useState<any>(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) setCurrentUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
+ // 💡 หา useEffect ตัวนี้ในไฟล์ของคุณ แล้ววางทับได้เลย
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setCurrentUser(user);
+      
+      // ✅ เพิ่ม Logic ตรงนี้: ถ้า Login แล้วและยังไม่มีชื่อเล่น ให้ดึงจาก Google มาใส่
+      // .split(" ")[0] จะช่วยเอาเฉพาะ "ชื่อหน้า" มาเป็นชื่อเล่นครับ
+      if (user.displayName && !nickname) {
+        const firstName = user.displayName.split(" ")[0];
+        setNickname(firstName);
+        console.log("ดึงชื่อจาก Google สำเร็จ:", firstName);
+      }
+    } else {
+      setCurrentUser(null);
+      setNickname(""); // ถ้า Logout ให้เคลียร์ชื่อทิ้ง
+    }
+  });
+  return () => unsubscribe();
+}, []); // รันครั้งเดียวตอนโหลดหน้าเว็บ
 
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -529,7 +549,7 @@ const randomQuote = useMemo(() => {
     setGameState("playing");
   };
 
-  const handleChoice = async (riskPoint: number, discPoint: number, index: number) => {
+ const handleChoice = async (riskPoint: number, discPoint: number, index: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
 
@@ -542,13 +562,23 @@ const randomQuote = useMemo(() => {
         setCurrentIndex((prev) => prev + 1);
         setIsTransitioning(false); 
       }, 250);
-    } else {
-      const riskTotal = newAnswers.reduce((sum, ans) => sum + ans.risk, 0);
-      const discTotal = newAnswers.reduce((sum, ans) => sum + ans.disc, 0);
+} else {
+      // 💡 ใช้ค่าจาก newAnswers (ตัวแปรท้องถิ่น) แทน answers (State) เพราะมันอัปเดตเร็วกว่า
+      const riskTotal = newAnswers.reduce((sum, ans) => sum + (ans?.risk || 0), 0);
+      const discTotal = newAnswers.reduce((sum, ans) => sum + (ans?.disc || 0), 0);
+      
       const calculated = calculatePersona(riskTotal, discTotal);
+      const personaId = calculated.primary.id;
+      const personaName = resultData[personaId as keyof typeof resultData]?.title || "นักลงทุนผู้มุ่งมั่น";
 
+      // 🚨 จุดที่ต้องแก้คือตรงนี้ครับ: เปลี่ยน answers[i] เป็น newAnswers[i]
       const detailedResults = activeScenarios.map((scenario, i) => {
-        const selectedChoice = scenario.choices[newAnswers[i].choiceIndex];
+        const answerData = newAnswers[i]; // ✅ ดึงจาก newAnswers
+        
+        // กันเหนียว: เช็กว่ามีข้อมูลไหม ถ้าไม่มีให้ใช้ค่าเริ่มต้น
+        const selectedIdx = answerData ? answerData.choiceIndex : 0;
+        const selectedChoice = scenario.choices[selectedIdx];
+
         return {
           q_id: scenario.id,
           npc: scenario.npcName,
@@ -558,34 +588,59 @@ const randomQuote = useMemo(() => {
         };
       });
 
-      // สั่งบันทึกลง Firebase แบบ Fire-and-forget (เอา await และ try...catch ออก)
-      // เพื่อไม่ให้ UI ต้องรอโหลด หากเน็ตช้า
-// 💡 แก้ไขจุดนี้ในหน้า Money Avatar
-    addDoc(collection(db, "quiz_results"), { // ใช้ชื่อแฟ้มเดิมของคุณฟุ้ย
-        userId: currentUser?.uid || "guest",  // 🚨 1. เพิ่มบรรทัดนี้ (สำคัญมาก!)
-        avatarType: persona,                 // 🚨 2. เพิ่มชื่อนี้เพื่อให้ Dashboard ดึงไปโชว์
-        nickname,
-        persona,
-        resultKey: calculated.primary.id,
-        riskScore: riskTotal,
-        discScore: discTotal,
-        history: detailedResults,
-        createdAt: serverTimestamp(),
-      }).then(() => {
-        console.log("✅ บันทึกสำเร็จพร้อมส่งข้อมูลให้ Dashboard แล้ว!");
-      }).catch(error => console.error("❌ บันทึกล้มเหลว:", error));
-      // หน่วงเวลา 600ms ให้ User เห็นหลอดสีวิ่งเต็ม 100% ฟินๆ ก่อนเปลี่ยนฉาก
-     setTimeout(() => {
-        setIsTransitioning(false);
-        setGameState("loading");
-        
-        // 👇 ปรับตัวเลขตรงนี้ครับ เปลี่ยนจาก 2500 เป็น 4000 หรือ 4500
-        setTimeout(() => setGameState("result"), 4500); 
-        
-      }, 600);
-    }
-  };
+      const saveMoneyResult = async () => {
+        try {
+          const docRef = await addDoc(collection(db, "quiz_results"), {
+            userId: currentUser?.uid || "guest",
+            avatarType: personaName, 
+            nickname: nickname || "นักล่าความมั่งคั่ง",
+            persona: personaName,
+            resultKey: personaId,
+            riskScore: riskTotal,
+            discScore: discTotal,
+            history: detailedResults,
+            createdAt: serverTimestamp(),
+          });
+          
+          // ... (Logic แจก XP เหมือนเดิม)
+          // ... (Logic แจก XP เหมือนเดิมของคุณฟุ้ย)
+          console.log("✅ บันทึกสำเร็จ! ID:", docRef.id);
 
+          // 2. Logic แจก 50 XP (เฉพาะสมาชิก และเฉพาะครั้งแรก)
+          if (currentUser) {
+            const userRef = doc(db, "users", currentUser.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              if (!userData.hasMoneyXP) {
+                await setDoc(userRef, {
+                  totalXP: increment(50),
+                  hasMoneyXP: true
+                }, { merge: true });
+                console.log("🎉 +50 XP สำเร็จ!");
+              }
+            }
+          }
+
+          // 3. หน่วงเวลาเปลี่ยนหน้า
+          setTimeout(() => {
+            setIsTransitioning(false);
+            setGameState("loading");
+            setTimeout(() => setGameState("result"), 4500); 
+          }, 600);
+
+        } catch (error) {
+          console.error("❌ บันทึกล้มเหลว:", error);
+          setIsTransitioning(false); // ปลดล็อกเพื่อให้กดใหม่ได้ถ้าพลาด
+        }
+      };
+
+      // เรียกใช้งานการบันทึก
+      saveMoneyResult();
+    } // ปิด else
+  }; // ปิด handleChoice
+  
   const handleBack = () => { if (currentIndex > 0 && !isTransitioning) setCurrentIndex((prev) => prev - 1); };
   const handleForward = () => { if (answers[currentIndex] !== undefined && currentIndex < TOTAL_QUESTIONS - 1 && !isTransitioning) setCurrentIndex((prev) => prev + 1); };
   const handleMatrixClick = () => setMatrixRotation(prev => prev + 360);
@@ -1014,13 +1069,91 @@ const getCurrentJargons = () => {
 </div>
 
                   {/* 6️⃣ เครื่องมืออัปสกิลอื่นๆ */}
-                  <div className="flex flex-col items-center justify-center gap-2 mb-4">
-                    <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2"><span className="w-8 h-px bg-stone-200"></span>เครื่องมืออัปสกิลอื่นๆ<span className="w-8 h-px bg-stone-200"></span></p>
-                    <div className="flex items-center justify-center gap-2 w-full">
-                      <a href="https://wheel-of-life-upskill.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 bg-white text-stone-600 border border-stone-200 shadow-sm py-2.5 px-1 rounded-xl hover:bg-stone-50 hover:border-amber-300 hover:text-amber-600 transition-all active:scale-95"><PieChart size={14} className="text-amber-500" /><span className="text-[10px] font-bold">เช็กสมดุลชีวิต</span></a>
-                      <a href="https://disc-office.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 bg-white text-stone-600 border border-stone-200 shadow-sm py-2.5 px-1 rounded-xl hover:bg-stone-50 hover:border-sky-400 hover:text-sky-600 transition-all active:scale-95"><Users size={14} className="text-sky-500" /><span className="text-[10px] font-bold">ค้นหาจุดแข็ง</span></a>
-                    </div>
-                  </div>
+<div className="mb-6 mt-4 px-2">
+  {/* เส้นคั่นและข้อความหัวข้อ */}
+  <div className="flex items-center justify-center gap-3 mb-4">
+    <div className="h-[1px] bg-slate-200 flex-1"></div>
+    <p className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase whitespace-nowrap">เครื่องมืออัปสกิลอื่นๆ</p>
+    <div className="h-[1px] bg-slate-200 flex-1"></div>
+  </div>
+
+  <div className="flex flex-col gap-3">
+    {/* แถวบน: 2 ปุ่มคู่กัน (สมดุลชีวิต + เช็กตัวตน) */}
+    <div className="grid grid-cols-2 gap-3">
+      {/* 1. ปุ่มเช็กสมดุลชีวิต */}
+      <a 
+        href="/tools/wheel-of-life" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group"
+      >
+        <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+          <PieChart size={18} className="text-orange-500" />
+        </div>
+        <span className="text-[12px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
+      </a>
+
+      {/* 2. ปุ่มเช็กตัวตน (DISC) */}
+      <a 
+        href="/tools/disc" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-sky-200 hover:bg-sky-50/50 transition-all active:scale-95 group"
+      >
+        <div className="w-8 h-8 rounded-full bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+          <Users size={18} className="text-sky-500" />
+        </div>
+        <span className="text-[12px] font-bold text-slate-700">เช็กตัวตน</span>
+      </a>
+    </div>
+
+    {/* ✨ แถวล่าง: ปุ่มที่สลับตามสถานะ Login (Dashboard / กลับหน้าแรก) ✨ */}
+    <a 
+      href={currentUser ? "/dashboard" : "/"} 
+      className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
+    >
+      <div className="flex items-center gap-3 pl-4 py-3">
+        {currentUser ? (
+          /* ✅ กรณี Login แล้ว: แสดง Dashboard */
+          <>
+            <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+              <Trophy size={20} className="text-blue-400" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[14px] font-black text-white tracking-wide">ไปที่ Dashboard หลัก</span>
+              <span className="text-[10px] text-slate-400 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
+            </div>
+          </>
+        ) : (
+          /* 👤 กรณีเป็น Guest: แสดงกลับหน้าแรก */
+          <>
+            <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
+              <ArrowLeft size={20} className="text-slate-300" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[14px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
+              <span className="text-[10px] text-slate-400 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ลูกศรฝั่งขวา */}
+      <div className="pr-4">
+        {currentUser ? (
+          <ArrowRight size={18} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+        ) : (
+          <RefreshCcw size={16} className="text-slate-500 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />
+        )}
+      </div>
+
+      {/* แสง Glow เฉพาะตอนเป็นสมาชิก */}
+      {currentUser && (
+        <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl rounded-full"></div>
+      )}
+    </a>
+  </div>
+</div>
                   <div className="mt-2 text-center text-stone-400 text-[9px] uppercase tracking-widest font-semibold pb-4">Created by อัพสกิลกับฟุ้ย</div>
                 </div>
               </div>
