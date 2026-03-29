@@ -52,7 +52,7 @@ export default function DiscInfoPage() {
             <strong>DISC</strong> คือทฤษฎีบุคลิกภาพที่แบ่งคนออกเป็น 4 สไตล์หลัก การเข้าใจ DISC จะช่วยให้คุณสามารถปรับจูนการสื่อสาร (Adaptive Communication) ให้เข้ากับคนแต่ละประเภทได้ ซึ่งเป็นทักษะสำคัญของผู้นำและคนที่ประสบความสำเร็จ
           </p>
 
-       <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-8">
+<div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-8">
   {[
     { 
       id: "D", 
@@ -81,20 +81,21 @@ export default function DiscInfoPage() {
   ].map((item) => (
     <div 
       key={item.id} 
-      // 💡 ปรับ p-3 ในมือถือ เพื่อให้ประหยัดพื้นที่สำหรับ 2 คอลัมน์
-      className={`p-3 sm:p-5 rounded-2xl border ${item.color} transition-all duration-300 shadow-sm hover:shadow-md flex flex-col`}
+      // 💡 ปรับ p-2.5 บนมือถือเพื่อเพิ่มพื้นที่ขยับขยาย
+      className={`p-2.5 sm:p-5 rounded-2xl border ${item.color} transition-all duration-300 shadow-sm hover:shadow-md flex flex-col`}
     >
-      {/* 💡 ปรับขนาดฟอนต์หัวข้อให้เล็กลงในมือถือ (text-[13px]) */}
-      <p className="font-black text-[13px] sm:text-[16px] mb-1 sm:mb-1.5 leading-tight">
+      {/* 💡 ใส่ break-words กันชื่อ Conscientiousness ทะลุ และลดฟอนต์เหลือ 11px บนมือถือ */}
+      <p className="font-black text-[11px] sm:text-[16px] mb-1 sm:mb-1.5 leading-tight break-words">
         {item.title}
       </p>
-      {/* 💡 ปรับขนาดฟอนต์รายละเอียดให้เล็กลง (text-[11px]) เพื่อไม่ให้บรรทัดยาวเกินไป */}
-      <p className="text-slate-600 text-[11px] sm:text-[14px] leading-relaxed font-medium">
+      {/* 💡 รายละเอียดใช้ text-[10px] บนมือถือเพื่อให้จุข้อความได้ครบโดยไม่ยืดการ์ดจนเบี้ยว */}
+      <p className="text-slate-600 text-[10px] sm:text-[14px] leading-relaxed font-medium">
         {item.desc}
       </p>
     </div>
   ))}
 </div>
+
         </article>
 
         {/* Content Section 2 (Social Proof/Value) */}

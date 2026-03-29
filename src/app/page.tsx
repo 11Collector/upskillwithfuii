@@ -161,7 +161,7 @@ const handleLogin = async () => {
               gimmick = (
                 <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-50 text-purple-600 rounded-full text-[10px] font-black tracking-widest border border-purple-100 shadow-sm group-hover:bg-purple-500 group-hover:text-white transition-colors duration-300">
                   <Sparkles size={12} className="text-purple-500 group-hover:text-white transition-colors" />
-                  <span>Vibe ดี โดนใจ Gen Z ✨</span>
+                  <span>Vibe ดี โดนใจ Gen Z</span>
                 </div>
               );
             }
@@ -180,7 +180,9 @@ const handleLogin = async () => {
                 <div className="flex-1 flex flex-col h-full justify-center">
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg group-hover:text-red-600 transition-colors">{tool.name}</h3>
-                    <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">{tool.desc}</p>
+<p className="text-sm text-slate-500 mt-1 leading-relaxed break-words text-pretty pr-2">
+  {tool.desc}
+</p>
                   </div>
                   
                   {/* ป้าย Gimmick */}
