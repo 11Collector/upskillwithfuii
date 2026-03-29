@@ -2,8 +2,9 @@
 
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, BookOpen, ChevronRight, LogIn, LogOut, Loader2, LayoutDashboard, Star, Lock,Flame,BrainCircuit,Sparkles,Info } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, BookOpen, ChevronRight, LogIn, LogOut, Loader2, LayoutDashboard, Star, Lock,Flame,BrainCircuit,Sparkles,Info,Image,ShieldCheck,Zap } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
@@ -211,31 +212,132 @@ else if (tool.name.includes("คมสัด")) {
         })}
         </div>
       </section>
-
-      {/* --- 3. Preview Dashboard Section (ขายของจูงใจให้ Login) --- */}
-      {!user && (
-        <section className="mb-12 bg-slate-900 rounded-[3rem] p-8 sm:p-12 text-white relative overflow-hidden">
-          <div className="relative z-10 max-w-md">
-            <span className="text-amber-400 font-bold text-xs uppercase tracking-[0.2em] mb-4 block">Early Access (Free Beta)</span>
-         <h2 className="text-3xl md:text-4xl font-black mb-4 text-white leading-tight">
-  ปลดล็อก Dashboard <br />
-  <span className="text-blue-400">เพื่อเก็บสถิติส่วนตัว</span>
-</h2>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> บันทึกผลทดสอบของทุก App</li>
-              <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> สะสม XP พัฒนา Level การเรียนรู้ของคุณ</li>
-              <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> วิเคราะห์จุดที่ควรโฟกัสในการอัพสกิล</li>
-            </ul>
-            <button onClick={handleLogin} className="bg-white text-slate-900 px-8 py-3 rounded-full font-black text-sm hover:bg-amber-50 transition-colors">
-              เข้าสู่ระบบด้วย Google
-            </button>
-          </div>
-          <div className="absolute top-10 -right-20 opacity-20 rotate-12 hidden md:block">
-             <div className="w-80 h-96 bg-white/10 rounded-3xl border border-white/20 p-6">
-                <div className="h-4 w-32 bg-white/20 rounded mb-4" />
-                <div className="h-20 w-full bg-white/10 rounded-2xl mb-4" />
-                <div className="h-20 w-full bg-white/10 rounded-2xl" />
+{!user && (
+        <section className="mb-12 max-w-7xl mx-auto bg-slate-900 rounded-[3rem] overflow-hidden relative min-h-[550px] flex items-center shadow-2xl">
+          
+          {/* 🛡️ PDPA Trust Badge - มุมขวาบน (Security Seal Style) */}
+          <div className="absolute top-8 right-10 z-30 flex flex-col items-end opacity-50 hover:opacity-100 transition-all duration-500 group/pdpa">
+             <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover/pdpa:text-blue-400 transition-colors">
+                  PDPA Compliant
+                </span>
+                <ShieldCheck size={14} className="text-emerald-500" />
              </div>
+             {/* Tooltip เล็กๆ ที่จะชัดขึ้นตอน Hover */}
+             <div className="mt-2 text-right hidden md:block">
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-tight">
+                  Encrypted & Secured <br/> No Data Selling
+                </p>
+             </div>
+          </div>
+
+          {/* ✨ Ambient Background */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 opacity-80" />
+
+          <div className="relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 p-8 sm:p-20 items-center">
+            
+            {/* Left Side: Pitch Content */}
+            <div className="max-w-md mx-auto md:mx-0 text-left">
+              <span className="text-amber-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-4 block">
+                Early Access (Free Beta)
+              </span>
+              <h2 className="text-4xl md:text-5xl font-black mb-6 text-white leading-[1.1]">
+                ปลดล็อก Dashboard <br />
+                <span className="text-blue-400">เพื่อเก็บสถิติส่วนตัว</span>
+              </h2>
+              
+              <ul className="space-y-4 mb-10">
+                {[
+                  "บันทึกผลทดสอบของทุก App ในที่เดียว",
+                  "สะสม XP พัฒนา Level การเรียนรู้ของคุณ",
+                  "Personalized Insight วิเคราะห์จุดอัพสกิล"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-slate-300 text-sm font-medium">
+                    <div className="bg-amber-400/10 p-1.5 rounded-lg border border-amber-400/20">
+                      <Star size={16} className="text-amber-400 fill-amber-400/20" />
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex flex-col items-start gap-4">
+                <button onClick={handleLogin} className="w-full sm:w-auto bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm hover:bg-amber-50 transition-all active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3 group">
+                  <svg width="20" height="20" viewBox="0 0 48 48">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C40.486,35.33,44,30.075,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                  </svg>
+                  เข้าสู่ระบบด้วย Google
+                </button>
+                <p className="text-[10px] text-slate-500 font-medium ml-2">
+                  * เข้าร่วมฟรีในช่วง Beta Test พร้อมใช้ Dashboard สุด Exclusive
+                </p>
+              </div>
+            </div>
+
+            {/* Right Side: Decorative Mockup */}
+     <div className="hidden md:flex justify-end relative">
+  {/* ตัวมือถือ Mockup */}
+  <motion.div 
+    initial={{ opacity: 0, x: 50 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.8, delay: 0.3 }}
+    className="w-72 h-[500px] bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] border border-white/10 p-4 shadow-2xl relative rotate-6 hover:rotate-3 transition-transform duration-500"
+  >
+    <div className="w-full h-full bg-slate-950/50 rounded-[2.5rem] p-5 flex flex-col gap-4 overflow-hidden">
+      {/* Header ในมือถือ */}
+      <div className="flex justify-between items-center">
+        <div className="h-4 w-16 bg-white/10 rounded-full" />
+        <div className="h-6 w-6 rounded-full bg-amber-400/20 border border-amber-400/30" />
+      </div>
+
+      {/* กราฟจำลอง */}
+      <div className="h-32 w-full bg-blue-500/10 rounded-2xl border border-blue-500/20 p-4 flex items-end gap-1">
+        {[40, 70, 45, 90, 65].map((h, i) => (
+          <motion.div 
+            key={i}
+            initial={{ height: 0 }}
+            animate={{ height: `${h}%` }}
+            transition={{ delay: 1 + (i * 0.1), duration: 0.5 }}
+            className="flex-1 bg-blue-500/40 rounded-t-sm" 
+          />
+        ))}
+      </div>
+
+      {/* List รายการ */}
+      <div className="space-y-3 mt-2">
+        <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
+        <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
+        <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
+      </div>
+    </div>
+
+    {/* ✨ Floating XP Badge เพื่อความตึง */}
+    <motion.div 
+      animate={{ y: [0, -10, 0] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute -top-6 -left-12 bg-white/10 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-2"
+    >
+      <div className="bg-amber-400 p-1 rounded-lg">
+        <Zap size={16} className="text-slate-900 fill-current" />
+      </div>
+      <span className="text-white font-black text-xs">+150 XP</span>
+    </motion.div>
+
+    {/* ✨ Floating Level */}
+    <motion.div 
+      animate={{ y: [0, 10, 0] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+      className="absolute bottom-20 -right-10 bg-blue-500/20 backdrop-blur-lg px-4 py-2 rounded-full border border-blue-400/30 shadow-xl text-[10px] font-black text-blue-300 uppercase tracking-widest"
+    >
+      Level 12 reached
+    </motion.div>
+  </motion.div>
+</div>
+
           </div>
         </section>
       )}
