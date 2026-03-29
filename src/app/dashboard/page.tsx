@@ -794,7 +794,7 @@ const toggleQuest = async (id: number, xp: number) => {
   if (!lastMoney) missingAssessments.push("Money Avatar");
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans">
+<div className="min-h-screen bg-transparent p-4"> 
       <div className="max-w-7xl mx-auto">
         
 {/* --- 🧭 1. Top Section --- */}
