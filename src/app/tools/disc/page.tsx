@@ -371,9 +371,10 @@ return (
         )}
 
         {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
+ {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
         {gameState === "playing" && activeScenarios.length > 0 && (
-          // 💡 จัด Flex ให้ส่วนนี้เต็มความสูง และซ่อนขอบที่ล้น
-          <div className="flex flex-col h-full bg-[#E2E8F0] overflow-hidden">
+          // 💡 แก้ไขตรงนี้: เปลี่ยน h-full เป็น flex-1 และบังคับ min-h ให้ยืดเต็มจอ (หัก Navbar บน 64px และ Bottom Nav ล่าง 72px)
+          <div className="flex flex-col flex-1 min-h-[calc(100dvh-136px)] bg-[#E2E8F0] overflow-hidden w-full">
              
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
               <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
@@ -457,7 +458,11 @@ return (
 
         {/* ================= 3. หน้าจอ Loading ================= */}
         {gameState === "loading" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
+        <motion.div 
+  initial={{ opacity: 0 }} 
+  animate={{ opacity: 1 }} 
+  className="flex-1 flex flex-col min-h-[calc(100dvh-136px)] w-full items-center justify-center p-8 bg-slate-900"
+>
             <Loader2 size={48} className="text-blue-500 animate-spin mb-6" />
             <h2 className="text-2xl font-bold text-white mb-2 text-center">กำลังประมวลผลความตึง...</h2>
             <p className="text-slate-400 text-sm text-center">แอบส่องพฤติกรรมคุณในออฟฟิศอยู่ แป๊บนึงนะ 🕵️‍♂️</p>

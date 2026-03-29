@@ -516,7 +516,7 @@ export default function Home() {
 
         {/* --- PLAYING SCREEN --- */}
         {gameState === "playing" && activeScenarios.length > 0 && (
-          <div className="flex flex-col h-full bg-[#F4F3ED] overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-[calc(100dvh-136px)] w-full bg-[#F4F3ED] overflow-hidden">
             
             <div className="bg-stone-950 text-white px-3 py-3 flex items-center justify-between shadow-md shrink-0 border-b border-amber-500/20 z-30">
               <div className="flex items-center gap-2 max-w-[65%]">
@@ -613,7 +613,7 @@ export default function Home() {
         
         {/* --- LOADING SCREEN --- */}
         {gameState === "loading" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-stone-950 relative overflow-hidden">
+       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col min-h-[calc(100dvh-136px)] w-full items-center justify-center p-8 bg-stone-950 relative overflow-hidden">
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-[60px] pointer-events-none"></div>
             <Loader2 size={52} className="text-amber-500 animate-spin mb-6 z-10 drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]" />
             <h2 className="text-xl font-bold text-white mb-2 text-center tracking-wide z-10">กำลังประมวลผล...</h2>

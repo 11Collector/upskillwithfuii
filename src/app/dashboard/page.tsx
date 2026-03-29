@@ -73,7 +73,7 @@ export const MONEY_DATA: Record<string, any> = {
     title: "ผู้ประสบภัยวัยกลางคน", subtitle: "The Survivor", color: "bg-slate-500", barColor: "bg-slate-400", emoji: "🛶", titleColor: "text-slate-600",
     desc: "คุณมองเงินเป็นเกราะประคองชีวิตที่ต้องบริหารให้ผ่านไปได้ จุดแข็งคือทักษะการเอาตัวรอดที่เป็นเลิศ แม้วันนี้จะเหนื่อย แต่หัวใจนักสู้จะพาไปเจอวันที่ดีกว่า",
     motto: "นักสู้วันต่อวัน แค่หมุนเงินรอดไปได้อีกเดือนก็คือชัยชนะแล้ว",
-    bestPartner: { name: "🛠️ คอร์สอัปสกิลรายได้ & เงินสำรองฉุกเฉิน", desc: "การลงทุนที่ดีที่สุดตอนนี้ไม่ใช่หุ้น แต่คือการเพิ่มทักษะ (Skill Up) เพื่อหารายได้ทางที่สอง พร้อมกับโปะหนี้ดอกเบี้ยสูงให้ไวที่สุด" },
+    bestPartner: { name: "🛠️ คอร์สอัพสกิลรายได้ & เงินสำรองฉุกเฉิน", desc: "การลงทุนที่ดีที่สุดตอนนี้ไม่ใช่หุ้น แต่คือการเพิ่มทักษะ (Skill Up) เพื่อหารายได้ทางที่สอง พร้อมกับโปะหนี้ดอกเบี้ยสูงให้ไวที่สุด" },
     kryptonite: { name: "วงจรหนี้สะสมจากการแก้ปัญหาเฉพาะหน้า ⚡", desc: "การจ่ายเพียงขั้นต่ำหรือกู้หนี้ใหม่มาปิดหนี้เก่าคือการสร้างพายุลูกใหญ่ ความกดดันรายวันอาจทำให้มองข้ามดอกเบี้ยทบต้นฝั่งลบที่จะทำให้ฟื้นตัวยาก" }
   }
 };
@@ -334,6 +334,7 @@ export default function DashboardPage() {
 
   const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false); // 💡 เพิ่มบรรทัดนี้
     const [isGoalExpanded, setIsGoalExpanded] = useState(false);
+    const [showLimitModal, setShowLimitModal] = useState(false);
 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -701,10 +702,10 @@ const toggleQuest = async (id: number, xp: number) => {
     const isDone = completedQuests.includes(id);
     
     // ✅ ล็อกโควตา 3 ข้อ
-    if (!isDone && completedQuests.length >= 3) {
-      alert("วันนี้คุณทำภารกิจครบ 3 อย่างแล้ว! พักผ่อนได้เลยครับคุณพี่ 🚀");
-      return;
-    }
+ if (!isDone && completedQuests.length >= 3) {
+  setShowLimitModal(true); // เปลี่ยนจาก alert เป็นตัวนี้
+  return;
+}
 
     const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
     const userRef = doc(db, "users", user.uid);
@@ -1066,7 +1067,7 @@ const getQuoteFontSize = (text: string) => {
                 <Sparkles size={16} />
               </div>
               <p className="text-xs font-medium text-blue-800 leading-relaxed">
-                <span className="font-bold">💡 ทริคอัปสกิล:</span> ภารกิจวันนี้ยังเป็นแบบสุ่มพื้นฐานอยู่ 
+                <span className="font-bold">💡 ทริคอัพสกิล:</span> ภารกิจวันนี้ยังเป็นแบบสุ่มพื้นฐานอยู่ 
                 อย่าลืมไปทำแบบประเมิน <span className="font-bold text-indigo-600 underline decoration-indigo-200 underline-offset-2">({missingAssessments.join(", ")})</span> ด้านล่างให้ครบ เพื่อรับภารกิจที่ตรงกับตัวคุณที่สุดนะครับ!
               </p>
             </motion.div>
@@ -1393,7 +1394,7 @@ const getQuoteFontSize = (text: string) => {
                   Upskill Library
                 </h3>
                 <h2 className={`text-2xl font-black mb-1.5 leading-tight ${currentLevel >= 5 ? 'text-slate-900' : 'text-slate-700'}`}>
-                  คลังสมองอัปสกิล
+                  คลังสมองอัพสกิล
                 </h2>
                 <p className="text-sm font-medium text-slate-500 mb-6 max-w-xs px-2">
                   สรุปหนังสือและบทความดีๆ ที่คัดมาแล้ว
@@ -1437,34 +1438,51 @@ const getQuoteFontSize = (text: string) => {
       <AnimatePresence>
         
         {/* Info Popup (ใช้ร่วมกันหมด) */}
-        {infoModal?.isOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }} 
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" 
-            onClick={() => setInfoModal(null)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, y: 20 }} 
-              animate={{ scale: 1, y: 0 }} 
-              exit={{ scale: 0.95, y: 20 }} 
-              className="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto" 
-              onClick={e => e.stopPropagation()}
-            >
-              <button onClick={() => setInfoModal(null)} className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors z-10">
-                <X size={18}/>
-              </button>
-              <h3 className="text-xl font-black text-slate-800 mb-4 pr-8">{infoModal.title}</h3>
-              <div className="text-slate-600 font-medium">
-                {infoModal.content}
-              </div>
-              <button onClick={() => setInfoModal(null)} className="mt-8 w-full bg-slate-900 text-white font-bold py-3.5 rounded-2xl hover:bg-slate-800 transition-colors shadow-lg">
-                เข้าใจแล้ว
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
+        {/* Info Popup (ฉบับแก้กรอบเป๊ะ ไม่เลยบนล่าง) */}
+{infoModal?.isOpen && (
+  <motion.div 
+    initial={{ opacity: 0 }} 
+    animate={{ opacity: 1 }} 
+    exit={{ opacity: 0 }} 
+    className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm" 
+    onClick={() => setInfoModal(null)}
+  >
+    <motion.div 
+      initial={{ scale: 0.95, y: 20 }} 
+      animate={{ scale: 1, y: 0 }} 
+      exit={{ scale: 0.95, y: 20 }} 
+      // 💡 ปรับตรงนี้: เปลี่ยน max-h เป็น 80vh และเพิ่ม flex flex-col
+      className="bg-white rounded-[2.5rem] shadow-2xl relative max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden" 
+      onClick={e => e.stopPropagation()}
+    >
+      {/* 💡 ส่วนหัว: ให้ปุ่ม X อยู่กับที่เสมอ */}
+      <div className="p-6 pb-2 flex justify-between items-start sticky top-0 bg-white z-20">
+        <h3 className="text-xl font-black text-slate-800 pr-8 leading-tight">{infoModal.title}</h3>
+        <button 
+          onClick={() => setInfoModal(null)} 
+          className="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 p-2.5 rounded-full transition-all shrink-0"
+        >
+          <X size={20}/>
+        </button>
+      </div>
+
+      {/* 💡 ส่วนเนื้อหา: เลื่อน Scroll ได้แค่ตรงนี้ */}
+      <div className="px-6 py-2 overflow-y-auto custom-scrollbar flex-1 text-slate-600 font-medium leading-relaxed">
+        {infoModal.content}
+      </div>
+
+      {/* 💡 ส่วนท้าย: ปุ่มกดอยู่กับที่ด้านล่าง */}
+      <div className="p-6 pt-4 bg-white border-t border-slate-50">
+        <button 
+          onClick={() => setInfoModal(null)} 
+          className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-all active:scale-95 shadow-lg"
+        >
+          เข้าใจแล้ว
+        </button>
+      </div>
+    </motion.div>
+  </motion.div>
+)}
 
         {/* Level Up Popup */}
         {showLevelUp?.isOpen && (
@@ -1491,7 +1509,7 @@ const getQuoteFontSize = (text: string) => {
                           <Trophy size={40} className="fill-current"/>
                         </div>
                         <h2 className="text-3xl font-black text-slate-800 mb-1">ยินดีด้วย!</h2>
-                        <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-widest">คุณอัปเลเวลแล้ว</p>
+                        <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-widest">คุณอัพเลเวลแล้ว</p>
                         
                         <div className="bg-slate-900 text-white px-8 py-3 rounded-2xl border-4 border-slate-800 shadow-xl mb-6">
                             <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">LV. {showLevelUp.newLevel}</span>

@@ -129,42 +129,46 @@ const handleLogin = async () => {
           {tools.map((tool) => {
             let gimmick = null;
             
-            // 💡 1. DISC (ขิงด้วยจำนวนคนเล่น)
-            if (tool.name.toLowerCase().includes("disc")) {
-              gimmick = (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                  <Users size={12} className="text-blue-500 group-hover:text-white transition-colors" />
-                  <span>ผู้ใช้งาน 100K+</span>
-                </div>
-              );
-            } 
-            // 💡 2. Wheel of Life (ขิงด้วยกระแสโซเชียล)
-            else if (tool.name.toLowerCase().includes("wheel")) {
-              gimmick = (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-orange-50 text-red-600 rounded-full text-[10px] font-black tracking-widest border border-red-100 shadow-sm group-hover:bg-red-500 group-hover:text-white transition-colors duration-300">
-                  <Flame size={12} className="text-red-500 group-hover:text-white transition-colors animate-pulse" />
-                  <span>290K+ Views บน Social</span>
-                </div>
-              );
-            }
-            // 💡 3. Money Avatar (เน้นความพรีเมียมและความละเอียดของการวิเคราะห์)
-            else if (tool.name.toLowerCase().includes("money")) {
-              gimmick = (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 rounded-full text-[10px] font-black tracking-widest border border-amber-100 shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300">
-                  <BrainCircuit size={12} className="text-amber-500 group-hover:text-white transition-colors" />
-                  <span>วิเคราะห์เจาะลึกระดับ PRO</span>
-                </div>
-              );
-            }
-            // 💡 4. คมสัดสัด (ดึงดูด Gen Z ด้วยศัพท์ Vibe)
-            else if (tool.name.includes("คมสัด")) {
-              gimmick = (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-50 text-purple-600 rounded-full text-[10px] font-black tracking-widest border border-purple-100 shadow-sm group-hover:bg-purple-500 group-hover:text-white transition-colors duration-300">
-                  <Sparkles size={12} className="text-purple-500 group-hover:text-white transition-colors" />
-                  <span>Vibe ดี โดนใจ Gen Z</span>
-                </div>
-              );
-            }
+           // 💡 1. DISC
+if (tool.name.toLowerCase().includes("disc")) {
+  gimmick = (
+    // เปลี่ยน group-hover:text-white เป็น group-hover:text-blue-900
+    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 shadow-sm group-hover:bg-blue-100 group-hover:text-blue-900 transition-colors duration-300">
+      <Users size={12} className="text-blue-500 group-hover:text-blue-900 transition-colors" />
+      <span>ผู้ใช้งาน 100K+</span>
+    </div>
+  );
+} 
+// 💡 2. Wheel of Life
+else if (tool.name.toLowerCase().includes("wheel")) {
+  gimmick = (
+    // เปลี่ยน group-hover:text-white เป็น group-hover:text-red-900
+    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-orange-50 text-red-600 rounded-full text-[10px] font-black tracking-widest border border-red-100 shadow-sm group-hover:bg-red-100 group-hover:text-red-900 transition-colors duration-300">
+      <Flame size={12} className="text-red-500 group-hover:text-red-900 transition-colors animate-pulse" />
+      <span>290K+ Views บน Social</span>
+    </div>
+  );
+}
+// 💡 3. Money Avatar (จุดที่มีปัญหาในรูป)
+else if (tool.name.toLowerCase().includes("money")) {
+  gimmick = (
+    // เปลี่ยน group-hover:text-white เป็น group-hover:text-amber-950
+    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 rounded-full text-[10px] font-black tracking-widest border border-amber-100 shadow-sm group-hover:bg-amber-100 group-hover:text-amber-950 transition-colors duration-300">
+      <BrainCircuit size={12} className="text-amber-500 group-hover:text-amber-950 transition-colors" />
+      <span>วิเคราะห์เจาะลึกระดับ PRO</span>
+    </div>
+  );
+}
+// 💡 4. คมสัดสัด
+else if (tool.name.includes("คมสัด")) {
+  gimmick = (
+    // เปลี่ยน group-hover:text-white เป็น group-hover:text-purple-900
+    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-50 text-purple-600 rounded-full text-[10px] font-black tracking-widest border border-purple-100 shadow-sm group-hover:bg-purple-100 group-hover:text-purple-900 transition-colors duration-300">
+      <Sparkles size={12} className="text-purple-500 group-hover:text-purple-900 transition-colors" />
+      <span>Vibe ดี โดนใจ Gen Z</span>
+    </div>
+  );
+}
 
           return (
             // 💡 1. ให้ทั้งการ์ดกดลิงก์ไปที่หน้า /info ก่อนเสมอ
