@@ -719,9 +719,11 @@ const getCurrentJargons = () => {
   const activeJargons = getCurrentJargons();
 
   return (
-    <div className={`min-h-[100dvh] bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className}`}>
-      <div className={`w-full max-w-md shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
-        
+ // 💡 1. แก้ไข wrapper นอกสุด: เปลี่ยน min-h-[100dvh] เป็น h-full w-full
+    <div className={`h-full w-full bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className}`}>
+      
+      {/* 💡 2. แก้ไข container ของแอป: เปลี่ยน h-[100dvh] เป็น h-full */}
+      <div className={`w-full max-w-md shadow-2xl overflow-hidden h-full sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
         {/* --- START SCREEN --- */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col p-6 sm:p-8 bg-gradient-to-br from-[#FCFBF8] via-[#F4EDE4] to-[#E8DCC4] overflow-y-auto">

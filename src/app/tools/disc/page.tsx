@@ -296,10 +296,13 @@ const saveResultToFirebase = async () => {
     { id: "ชาว", label: "ไม่ระบุ", emoji: "👤" },
   ];
 
-  return (
-    <div className={`min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
-      <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
+return (
+    // 💡 1. แก้ min-h-[100dvh] เป็น h-full w-full
+    <div className={`h-full w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
+      
+      <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-full sm:h-[850px] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
+        {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full flex flex-col p-5 sm:p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">

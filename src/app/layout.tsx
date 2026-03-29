@@ -23,16 +23,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      <body className={`${kanit.className} bg-slate-50 min-h-screen flex flex-col text-slate-800`}>
+      {/* 💡 1. แก้ไข body: ล็อกความสูงให้พอดีจอ (100dvh) และปิดการ Scroll ของหน้าจอหลัก */}
+      <body className={`${kanit.className} bg-slate-50 h-[100dvh] flex flex-col text-slate-800 overflow-hidden`}>
         
-        {/* === แถบ Navbar ด้านบน (แสดงผลหลักใน Desktop) === */}
-        <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        {/* === แถบ Navbar ด้านบน === */}
+        {/* 💡 2. เอา sticky ออก แล้วใช้ shrink-0 เพื่อไม่ให้เมนูโดนบีบ */}
+        <nav className="shrink-0 bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 z-50">
           <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
             
             {/* โลโก้แบรนด์ */}
-          <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform">
-   <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" />
-</Link>
+            <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform">
+              <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" />
+            </Link>
 
             {/* เมนูสำหรับหน้าจอคอมพิวเตอร์ (Desktop Menu) */}
             <div className="hidden md:flex gap-6">
@@ -52,15 +54,15 @@ export default function RootLayout({
           </div>
         </nav>
 
-
         {/* === พื้นที่แสดงผลแอปแต่ละตัว (Main Content) === */}
-        {/* ใส่ pb-20 เพื่อไม่ให้เนื้อหาโดน Bottom Nav บังในมือถือ */}
-        <main className="flex-1 flex flex-col pb-20 md:pb-0 relative">
+        {/* 💡 3. เปลี่ยนให้เฉพาะ main เท่านั้นที่ Scroll ได้ (overflow-y-auto) และลบ pb-20 ทิ้งไปเลย */}
+        <main id="main-scroll-container" className="flex-1 overflow-y-auto w-full relative">
           {children}
         </main>
 
-        {/* === แถบ Bottom Navigation ด้านล่าง (แสดงผลเฉพาะใน Mobile) === */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-16 z-50 px-1 pb-safe shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        {/* === แถบ Bottom Navigation ด้านล่าง === */}
+        {/* 💡 4. เอา fixed ออก ใช้แค่ shrink-0 Flexbox จะดันมันไปอยู่ขอบล่างให้เองเป๊ะๆ */}
+        <div className="shrink-0 md:hidden bg-white border-t border-slate-200 flex justify-around items-center h-[4.5rem] pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-50">
           <Link href="/" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-red-800 active:scale-95 transition-all">
             <Home size={22} />
             <span className="text-[10px] mt-1 font-bold">หน้าหลัก</span>

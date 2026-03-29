@@ -795,18 +795,21 @@ const toggleQuest = async (id: number, xp: number) => {
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto">
         
-        {/* --- 🧭 1. Top Section --- */}
+{/* --- 🧭 1. Top Section --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           
-          <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden flex flex-col justify-between group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700">
-            {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-emerald-500/10 to-cyan-500/10 blur-[80px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+         <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative flex flex-col justify-between group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700">
             
-            {/* เส้นขอบสีด้านบน */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 group-hover:h-3 transition-all duration-300" />
+            {/* 💡 ย้ายเส้นขอบสีและพื้นหลังทั้งหมด มาไว้ในกรอบ overflow-hidden ตรงนี้ เพื่อให้มันตัดขอบโค้งเป๊ะๆ */}
+            <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none z-0">
+              
+              {/* ✨ เส้นขอบสีด้านบน (ย้ายเข้ามาอยู่ข้างในแล้ว และเอา rounded-t-[2.5rem] ออก) */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 group-hover:h-3 transition-all duration-300" />
 
-            <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none">
+              {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-emerald-500/10 to-cyan-500/10 blur-[80px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+
               <div className="absolute top-10 -right-20 opacity-10 rotate-12 hidden md:block transition-transform duration-700 group-hover:rotate-45 group-hover:scale-110">
                 <BrainCircuit size={300} strokeWidth={1} />
               </div>
@@ -1204,7 +1207,7 @@ const toggleQuest = async (id: number, xp: number) => {
                       : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(79,70,229,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(79,70,229,0.5)] hover:scale-[1.03]'
                     }`}>
                     <Sparkles size={16} className={hasClaimedQuoteToday ? "" : "animate-pulse"} />
-                    <span>{hasClaimedQuoteToday ? "สุ่มคำคมใหม่" : "สุ่มคำคมวันนี้ +10 XP"}</span>
+                    <span>{hasClaimedQuoteToday ? "สุ่มคำคมใหม่" : "สุ่มคำคมวันนี้ +10 XP (วันละครั้ง)"}</span>
                   </div>
                 </div>
               </div>
