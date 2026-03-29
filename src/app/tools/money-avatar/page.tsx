@@ -581,20 +581,33 @@ export default function Home() {
               </AnimatePresence>
             </div>
             
-            <div className="bg-[#FCFBF8] p-4 pt-3 pb-8 border-t border-stone-200 rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.08)] shrink-0 z-20 flex flex-col max-h-[55vh]">
-              <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-3 shrink-0"></div>
-              
-              <div className="space-y-2.5 overflow-y-auto p-1 pb-4 custom-scrollbar flex-1 min-h-0">
-                {activeScenarios[currentIndex]?.choices.map((choice: any, index: number) => {
-                  const isSelected = answers[currentIndex]?.choiceIndex === index;
-                  return (
-                    <button key={`${currentIndex}-${index}`} disabled={isTransitioning} onClick={() => handleChoice(choice.risk, choice.disc, index)} className={`w-full text-left px-5 py-3.5 rounded-xl text-[13px] leading-relaxed font-medium border-2 transition-all active:scale-[0.98] shadow-sm shrink-0 ${isSelected ? "bg-[#004D7A] border-[#004D7A] text-white shadow-md ring-2 ring-sky-300 ring-offset-1" : "bg-white border-stone-200 text-stone-700 hover:border-amber-400 hover:bg-amber-50"} ${isTransitioning && !isSelected ? "opacity-40" : ""}`}>
-                      {choice.text}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+        {/* --- ส่วนของ Choices (ด้านล่าง) --- */}
+<div className="bg-[#FCFBF8] p-4 pt-3 pb-6 border-t border-stone-200 rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.08)] shrink-0 z-20 flex flex-col">
+  {/* แถบดึงขนาดเล็กด้านบน */}
+  <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-3 shrink-0"></div>
+  
+  {/* กำหนดความสูงคงที่ (เช่น h-48 หรือ h-52) และอนุญาตให้ Scroll */}
+  <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar max-h-[190px] sm:max-h-[220px]">
+    {activeScenarios[currentIndex]?.choices.map((choice: any, index: number) => {
+      const isSelected = answers[currentIndex]?.choiceIndex === index;
+      return (
+        <button 
+          key={`${currentIndex}-${index}`} 
+          disabled={isTransitioning} 
+          onClick={() => handleChoice(choice.risk, choice.disc, index)} 
+          className={`w-full text-left px-4 py-2.5 rounded-xl text-[13px] leading-snug font-medium border-2 transition-all active:scale-[0.98] shadow-sm shrink-0 
+            ${isSelected 
+              ? "bg-[#004D7A] border-[#004D7A] text-white shadow-md ring-2 ring-sky-300 ring-offset-1" 
+              : "bg-white border-stone-200 text-stone-700 hover:border-amber-400 hover:bg-amber-50"
+            } 
+            ${isTransitioning && !isSelected ? "opacity-40" : ""}`}
+        >
+          {choice.text}
+        </button>
+      );
+    })}
+  </div>
+</div>
           </div>
         )}
         
