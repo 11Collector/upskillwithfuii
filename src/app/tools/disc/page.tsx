@@ -33,7 +33,7 @@ const shuffleArray = (array: any[]) => {
 const resultData = {
   D: {
     rpgTitle: "เดอะแบกสายบวก", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀",
-    titleColor: "text-red-600", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
+    titleColor: "text-red-600",
     desc: "คุณคือเครื่องจักรปั่นงาน! ชอบความท้าทาย ตัดสินใจไว เด็ดขาด มั่นใจสูง งานด่วนงานไฟไหม้ขอให้บอก พร้อมบวกเสมอไม่ว่าหน้าไหน!",
     warning: "ระวังหัวร้อนจนเผลอวีน หรือเร่งงานเพื่อนในทีมจนหายใจไม่ทัน ใจร่มๆ บ้างนะลูกพี่!",
     bestPartner: { type: "C", name: "Type C - มนุษย์ Checklist 🧐", desc: "เพื่อนซี้สายซัพ! C จะช่วยอุดรูรั่วหลังบ้าน ให้คุณพุ่งชนเป้าหมายได้เต็มที่" },
@@ -41,7 +41,7 @@ const resultData = {
   },
   I: {
     rpgTitle: "รมต. เอนเตอร์เทน", discTitle: "มนุษย์กลุ่ม I (Influence)", color: "bg-orange-500", barColor: "bg-orange-400", emoji: "💃",
-    titleColor: "text-orange-500", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
+    titleColor: "text-orange-500",
     desc: "คุณคือสีสันของแผนก! มนุษย์โลกสวย ชอบเข้าสังคม สร้างบรรยากาศดีๆ ใครอยู่ใกล้ก็อารมณ์ดี เรื่องงานอาจจะชิว แต่เรื่องปาร์ตี้เราจริงจัง!",
     warning: "รับปากเก่งจนงานล้นมือ ดีเทลตกหล่นบ่อยเพราะมัวแต่เมาท์เพลิน โฟกัสหน่อยนะคุณน้า!",
     bestPartner: { type: "S", name: "Type S - กาวใจประจำออฟฟิศ 🛡️", desc: "ผู้ฟังที่ดี! S จะคอยซัพพอร์ตไอเดียฟุ้งๆ และฟังเรื่องเมาท์ของคุณได้ทั้งวัน" },
@@ -49,7 +49,7 @@ const resultData = {
   },
   S: {
     rpgTitle: "กาวใจประจำออฟฟิศ", discTitle: "มนุษย์กลุ่ม S (Steadiness)", color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️",
-    titleColor: "text-emerald-600", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
+    titleColor: "text-emerald-600",
     desc: "คุณคือเซฟโซนของทุกคน! ใจเย็น เป็นผู้ฟังที่ดี ใครมีปัญหาอะไรก็ชอบมาปรึกษา เน้นประนีประนอม รักสงบ เกลียดการเปลี่ยนแปลงกะทันหันสุดๆ",
     warning: "ขี้เกรงใจเกินร้อย ยอมแบกงานคนอื่นไว้เองหมดจนตัวเองหลังหัก หัดเซย์โนบ้างนะ!",
     bestPartner: { type: "I", name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "คนเติมไฟ! I จะช่วยดึงคุณออกจากเซฟโซนมาสนุกกับชีวิตออฟฟิศมากขึ้น" },
@@ -57,7 +57,7 @@ const resultData = {
   },
   C: {
     rpgTitle: "มนุษย์ Checklist", discTitle: "มนุษย์กลุ่ม C (Compliance)", color: "bg-blue-600", barColor: "bg-blue-500", emoji: "🧐",
-    titleColor: "text-blue-600", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
+    titleColor: "text-blue-600",
     desc: "คุณคือเครื่องจับผิด! สายวิเคราะห์ รอบคอบ มีแผนเสมอ ทุกอย่างต้องมี Reference ผิดมิลลิเมตรเดียวก็ไม่ได้ เจ้าระเบียบยืนหนึ่ง!",
     warning: "ยึดติดความเป๊ะจนลืมดูเวลา มัวแต่จัดหน้ากระดาษและแก้ฟอนต์จนเกือบตกเดดไลน์!",
     bestPartner: { type: "D", name: "Type D - เดอะแบกสายบวก 🚀", desc: "คู่หูทำยอด! คุณวางแผนเป๊ะๆ ให้ ส่วน D จะเป็นคนฟาดฟันเอาผลลัพธ์มาเอง" },
@@ -80,22 +80,19 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // 💡 2. สั่งให้เริ่มจับสัญญาณว่าใคร Login
- // 💡 แก้ไข useEffect ตัวเดิมให้เป็นแบบนี้ครับ
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (user) => {
     if (user) {
       setCurrentUser(user);
       console.log("จับสัญญาณ User ได้แล้ว:", user.uid);
 
-      // ✅ เพิ่มบรรทัดนี้: ถ้ามีชื่อใน Google ให้เอามาใส่ใน Nickname ทันที
-      // ถ้าอยากได้ชื่อเล่นจริงๆ อาจจะใช้ .split(" ")[0] เพื่อเอาแค่ชื่อหน้าครับ
       if (user.displayName && !nickname) {
         setNickname(user.displayName.split(" ")[0]); 
       }
     }
   });
   return () => unsubscribe();
-}, []); // รันครั้งเดียวตอนโหลดหน้าเว็บ
+}, []); 
 
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -218,22 +215,18 @@ const saveResultToFirebase = async () => {
       percentages: percentages,
       title: getDynamicTitle(),
       answers: answers,
-      updatedAt: serverTimestamp(), // เปลี่ยนเป็น updatedAt ให้สื่อความหมาย
+      updatedAt: serverTimestamp(),
       createdAt: serverTimestamp()  
     };
 
-    // 🔥 ส่วนที่ต้องเปลี่ยน: Logic การบันทึก 🔥
     if (currentUser) {
-      // ✅ ถ้า Login แล้ว: ใช้ setDoc ระบุ ID เป็น UID ของ User เลย (ทับของเก่า)
       await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
       console.log("✅ อัปเดตผลลัพธ์ DISC ล่าสุดให้เรียบร้อย!");
     } else {
-      // ✅ ถ้าเป็น Guest: ใช้ addDoc สร้างรายการใหม่เหมือนเดิม
       await addDoc(collection(db, "discResults"), resultPayload);
       console.log("✅ บันทึกข้อมูล Guest เรียบร้อย!");
     }
 
-    // 💡 2. ส่วนแจก XP (ยังคงเดิมไว้ เพราะคุณมี Flag เช็กอยู่แล้ว)
     if (currentUser) {
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
@@ -297,12 +290,11 @@ const saveResultToFirebase = async () => {
   ];
 
 return (
-    // 💡 1. แก้ min-h-[100dvh] เป็น h-full w-full
     <div className={`h-full w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
       
+      {/* 💡 กรอบนอกสุด ใส่ overflow-hidden ให้มุมโค้งสวยงาม และ h-full ให้พอดีจอ */}
       <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-full sm:h-[850px] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
-        {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full flex flex-col p-5 sm:p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
@@ -333,7 +325,6 @@ return (
 
 <input
   type="text"
-  // ✨ ปรับ Placeholder ให้ดูเป็นกันเองขึ้นเมื่อ Login แล้ว
   placeholder={currentUser ? "ชื่อเล่นของคุณ..." : "เช่น มายด์, ฝน, บอย"}
   value={nickname}
   onChange={(e) => setNickname(e.target.value)}
@@ -381,7 +372,9 @@ return (
 
         {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
         {gameState === "playing" && activeScenarios.length > 0 && (
-          <div className="flex flex-col h-full bg-[#E2E8F0]">
+          // 💡 จัด Flex ให้ส่วนนี้เต็มความสูง และซ่อนขอบที่ล้น
+          <div className="flex flex-col h-full bg-[#E2E8F0] overflow-hidden">
+             
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
               <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                 {currentIndex > 0 && (
@@ -393,7 +386,7 @@ return (
                   {activeScenarios[currentIndex].avatar}
                 </div>
                 <div className="flex flex-col justify-center overflow-hidden flex-1">
-  <h2 className="text-white font-bold text-[13px] leading-tight truncate w-full">{activeScenarios[currentIndex].npcName}</h2>
+                  <h2 className="text-white font-bold text-[13px] leading-tight truncate w-full">{activeScenarios[currentIndex].npcName}</h2>
                   <p className="text-[10px] text-blue-300 leading-tight truncate w-full">{activeScenarios[currentIndex].role}</p>
                 </div>
               </div>
@@ -410,6 +403,7 @@ return (
               </div>
             </div>
 
+            {/* 💡 แชทเลื่อนได้ */}
             <div className="flex-1 p-5 overflow-y-auto flex flex-col pb-4">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -427,10 +421,12 @@ return (
               </AnimatePresence>
             </div>
 
-            <div className="bg-slate-100 p-4 pt-4 border-t border-slate-200 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.06)] shrink-0 z-20 relative">
-              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
-              <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide">เลือกคำตอบสไตล์คุณ</p>
-              <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
+            {/* 💡 กรอบตัวเลือก กำหนดความสูงสูงสุด (max-h) และให้เลื่อนได้ */}
+            <div className="bg-slate-100 p-4 pt-4 border-t border-slate-200 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.06)] shrink-0 z-20 flex flex-col max-h-[50vh]">
+              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3 shrink-0"></div>
+              <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide shrink-0">เลือกคำตอบสไตล์คุณ</p>
+              
+              <div className="space-y-3 overflow-y-auto pr-1 pb-2">
                 {activeScenarios[currentIndex].choices.map((choice, index) => {
                   const isSelected = answers[currentIndex] === choice.type;
 
@@ -442,7 +438,7 @@ return (
                         e.currentTarget.blur();
                         handleChoice(choice.type);
                       }}
-                      className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
+                      className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words shrink-0
                         ${isSelected 
                           ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" 
                           : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm" 
@@ -470,8 +466,11 @@ return (
 
         {/* ================= 4. หน้าจอสรุปผล ================= */}
         {gameState === "result" && (
-          <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
-            <div className="w-full h-full overflow-y-auto pb-40">
+          // 💡 ใช้ Flex จัดโครงสร้าง หน้าจอเลื่อนได้ ส่วนปุ่มติดขอบล่าง
+          <div className="flex flex-col h-full bg-slate-50 relative overflow-hidden">
+            
+            {/* 💡 พื้นที่แสดงผลลัพธ์ (เลื่อนขึ้นลงได้) */}
+            <div className="flex-1 overflow-y-auto w-full pb-8"> 
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
                 
                 <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-md shrink-0`}>
@@ -482,7 +481,7 @@ return (
                   <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1.5 rounded-full">{resultData[getFinalResult()].discTitle}</p>
                 </div>
 
-                <div className="p-5 pt-12 flex-1 flex flex-col relative bg-slate-50">
+                <div className="p-5 pt-12 flex flex-col relative bg-slate-50">
                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-5xl w-24 h-24 rounded-full flex items-center justify-center shadow-xl border-[6px] border-slate-50 z-10">
                     {resultData[getFinalResult()].emoji}
                   </div>
@@ -490,7 +489,6 @@ return (
                <div className="text-center mt-2 mb-4">
                     <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">ฉายาของคุณคือ</p>
                     <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">{nickname}</h1>
-                    {/* ✨ แก้ไขบรรทัดล่างนี้ เปลี่ยน text-blue-600 เป็น dynamic class */}
                     <p className={`text-lg font-black leading-tight px-2 ${resultData[getFinalResult()].titleColor}`}>
                       {getDynamicTitle()}
                     </p>
@@ -550,13 +548,11 @@ return (
                     </div>
                   </div>
 
-                  {/* ✨ 3. อัปเดตส่วน "ทำงานกับใครเวิร์คสุด?" ให้ดึงสีจาก themeColors ✨ */}
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
                     <h3 className="font-bold text-slate-800 mb-3 text-sm border-b pb-2 flex items-center gap-2">
                       <span className="text-[16px]">🤝</span> ทำงานกับใครเวิร์คสุด?
                     </h3>
                     
-                    {/* กล่องคู่หูแบกงาน */}
                     <div className={`${themeColors[resultData[getFinalResult()].bestPartner.type].bg} border ${themeColors[resultData[getFinalResult()].bestPartner.type].border} p-3 rounded-xl mb-2 transition-colors`}>
                       <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].title} mb-1 flex items-center gap-1`}>
                         <Zap size={14}/> คู่หูแบกงาน (Best Partner)
@@ -569,7 +565,6 @@ return (
                       </p>
                     </div>
 
-                    {/* กล่องคู่กรรมทำปวดหัว */}
                     <div className={`${themeColors[resultData[getFinalResult()].kryptonite.type].bg} border ${themeColors[resultData[getFinalResult()].kryptonite.type].border} p-3 rounded-xl transition-colors`}>
                       <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].title} mb-1 flex items-center gap-1`}>
                         <ShieldAlert size={14}/> คู่กรรมทำปวดหัว (Kryptonite)
@@ -582,14 +577,11 @@ return (
                       </p>
                     </div>
                   </div>
-{/* ✨ เพิ่มแบนเนอร์เช็กสมดุลชีวิตตรงนี้ (ใต้ส่วนทำงานกับใครเวิร์คสุด) ✨ */}
             
-                    {/* เอฟเฟกต์ตกแต่งให้ดูมีมิติ */}
                     <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
                     <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
            <div className="mb-6 mt-4">
-  {/* เส้นคั่นและข้อความ */}
   <div className="flex items-center justify-center gap-3 mb-4">
     <div className="h-[1px] bg-slate-100 flex-1"></div>
     <p className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">เครื่องมืออัปสกิลอื่นๆ</p>
@@ -597,7 +589,6 @@ return (
   </div>
 
   <div className="flex flex-col gap-3">
-    {/* แถวบน: 2 ปุ่มคู่กัน (คงเดิม) */}
     <div className="grid grid-cols-2 gap-3">
       <a 
         href="/tools/wheel-of-life" 
@@ -624,14 +615,12 @@ return (
       </a>
     </div>
 
-    {/* ✨ แถวล่าง: ปุ่มที่สลับตามสถานะ Login (แก้ไขแล้ว) ✨ */}
     <a 
       href={currentUser ? "/dashboard" : "/"} 
       className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
     >
       <div className="flex items-center gap-3 pl-4 py-3">
         {currentUser ? (
-          /* ✅ กรณี Login แล้ว: แสดง Dashboard */
           <>
             <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
               <LayoutDashboard size={20} className="text-blue-400" />
@@ -642,7 +631,6 @@ return (
             </div>
           </>
         ) : (
-          /* 👤 กรณีเป็น Guest: แสดงกลับหน้าแรก */
           <>
             <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
               <ArrowLeft size={20} className="text-slate-300" />
@@ -655,7 +643,6 @@ return (
         )}
       </div>
 
-      {/* ลูกศรข้างขวา (ปรับสี/ทิศทางตามสถานะ) */}
       <div className="pr-4">
         {currentUser ? (
           <ArrowRight size={18} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
@@ -664,14 +651,12 @@ return (
         )}
       </div>
 
-      {/* แสงวิบวับ (แสดงเฉพาะตอน Login) */}
       {currentUser && (
         <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl rounded-full"></div>
       )}
     </a>
   </div>
 </div>
-                  {/* ✨ จบ: เครื่องมืออัปสกิลอื่นๆ ✨ */}
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">
                     Created by อัพสกิลกับฟุ้ย
@@ -723,34 +708,26 @@ return (
               )}
             </AnimatePresence>
 
-            <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex flex-col gap-2 z-20">
-              <button 
-                onClick={handleDownloadImage}
-                disabled={isCapturing}
-                className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors text-[14px] shadow-md disabled:bg-slate-400"
-              >
-                <Camera size={18} /> {isCapturing ? "กำลังประมวลผลรูปภาพ..." : "เซฟรูปเอาไปขิงเพื่อนใน Story"}
-              </button>
-              
-           <div className="flex gap-2">
-                {/* ✨ ปรับส่วนนี้: ปุ่มเขียว LINE สำหรับทักแชท ✨ */}
-                <a 
-                  href="https://lin.ee/rQawKUM" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="flex-1 bg-[#00c300] text-white font-bold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-[#00aa00] transition-colors shadow-sm"
-                >
-                  <MessageSquare size={16} /> อัปสกิลจากจุดแข็งเพิ่ม
-                </a>
-                
-                <button 
-                  onClick={restartGame} 
-                  className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-slate-300 transition-colors"
-                >
-                  <RefreshCcw size={16} /> เล่นใหม่อีกครั้ง
-                </button>
-              </div>
-            </div>
+          <div className="shrink-0 w-full bg-white/95 backdrop-blur-md p-4 pb-8 sm:pb-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex gap-2 z-20">
+  {/* ปุ่มเซฟรูป */}
+  <button 
+    onClick={handleDownloadImage}
+    disabled={isCapturing}
+    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all text-[12px] sm:text-[14px] shadow-md disabled:bg-slate-400 active:scale-95"
+  >
+    <Camera size={18} /> {isCapturing ? "รอแป๊บ..." : "เซฟรูปขิงใน Story"}
+  </button>
+  
+  {/* ปุ่ม LINE OA */}
+  <a 
+    href="https://lin.ee/rQawKUM" 
+    target="_blank" 
+    rel="noreferrer" 
+    className="flex-1 bg-[#00c300] text-white font-bold py-3.5 rounded-xl text-center text-[12px] sm:text-[14px] flex items-center justify-center gap-1.5 hover:bg-[#00aa00] transition-all shadow-sm active:scale-95"
+  >
+    <MessageSquare size={16} /> ติดตาม LINE OA
+  </a>
+</div>
 
           </div>
         )}
