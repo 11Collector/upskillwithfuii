@@ -213,24 +213,8 @@ else if (tool.name.includes("คมสัด")) {
         </div>
       </section>
 {!user && (
-        <section className="mb-12 max-w-7xl mx-auto bg-slate-900 rounded-[3rem] overflow-hidden relative min-h-[550px] flex items-center shadow-2xl">
+        <section className="mb-12 max-w-7xl mx-auto bg-slate-900 rounded-[3rem] overflow-hidden relative min-h-[550px] flex items-center shadow-2xl border border-white/5">
           
-          {/* 🛡️ PDPA Trust Badge - มุมขวาบน (Security Seal Style) */}
-          <div className="absolute top-8 right-10 z-30 flex flex-col items-end opacity-50 hover:opacity-100 transition-all duration-500 group/pdpa">
-             <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover/pdpa:text-blue-400 transition-colors">
-                  PDPA Compliant
-                </span>
-                <ShieldCheck size={14} className="text-emerald-500" />
-             </div>
-             {/* Tooltip เล็กๆ ที่จะชัดขึ้นตอน Hover */}
-             <div className="mt-2 text-right hidden md:block">
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-tight">
-                  Encrypted & Secured <br/> No Data Selling
-                </p>
-             </div>
-          </div>
-
           {/* ✨ Ambient Background */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 opacity-80" />
@@ -262,7 +246,8 @@ else if (tool.name.includes("คมสัด")) {
                 ))}
               </ul>
 
-              <div className="flex flex-col items-start gap-4">
+              {/* --- Login Group & PDPA --- */}
+              <div className="flex flex-col items-start gap-4 w-full">
                 <button onClick={handleLogin} className="w-full sm:w-auto bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm hover:bg-amber-50 transition-all active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3 group">
                   <svg width="20" height="20" viewBox="0 0 48 48">
                     <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -272,75 +257,71 @@ else if (tool.name.includes("คมสัด")) {
                   </svg>
                   เข้าสู่ระบบด้วย Google
                 </button>
-                <p className="text-[10px] text-slate-500 font-medium ml-2">
-                  * เข้าร่วมฟรีในช่วง Beta Test พร้อมใช้ Dashboard สุด Exclusive
+                
+                <p className="text-[10px] text-slate-500 font-medium ml-2 mb-2">
+                  * เข้าร่วมฟรีในช่วง Beta พร้อมใช้ Dashboard สุด Exclusive
                 </p>
+
+<div className="w-full max-w-sm pt-5 border-t border-white/5">
+   <div className="flex items-center gap-2 mb-2">
+      <ShieldCheck size={14} className="text-emerald-500" />
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Privacy & Security</span>
+   </div>
+   <p className="text-[10.5px] text-slate-500 leading-relaxed font-bold tracking-tight">
+     Personalized insights only. Industry-standard security. <br className="hidden sm:block"/>
+     <span className="text-slate-400">Zero individual data sharing. Anonymous aggregate trends only.</span>
+   </p>
+</div>
               </div>
             </div>
 
             {/* Right Side: Decorative Mockup */}
-     <div className="hidden md:flex justify-end relative">
-  {/* ตัวมือถือ Mockup */}
-  <motion.div 
-    initial={{ opacity: 0, x: 50 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.8, delay: 0.3 }}
-    className="w-72 h-[500px] bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] border border-white/10 p-4 shadow-2xl relative rotate-6 hover:rotate-3 transition-transform duration-500"
-  >
-    <div className="w-full h-full bg-slate-950/50 rounded-[2.5rem] p-5 flex flex-col gap-4 overflow-hidden">
-      {/* Header ในมือถือ */}
-      <div className="flex justify-between items-center">
-        <div className="h-4 w-16 bg-white/10 rounded-full" />
-        <div className="h-6 w-6 rounded-full bg-amber-400/20 border border-amber-400/30" />
-      </div>
+            <div className="hidden md:flex justify-end relative">
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="w-72 h-[500px] bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] border border-white/10 p-4 shadow-2xl relative rotate-6 hover:rotate-3 transition-transform duration-500"
+              >
+                <div className="w-full h-full bg-slate-950/50 rounded-[2.5rem] p-5 flex flex-col gap-4 overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-16 bg-white/10 rounded-full" />
+                    <div className="h-6 w-6 rounded-full bg-amber-400/20 border border-amber-400/30" />
+                  </div>
 
-      {/* กราฟจำลอง */}
-      <div className="h-32 w-full bg-blue-500/10 rounded-2xl border border-blue-500/20 p-4 flex items-end gap-1">
-        {[40, 70, 45, 90, 65].map((h, i) => (
-          <motion.div 
-            key={i}
-            initial={{ height: 0 }}
-            animate={{ height: `${h}%` }}
-            transition={{ delay: 1 + (i * 0.1), duration: 0.5 }}
-            className="flex-1 bg-blue-500/40 rounded-t-sm" 
-          />
-        ))}
-      </div>
+                  {/* Donut Chart Mockup */}
+                  <div className="h-32 w-full bg-blue-500/10 rounded-2xl border border-blue-500/20 p-4 flex items-center justify-center relative">
+                    <svg width="70" height="70" viewBox="0 0 100 100" className="-rotate-90">
+                      <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-800" />
+                      <motion.circle
+                        cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="12" fill="transparent"
+                        strokeDasharray="263.9" initial={{ strokeDashoffset: 263.9 }} animate={{ strokeDashoffset: 100 }}
+                        transition={{ duration: 1.5, delay: 1 }} className="text-blue-500" strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-white font-black text-[10px]">82%</span>
+                    </div>
+                  </div>
 
-      {/* List รายการ */}
-      <div className="space-y-3 mt-2">
-        <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
-        <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
-        <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
-      </div>
-    </div>
+                  <div className="space-y-3 mt-2">
+                    <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
+                    <div className="h-16 w-full bg-slate-800/50 rounded-2xl border border-white/5" />
+                  </div>
+                </div>
 
-    {/* ✨ Floating XP Badge เพื่อความตึง */}
-    <motion.div 
-      animate={{ y: [0, -10, 0] }}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute -top-6 -left-12 bg-white/10 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-2"
-    >
-      <div className="bg-amber-400 p-1 rounded-lg">
-        <Zap size={16} className="text-slate-900 fill-current" />
-      </div>
-      <span className="text-white font-black text-xs">+150 XP</span>
-    </motion.div>
-
-    {/* ✨ Floating Level */}
-    <motion.div 
-      animate={{ y: [0, 10, 0] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-      className="absolute bottom-20 -right-10 bg-blue-500/20 backdrop-blur-lg px-4 py-2 rounded-full border border-blue-400/30 shadow-xl text-[10px] font-black text-blue-300 uppercase tracking-widest"
-    >
-      Level 12 reached
-    </motion.div>
-  </motion.div>
-</div>
+                {/* Floating Elements */}
+                <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute -top-6 -left-12 bg-white/10 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-2">
+                  <div className="bg-amber-400 p-1 rounded-lg"><Zap size={16} className="text-slate-900 fill-current" /></div>
+                  <span className="text-white font-black text-xs">+150 XP</span>
+                </motion.div>
+              </motion.div>
+            </div>
 
           </div>
         </section>
       )}
+      
       
 
       <p className="mt-12 text-center text-xs text-slate-400 font-medium">
