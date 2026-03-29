@@ -113,7 +113,7 @@ const handleLogin = async () => {
 {/* --- 2. Tools Grid (เปิดให้ทุกคนเห็นเพื่อสร้าง Trust) --- */}
       <section className="mb-12">
         <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-           📌 เครื่องมือสำหรับคุณ
+           📌 เครื่องมือเฉพาะสำหรับคุณ
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {tools.map((tool) => {
