@@ -49,27 +49,35 @@ export default function WheelOfLifeInfoPage() {
         <article className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
           <h2 className="text-2xl font-black text-slate-800 mb-4 border-l-4 border-red-600 pl-4">Wheel of Life คืออะไร?</h2>
           <p className="text-slate-600 leading-relaxed mb-6">
-            <strong>Wheel of Life (วงล้อชีวิต)</strong> คือเครื่องมือที่จะช่วยให้คุณมองเห็นภาพรวมของชีวิตได้อย่างชัดเจนที่สุด ช่วยสะท้อนว่าปัจจุบันคุณให้น้ำหนักกับเรื่องไหน และหลงลืมเรื่องอะไรไปหรือเปล่า เพื่อให้คุณวางแผนปรับปรุงชีวิตให้ &quot;กลม&quot; และหมุนไปข้างหน้าได้อย่างราบรื่น
+            <strong>Wheel of Life (วงล้อชีวิต) </strong> คือเครื่องมือที่จะช่วยให้คุณมองเห็นภาพรวมของชีวิตได้อย่างชัดเจนที่สุด ช่วยสะท้อนว่าปัจจุบันคุณให้น้ำหนักกับเรื่องไหน และหลงลืมเรื่องอะไรไปหรือเปล่า เพื่อให้คุณวางแผนปรับปรุงชีวิตให้ &quot;กลม&quot; และหมุนไปข้างหน้าได้อย่างราบรื่น
           </p>
 
           <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">ชีวิต 8 ด้านที่คุณต้องประเมิน ได้แก่:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {[
-              "สุขภาพ (Health)",
-              "การเงิน (Finance)",
-              "การงานหรือธุรกิจ (Career & Business)",
-              "ครอบครัว (Family)",
-              "ความสัมพันธ์เพื่อนฝูง (Social)",
-              "พัฒนาตนเอง (Self-Development)",
-              "พัฒนาจิตใจ (Spiritual)",
-              "ช่วยเหลือสังคม (Contribution)"
-            ].map((item, index) => (
-              <div key={index} className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-red-200 transition-colors">
-                <CheckCircle2 size={20} className="text-red-600 shrink-0 mt-0.5" />
-                <span className="text-slate-700 text-[15px] font-bold">{item}</span>
-              </div>
-            ))}
-          </div>
+       {/* 💡 เปลี่ยนตรง grid-cols-1 เป็น grid-cols-2 และปรับ gap ให้เล็กลงในมือถือ */}
+<div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-4">
+  {[
+    "สุขภาพ (Health)",
+    "การเงิน (Finance)",
+    "การงานหรือธุรกิจ (Career & Business)",
+    "ครอบครัว (Family)",
+    "ความสัมพันธ์เพื่อนฝูง (Social)",
+    "พัฒนาตนเอง (Self-Development)",
+    "พัฒนาจิตใจ (Spiritual)",
+    "ช่วยเหลือสังคม (Contribution)"
+  ].map((item, index) => (
+    <div 
+      key={index} 
+      // 💡 ปรับ p-3 ในมือถือ และ p-4 ในจอใหญ่ เพื่อประหยัดพื้นที่
+      className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-red-200 transition-colors"
+    >
+      <CheckCircle2 size={18} className="text-red-600 shrink-0 mt-0.5" />
+      {/* 💡 ปรับ text-[12px] ในมือถือ และ text-[15px] ในจอใหญ่ เพื่อให้แสดงผล 2 คอลัมน์ได้สวยงาม */}
+      <span className="text-slate-700 text-[12px] sm:text-[15px] font-bold leading-tight">
+        {item}
+      </span>
+    </div>
+  ))}
+</div>
         </article>
 
         {/* Content Section 2 */}

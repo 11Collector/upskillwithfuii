@@ -54,7 +54,7 @@ export default function KhomsatsatInfoPage() {
             <strong>คมสัดสัด</strong> ผสมผสานหลักจิตวิทยาการสำรวจอารมณ์ (Mood Tracking) เข้ากับ AI Generative แบบล้ำๆ โดยให้คุณเริ่มต้นจากการเลือก <strong>1 ใน 10 อารมณ์พื้นฐาน</strong> จากนั้นระบบจะสุ่มคำศัพท์นามธรรมมาให้คุณ <strong>&quot;ปัดซ้าย-ปัดขวา&quot;</strong> เพื่อเลือกคำที่ตรงกับใจคุณที่สุดในเวลานั้น
           </p>
 
-          <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">ตัวอย่างอารมณ์ที่คุณสามารถเลือกได้:</h3>
+          <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">ตัวอย่างอารมณ์ที่คุณสามารถเลือกได้</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
             {[
               { emoji: "🫠", title: "เหนื่อยล้า", color: "bg-orange-50 text-orange-700 border-orange-100" },
