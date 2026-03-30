@@ -476,9 +476,9 @@ try {
   const activeJargons = getCurrentJargons();
 
   return (
-    <div className={`h-full w-full bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className} overflow-hidden`}>
+    <div className={`min-h-[100dvh] w-full bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className} overflow-hidden`}>
       
-      <div className={`w-full max-w-md shadow-2xl overflow-hidden h-full sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
+      <div className={`w-full max-w-md md:max-w-2xl lg:max-w-4xl shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] lg:h-[900px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
         
         {/* --- START SCREEN --- */}
         {gameState === "start" && (
@@ -496,7 +496,7 @@ try {
                 <div>
                   <p className="font-bold text-red-600 text-[13px] mb-1">คำเตือน</p>
                   <p className="text-[11px] text-stone-600 leading-relaxed font-light">
-                    โปรดใช้วิจารณญาณก่อนการใช้เงิน เพื่อหาสไตล์ตัวเอง กดเลือก <span className="font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">"ตามสัญชาตญาณ"</span> คิดเยอะๆ เพราะเงินคุณไม่ใช่เงินผม !
+                    โปรดใช้วิจารณญาณก่อนการใช้เงิน เพื่อหาสไตล์ตัวเอง กดเลือก <span className="font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">&quot;ตามสัญชาตญาณ&quot;</span> คิดเยอะๆ เพราะเงินคุณไม่ใช่เงินผม !
                   </p>
                 </div>
               </div>
@@ -635,7 +635,7 @@ try {
             <h2 className="text-xl font-bold text-white mb-2 text-center tracking-wide z-10">กำลังประมวลผล...</h2>
             <p className="text-stone-400 text-[13px] text-center font-light mb-12 z-10">สแกน AVATAR การเงินของคุณ 📉📈</p>
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }} className="max-w-[280px] text-center z-10 bg-stone-900/60 p-5 rounded-2xl border border-stone-800/80 backdrop-blur-sm shadow-xl">
-              <div className="text-amber-500/40 text-4xl leading-none absolute -top-3 -left-2 font-serif">"</div>
+              <div className="text-amber-500/40 text-4xl leading-none absolute -top-3 -left-2 font-serif">&quot;</div>
               <p className="text-stone-300 text-[12px] italic leading-relaxed mb-4 relative z-10">
                 {randomQuote.text.split("'").map((part, i) => i % 2 === 1 ? <span key={i} className="text-amber-400 font-semibold">{part}</span> : part)}
               </p>

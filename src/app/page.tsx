@@ -144,21 +144,7 @@ const handleLogin = async () => {
         พร้อมที่จะขยับขีดจำกัดของตัวเองในวันนี้หรือยัง?
       </p>
       
-      {/* 📊 Mini XP Bar (เพื่อให้เชื่อมโยงกับระบบ Level) */}
-      <div className="hidden sm:block w-48 mt-4">
-        <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase mb-1.5 tracking-tighter">
-          <span>Daily Progress</span>
-          <span>850 / 1000 XP</span>
-        </div>
-        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: "85%" }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="h-full bg-gradient-to-r from-red-600 to-amber-500" 
-          />
-        </div>
-      </div>
+     
     </div>
   </div>
 
