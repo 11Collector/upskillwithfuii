@@ -647,7 +647,7 @@ const openDiscInfo = (e: React.MouseEvent) => {
         </div>
       </div>
     );
-    setInfoModal({ isOpen: true, title: "Behavior Deep Scan", content });
+    setInfoModal({ isOpen: true, title: "DISC STYLE", content });
   };
 
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";

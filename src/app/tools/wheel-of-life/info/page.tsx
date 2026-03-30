@@ -35,7 +35,7 @@ export default function WheelOfLifeInfoPage() {
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto leading-relaxed">
             ทำงานหนักจนลืมดูแลสุขภาพ? กังวลเรื่องเงินจนความสัมพันธ์พัง? <br className="hidden md:block"/>
-            ใช้เวลาเพียง 2 นาที ประเมินชีวิตของคุณผ่านกราฟใยแมงมุม เพื่อค้นหาว่าจุดไหนที่คุณควร &quot;โฟกัส&quot; ในปีนี้
+            ใช้เวลาเพียง 5-10 นาที ประเมินชีวิตของคุณผ่านวงล้อชีวิต เพื่อค้นหาว่าจุดไหนที่คุณควร &quot;โฟกัส&quot; ในปีนี้
           </p>
           
           <Link href="/tools/wheel-of-life">
@@ -49,10 +49,10 @@ export default function WheelOfLifeInfoPage() {
         <article className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
           <h2 className="text-2xl font-black text-slate-800 mb-4 border-l-4 border-red-600 pl-4">Wheel of Life คืออะไร?</h2>
           <p className="text-slate-600 leading-relaxed mb-6">
-            <strong>Wheel of Life (วงล้อชีวิต) </strong> คือเครื่องมือที่จะช่วยให้คุณมองเห็นภาพรวมของชีวิตได้อย่างชัดเจนที่สุด ช่วยสะท้อนว่าปัจจุบันคุณให้น้ำหนักกับเรื่องไหน และหลงลืมเรื่องอะไรไปหรือเปล่า เพื่อให้คุณวางแผนปรับปรุงชีวิตให้ &quot;กลม&quot; และหมุนไปข้างหน้าได้อย่างราบรื่น
+            <strong>Wheel of Life (วงล้อชีวิต) </strong> คือเครื่องมือที่จะช่วยให้คุณมองเห็นภาพรวมของชีวิตได้อย่างชัดเจนที่สุด ช่วยสะท้อนว่าปัจจุบันคุณให้น้ำหนักกับเรื่องไหน และหลงลืมเรื่องอะไรไปหรือเปล่า เพื่อให้คุณวางแผนปรับปรุงล้อของชีวิตให้ &quot;กลม&quot; และหมุนไปข้างหน้าได้อย่างราบรื่น
           </p>
 
-          <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">ชีวิต 8 ด้านที่คุณต้องประเมิน ได้แก่:</h3>
+          <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">ชีวิต 8 ด้านที่คุณต้องประเมิน ได้แก่</h3>
        {/* 💡 เปลี่ยนตรง grid-cols-1 เป็น grid-cols-2 และปรับ gap ให้เล็กลงในมือถือ */}
 <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-4">
   {[

@@ -35,7 +35,7 @@ export default function DiscInfoPage() {
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto leading-relaxed">
             เคยสงสัยไหมว่าทำไมคุยกับเพื่อนร่วมงานบางคนแล้วเหนื่อย? <br className="hidden md:block"/>
-            ใช้เวลา 5 นาที ค้นหา &quot;สี&quot; ของคุณ เพื่อรู้วิธีสื่อสารให้ได้ใจคนทุกสไตล์
+            ใช้เวลา 1-2 นาที ค้นหา &quot;สี&quot; ของคุณ เพื่อรู้วิธีสื่อสารให้ได้ใจคนทุกสไตล์
           </p>
           
           <Link href="/tools/disc">
