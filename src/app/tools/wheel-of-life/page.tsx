@@ -303,20 +303,25 @@ export default function WheelOfLifeApp() {
   const [reportDocId, setReportDocId] = useState<string | null>(null);
 
   useEffect(() => {
+    // 🔥 1. สั่งเด้งไปบนสุดทันทีที่เข้าหน้านี้
+    window.scrollTo(0, 0);
+
+    // 2. จัดการเรื่อง Mobile Check (โค้ดเดิมของคุณฟุ้ย)
     setIsMobile(window.innerWidth < 768);
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     
-    // เช็กสถานะการ Login ของผู้ใช้งาน
+    // 3. เช็กสถานะการ Login (โค้ดเดิมของคุณฟุ้ย)
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
     });
 
+    // 4. Cleanup Function
     return () => {
       window.removeEventListener('resize', handleResize);
       unsubscribe();
     };
-  }, []);
+}, []); // 💡 อย่าลืมเช็กว่ามี [] (Empty Dependency) เพื่อให้รันแค่ตอนเข้าหน้าครั้งแรก, []);
 
   const handleScoreChange = (type: 'current' | 'target', index: number, value: string) => {
     const val = parseInt(value);

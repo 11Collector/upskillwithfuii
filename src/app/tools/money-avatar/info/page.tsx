@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function MoneyAvatarInfoPage() {
+ 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800 font-sans pb-20">
       
