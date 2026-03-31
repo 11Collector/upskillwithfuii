@@ -57,7 +57,7 @@ const mockArticles = [
   }
 ];
 
-const categories = ["ทั้งหมด", "หนังสือ", "พัฒนาตัวเอง", "การเงิน & ลงทุน", "Business"];
+const categories = ["ทั้งหมด", "หนังสือ", "พัฒนาตัวเอง", "การเงิน & ลงทุน", "ธุรกิจ"];
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },

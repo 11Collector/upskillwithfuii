@@ -110,14 +110,19 @@ const handleLogin = async () => {
   {/* ✨ Ambient Decor: แสงสีแดงจางๆ มุมขวาบน */}
   <div className="absolute -top-10 -right-10 w-40 h-40 bg-red-500/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-red-500/10 transition-colors duration-700" />
   
-  {/* 🚪 Logout Button: ปรับให้ดูเป็นปุ่ม Minimal ที่สะอาดขึ้น */}
-  <button 
-    onClick={handleLogout} 
-    className="absolute top-6 right-8 flex items-center gap-2 text-slate-400 hover:text-red-600 transition-all text-[10px] font-black uppercase tracking-[0.2em] group/logout"
-  >
-    <LogOut size={14} className="group-hover/logout:-translate-x-1 transition-transform" /> 
-    Logout
-  </button>
+{/* 🚪 Logout Button: ปรับพื้นที่สัมผัสให้กว้างขึ้นแต่ยังดู Minimal เหมือนเดิม */}
+<button 
+  onClick={handleLogout} 
+  className="absolute top-4 right-4 z-50 flex items-center gap-2 
+             /* เพิ่ม Padding เพื่อขยายพื้นที่กด (สำคัญมาก!) */
+             p-4 sm:p-2 
+             text-slate-400 hover:text-red-600 active:text-red-500
+             transition-all text-[11px] font-black uppercase tracking-[0.2em] 
+             group/logout active:scale-95 /* เพิ่ม Feedback ตอนกด */"
+>
+  <LogOut size={18} className="group-hover/logout:-translate-x-1 transition-transform" /> 
+  <span className="hidden sm:inline">Logout</span> {/* บนมือถือโชว์แค่ไอคอนก็ได้ ถ้าอยากให้คลีนสุดๆ */}
+</button>
 
   <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6 z-10 w-full md:w-auto">
     {/* 👤 Profile Image & Level Badge */}
