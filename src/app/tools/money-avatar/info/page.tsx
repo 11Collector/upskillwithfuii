@@ -4,8 +4,8 @@ import { ArrowLeft, Wallet, TrendingUp, ShieldAlert, Sparkles, ArrowRight, BookO
 
 // 💡 1. Metadata เจาะกลุ่มคนลงทุน/บริหารเงิน
 export const metadata: Metadata = {
-  title: "Money Avatar: ถอดรหัสสไตล์การเงินและการลงทุน | Upskill Everyday",
-  description: "ค้นหา 'ทรง' ทางการเงินของคุณผ่าน Money Avatar ประเมินความเสี่ยงและระเบียบวินัย เพื่อค้นหาจุดแข็ง จุดอ่อน และหลุมพรางทางการเงินที่ฉุดรั้งความมั่งคั่งของคุณ",
+  title: "9 ทรงการเงิน Money Avatar: คุณคือใครในโลกการเงิน? | Upskill Everyday",
+  description: "ค้นหา 'ทรง' การเงินของคุณผ่าน 9 Money Avatar! ประเมินความเสี่ยงและระเบียบวินัย เพื่อค้นหาจุดแข็ง จุดอ่อน และหลุมพรางทางการเงินที่ฉุดรั้งความมั่งคั่งของคุณ เริ่มทำแบบทดสอบเลย",
 };
 
 export default function MoneyAvatarInfoPage() {

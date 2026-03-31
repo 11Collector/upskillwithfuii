@@ -4,8 +4,8 @@ import { ArrowLeft, Mic, MessageSquare, Users, Sparkles, ArrowRight, Zap } from 
 
 // 💡 1. Metadata เจาะกลุ่มคนทำงานและทีม (SEO)
 export const metadata: Metadata = {
-  title: "วิเคราะห์ DISC: ค้นหาตัวตนและการสื่อสารในที่ทำงาน | Upskill Everyday",
-  description: "เข้าใจสไตล์การสื่อสารของคุณผ่านแบบประเมิน DISC เพื่อการทำงานร่วมกับผู้อื่นอย่างมีประสิทธิภาพ และลดความขัดแย้งในทีม",
+  title: "แบบทดสอบ DISC: วิเคราะห์ตัวตนและการสื่อสารในที่ทำงาน | Upskill Everyday",
+  description: "ค้นหาตัวตนผ่านแบบประเมิน DISC เพื่อเข้าใจจุดแข็งและการทำงานร่วมกับผู้อื่นอย่างมืออาชีพ ลดความขัดแย้ง และเพิ่มประสิทธิภาพในทีมวิศวกรและวัยทำงาน",
 };
 
 export default function DiscInfoPage() {

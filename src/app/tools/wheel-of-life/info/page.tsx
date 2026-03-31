@@ -4,8 +4,8 @@ import { ArrowLeft, PieChart, CheckCircle2, BrainCircuit, LineChart, Sparkles, A
 
 // 💡 Metadata สำหรับ SEO
 export const metadata: Metadata = {
-  title: "แบบประเมินสมดุลชีวิต 8 ด้าน (Wheel of Life) ออนไลน์ ฟรี | Upskill Everyday",
-  description: "เช็กสมดุลชีวิตด้วยเครื่องมือ Wheel of Life วิเคราะห์จุดอ่อน-จุดแข็ง พร้อมรับ AI Roadmap วางแผนพัฒนาตนเอง 7 วัน เพื่อเป็นคุณในเวอร์ชันที่ดีกว่าเดิม",
+  title: "Wheel of Life: แบบประเมินวงล้อชีวิตและ AI Roadmap | Upskill Everyday",
+  description: "เช็กสมดุลชีวิตด้วยเครื่องมือ Wheel of Life (วงล้อชีวิต) วิเคราะห์จุดอ่อน-จุดแข็ง พร้อมรับ AI Roadmap วางแผนพัฒนาตนเอง 7 วัน เพื่อเป็นคุณในเวอร์ชันที่ดีกว่าเดิม ฟรี!",
 };
 
 export default function WheelOfLifeInfoPage() {

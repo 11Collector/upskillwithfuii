@@ -4,8 +4,8 @@ import { ArrowLeft, Quote, Heart, Sparkles, Feather, Download, ArrowRight } from
 
 // 💡 1. Metadata ดัก Keyword สายฮีลใจ / แคปชั่น / คำคม
 export const metadata: Metadata = {
-  title: "คมสัดสัด: สร้างคำคมฮีลใจจากความรู้สึกของคุณ | Upskill Everyday",
-  description: "แอปสร้างคำคมและแคปชั่นสุดล้ำ แค่เลือกอารมณ์และปัดเลือกคำศัพท์ที่ทัชใจ AI จะร้อยเรียงเป็นบทกวีหรือข้อคิดดีๆ เพื่อฮีลใจและแชร์ลงโซเชียลได้ทันที",
+  title: "คมสัดสัด: AI สร้างแคปชั่นและคำคมฮีลใจจากความรู้สึก | Upskill Everyday",
+  description: "แอปสร้างแคปชั่นและคำคมสุดคมด้วย AI แค่เลือกอารมณ์ที่ใช่ ปัดคำที่ชอบ แล้วให้ AI ร้อยเรียงเป็นข้อคิดดีๆ พร้อมแชร์ลงโซเชียลได้ทันที ลองเลย!",
 };
 
 export default function KhomsatsatInfoPage() {
