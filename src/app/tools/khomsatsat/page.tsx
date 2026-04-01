@@ -275,120 +275,107 @@ export default function SwipeQuoteApp() {
     setGameState("swiping");
   };
 
- const processAIGeneration = async (wordsToUse: string[]) => {
-    setGameState("generating");
+const processAIGeneration = async (wordsToUse: string[]) => {
+  setGameState("generating");
+
+  // 1. ประกอบ Prompt (คงความโหดไว้เหมือนเดิม)
+  const promptText = `
+    คุณคือนักเขียนคำคมมือฉมัง สไตล์ปรัชญาชีวิต การเติบโต และความก้าวหน้า (แบบที่เราเรียกกันว่า "คมสัดสัด")
+    ผู้ใช้กำลังรู้สึก: ${playerMood?.title}
+    และเลือกคำสะท้อนความรู้สึกคือ: ${wordsToUse.join(', ')}
+
+    จงแต่งคำคม 1 บท สั้นๆ กระชับ **ความยาว 5-7 บรรทัดเท่านั้น** (สไตล์ Typography Art)
     
-    // 1. ประกอบ Prompt โหดๆ ไว้ที่หน้าบ้านนี้เลย
-    const promptText = `
-      คุณคือนักเขียนคำคมมือฉมัง สไตล์ปรัชญาชีวิต การเติบโต และความก้าวหน้า (แบบที่เราเรียกกันว่า "คมสัดสัด")
-      ผู้ใช้กำลังรู้สึก: ${playerMood?.title}
-      และเลือกคำสะท้อนความรู้สึกคือ: ${wordsToUse.join(', ')}
+    🚨 เงื่อนไขสำคัญ (Algorithm การตัดคำ):
+    1. ต้องลึกซึ้ง กระแทกใจ ให้ข้อคิดสะกิดใจแบบเฉียบขาด
+    2. ห้ามใส่เครื่องหมายอัญประกาศ (" ") หรือ Quote คร่อมคำศัพท์หรือประโยคใดๆ ในคำคมโดยเด็ดขาด
+    3. ความยาวรวมต้องสั้นมากๆ ทรงพลัง ไม่เยิ่นเย้อ
+    4. ต้องขึ้นบรรทัดใหม่ (\\n) ตามจังหวะการอ่าน บรรทัดละประมาณ 3-5 คำ
+    5. ห้ามแต่งเกิน 7 บรรทัดเด็ดขาด
+    6. ห้ามตัดกลางคำ ให้ตัดตามจังหวะความหมาย
+    7. ห้ามพิมพ์คำอธิบาย พิมพ์แค่ "ตัวคำคม" เท่านั้น
+  `;
 
-      จงแต่งคำคม 1 บท สั้นๆ กระชับ **ความยาว 5-7 บรรทัดเท่านั้น** (สไตล์ Typography Art)
-      
-      🚨 เงื่อนไขสำคัญ (Algorithm การตัดคำ):
-      1. ต้องลึกซึ้ง กระแทกใจ ให้ข้อคิดสะกิดใจแบบเฉียบขาด
-      2. ห้ามใส่เครื่องหมายอัญประกาศ (" ") หรือ Quote คร่อมคำศัพท์หรือประโยคใดๆ ในคำคมโดยเด็ดขาด ให้ร้อยเรียงคำให้กลมกลืนเป็นเนื้อเดียวกัน
-      3. ความยาวรวมต้องสั้นมากๆ (ห้ามเกิน 30-35 คำรวมทั้งบท) ทรงพลัง ไม่เยิ่นเย้อ
-      4. ต้องขึ้นบรรทัดใหม่ (\\n) ตามจังหวะการอ่าน บรรทัดละประมาณ 3-5 คำ
-      5. ห้ามแต่งเกิน 7 บรรทัดเด็ดขาด
-      6. ห้ามตัดกลางคำ ให้ตัดตามจังหวะความหมายให้ดูเหมือนบทกวี
-      7. ห้ามพิมพ์คำอธิบาย พิมพ์แค่ "ตัวคำคม" เท่านั้น
-    `;
+  try {
+    // ใส่ AbortController เผื่อ API ค้างนานเกิน 15 วินาทีให้ตัดจบ
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+    const response = await fetch('/api/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    const data = await response.json();
+
+    // เช็ก Error จาก API (รวมถึงกรณี DeepSeek High Demand)
+    if (data.error) {
+      const errorMsg = data.error.toLowerCase();
+      if (errorMsg.includes("high demand") || errorMsg.includes("quota") || errorMsg.includes("busy")) {
+        setFinalQuote("ขออภัยครับ ตอนนี้ AI กำลังพักดื่มน้ำ (คนใช้เยอะมาก) ☕\nลองกดสุ่มใหม่อีกครั้งในอีก 10 วินาทีนี้นะ!");
+        setGameState("result");
+        return;
+      }
+      throw new Error(data.error);
+    }
+
+    // 2. ดึงคำคม (รองรับทั้ง format ใหม่ของ DeepSeek และ format เก่าเผื่อสลับกลับไป Gemini)
+    let generatedQuote = data.quote || data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+
+    if (!generatedQuote) throw new Error("AI ส่งข้อมูลมาว่างเปล่า");
+
+    setFinalQuote(generatedQuote);
+    setGameState("result");
+
+    // 3. เซฟลง Firebase และ จัดการ XP (ส่วนนี้ logic เดิมดีอยู่แล้วครับ)
     try {
-      const response = await fetch('/api/quote', { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText })
+      const { db } = await import('@/lib/firebase');
+      const { collection, addDoc, doc, getDoc, setDoc, increment, serverTimestamp } = await import('firebase/firestore');
+
+      // ก. บันทึกลงคลัง
+      await addDoc(collection(db, "quotes"), {
+        userId: currentUser?.uid || "guest",
+        mood: playerMood?.title,
+        words: wordsToUse,
+        quote: generatedQuote,
+        createdAt: serverTimestamp()
       });
 
-      const data = await response.json();
-      
-      console.log("📦 ของที่ได้จาก API:", data);
+      // ข. แจก XP (ถ้า Login)
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
-    // 💡 แก้ตรงบรรทัด 310 เป็นต้นไป
-      if (data.error) {
-        // เช็กว่าถ้าเป็น Error เรื่องคนใช้เยอะ (High Demand)
-        if (data.error.includes("high demand") || data.error.includes("quota")) {
-          setFinalQuote("ขออภัยครับ ตอนนี้ AI กำลังพักดื่มน้ำ (คนใช้เยอะมาก) ☕\nลองกดสุ่มใหม่อีกครั้งในอีก 10 วินาทีนี้นะ!");
-          setGameState("result");
-          return; // ออกจากฟังก์ชันเลย ไม่ต้อง throw error
-        }
-        
-        // ถ้าเป็น Error อื่นๆ
-        throw new Error(data.error);
-      }
-
-      let generatedQuote = "";
-
-      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        generatedQuote = data.candidates[0].content.parts[0].text.trim();
-      } 
-      else if (data.quote) {
-        generatedQuote = data.quote;
-      } 
-      else {
-        throw new Error("AI ส่งข้อมูลมาผิดรูปแบบ");
-      }
-
-      // แสดงผล
-      setFinalQuote(generatedQuote);
-      setGameState("result");
-
-      // 💡 2. เซฟลง Firebase และ จัดการเรื่องแจก XP
-      try {
-        const { db } = await import('@/lib/firebase');
-        const { collection, addDoc, doc, getDoc, setDoc, increment, serverTimestamp } = await import('firebase/firestore');
-        
-        // ก. เซฟคำคมลงคลัง
-        await addDoc(collection(db, "quotes"), {
-          userId: currentUser?.uid || "guest",
-          mood: playerMood?.title,
-          words: wordsToUse,
-          quote: generatedQuote,
-          createdAt: serverTimestamp()
-        });
-        console.log("✅ บันทึกคำคมลง DB สำเร็จ!");
-
-        // ข. เช็กและแจก XP (ถ้า Login อยู่)
-        if (currentUser) {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
-          
-          let shouldGiveXP = true;
-          
-          if (userSnap.exists()) {
-             const userData = userSnap.data();
-             // ถ้าวันที่ทำล่าสุดตรงกับวันนี้ แปลว่าเคยได้ XP ไปแล้ว
-             if (userData.lastQuoteDate === todayStr) {
-                shouldGiveXP = false;
-             }
-          }
-
-          // ถ้าสมควรได้ XP ก็อัปเดตลง DB ซะ!
-          if (shouldGiveXP) {
-            await setDoc(userRef, {
-              totalXP: increment(10), // 💡 แจก 10 XP
-              lastQuoteDate: todayStr // 💡 จำไว้ว่าวันนี้กดรับไปแล้ว
-            }, { merge: true });
-            console.log("🎉 แจก +10 XP สำหรับคำคมวันนี้สำเร็จ!");
-          } else {
-            console.log("ℹ️ วันนี้ได้รับ XP จากคำคมไปแล้ว ไม่บวกเพิ่มครับ");
-          }
+        let shouldGiveXP = true;
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (userData.lastQuoteDate === todayStr) shouldGiveXP = false;
         }
 
-      } catch (dbError) {
-        console.error("❌ บันทึก DB พลาด:", dbError);
+        if (shouldGiveXP) {
+          await setDoc(userRef, {
+            totalXP: increment(10),
+            lastQuoteDate: todayStr
+          }, { merge: true });
+          console.log("🎉 +10 XP Success!");
+        }
       }
-      
-    } catch (error: any) {
-      console.error("🚨 API Error Caught:", error);
-      setFinalQuote(`ท่ามกลางความรู้สึก "${wordsToUse[0]}"...\nจงใช้ "${wordsToUse[1]}" เป็นคำตอบของวันนี้`);
-      setGameState("result");
+    } catch (dbError) {
+      console.error("❌ Firebase Error:", dbError);
     }
-  };
+
+  } catch (error: any) {
+    console.error("🚨 API Error:", error);
+    // Fallback: กรณีล่มจริงๆ ให้สร้างคำคมจากคำที่เลือกแบบ Manual ให้เลย
+    const fallback = `ในวันที่หัวใจมีแต่ ${wordsToUse[0]}\nจงใช้ ${wordsToUse[1]} เป็นเข็มทิศ\nเพื่อพบความหมายของ ${wordsToUse[2]}\nที่รอคุณอยู่ในวันพรุ่งนี้`;
+    setFinalQuote(fallback);
+    setGameState("result");
+  }
+};
 
   const resetApp = () => {
     setGameState("start"); setPlayerMood(null);

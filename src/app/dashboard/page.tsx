@@ -502,15 +502,15 @@ const AvatarDisplay = ({ currentLevel }: { currentLevel: number }) => {
       <div className={`absolute inset-0 bg-gradient-to-t ${avatarData.glow} to-transparent blur-3xl rounded-full opacity-60`} />
       
       {/* รูปอวตาร */}
-      <img 
-        src={avatarData.image} 
-        alt="User Avatar"
-        className="w-60 h-60 md:w-60 md:h-60 relative z-10 drop-shadow-2xl transition-transform duration-300 group-hover/avatar:scale-110"
-        // ถ้าโหลดไม่ขึ้น ให้ลองเช็ก Path ใน folder public อีกทีนะครับ
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
-        }}
-      />
+    <img 
+  src={avatarData.image} 
+  alt="User Avatar"
+  className="w-48 h-48 md:w-60 md:h-60 object-contain flex-shrink-0 relative z-10 drop-shadow-2xl transition-transform duration-300 group-hover/avatar:scale-110"
+  onError={(e) => {
+    (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
+  }}
+/>
+
     </div>
   );
 };
@@ -546,6 +546,21 @@ const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
   const [showSpecialQuestModal, setShowSpecialQuestModal] = useState(false);
   const [customQuestTitle, setCustomQuestTitle] = useState(""); // เก็บชื่อเควสที่กรอก
 const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เปิด/ปิด Modal
+
+// --- ภายใน DashboardPage Component ---
+const [gender, setGender] = useState<"male" | "female">("male"); // เพิ่มบรรทัดนี้
+
+// เพิ่มฟังก์ชันสำหรับเปลี่ยนเพศและ Save ลง Firebase
+const handleGenderChange = async (newGender: "male" | "female") => {
+  if (!user) return;
+  setGender(newGender);
+  try {
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, { gender: newGender }, { merge: true });
+  } catch (error) {
+    console.error("Error updating gender:", error);
+  }
+};
 
   // 🕒 2. Effect สำหรับเช็กเที่ยงคืนแบบสดๆ
   useEffect(() => {
@@ -609,7 +624,7 @@ useEffect(() => {
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
-          
+          setGender(userData.gender || "male");
           let xpToClaim = 0;
           let xpUpdates: any = {};
 
@@ -1249,10 +1264,9 @@ const getQuoteFontSize = (text: string) => {
   </div>
   
   {/* 👾 2. ส่วน Avatar (เด่นตระหง่านอยู่ตรงกลาง) */}
-  <div className="flex-shrink-0 relative z-20 my-6">
-    <AvatarDisplay currentLevel={currentLevel} />
-  </div>
-
+<div className="flex-shrink-0 relative z-20 my-6">
+  <AvatarDisplay currentLevel={currentLevel} />
+</div>
   {/* 📊 3. ส่วนกล่อง Profile & Level (เพิ่ม mx-auto เพื่อให้อยู่ตรงกลาง) */}
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 relative z-20 w-full max-w-2xl mx-auto">
     
@@ -2092,6 +2106,62 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
               <span>ปลดล็อกที่ LV.5</span>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  </motion.div>
+</Link>
+
+{/* 🌟 6. Deep Work Mode - Theme Library (Monochrome Version) */}
+<Link href="/tools/deep-work" className="group block h-full relative">
+  <motion.div 
+    whileHover={{ y: -6 }} 
+    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-zinc-200 relative overflow-hidden group"
+  >
+    
+    {/* 🏷️ Status Badge (Top 8 Right 8 เหมือน Library) */}
+    <div className="absolute top-8 right-8 z-30">
+      <motion.div 
+        initial={{ scale: 0 }} animate={{ scale: 1 }}
+        className="bg-black text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-zinc-200 flex items-center gap-1.5 uppercase tracking-wider"
+      >
+        <Zap size={10} className="fill-white" /> Ready
+      </motion.div>
+    </div>
+
+    {/* ✨ Ambient Light & Black Top Bar (Theme เดียวกับ Library) */}
+    <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-zinc-400/5 to-zinc-900/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-zinc-400/10 transition-colors duration-700" />
+    <div className="absolute top-0 left-0 w-full h-1.5 bg-black opacity-80 transition-all duration-500 group-hover:h-3" />
+    
+    <div className="relative z-10 flex flex-col items-center h-full w-full">
+      
+      {/* 🧠 Logo Container (ดีไซน์เดียวกับ Library) */}
+      <div className="relative mb-6 mt-2">
+        <div className="absolute inset-0 blur-3xl opacity-20 bg-zinc-200" />
+        <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-110">
+          🧘‍♂️
+        </div>
+      </div>
+
+      <h3 className="font-bold text-zinc-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> Deep Work System </h3>
+      <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-black transition-colors">
+        ห้องสมาธิอัพสกิล
+      </h2>
+      
+     <div className="text-[14px] font-medium text-slate-500 mb-8 px-6 leading-relaxed max-w-[280px]">
+  <p className="mb-2">จดจ่อกับสิ่งที่ทำ และพัฒนาสมอง</p>
+  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-zinc-100 text-black rounded-full border border-zinc-200/50 text-[11px] font-black uppercase tracking-wider">
+    <Zap size={12} className="fill-current text-yellow-500" />
+    Receive +20 XP
+  </span>
+</div>
+      
+      <div className="w-full px-4 mt-auto">
+        <div className="group/btn-deep relative">
+          <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-black text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] group-hover/btn-deep:scale-[1.02] group-hover/btn-deep:bg-zinc-800 active:scale-95">
+            <BrainCircuit size={16} className="text-white/80" />
+            <span>เริ่มโหมดโฟกัส</span>
+          </div>
         </div>
       </div>
     </div>
