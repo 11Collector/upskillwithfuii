@@ -126,27 +126,40 @@ useEffect(() => {
     }
   };
 
-  // --- ปรับปรุง Logic การเริ่ม/หยุด Timer ---
-  const toggleTimer = async () => {
-    if (!isActive) {
-      // กด Start: คำนวณเวลาสิ้นสุด ณ ตอนนี้
-      endTimeRef.current = Date.now() + timeLeft * 1000;
-      setIsActive(true);
-      await requestWakeLock();
-    } else {
-      // กด Pause: เคลียร์ค่า และหยุด Wake Lock
-      setIsActive(false);
-      if (timerRef.current) clearInterval(timerRef.current);
-      await releaseWakeLock();
-    }
-  };
-
-  const handleReset = async () => {
+// --- ปรับปรุง Logic การเริ่ม/หยุด Timer (เพิ่มการ Save ลงเครื่อง) ---
+const toggleTimer = async () => {
+  if (!isActive) {
+    // 1. คำนวณเวลาที่จะสิ้นสุด
+    const targetTime = Date.now() + timeLeft * 1000;
+    endTimeRef.current = targetTime;
+    
+    // 2. ✨ บันทึกลง localStorage ทันทีที่กดเริ่ม ✨
+    localStorage.setItem("deepWork_endTime", targetTime.toString());
+    localStorage.setItem("deepWork_selectedTime", selectedTime.toString());
+    
+    setIsActive(true);
+    await requestWakeLock();
+  } else {
+    // กด Pause: หยุดนับ และลบเวลาเป้าหมายออก (เพราะถือว่าหยุดชั่วคราว)
     setIsActive(false);
-    setTimeLeft(selectedTime * 60);
+    localStorage.removeItem("deepWork_endTime"); 
     if (timerRef.current) clearInterval(timerRef.current);
     await releaseWakeLock();
-  };
+  }
+};
+
+// --- ฟังก์ชัน Reset (เพิ่มการล้างค่าในเครื่อง) ---
+const handleReset = async () => {
+  setIsActive(false);
+  setTimeLeft(selectedTime * 60);
+  
+  // ✨ ล้างค่าที่ค้างในเครื่องทิ้ง ✨
+  localStorage.removeItem("deepWork_endTime");
+  localStorage.removeItem("deepWork_selectedTime");
+  
+  if (timerRef.current) clearInterval(timerRef.current);
+  await releaseWakeLock();
+};
 
   useEffect(() => {
     if (isActive && !isFinished) {
