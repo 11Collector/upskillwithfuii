@@ -36,11 +36,12 @@ export default function DeepWorkPage() {
 
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
-
-  useEffect(() => {
+useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+
+        // 1. เช็คความคืบหน้าจาก Firestore (ของเดิม)
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if (userDoc.exists()) {
           const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
@@ -48,10 +49,64 @@ export default function DeepWorkPage() {
             setHasClaimedToday(true);
           }
         }
-      } else router.push("/");
+
+        // 2. ✨ เช็คเวลาที่ค้างไว้ในเครื่อง (Background Sync) ✨
+        const savedEndTime = localStorage.getItem("deepWork_endTime");
+        const savedSelectedTime = localStorage.getItem("deepWork_selectedTime");
+
+        if (savedEndTime && savedSelectedTime) {
+          const now = Date.now();
+          const target = parseInt(savedEndTime);
+          const remaining = Math.round((target - now) / 1000);
+
+          if (remaining > 0) {
+            // กรณี: ยังมีเวลาเหลือ -> ให้เดินหน้าจอนับต่อจากจุดที่ควรจะเป็น
+            endTimeRef.current = target;
+            setSelectedTime(parseInt(savedSelectedTime));
+            setTimeLeft(remaining);
+            setIsActive(true);
+          } else {
+            // กรณี: เวลาหมดไปแล้วตอนที่เราไม่อยู่หน้านี้ -> เคลียร์ทิ้ง
+            localStorage.removeItem("deepWork_endTime");
+          }
+        }
+
+      } else {
+        router.push("/");
+      }
     });
+
     return () => unsubscribe();
   }, [router]);
+
+  // ตัว Re-Sync เวลาอัตโนมัติเมื่อ User กลับมาโฟกัสหน้าจอ (แก้ปัญหาเวลาเดินช้ากว่าจริง)
+  useEffect(() => {
+    const syncOnFocus = () => {
+      if (document.visibilityState === "visible" && isActive && endTimeRef.current) {
+        const now = Date.now();
+        const target = endTimeRef.current;
+        const remaining = Math.round((target - now) / 1000);
+
+        if (remaining <= 0) {
+          setTimeLeft(0);
+          setIsActive(false);
+          setIsFinished(true);
+          localStorage.removeItem("deepWork_endTime");
+        } else {
+          // บังคับ "ดีด" ตัวเลขให้ตรงกับเวลาจริง (Zero Drift)
+          setTimeLeft(remaining);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", syncOnFocus);
+    window.addEventListener("focus", syncOnFocus);
+    
+    return () => {
+      document.removeEventListener("visibilitychange", syncOnFocus);
+      window.removeEventListener("focus", syncOnFocus);
+    };
+  }, [isActive]);
 
   // --- ฟังก์ชันป้องกันหน้าจอดับ ---
   const requestWakeLock = async () => {

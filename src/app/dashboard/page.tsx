@@ -1235,6 +1235,7 @@ const getQuoteFontSize = (text: string) => {
   return "text-xl md:text-2xl leading-relaxed"; // สั้นๆ (เน้นให้ใหญ่กระแทกตา)
 };
 
+
   return (
 <div className="min-h-screen bg-transparent p-4"> 
       <div className="max-w-7xl mx-auto">
