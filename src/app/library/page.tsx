@@ -8,11 +8,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// ✅ 1. นำเข้าข้อมูลจากไฟล์ที่เราแยกไว้ (ลบของเก่าที่ประกาศในไฟล์นี้ออกด้วยนะครับ)
+// ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
 
-// 🎨 2. Map สำหรับคุม Theme (แนะนำให้แยกไฟล์นี้ไว้ที่ @/constants/themes.ts ถ้าต้องใช้ในหน้า Detail ด้วย)
+// 🎨 2. Themes
 const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: string; borderColor: string }> = {
+  "ทั้งหมด": { 
+    icon: <LayoutGrid size={18} />, 
+    color: "text-slate-400", 
+    bgColor: "bg-white/5", 
+    borderColor: "border-white/10" 
+  },
   "หนังสือ": { 
     icon: <BookOpen size={20} />, 
     color: "text-emerald-400", 
@@ -36,18 +42,12 @@ const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: strin
     color: "text-indigo-400", 
     bgColor: "bg-indigo-500/10", 
     borderColor: "border-indigo-500/20" 
-  },
-  "ทั้งหมด": { 
-    icon: <LayoutGrid size={18} />, 
-    color: "text-slate-400", 
-    bgColor: "bg-white/5", 
-    borderColor: "border-white/10" 
   }
 };
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } } // เร่งความเร็วการโชว์การ์ดนิดนึง
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
 };
 
 const cardVariants: Variants = {
@@ -72,7 +72,7 @@ export default function PremiumLibraryPage() {
       <div className="max-w-5xl mx-auto relative z-10">
         
         {/* --- Header --- */}
-        <header className="mb-16 pt-8">
+        <header className="mb-10 pt-8">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-400 rounded-full text-[10px] font-black mb-6 border border-amber-500/20 uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(245,158,11,0.1)]">
             <Crown size={14} /> <span>Exclusive Upskill Library</span>
           </motion.div>
@@ -82,25 +82,30 @@ export default function PremiumLibraryPage() {
           <p className="text-slate-500 text-lg font-medium">สรุปหนังสือและบทความพรีเมียมคัดมาเพื่อคุณโดยเฉพาะ</p>
         </header>
 
-        {/* --- Categories --- */}
-        <div className="flex flex-wrap gap-3 mb-14 overflow-x-auto pb-4 no-scrollbar">
-          {Object.keys(CATEGORY_THEMES).map((cat) => (
-            <button 
-                key={cat} 
-                onClick={() => setActiveCategory(cat)} 
-                className={`flex items-center gap-2.5 px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 border ${
-                    activeCategory === cat 
-                    ? "bg-amber-500 text-black border-amber-400 shadow-[0_10px_25px_-5px_rgba(245,158,11,0.4)] scale-105" 
-                    : "bg-white/5 text-slate-400 border-white/5 hover:bg-white/10 hover:border-white/10"
-                }`}
-            >
-              <span className={activeCategory === cat ? "text-black" : "text-slate-500"}>
-                {CATEGORY_THEMES[cat].icon}
-              </span>
-              {cat}
-            </button>
-          ))}
-        </div>
+       {/* --- 🛠️ Categories (แก้ไขจุดที่ขอบซ้ายขาด) --- */}
+<div className="relative mb-14">
+  {/* เพิ่ม px-6 เพื่อให้มีที่ให้เงาและ Scale ด้านซ้ายไม่ขาด และใส่ -mx-6 เพื่อให้เลื่อนได้สุดขอบจอ */}
+  <div className="flex gap-3 overflow-x-auto pt-8 pb-8 px-6 no-scrollbar -mt-8 -mb-8 -mx-6"> 
+    {Object.keys(CATEGORY_THEMES).map((cat, index) => (
+      <button 
+          key={cat} 
+          onClick={() => setActiveCategory(cat)} 
+          className={`flex-none flex items-center gap-2.5 px-6 py-3.5 rounded-full text-[13px] font-black uppercase tracking-widest transition-all duration-300 border ${
+              activeCategory === cat 
+              ? "bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_10px_30px_rgba(245,158,11,0.4)] scale-105 z-20" 
+              : "bg-[#161616] text-zinc-500 border-zinc-800/50 hover:bg-[#1c1c1c] hover:text-zinc-300 hover:border-zinc-700"
+          } ${index === 0 ? "ml-2" : ""}`} // เพิ่ม ml-2 เล็กน้อยที่ปุ่มแรกเพื่อเผื่อพื้นที่ให้ Scale-105
+      >
+        <span className={activeCategory === cat ? "text-black" : "text-zinc-600"}>
+          {CATEGORY_THEMES[cat].icon}
+        </span>
+        {cat}
+      </button>
+    ))}
+  </div>
+  {/* Gradient กันขอบขวาดูแข็งเกินไป */}
+  <div className="absolute right-[-24px] top-0 bottom-0 w-20 bg-gradient-to-l from-[#0A0A0A] to-transparent pointer-events-none z-10" />
+</div>
 
         {/* --- Grid Area --- */}
         <motion.div 
@@ -118,13 +123,10 @@ export default function PremiumLibraryPage() {
                     key={article.id} 
                     variants={cardVariants} 
                     layout 
-                    initial="hidden"
-                    animate="show"
-                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                     className="h-full"
                 >
                   <Link href={`/library/${article.slug}`} className="group block h-full">
-                    <div className="h-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 flex flex-col transition-all duration-500 hover:border-amber-500/30 hover:bg-[#151515] relative overflow-hidden">
+                    <div className="h-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 flex flex-col transition-all duration-500 hover:border-amber-500/30 hover:bg-[#151515] relative overflow-hidden shadow-2xl">
                       
                       {/* XP Badge */}
                       <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
@@ -145,7 +147,7 @@ export default function PremiumLibraryPage() {
                         <h2 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-amber-400 transition-colors line-clamp-2">
                           {article.title}
                         </h2>
-                        <p className="text-slate-500 text-sm leading-relaxed mb-10 font-medium line-clamp-2">
+                        <p className="text-slate-500 text-sm leading-relaxed mb-10 font-medium line-clamp-2 opacity-80">
                           {article.excerpt}
                         </p>
                       </div>
@@ -166,7 +168,7 @@ export default function PremiumLibraryPage() {
 
         {/* --- Footer --- */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-24 text-center py-12 border-t border-white/5">
-           <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-xl uppercase tracking-widest">
+           <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-[0_20px_40px_rgba(255,255,255,0.05)] uppercase tracking-widest">
               <LayoutGrid size={18} /> กลับสู่ DASHBOARD
            </Link>
         </motion.footer>

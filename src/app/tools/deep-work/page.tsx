@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // เพิ่ม useRef
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BrainCircuit, Zap, ArrowLeft, X, Play, Pause, 
-  RotateCcw, Sparkles, BookOpen, Trophy, Clock, Lightbulb
+  RotateCcw, Trophy, BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,11 @@ export default function DeepWorkPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
 
+  // --- Refs สำหรับจัดการ Timer และ Wake Lock ---
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const endTimeRef = useRef<number | null>(null);
+  const wakeLockRef = useRef<any>(null);
+
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
 
@@ -48,16 +53,70 @@ export default function DeepWorkPage() {
     return () => unsubscribe();
   }, [router]);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isActive && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft === 0 && isActive) {
-      setIsActive(false);
-      setIsFinished(true);
+  // --- ฟังก์ชันป้องกันหน้าจอดับ ---
+  const requestWakeLock = async () => {
+    if ("wakeLock" in navigator) {
+      try {
+        wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
+      } catch (err) {
+        console.error("Wake Lock error:", err);
+      }
     }
-    return () => clearInterval(timer);
-  }, [isActive, timeLeft]);
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      await wakeLockRef.current.release();
+      wakeLockRef.current = null;
+    }
+  };
+
+  // --- ปรับปรุง Logic การเริ่ม/หยุด Timer ---
+  const toggleTimer = async () => {
+    if (!isActive) {
+      // กด Start: คำนวณเวลาสิ้นสุด ณ ตอนนี้
+      endTimeRef.current = Date.now() + timeLeft * 1000;
+      setIsActive(true);
+      await requestWakeLock();
+    } else {
+      // กด Pause: เคลียร์ค่า และหยุด Wake Lock
+      setIsActive(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+      await releaseWakeLock();
+    }
+  };
+
+  const handleReset = async () => {
+    setIsActive(false);
+    setTimeLeft(selectedTime * 60);
+    if (timerRef.current) clearInterval(timerRef.current);
+    await releaseWakeLock();
+  };
+
+  useEffect(() => {
+    if (isActive && !isFinished) {
+      timerRef.current = setInterval(() => {
+        if (endTimeRef.current) {
+          const now = Date.now();
+          const remaining = Math.round((endTimeRef.current - now) / 1000);
+
+          if (remaining <= 0) {
+            setTimeLeft(0);
+            setIsActive(false);
+            setIsFinished(true);
+            releaseWakeLock();
+            if (timerRef.current) clearInterval(timerRef.current);
+          } else {
+            setTimeLeft(remaining);
+          }
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isActive, isFinished]);
 
   const handleSelectTime = (mins: number) => {
     if (isActive) return;
@@ -73,11 +132,7 @@ export default function DeepWorkPage() {
         totalFocusMinutes: increment(selectedTime),
         lastFocusDate: new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'})
       };
-
-      if (!hasClaimedToday) {
-        payload.totalXP = increment(20);
-      }
-
+      if (!hasClaimedToday) payload.totalXP = increment(20);
       if (reflection.trim() !== "") {
         payload.focusReflections = arrayUnion({
           date: new Date().toISOString(),
@@ -85,7 +140,6 @@ export default function DeepWorkPage() {
           text: reflection.trim()
         });
       }
-
       await setDoc(doc(db, "users", user.uid), payload, { merge: true });
       router.push("/dashboard");
     } catch (e) { 
@@ -108,7 +162,6 @@ export default function DeepWorkPage() {
   return (
     <div className={`min-h-[100dvh] bg-zinc-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden ${inter.className}`}>
       
-      {/* 🧭 Back Home */}
       <div className="absolute top-8 left-8 z-20">
         <Link href="/dashboard" className="flex items-center gap-2 text-zinc-400 hover:text-black transition-all group">
           <div className="p-2 bg-white rounded-full shadow-sm border border-zinc-200 group-hover:border-zinc-400">
@@ -124,7 +177,6 @@ export default function DeepWorkPage() {
             key="timer" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }}
             className="w-full max-w-lg bg-white p-10 md:p-16 rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-white flex flex-col items-center relative overflow-hidden group"
           >
-            {/* 🏷️ Floating XP Badge */}
             <motion.div 
               animate={isActive ? { y: [0, -5, 0] } : {}}
               transition={{ repeat: Infinity, duration: 2 }}
@@ -144,7 +196,6 @@ export default function DeepWorkPage() {
               <div className="h-px w-12 bg-zinc-200" />
             </div>
 
-            {/* Time Tabs */}
             {!isActive && (
               <div className="flex bg-zinc-50 p-1 rounded-[1.5rem] border border-zinc-200 mb-10 w-full max-w-[240px] shadow-inner">
                 {[15, 30].map((mins) => (
@@ -160,7 +211,6 @@ export default function DeepWorkPage() {
               </div>
             )}
 
-            {/* 🕒 Clock Display */}
             <div className="relative flex items-center justify-center mb-12">
               <div className="absolute inset-0 bg-zinc-100 blur-[80px] opacity-50 rounded-full" />
               <svg className="w-72 h-72 sm:w-80 sm:h-80 transform -rotate-90 relative z-10">
@@ -191,9 +241,9 @@ export default function DeepWorkPage() {
             </div>
 
             <div className="flex items-center gap-12">
-              <button onClick={() => { setTimeLeft(selectedTime * 60); setIsActive(false); }} className="text-zinc-300 hover:text-black transition-all hover:-rotate-45"><RotateCcw size={22}/></button>
+              <button onClick={handleReset} className="text-zinc-300 hover:text-black transition-all hover:-rotate-45"><RotateCcw size={22}/></button>
               <button 
-                onClick={() => setIsActive(!isActive)}
+                onClick={toggleTimer}
                 className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-[0_20px_40px_rgba(0,0,0,0.15)] active:scale-95 border-4 border-white ${isActive ? 'bg-zinc-100 text-black' : 'bg-zinc-900 text-white hover:bg-black'}`}
               >
                 {isActive ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" className="ml-1" />}
@@ -202,30 +252,22 @@ export default function DeepWorkPage() {
             </div>
           </motion.div>
         ) : (
-          /* 🏆 Victory Screen - NEW ONYX THEME 🖤 */
           <motion.div 
             key="success" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md bg-zinc-900 p-10 md:p-14 rounded-[4rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] border border-zinc-800 flex flex-col items-center text-center relative overflow-hidden"
           >
-            {/* Glossy Top Accent */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-            
             <div className="w-16 h-16 bg-gradient-to-br from-zinc-700 to-black text-white rounded-3xl flex items-center justify-center mb-8 shadow-2xl border border-zinc-700">
               <Trophy size={32} className="text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
             </div>
-
             <h2 className="text-3xl font-black text-white mb-2 tracking-tighter uppercase">Mission Success</h2>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-10">You've mastered {selectedTime} minutes</p>
-
-            {/* Reward Badge */}
             <div className="flex items-center gap-1.5 mb-10 bg-black/50 px-4 py-2 rounded-full border border-zinc-700/50 backdrop-blur-md">
               <Zap size={12} className={hasClaimedToday ? "fill-zinc-600 text-zinc-600" : "fill-emerald-400 text-emerald-400"} />
               <p className={`text-[10px] font-black uppercase tracking-widest ${hasClaimedToday ? 'text-zinc-500' : 'text-emerald-400'}`}>
                 {hasClaimedToday ? `+${selectedTime} MINS SAVED` : "+20 XP EARNED"}
               </p>
             </div>
-
-            {/* Reflection Area - Dark Version */}
             <div className="w-full bg-black/40 rounded-[2.5rem] p-8 mb-10 text-left border border-zinc-800 shadow-inner group">
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
@@ -237,8 +279,6 @@ export default function DeepWorkPage() {
                 value={reflection} onChange={(e) => setReflection(e.target.value)}
               />
             </div>
-
-            {/* Action Button - Neon Emerald Glow */}
             <button 
               onClick={handleClaimXP} 
               disabled={isSaving} 
