@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion"; 
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star,Camera,Download } from "lucide-react"; 
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star,Camera,Download,Ticket } from "lucide-react"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -553,6 +553,7 @@ const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เ�
 const [gender, setGender] = useState<"male" | "female">("male"); 
 const [streakCount, setStreakCount] = useState<number>(0);
 const [showShareModal, setShowShareModal] = useState(false);
+const [showLineModal, setShowLineModal] = useState(false);
 
 // เพิ่มฟังก์ชันสำหรับเปลี่ยนเพศและ Save ลง Firebase
 const handleGenderChange = async (newGender: "male" | "female") => {
@@ -1068,7 +1069,8 @@ const dailyXPGained = completedQuests.reduce((sum: number, id) => {
   return sum + (quest?.xp || 0);
 }, 0);
 
-const currentLevel = Math.floor(totalXP / 100) + 1;
+ const currentLevel = Math.floor(totalXP / 100) + 1;
+
  const currentLevelXP = totalXP % 100;
   
   const getLevelTitle = (level: number) => {
@@ -1545,8 +1547,9 @@ const handleDownloadCard = async () => {
       </div>
 
       <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 opacity-60">Complete Quest 7 days for +50 XP Bonus</p>
-    </div>
+    
 
+    </div>
   </div>
 </header>
           <div className="lg:col-span-1 bg-slate-800 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-center border border-slate-700 group transition-all duration-500 hover:shadow-[0_20px_50px_rgba(239,68,68,0.15)] hover:border-slate-600">
@@ -2178,81 +2181,88 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
     <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-400/5 to-orange-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-amber-400/10 transition-colors duration-700" />
     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-200 via-orange-400 to-amber-200 opacity-80" />
     
-    <div className="relative z-10 flex flex-col items-center h-full w-full">
-      {lastMoney ? (
-        <>
-          <div className="relative mb-6 mt-2">
-            <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
-            <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500">
-              {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
-            </div>
+  {/* --- ส่วนของ Money Avatar --- */}
+<div className="relative z-10 flex flex-col items-center h-full w-full">
+  {lastMoney ? (
+    <>
+      {/* ห่อเนื้อหาหลักไว้ด้วยกัน */}
+      <div className="flex flex-col items-center">
+        <div className="relative mb-6 mt-2">
+          <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
+          <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500">
+            {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
           </div>
-
-          <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>
-          <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors"> 
-            {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"} 
-          </h2>
-          
-          <div className="inline-flex items-center bg-amber-50 text-amber-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-amber-100/50 shadow-sm">
-            Match {lastMoney.primaryMatch || 100}%
-          </div>
-
-          <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]"> 
-            "{MONEY_DATA[lastMoney.resultKey]?.motto}" 
-          </p>
-
-          {/* 🎭 Secondary Persona */}
-          {lastMoney.secondaryKey && MONEY_DATA[lastMoney.secondaryKey] && (
-              <div className="mb-10 py-2.5 px-5 rounded-2xl bg-slate-50/50 border border-slate-100/80 flex items-center gap-3 relative group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
-                  <span className="text-xl shrink-0">{MONEY_DATA[lastMoney.secondaryKey].emoji}</span>
-                  <div className="flex flex-col items-start leading-none gap-1">
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ตัวตนรอง</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] font-bold text-slate-700">
-                        {MONEY_DATA[lastMoney.secondaryKey].title}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-300 italic">
-                        {lastMoney.secondaryMatch}%
-                      </span>
-                    </div>
-                  </div>
-              </div>
-          )}
-          
-        <div className="w-full px-4">
-  <div className="group/btn-start relative">
-    <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
-      <RefreshCw size={16} className="text-white/80" />
-      <span>
-       ประเมินใหม่
-      </span>
-    </div>
-  </div>
-</div>
-        </>
-      ) : (
-     <div className="flex flex-col items-center justify-center h-full py-10 relative w-full">
-           <div className="relative mb-6 mt-4">
-              <div className="absolute inset-0 bg-amber-200 blur-2xl opacity-20" />
-              <div className="relative w-24 h-24 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100 shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all">
-                 <Wallet size={36} />
-              </div>
-           </div>
-           <h3 className="text-2xl font-black text-slate-800 mb-2">Money Avatar</h3>
-           <p className="text-slate-400 text-sm font-medium mb-8">ถอดรหัสสไตล์การเงินของคุณ</p>
-       <div className="w-full px-4">
-  <div className="group/btn-start relative">
-    <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
-      <Sparkles size={16} className="text-white/80" />
-      <span>
-        เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span>
-      </span>
-    </div>
-  </div>
-</div>
         </div>
-      )}
+
+        <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>
+        <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors"> 
+          {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"} 
+        </h2>
+        
+        <div className="inline-flex items-center bg-amber-50 text-amber-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-amber-100/50 shadow-sm">
+          Match {lastMoney.primaryMatch || 100}%
+        </div>
+
+        <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]"> 
+          "{MONEY_DATA[lastMoney.resultKey]?.motto}" 
+        </p>
+
+        {/* 🎭 Secondary Persona */}
+        {lastMoney.secondaryKey && MONEY_DATA[lastMoney.secondaryKey] && (
+            <div className="mb-6 py-2.5 px-5 rounded-2xl bg-slate-50/50 border border-slate-100/80 flex items-center gap-3 relative group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+                <span className="text-xl shrink-0">{MONEY_DATA[lastMoney.secondaryKey].emoji}</span>
+                <div className="flex flex-col items-start leading-none gap-1">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ตัวตนรอง</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-bold text-slate-700">
+                      {MONEY_DATA[lastMoney.secondaryKey].title}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-300 italic">
+                      {lastMoney.secondaryMatch}%
+                    </span>
+                  </div>
+                </div>
+            </div>
+        )}
+      </div>
+      
+      {/* 🔘 ปุ่มประเมินใหม่ (ใส่ mt-auto เพื่อดันลงล่าง) */}
+      <div className="w-full px-4 mt-auto">
+        <div className="group/btn-start relative">
+          <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+            <RefreshCw size={16} className="text-white/80" />
+            <span>ประเมินใหม่</span>
+          </div>
+        </div>
+      </div>
+    </>
+  ) : (
+    <div className="flex flex-col items-center justify-between h-full w-full py-2">
+      <div className="flex flex-col items-center justify-center pt-8">
+         <div className="relative mb-6">
+            <div className="absolute inset-0 bg-amber-200 blur-2xl opacity-20" />
+            <div className="relative w-24 h-24 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100 shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all">
+               <Wallet size={36} />
+            </div>
+         </div>
+         <h3 className="text-2xl font-black text-slate-800 mb-2">Money Avatar</h3>
+         <p className="text-slate-400 text-sm font-medium">ถอดรหัสสไตล์การเงินของคุณ</p>
+      </div>
+
+      {/* 🔘 ปุ่มเริ่มครั้งแรก (ใส่ mt-auto หรือใช้ justify-between) */}
+      <div className="w-full px-4 mt-auto">
+        <div className="group/btn-start relative">
+          <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+            <Sparkles size={16} className="text-white/80" />
+            <span>
+              เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span>
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
+  )}
+</div>
   </motion.div>
 </Link>
 
@@ -2332,14 +2342,17 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
   </motion.div>
 </Link>
 
-{/* 🌟 6. Deep Work Mode - Theme Library (Monochrome Version) */}
-<Link href="/tools/deep-work" className="group block h-full relative">
+{/* 🌟 6. Deep Work Mode - Premium Monochrome Style */}
+<Link 
+  href="/tools/deep-work" 
+  className="group block h-full relative cursor-pointer"
+>
   <motion.div 
     whileHover={{ y: -6 }} 
-    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-zinc-200 relative overflow-hidden group"
+    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-zinc-200 relative overflow-hidden"
   >
     
-    {/* 🏷️ Status Badge (Top 8 Right 8 เหมือน Library) */}
+    {/* 🏷️ Status Badge (ตำแหน่งเดียวกับ Library) */}
     <div className="absolute top-8 right-8 z-30">
       <motion.div 
         initial={{ scale: 0 }} animate={{ scale: 1 }}
@@ -2349,13 +2362,15 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
       </motion.div>
     </div>
 
-    {/* ✨ Ambient Light & Black Top Bar (Theme เดียวกับ Library) */}
+    {/* ✨ Ambient Light & Black Top Bar (โครงสร้างเดียวกับ Library) */}
     <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-zinc-400/5 to-zinc-900/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-zinc-400/10 transition-colors duration-700" />
-    <div className="absolute top-0 left-0 w-full h-1.5 bg-black opacity-80 transition-all duration-500 group-hover:h-3" />
+    
+    {/* Top Bar ปรับให้หนาขึ้นเมื่อ Hover เหมือน Library */}
+    <div className="absolute top-0 left-0 w-full h-1.5 bg-zinc-900 opacity-80 transition-all duration-500 group-hover:h-2" />
     
     <div className="relative z-10 flex flex-col items-center h-full w-full">
       
-      {/* 🧠 Logo Container (ดีไซน์เดียวกับ Library) */}
+      {/* 🧠 Logo Container (w-24 h-24 เท่ากับ Library เป๊ะ) */}
       <div className="relative mb-6 mt-2">
         <div className="absolute inset-0 blur-3xl opacity-20 bg-zinc-200" />
         <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-110">
@@ -2368,17 +2383,21 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
         ห้องสมาธิอัพสกิล
       </h2>
       
-     <div className="text-[14px] font-medium text-slate-500 mb-8 px-6 leading-relaxed max-w-[280px]">
-  <p className="mb-2">จดจ่อกับสิ่งที่ทำ และพัฒนาสมอง</p>
-  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-zinc-100 text-black rounded-full border border-zinc-200/50 text-[11px] font-black uppercase tracking-wider">
-    <Zap size={12} className="fill-current text-yellow-500" />
-    Receive +20 XP
-  </span>
-</div>
+      {/* Description & XP Badge (จัดวางให้สมดุลกับ Library) */}
+      <div className="flex flex-col items-center mb-8 px-6 max-w-[280px]">
+        <p className="text-[14px] font-medium text-slate-500 leading-relaxed opacity-80 mb-3">
+          จดจ่อกับสิ่งที่ทำ <br/> และพัฒนาสมองให้เฉียบคม
+        </p>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-zinc-100 text-zinc-600 rounded-full border border-zinc-200/50 text-[10px] font-black uppercase tracking-wider">
+          <Zap size={11} className="fill-yellow-400 text-yellow-400" />
+          Receive +20 XP
+        </span>
+      </div>
       
+      {/* Button (สัดส่วนและ Padding เท่ากับ Library) */}
       <div className="w-full px-4 mt-auto">
         <div className="group/btn-deep relative">
-          <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-black text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] group-hover/btn-deep:scale-[1.02] group-hover/btn-deep:bg-zinc-800 active:scale-95">
+          <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-black text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.3)] group-hover/btn-deep:scale-[1.02] group-hover/btn-deep:bg-zinc-800 active:scale-95">
             <BrainCircuit size={16} className="text-white/80" />
             <span>เริ่มโหมดโฟกัส</span>
           </div>
@@ -2690,6 +2709,68 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
   </motion.div>
 )}
       </AnimatePresence>
+
+{/* 🎫 Modal: Line OA Instruction */}
+<AnimatePresence>
+  {showLineModal && (
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl"
+      onClick={() => setShowLineModal(false)}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20, rotate: -2 }}
+        animate={{ scale: 1, y: 0, rotate: 0 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white rounded-[3rem] p-8 shadow-2xl max-w-sm w-full border-[6px] border-indigo-50 relative overflow-hidden text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 🎉 Decor */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+        
+        <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner rotate-3">
+          <Ticket size={40} className="-rotate-12" />
+        </div>
+
+        <h3 className="text-2xl font-black text-slate-800 mb-2">ปลดล็อกสิทธิ์สำเร็จ! 🔥</h3>
+        <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
+          ก้าวสุดท้ายเพื่อรับส่วนลด Exclusive <br />
+          ให้คุณกดปุ่มด้านล่างเพื่อไปที่ Line OA <br />
+          แล้วพิมพ์คำว่า...
+        </p>
+
+        {/* 📋 โค้ดลับ */}
+        <div className="bg-slate-900 rounded-2xl p-6 mb-8 relative group">
+          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] block mb-2">Message Code</span>
+          <span className="text-4xl font-black text-white tracking-widest group-hover:scale-110 transition-transform block">
+            LVL5
+          </span>
+          <div className="absolute -top-2 -right-2 bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-1 rounded-lg">
+            COPY CODE
+          </div>
+        </div>
+
+        <Link 
+          href="https://lin.ee/rQawKUM"
+          target="_blank"
+          onClick={() => setShowLineModal(false)}
+          className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 active:scale-95"
+        >
+          ไปที่ Line OA เพื่อรับสิทธิ์
+          <ChevronRight size={18} />
+        </Link>
+
+        <button 
+          onClick={() => setShowLineModal(false)}
+          className="mt-4 text-slate-400 text-[11px] font-black uppercase tracking-widest hover:text-slate-600 transition-colors"
+        >
+          ไว้กดทีหลัง
+        </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
     </div>
   );
 }

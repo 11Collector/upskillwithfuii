@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react"; // เพิ่ม useRef
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BrainCircuit, Zap, ArrowLeft, X, Play, Pause, 
@@ -12,7 +12,6 @@ import { db, auth } from "@/lib/firebase";
 import { doc, setDoc, increment, arrayUnion, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 
-// --- Fonts ---
 import { Inter, Geist_Mono } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 const geist_mono = Geist_Mono({ subsets: ["latin"], weight: ["900"] });
@@ -20,7 +19,6 @@ const geist_mono = Geist_Mono({ subsets: ["latin"], weight: ["900"] });
 export default function DeepWorkPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  
   const [isActive, setIsActive] = useState(false);
   const [selectedTime, setSelectedTime] = useState(15);
   const [timeLeft, setTimeLeft] = useState(15 * 60);
@@ -28,94 +26,104 @@ export default function DeepWorkPage() {
   const [reflection, setReflection] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true); // เพิ่มสถานะกำลังตรวจสอบ
 
-  // --- Refs สำหรับจัดการ Timer และ Wake Lock ---
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const endTimeRef = useRef<number | null>(null);
   const wakeLockRef = useRef<any>(null);
 
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
-useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
 
-        // 1. เช็คความคืบหน้าจาก Firestore (ของเดิม)
+useEffect(() => {
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+  // 1. ✨ ดึงจาก Local Storage มาแสดงก่อนทันที (ความเร็วแสง)
+  const cachedDate = localStorage.getItem("lastFocusDate_cache");
+  if (cachedDate === todayStr) {
+    setHasClaimedToday(true);
+    // ถ้าในเครื่องมีค่าแล้ว ให้ถือว่าเช็คเสร็จเบื้องต้น
+    setIsCheckingStatus(false);
+  }
+
+  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    if (currentUser) {
+      setUser(currentUser);
+
+      try {
+        // 2. ✨ ดึงจาก Firestore มายืนยันความถูกต้อง (Background Sync)
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if (userDoc.exists()) {
-          const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
-          if (userDoc.data().lastFocusDate === todayStr) {
-            setHasClaimedToday(true);
+          const dbLastFocusDate = userDoc.data().lastFocusDate;
+          const isClaimedInDB = dbLastFocusDate === todayStr;
+
+          // อัปเดต UI ตามข้อมูลจริงจาก Database
+          setHasClaimedToday(isClaimedInDB);
+          
+          // อัปเดต Cache ในเครื่องให้ตรงกับ Database เสมอ
+          if (dbLastFocusDate) {
+            localStorage.setItem("lastFocusDate_cache", dbLastFocusDate);
           }
         }
-
-        // 2. ✨ เช็คเวลาที่ค้างไว้ในเครื่อง (Background Sync) ✨
-        const savedEndTime = localStorage.getItem("deepWork_endTime");
-        const savedSelectedTime = localStorage.getItem("deepWork_selectedTime");
-
-        if (savedEndTime && savedSelectedTime) {
-          const now = Date.now();
-          const target = parseInt(savedEndTime);
-          const remaining = Math.round((target - now) / 1000);
-
-          if (remaining > 0) {
-            // กรณี: ยังมีเวลาเหลือ -> ให้เดินหน้าจอนับต่อจากจุดที่ควรจะเป็น
-            endTimeRef.current = target;
-            setSelectedTime(parseInt(savedSelectedTime));
-            setTimeLeft(remaining);
-            setIsActive(true);
-          } else {
-            // กรณี: เวลาหมดไปแล้วตอนที่เราไม่อยู่หน้านี้ -> เคลียร์ทิ้ง
-            localStorage.removeItem("deepWork_endTime");
-          }
-        }
-
-      } else {
-        router.push("/");
+      } catch (error) {
+        console.error("Error fetching user progress:", error);
+      } finally {
+        // เช็คเสร็จสมบูรณ์ (ไม่ว่าจะสำเร็จหรือ Error)
+        setIsCheckingStatus(false);
       }
-    });
 
-    return () => unsubscribe();
-  }, [router]);
+      // 3. ✨ Logic การดึงเวลาที่ค้างไว้ (เหมือนเดิมของคุณ)
+      const savedEndTime = localStorage.getItem("deepWork_endTime");
+      const savedSelectedTime = localStorage.getItem("deepWork_selectedTime");
+      if (savedEndTime && savedSelectedTime) {
+        const now = Date.now();
+        const target = parseInt(savedEndTime);
+        const remaining = Math.round((target - now) / 1000);
+        if (remaining > 0) {
+          endTimeRef.current = target;
+          setSelectedTime(parseInt(savedSelectedTime));
+          setTimeLeft(remaining);
+          setIsActive(true);
+        } else {
+          localStorage.removeItem("deepWork_endTime");
+        }
+      }
+    } else {
+      router.push("/");
+    }
+  });
 
-  // ตัว Re-Sync เวลาอัตโนมัติเมื่อ User กลับมาโฟกัสหน้าจอ (แก้ปัญหาเวลาเดินช้ากว่าจริง)
+  return () => unsubscribe();
+}, [router]);
+
   useEffect(() => {
     const syncOnFocus = () => {
       if (document.visibilityState === "visible" && isActive && endTimeRef.current) {
         const now = Date.now();
         const target = endTimeRef.current;
         const remaining = Math.round((target - now) / 1000);
-
         if (remaining <= 0) {
           setTimeLeft(0);
           setIsActive(false);
           setIsFinished(true);
           localStorage.removeItem("deepWork_endTime");
         } else {
-          // บังคับ "ดีด" ตัวเลขให้ตรงกับเวลาจริง (Zero Drift)
           setTimeLeft(remaining);
         }
       }
     };
-
     document.addEventListener("visibilitychange", syncOnFocus);
     window.addEventListener("focus", syncOnFocus);
-    
     return () => {
       document.removeEventListener("visibilitychange", syncOnFocus);
       window.removeEventListener("focus", syncOnFocus);
     };
   }, [isActive]);
 
-  // --- ฟังก์ชันป้องกันหน้าจอดับ ---
   const requestWakeLock = async () => {
     if ("wakeLock" in navigator) {
-      try {
-        wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
-      } catch (err) {
-        console.error("Wake Lock error:", err);
-      }
+      try { wakeLockRef.current = await (navigator as any).wakeLock.request("screen"); } 
+      catch (err) { console.error("Wake Lock error:", err); }
     }
   };
 
@@ -126,40 +134,30 @@ useEffect(() => {
     }
   };
 
-// --- ปรับปรุง Logic การเริ่ม/หยุด Timer (เพิ่มการ Save ลงเครื่อง) ---
-const toggleTimer = async () => {
-  if (!isActive) {
-    // 1. คำนวณเวลาที่จะสิ้นสุด
-    const targetTime = Date.now() + timeLeft * 1000;
-    endTimeRef.current = targetTime;
-    
-    // 2. ✨ บันทึกลง localStorage ทันทีที่กดเริ่ม ✨
-    localStorage.setItem("deepWork_endTime", targetTime.toString());
-    localStorage.setItem("deepWork_selectedTime", selectedTime.toString());
-    
-    setIsActive(true);
-    await requestWakeLock();
-  } else {
-    // กด Pause: หยุดนับ และลบเวลาเป้าหมายออก (เพราะถือว่าหยุดชั่วคราว)
+  const toggleTimer = async () => {
+    if (!isActive) {
+      const targetTime = Date.now() + timeLeft * 1000;
+      endTimeRef.current = targetTime;
+      localStorage.setItem("deepWork_endTime", targetTime.toString());
+      localStorage.setItem("deepWork_selectedTime", selectedTime.toString());
+      setIsActive(true);
+      await requestWakeLock();
+    } else {
+      setIsActive(false);
+      localStorage.removeItem("deepWork_endTime"); 
+      if (timerRef.current) clearInterval(timerRef.current);
+      await releaseWakeLock();
+    }
+  };
+
+  const handleReset = async () => {
     setIsActive(false);
-    localStorage.removeItem("deepWork_endTime"); 
+    setTimeLeft(selectedTime * 60);
+    localStorage.removeItem("deepWork_endTime");
+    localStorage.removeItem("deepWork_selectedTime");
     if (timerRef.current) clearInterval(timerRef.current);
     await releaseWakeLock();
-  }
-};
-
-// --- ฟังก์ชัน Reset (เพิ่มการล้างค่าในเครื่อง) ---
-const handleReset = async () => {
-  setIsActive(false);
-  setTimeLeft(selectedTime * 60);
-  
-  // ✨ ล้างค่าที่ค้างในเครื่องทิ้ง ✨
-  localStorage.removeItem("deepWork_endTime");
-  localStorage.removeItem("deepWork_selectedTime");
-  
-  if (timerRef.current) clearInterval(timerRef.current);
-  await releaseWakeLock();
-};
+  };
 
   useEffect(() => {
     if (isActive && !isFinished) {
@@ -167,7 +165,6 @@ const handleReset = async () => {
         if (endTimeRef.current) {
           const now = Date.now();
           const remaining = Math.round((endTimeRef.current - now) / 1000);
-
           if (remaining <= 0) {
             setTimeLeft(0);
             setIsActive(false);
@@ -180,10 +177,7 @@ const handleReset = async () => {
         }
       }, 1000);
     }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isActive, isFinished]);
 
   const handleSelectTime = (mins: number) => {
@@ -230,12 +224,12 @@ const handleReset = async () => {
   return (
     <div className={`min-h-[100dvh] bg-zinc-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden ${inter.className}`}>
       
+      {/* Exit Button - ปรับเป็น rounded-full */}
       <div className="absolute top-8 left-8 z-20">
         <Link href="/dashboard" className="flex items-center gap-2 text-zinc-400 hover:text-black transition-all group">
           <div className="p-2 bg-white rounded-full shadow-sm border border-zinc-200 group-hover:border-zinc-400">
             <ArrowLeft size={16} />
           </div>
-          <span className="font-black text-[9px] uppercase tracking-[0.3em]">Exit System</span>
         </Link>
       </div>
 
@@ -245,10 +239,11 @@ const handleReset = async () => {
             key="timer" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }}
             className="w-full max-w-lg bg-white p-10 md:p-16 rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-white flex flex-col items-center relative overflow-hidden group"
           >
+            {/* Status Badge */}
             <motion.div 
               animate={isActive ? { y: [0, -5, 0] } : {}}
               transition={{ repeat: Infinity, duration: 2 }}
-              className={`absolute top-10 right-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-lg z-20 border ${hasClaimedToday ? 'bg-zinc-100 text-zinc-400 border-zinc-200' : 'bg-zinc-900 text-white border-zinc-700'}`}
+              className={`absolute top-10 right-10 flex items-center gap-1.5 px-4 py-2 rounded-full shadow-lg z-20 border ${hasClaimedToday ? 'bg-zinc-100 text-zinc-400 border-zinc-200' : 'bg-zinc-900 text-white border-zinc-700'}`}
             >
               <Zap size={10} className={hasClaimedToday ? 'fill-zinc-300' : 'fill-yellow-400 text-yellow-400'} />
               <span className="text-[9px] font-black tracking-widest">{hasClaimedToday ? 'DAILY LIMIT' : '+20 XP READY'}</span>
@@ -257,19 +252,21 @@ const handleReset = async () => {
             <div className="absolute top-0 left-0 w-full h-2 bg-zinc-900 opacity-90" />
             
             <div className="flex flex-col items-center mb-10">
-              <div className="w-12 h-12 bg-zinc-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-zinc-100 group-hover:rotate-12 transition-transform duration-500">
+              {/* Icon Container - ปรับเป็น rounded-full */}
+              <div className="w-12 h-12 bg-zinc-50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-zinc-100 group-hover:rotate-12 transition-transform duration-500">
                 <BrainCircuit size={26} className="text-zinc-900" />
               </div>
               <h1 className="text-sm font-black text-zinc-400 tracking-[0.4em] uppercase mb-1">Deep Work Engine</h1>
               <div className="h-px w-12 bg-zinc-200" />
             </div>
 
+            {/* Time Selector - ปรับทั้ง Container และปุ่มข้างในเป็น rounded-full */}
             {!isActive && (
-              <div className="flex bg-zinc-50 p-1 rounded-[1.5rem] border border-zinc-200 mb-10 w-full max-w-[240px] shadow-inner">
+              <div className="flex bg-zinc-50 p-1.5 rounded-full border border-zinc-200 mb-10 w-full max-w-[240px] shadow-inner">
                 {[15, 30].map((mins) => (
                   <button
                     key={mins} onClick={() => handleSelectTime(mins)}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${
+                    className={`flex-1 py-2.5 rounded-full text-[10px] font-black tracking-widest transition-all ${
                       selectedTime === mins ? 'bg-white text-black shadow-md border border-zinc-100' : 'text-zinc-400'
                     }`}
                   >
@@ -279,6 +276,7 @@ const handleReset = async () => {
               </div>
             )}
 
+            {/* SVG Timer */}
             <div className="relative flex items-center justify-center mb-12">
               <div className="absolute inset-0 bg-zinc-100 blur-[80px] opacity-50 rounded-full" />
               <svg className="w-72 h-72 sm:w-80 sm:h-80 transform -rotate-90 relative z-10">
@@ -308,15 +306,16 @@ const handleReset = async () => {
               <p className="text-[10px] font-bold text-zinc-500 leading-relaxed max-w-[260px] mx-auto italic">"{getGuideText()}"</p>
             </div>
 
+            {/* Control Buttons */}
             <div className="flex items-center gap-12">
-              <button onClick={handleReset} className="text-zinc-300 hover:text-black transition-all hover:-rotate-45"><RotateCcw size={22}/></button>
+              <button onClick={handleReset} className="text-zinc-300 hover:text-black transition-all hover:-rotate-45 p-2"><RotateCcw size={22}/></button>
               <button 
                 onClick={toggleTimer}
                 className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-[0_20px_40px_rgba(0,0,0,0.15)] active:scale-95 border-4 border-white ${isActive ? 'bg-zinc-100 text-black' : 'bg-zinc-900 text-white hover:bg-black'}`}
               >
                 {isActive ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" className="ml-1" />}
               </button>
-              <button onClick={() => router.push("/dashboard")} className="text-zinc-300 hover:text-red-500 transition-all"><X size={22}/></button>
+              <button onClick={() => router.push("/dashboard")} className="text-zinc-300 hover:text-red-500 transition-all p-2"><X size={22}/></button>
             </div>
           </motion.div>
         ) : (
@@ -325,17 +324,22 @@ const handleReset = async () => {
             className="w-full max-w-md bg-zinc-900 p-10 md:p-14 rounded-[4rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] border border-zinc-800 flex flex-col items-center text-center relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-            <div className="w-16 h-16 bg-gradient-to-br from-zinc-700 to-black text-white rounded-3xl flex items-center justify-center mb-8 shadow-2xl border border-zinc-700">
+            
+            {/* Success Icon - ปรับเป็น rounded-full */}
+            <div className="w-16 h-16 bg-gradient-to-br from-zinc-700 to-black text-white rounded-full flex items-center justify-center mb-8 shadow-2xl border border-zinc-700">
               <Trophy size={32} className="text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
             </div>
+            
             <h2 className="text-3xl font-black text-white mb-2 tracking-tighter uppercase">Mission Success</h2>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-10">You've mastered {selectedTime} minutes</p>
-            <div className="flex items-center gap-1.5 mb-10 bg-black/50 px-4 py-2 rounded-full border border-zinc-700/50 backdrop-blur-md">
+            
+            <div className="flex items-center gap-1.5 mb-10 bg-black/50 px-5 py-2.5 rounded-full border border-zinc-700/50 backdrop-blur-md">
               <Zap size={12} className={hasClaimedToday ? "fill-zinc-600 text-zinc-600" : "fill-emerald-400 text-emerald-400"} />
               <p className={`text-[10px] font-black uppercase tracking-widest ${hasClaimedToday ? 'text-zinc-500' : 'text-emerald-400'}`}>
                 {hasClaimedToday ? `+${selectedTime} MINS SAVED` : "+20 XP EARNED"}
               </p>
             </div>
+
             <div className="w-full bg-black/40 rounded-[2.5rem] p-8 mb-10 text-left border border-zinc-800 shadow-inner group">
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
@@ -347,10 +351,12 @@ const handleReset = async () => {
                 value={reflection} onChange={(e) => setReflection(e.target.value)}
               />
             </div>
+
+            {/* Main Action Button - ปรับเป็น rounded-full */}
             <button 
               onClick={handleClaimXP} 
               disabled={isSaving} 
-              className={`w-full py-5 rounded-3xl font-black text-[11px] uppercase tracking-[0.3em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl ${
+              className={`w-full py-5 rounded-full font-black text-[11px] uppercase tracking-[0.3em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl ${
                 hasClaimedToday 
                 ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700' 
                 : 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-emerald-500/20'
