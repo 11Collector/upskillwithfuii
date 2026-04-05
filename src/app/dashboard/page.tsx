@@ -636,15 +636,33 @@ useEffect(() => {
           setLastQuote(quoteSnap.docs[0].data());
         }
 
-        // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
+      // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
           
           setGender(userData.gender || "male");
-          setStreakCount(userData.streakCount || 0);
+          
+          // 🛠️ [FIX BUG 3]: ดึง Streak มา แล้วเช็กก่อนว่าขาดไปหรือยังตั้งแต่วินาทีแรกที่โหลด!
+          let currentStreak = userData.streakCount || 0;
+          
+          if (userData.lastQuestDate) {
+             const lastDate = new Date(userData.lastQuestDate);
+             const todayDate = new Date(todayStr);
+             const diffDays = Math.round((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+             
+             // ถ้าทิ้งช่วงเกิน 1 วัน แปลว่า Streak พังไปแล้ว
+             if (diffDays > 1 && currentStreak > 0) {
+                currentStreak = 0; 
+                // อัปเดตลง DB ไปเลยเงียบๆ เพื่อคลีนข้อมูล
+                setDoc(doc(db, "users", currentUser.uid), { streakCount: 0 }, { merge: true });
+             }
+          }
+          
+          setStreakCount(currentStreak); // ใช้ค่าที่เช็กความถูกต้องแล้ว
 
           let xpToClaim = 0;
+          // ... (โค้ดดึงตัวแปร xpToClaim และอื่นๆ ด้านล่างปล่อยไว้เหมือนเดิมครับ)
           let xpUpdates: any = {};
 
           // เช็ก XP ที่ยังไม่เคยกดรับ
@@ -1133,13 +1151,30 @@ const toggleQuest = async (id: number | string, xp: number) => {
     }
   }
 
-  // กรณีที่ 2: "กดยกเลิก" (Untoggle) และไม่เหลือเควสอื่นที่ทำค้างไว้เลยในวันนี้
+ // กรณีที่ 2: "กดยกเลิก" (Untoggle) และไม่เหลือเควสอื่นที่ทำค้างไว้เลยในวันนี้
   else if (isDone && newCompleted.length === 0) {
-    newStreak = Math.max(0, newStreak - 1); // หัก Streak คืน
-    newLastQuestDate = ""; // ล้างวันที่ เพื่อให้ระบบยอมให้บวก Streak ใหม่ถ้ากลับมาติ๊กอีกครั้ง
     
-    // ถ้าเคสนี้เคยได้โบนัส 7 วันไป (เช่น เพิ่งครบวันที่ 7 แล้วกดยกเลิก) 
-    // ตัว XP ก็จะถูกหักคืนอัตโนมัติจาก xpChange เดิมอยู่แล้ว แต่ถ้าอยากให้เป๊ะอาจจะเช็กเพิ่มครับ
+    // 🛠️ [FIX BUG 1]: ป้องกันบั๊กปั๊ม XP! ถ้ายกเลิกตอนที่ Streak หาร 7 ลงตัวเป๊ะ ต้องริบโบนัส 50 XP คืนด้วย
+    if (newStreak % 7 === 0 && newStreak !== 0) {
+      xpChange -= 50; 
+    }
+
+    newStreak = Math.max(0, newStreak - 1); // หัก Streak คืน
+    
+    if (newStreak > 0) {
+      // 🛠️ [FIX BUG 2]: ถอยวันที่กลับไป 1 วัน (เมื่อวาน) 
+      const [year, month, day] = todayStr.split('-').map(Number);
+      const yesterdayDate = new Date(year, month - 1, day - 1);
+      const yesterdayStr = [
+        yesterdayDate.getFullYear(),
+        String(yesterdayDate.getMonth() + 1).padStart(2, '0'),
+        String(yesterdayDate.getDate()).padStart(2, '0')
+      ].join('-');
+      
+      newLastQuestDate = yesterdayStr;
+    } else {
+      newLastQuestDate = ""; // ถ้า Streak เป็น 0 ไปแล้ว ค่อยล้างทิ้ง
+    }
   }
 
   // 3. คำนวณ Level ใหม่
@@ -1524,11 +1559,19 @@ const handleDownloadCard = async () => {
     {/* 🌟 3. Bottom Bar (เหลือแค่เส้น Progress Track เดี่ยวๆ แล้ว) */}
     <div className="w-full mt-auto pt-4 border-t border-white/5 flex flex-col items-center relative z-20">
       
-      {/* Slim Progress Track */}
+{/* Slim Progress Track */}
       <div className="relative flex items-center justify-between w-full max-w-[380px] mb-4 h-8 px-2">
         <div className="absolute left-4 right-4 h-[1px] bg-white/10 top-1/2 -translate-y-1/2" />
-        <motion.div initial={{ width: 0 }} animate={{ width: `${((streakCount % 7 === 0 && streakCount > 0 ? 7 : streakCount % 7) - 1) / 6 * 100}%` }} className="absolute left-4 h-[1px] bg-gradient-to-r from-orange-500 to-yellow-400 top-1/2 -translate-y-1/2 origin-left shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+        
+        {/* ทับบรรทัด motion.div ด้วยอันนี้ 👇 */}
+        <motion.div 
+          initial={{ width: 0 }} 
+          animate={{ width: `${streakCount === 0 ? 0 : ((streakCount % 7 === 0 && streakCount > 0 ? 7 : streakCount % 7) - 1) / 6 * 100}%` }} 
+          className="absolute left-4 h-[1px] bg-gradient-to-r from-orange-500 to-yellow-400 top-1/2 -translate-y-1/2 origin-left shadow-[0_0_8px_rgba(249,115,22,0.5)]" 
+        />
+        
         {[1, 2, 3, 4, 5, 6, 7].map((dot) => {
+          // ... โค้ด loop จุดเหมือนเดิม
           const currentProgress = streakCount % 7 === 0 && streakCount > 0 ? 7 : streakCount % 7;
           const isFilled = dot <= currentProgress;
           const isLastDot = dot === 7;
