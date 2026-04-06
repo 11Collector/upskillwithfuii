@@ -572,19 +572,20 @@ const handleGenderChange = async (newGender: "male" | "female") => {
     // เซ็ตวันที่ครั้งแรก
     setTodayDateStr(new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'}));
 
-    // สร้าง Interval เช็กทุกๆ 1 นาที เผื่อผู้ใช้เปิดทิ้งไว้ข้ามเที่ยงคืน
-    const interval = setInterval(() => {
-        const nowStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
-        setTodayDateStr((prev) => {
-            if (prev && prev !== nowStr) {
-                // ขึ้นวันใหม่แล้ว! รีเซ็ต Progress สดๆ เลย
-                setCompletedQuests([]);
-                setHasClaimedQuoteToday(false);
-                return nowStr;
-            }
-            return prev || nowStr;
-        });
-    }, 60000); 
+  // ใน useEffect บรรทัดที่ 319 โดยประมาณ
+const interval = setInterval(() => {
+    const nowStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+    setTodayDateStr((prev) => {
+        if (prev && prev !== nowStr) {
+            // ขึ้นวันใหม่แล้ว! รีเซ็ต Progress สดๆ เลย
+            setCompletedQuests([]);
+            setHasClaimedQuoteToday(false);
+            setCustomQuestTitle(""); // 👈 [FIX] เคลียร์ชื่อเควสทำเองด้วย
+            return nowStr;
+        }
+        return prev || nowStr;
+    });
+}, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -1033,11 +1034,12 @@ const dailyGuidedPrompt = useMemo(() => {
     const seedStr = todayDateStr.replace(/-/g, '');
     const seed = parseInt(seedStr, 10) || 1;
 
-    // ฟังก์ชันสุ่มตัวเลขแบบคงที่สำหรับวันนั้นๆ
-    const pseudoRandom = (max: number, salt: number) => {
-      const x = Math.sin(seed + salt) * 10000;
-      return Math.floor((x - Math.floor(x)) * max);
-    };
+  // ใน useMemo ของ dailyQuests
+const pseudoRandom = (max: number, salt: number) => {
+    // 👈 [FIX] เปลี่ยนเป็น * หรือใช้สมการที่ทำให้ตัวเลขกระจายตัวมากขึ้น
+    const x = Math.sin(seed * salt * 1.234) * 10000; 
+    return Math.floor((x - Math.floor(x)) * max);
+};
     
     const qList = [
       { id: 1, type: "WHEEL", title: "", xp: 15 },
@@ -1059,15 +1061,16 @@ const dailyGuidedPrompt = useMemo(() => {
     const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
     qList[2].title = moneyPool[pseudoRandom(moneyPool.length, 3)];
 
-    const getUniqueQuest = (pool: string[], existingTitles: string[], salt: number) => {
-      let index = pseudoRandom(pool.length, salt);
-      let selectedQuest = pool[index];
-      while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 5)))) {
+   const getUniqueQuest = (pool: string[], existingTitles: string[], salt: number) => {
+    let index = pseudoRandom(pool.length, salt);
+    let selectedQuest = pool[index];
+    // 👈 [FIX] เปลี่ยนจาก 5 เป็น 8 หรือ 10 เพื่อให้ครอบคลุมตัวหนังสือหลัง Emoji
+    while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 10)))) { 
         index = (index + 1) % pool.length;
         selectedQuest = pool[index];
-      }
-      return selectedQuest;
-    };
+    }
+    return selectedQuest;
+};
 
     const currentTitles = [qList[0].title, qList[1].title, qList[2].title];
     qList[3].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 4);
