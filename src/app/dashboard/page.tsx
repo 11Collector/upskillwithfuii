@@ -544,11 +544,11 @@ const getWeekRangeThai = () => {
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
   
-  const options = { month: 'short', day: 'numeric' };
-  
-  // จัดรูปแบบ: "6 เม.ย. - 12 เม.ย."
-  const start = monday.toLocaleDateString('th-TH', options);
-  const end = sunday.toLocaleDateString('th-TH', options);
+const options = { month: 'short', day: 'numeric' } as const;
+
+// จัดรูปแบบ: "6 เม.ย. - 12 เม.ย."
+const start = monday.toLocaleDateString('th-TH', options);
+const end = sunday.toLocaleDateString('th-TH', options);
   
   return `${start} - ${end}`;
 };
