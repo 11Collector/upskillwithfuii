@@ -359,23 +359,33 @@ const handleGenerateResult = async () => {
         });
         console.log("✅ เซฟโหมด Member สำเร็จ! ID:", docRef.id);
 
-        // ✅ 2. Logic แจก 50 XP (เฉพาะครั้งแรกที่ประเมินสำเร็จ)
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          // ถ้ายังไม่เคยมี Flag hasWheelXP แปลว่านี่คือครั้งแรก!
+          
+          // 🌟 [AUDIT RESET LOGIC]: เตรียมข้อมูลอัปเดต User Profile
+          // เราจะรีเซ็ตทุกอย่างเพื่อให้ Dashboard เริ่มนับแผน AI ใหม่เป็น DAY 1 ทันที
+          let updateData: any = {
+            wheelPlanDay: 0,       
+            lastQuestDate: null,   // 🚩 ล้างวันที่ เพื่อให้เริ่มติ๊กเควสใหม่ได้เลยไม่ต้องรอพรุ่งนี้
+            completedQuestIds: [], // 🚩 ล้างเควสที่เคยติ๊กไว้ เพื่อเริ่มเก็บแต้มใหม่
+            customQuestTitle: ""   // 🚩 (แถม) ล้างเควสทำเอง เผื่อเขาอยากตั้งเป้าหมายใหม่ให้เข้ากับรอบนี้
+          };
+
+          // ✅ 2. Logic แจก 50 XP (ถ้าเป็นการทำครั้งแรกจริงๆ)
           if (!userData.hasWheelXP) {
-            await setDoc(userRef, {
-              totalXP: increment(50), // 💡 บวก 50 แต้ม
-              hasWheelXP: true        // 💡 ปักหมุดไว้ว่าแจกไปแล้วนะ
-            }, { merge: true });
+            updateData.totalXP = increment(50);
+            updateData.hasWheelXP = true;
             console.log("🎉 ยินดีด้วย! คุณได้รับ 50 XP สำหรับการประเมินครั้งแรก");
           }
+
+          // ยิงคำสั่งอัปเดต Profile ครั้งเดียวจบ
+          await setDoc(userRef, updateData, { merge: true });
         }
       } else {
-        // ✅ 3. โหมด Guest (ไม่มีการแจก XP)
+        // ✅ 3. โหมด Guest (ไม่มีการแจก XP และไม่มีการรีเซ็ต)
         docRef = await addDoc(collection(db, "user_reports"), { 
           type: 'wheel_of_life',
           currentScores, 
