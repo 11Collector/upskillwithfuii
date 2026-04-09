@@ -98,6 +98,17 @@ const avatarImages: Record<string, string> = {
   "LOW_RISK_HIGH_DISC": "/avatars/snail.png",      // พิทักษ์เงินต้น
 };
 
+const preloadAvatars = () => {
+  // เช็กก่อนว่าอยู่ใน Browser ไหม (ฝั่ง Server จะไม่มี window)
+  if (typeof window !== "undefined") {
+    Object.values(avatarImages).forEach((src) => {
+      // 🟢 เติม window. นำหน้า เพื่อเรียกใช้ Native JS Image Constructor
+      const img = new window.Image(); 
+      img.src = src;
+    });
+  }
+};
+
 const calculatePersona = (riskScore: number, discScore: number): CalculationResult => {
     const results = profileCenters.map((profile) => {
       const distance = Math.hypot(riskScore - profile.risk, discScore - profile.disc);
@@ -349,6 +360,7 @@ export default function Home() {
 
   // --- Auth Effect ---
   useEffect(() => {
+    preloadAvatars();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
