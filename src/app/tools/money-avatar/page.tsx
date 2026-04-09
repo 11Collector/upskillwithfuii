@@ -85,6 +85,19 @@ const profileCenters = [
   { id: "LOW_RISK_LOW_DISC", risk: 0, disc: 0 },
 ];
 
+// ใส่ไว้ใต้ const profileCenters = [...] ก็ได้ครับ
+const avatarImages: Record<string, string> = {
+  "HIGH_RISK_LOW_DISC": "/avatars/phoenix.png",    // กาวสุดกราฟ
+  "HIGH_RISK_MID_DISC": "/avatars/monkey.png",     // ล่าเทรนด์(ดอย)
+  "HIGH_RISK_HIGH_DISC": "/avatars/wolf.png",      // เซียนระบบ
+  "MID_RISK_LOW_DISC": "/avatars/peacock.png",     // ตัวตึงสายเปย์
+  "MID_RISK_MID_DISC": "/avatars/capybara.png",    // มนุษย์สมดุล
+  "MID_RISK_HIGH_DISC": "/avatars/ant.png",        // นักปั้นพอร์ต
+  "LOW_RISK_LOW_DISC": "/avatars/deer.png",        // ผู้ประสบภัย
+  "LOW_RISK_MID_DISC": "/avatars/turtle.png",      // สายเซฟโซน
+  "LOW_RISK_HIGH_DISC": "/avatars/snail.png",      // พิทักษ์เงินต้น
+};
+
 const calculatePersona = (riskScore: number, discScore: number): CalculationResult => {
     const results = profileCenters.map((profile) => {
       const distance = Math.hypot(riskScore - profile.risk, discScore - profile.disc);
@@ -572,6 +585,15 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+{/* 🟢 ส่วนรูป Capybara แบบคลีนๆ ไม่มีขอบบนล่าง */}
+<div className="w-full flex justify-center">
+  <img
+    src="/avatars/capybara.png"
+    alt="Capybara"
+    className="w-48 h-auto object-contain drop-shadow-xl" 
+  />
+</div>
+
               <div className="w-full mb-6">
                 <label className="block text-[13px] font-bold text-stone-700 mb-3 text-center uppercase tracking-wider">คุณมาในทรงไหน?</label>
                 <div className="grid grid-cols-4 gap-2">
@@ -753,7 +775,7 @@ export default function Home() {
           <div className="flex-1 flex flex-col bg-[#FCFBF8] relative overflow-hidden">
             <div className="flex-1 overflow-y-auto pb-60 custom-scrollbar">
               <div ref={printRef} className="flex flex-col bg-[#FCFBF8] w-full relative">
-                <div className={`${currentResult.color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-lg shrink-0 rounded-b-[2rem]`}>
+                <div className={`${currentResult.color} text-white p-6 pb-20 text-center flex flex-col items-center relative shadow-lg shrink-0 rounded-b-[2rem]`}>
                   <button onClick={() => setShowJargon(true)} className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 text-white rounded-full transition-all active:scale-90 backdrop-blur-sm border border-white/20 flex items-center justify-center z-20 shadow-sm">
                     <BookOpen size={18} />
                     {activeJargons.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-red-500 w-2.5 h-2.5 rounded-full border border-stone-900 animate-pulse shadow-sm"></span>}
@@ -763,20 +785,35 @@ export default function Home() {
                   <p className="text-white/95 text-[11px] bg-black/25 px-4 py-1.5 rounded-full font-medium tracking-wide border border-white/10 backdrop-blur-sm">{currentResult.subtitle}</p>
                 </div>
 
-                <div className="p-5 pt-10 flex flex-col relative">
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-5xl w-24 h-24 rounded-full flex items-center justify-center shadow-xl border-[4px] border-[#FCFBF8] z-10">
-                    {currentResult.emoji}
-                  </div>
-                  <div className="text-center mt-3 mb-5">
-                    <p className="text-stone-400 text-[11px] font-semibold tracking-widest uppercase mb-1">AVATAR การเงินของคุณ</p>
-                    <h1 className="text-2xl font-black text-stone-900 leading-tight mb-1">{persona === "ไม่ระบุ" ? nickname : `${persona}${nickname}`}</h1>
-                    <p className={`text-lg font-bold leading-tight ${currentResult.titleColor}`}>{currentResult.title}</p>
-                    <div className="flex items-center justify-center mt-2">
-                       <span className="bg-stone-100 text-stone-500 px-3 py-1 rounded-full text-[10px] font-bold border border-stone-200 shadow-sm">
-                         ตรงกับคุณ {matchStats.primary.matchPercentage}%
-                       </span>
-                    </div>
-                  </div>
+             <div className="p-5 pt-10 flex flex-col relative">
+  {/* 🟢 ปรับขนาดจาก w-24 h-24 เป็น w-32 h-32 และเลื่อนขึ้นไป -top-16 (ครึ่งหนึ่งของ 32) */}
+  <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-[6px] border-[#FCFBF8] z-10 overflow-hidden">
+    {avatarImages[matchStats.primary.id] ? (
+      <Image 
+        src={avatarImages[matchStats.primary.id]} 
+        alt={currentResult.title} 
+        width={128} // ปรับให้สัมพันธ์กับ w-32
+        height={128} 
+        className="object-contain w-[85%] h-[85%]" // ใช้ object-contain และลดขนาดลงนิดนึงเพื่อให้เห็นตัวการ์ตูนครบ ไม่โดนขอบวงกลมตัด
+      />
+    ) : (
+      <span className="text-6xl">{currentResult.emoji}</span> // ขยาย Emoji ตามขนาดวงกลม
+    )}
+  </div>
+
+  {/* ปรับ mt-3 เป็น mt-10 หรือ mt-12 เพื่อหลบวงกลมที่ใหญ่ขึ้น */}
+  <div className="text-center mt-12 mb-5">
+    <p className="text-stone-400 text-[11px] font-semibold tracking-widest uppercase mb-1">AVATAR การเงินของคุณ</p>
+    <h1 className="text-2xl font-black text-stone-900 leading-tight mb-1">
+      {persona === "ไม่ระบุ" ? nickname : `${persona}${nickname}`}
+    </h1>
+    <p className={`text-lg font-bold leading-tight ${currentResult.titleColor}`}>{currentResult.title}</p>
+    <div className="flex items-center justify-center mt-2">
+       <span className="bg-stone-100 text-stone-500 px-3 py-1 rounded-full text-[10px] font-bold border border-stone-200 shadow-sm">
+         ตรงกับคุณ {matchStats.primary.matchPercentage}%
+       </span>
+    </div>
+  </div>
                   
                   {/* 1️⃣ จุดแข็ง / มุมมองต่อเงิน */}
                   <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-3 text-center">
@@ -971,7 +1008,6 @@ export default function Home() {
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }} 
-      // เพิ่ม p-6 และ items-center เพื่อให้มันลอยอยู่กลางจอ ไม่ชนขอบ
       className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6" 
       onClick={() => setShowInfo(false)}
     >
@@ -979,7 +1015,6 @@ export default function Home() {
         initial={{ scale: 0.9, y: 20 }} 
         animate={{ scale: 1, y: 0 }} 
         exit={{ scale: 0.9, y: 20 }} 
-        // ปรับ max-h ให้สั้นลงเล็กน้อย (75vh) เพื่อไม่ให้กินขอบบนล่าง
         className="bg-[#FCFBF8] w-full max-w-[360px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200" 
         onClick={e => e.stopPropagation()}
       >
@@ -999,21 +1034,32 @@ export default function Home() {
           </button>
         </div>
 
-        {/* เนื้อหาด้านใน */}
-        <div className="overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[#FCFBF8]">
-          {Object.values(resultData).map((type, idx) => (
-            <div key={idx} className="bg-white p-4 rounded-2xl border border-stone-100 flex items-start gap-4 shadow-sm hover:border-amber-200 transition-colors">
-              <div className="text-4xl mt-1 shrink-0">{type.emoji}</div>
-              <div>
-                <p className={`font-bold text-[14px] ${type.titleColor}`}>{type.title}</p>
-                <p className="text-[11px] text-stone-400 font-medium mb-2 uppercase tracking-tight">{type.subtitle}</p>
-                <p className="text-[12px] text-stone-600 leading-relaxed font-light">
-                  {highlightText(type.desc, "font-bold text-stone-800 bg-amber-50 px-1 rounded-sm border-b border-amber-200")}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+       <div className="overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[#FCFBF8]">
+  {/* เปลี่ยนเป็น Object.entries เพื่อให้ดึง 'key' มาใช้แมพรูปภาพได้ */}
+  {Object.entries(resultData).map(([key, type]) => (
+    <div key={key} className="bg-white p-4 rounded-2xl border border-stone-100 flex items-start gap-4 shadow-sm hover:border-amber-200 transition-colors">
+      
+      {/* ส่วนแสดงรูปภาพ Avatar */}
+      <div className="w-16 h-16 shrink-0 bg-stone-50 rounded-2xl overflow-hidden border border-stone-100 flex items-center justify-center">
+        <img 
+          src={avatarImages[key]} 
+          alt={type.title}
+          className="w-14 h-14 object-contain" // ใช้ object-contain เพื่อให้เห็นตัวการ์ตูนครบตัว
+          onError={(e) => { e.currentTarget.src = "/avatars/default.png" }} // Fallback กรณีหาไฟล์ไม่เจอ
+        />
+      </div>
+
+      <div className="flex-1">
+        <p className={`font-bold text-[14px] ${type.titleColor}`}>{type.title}</p>
+        <p className="text-[11px] text-stone-400 font-medium mb-2 uppercase tracking-tight">{type.subtitle}</p>
+        <p className="text-[12px] text-stone-600 leading-relaxed font-light">
+          {highlightText(type.desc, "font-bold text-stone-800 bg-amber-50 px-1 rounded-sm border-b border-amber-200")}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
+     
       </motion.div>
     </motion.div>
   )}

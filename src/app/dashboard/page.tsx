@@ -553,7 +553,18 @@ const calculateRelativeWeek = (joinDate: Date, targetDate = new Date()) => {
   };
 };
 
-
+// ใส่ไว้ใต้ const profileCenters = [...] ก็ได้ครับ
+const avatarImages: Record<string, string> = {
+  "HIGH_RISK_LOW_DISC": "/avatars/phoenix.png",    // กาวสุดกราฟ
+  "HIGH_RISK_MID_DISC": "/avatars/monkey.png",     // ล่าเทรนด์(ดอย)
+  "HIGH_RISK_HIGH_DISC": "/avatars/wolf.png",      // เซียนระบบ
+  "MID_RISK_LOW_DISC": "/avatars/peacock.png",     // ตัวตึงสายเปย์
+  "MID_RISK_MID_DISC": "/avatars/capybara.png",    // มนุษย์สมดุล
+  "MID_RISK_HIGH_DISC": "/avatars/ant.png",        // นักปั้นพอร์ต
+  "LOW_RISK_LOW_DISC": "/avatars/deer.png",        // ผู้ประสบภัย
+  "LOW_RISK_MID_DISC": "/avatars/turtle.png",      // สายเซฟโซน
+  "LOW_RISK_HIGH_DISC": "/avatars/snail.png",      // พิทักษ์เงินต้น
+};
 
 export default function DashboardPage() {
 
@@ -2837,9 +2848,23 @@ const hasDoneWheelToday = completedQuests.includes(1);
       <div className="flex flex-col items-center">
         <div className="relative mb-6 mt-2">
           <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
-          <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500">
-            {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
-          </div>
+         <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden">
+  
+  {/* 🟢 เช็กว่ามีรูปภาพใน avatarImages ตาม Key หรือไม่ */}
+  {avatarImages[lastMoney.resultKey] ? (
+    <img 
+      src={avatarImages[lastMoney.resultKey]} 
+      alt="Avatar"
+      className="w-[80%] h-[80%] object-contain" // ใช้ 80% เพื่อให้ตัวการ์ตูนไม่เบียดขอบวงกลมเกินไป
+    />
+  ) : (
+    // 🟡 ถ้าไม่มีรูป ให้กลับไปใช้ Emoji เป็นแผนสำรอง (Fallback)
+    <span className="text-5xl">
+      {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
+    </span>
+  )}
+
+</div>
         </div>
 
         <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>

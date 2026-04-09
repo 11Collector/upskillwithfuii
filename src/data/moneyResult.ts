@@ -15,7 +15,7 @@ export const resultData: Record<string, any> = {
   // 🟢 วินัยสูง (High Discipline)
   HIGH_RISK_HIGH_DISC: {
     title: "เซียนระบบสุดตึง", 
-    subtitle: "The System Alpha", 
+    subtitle: "The Wolf", // ปรับจาก The System Alpha
     color: "bg-purple-600", barColor: "bg-purple-500", emoji: "🧠", titleColor: "text-purple-600",
     desc: "คุณมองเงินเป็น **Code** ที่ต้องดีบักและรันให้เป๊ะตามแผน จุดแข็งคือ **ความนิ่ง** ที่แยกอารมณ์ออกจากตัวเลขได้อย่างเด็ดขาด ทำให้คุณคุมเกมได้แม้ในสภาวะตลาดที่บ้าคลั่งที่สุด",
     motto: "เงินคือเครื่องจักร และตัวเราคือคนเขียนโค้ดคุมมันอีกที",
@@ -30,7 +30,7 @@ export const resultData: Record<string, any> = {
   },
   MID_RISK_HIGH_DISC: {
     title: "นักปั้นพอร์ตมือฉมัง", 
-    subtitle: "The Compounder", 
+    subtitle: "The Ant", // ปรับจาก The Compounder
     color: "bg-blue-600", barColor: "bg-blue-500", emoji: "📈", titleColor: "text-blue-600",
     desc: "คุณมองเงินเป็น **เมล็ดพันธุ์** ที่ต้องใช้เวลาบ่มเพาะ จุดแข็งคือ **ความอึดและพลังดอกเบี้ยทบต้น** ที่คุณยึดถือเป็นคัมภีร์ ชัยชนะที่ยั่งยืนไม่ได้สร้างเสร็จในวันเดียว",
     motto: "เงินไม่ได้งอกเงยด้วยความเร็ว แต่งอกเงยด้วยความสม่ำเสมอ",
@@ -45,7 +45,7 @@ export const resultData: Record<string, any> = {
   },
   LOW_RISK_HIGH_DISC: {
     title: "ผู้พิทักษ์เงินต้น", 
-    subtitle: "The Vault Guardian", 
+    subtitle: "The Snail", // ปรับจาก The Vault Guardian
     color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️", titleColor: "text-emerald-600",
     desc: "คุณมองเงินเป็น **ปราสาท** ที่ต้องรักษาฐานที่มั่นให้แข็งแกร่งที่สุด จุดแข็งคือ **ความรอบคอบ** คุณคือนอนหลับฝันดีได้เสมอ เพราะรู้ว่าเงินต้นไม่มีวันพัง",
     motto: "ความมั่งคั่งที่แท้จริง คือการนอนหลับฝันดีโดยไม่ต้องกังวลเรื่องเงิน",
@@ -62,7 +62,7 @@ export const resultData: Record<string, any> = {
   // 🟡 วินัยปานกลาง (Mid Discipline) 
   HIGH_RISK_MID_DISC: {
     title: "ล่าเทรนด์(ติดดอย)", 
-    subtitle: "The Trend Surfer", 
+    subtitle: "The Monkey", // ปรับจาก The Trend Surfer
     color: "bg-rose-500", barColor: "bg-rose-400", emoji: "🏄‍♂️", titleColor: "text-rose-500",
     desc: "คุณมองเงินเป็น **คลื่น** ที่ต้องกระโดดขึ้นไปขี่ให้ทันเวลา จุดแข็งคือ **ความไวและความกล้า** ที่พร้อมรุกในจังหวะที่คนอื่นลังเล แม้จะติดดอยบ้าง แต่ก็พร้อมลุยรอบใหม่เสมอ",
     motto: "ที่ไหนมีกระแส ที่นั่นมีโอกาส (และดอยที่รอให้เราไปพิชิต)",
@@ -76,8 +76,8 @@ export const resultData: Record<string, any> = {
     }
   },
   MID_RISK_MID_DISC: {
-    title: "มนุษย์สุดสมดุล", 
-    subtitle: "The Balanced One", 
+    title: "สุดสมดุล", 
+    subtitle: "The Capybara", // ปรับจาก The Balanced One
     color: "bg-amber-500", barColor: "bg-amber-400", emoji: "⚖️", titleColor: "text-amber-500",
     desc: "คุณมองเงินเป็น **จิ๊กซอว์** ส่วนหนึ่งของชีวิตที่ต้องวางให้ถูกที่ จุดแข็งคือ **ความยืดหยุ่น** ที่ทำให้คุณสนุกกับปัจจุบันได้โดยไม่ทิ้งอนาคต บริหารความสุขและพอร์ตได้ดีที่สุด",
     motto: "เงินมีไว้ใช้สร้างชีวิต ไม่ใช่ให้ชีวิตมีไว้เพื่อหาเงินอย่างเดียว",
@@ -92,7 +92,7 @@ export const resultData: Record<string, any> = {
   },
   LOW_RISK_MID_DISC: {
     title: "สายโคตรเซฟโซน", 
-    subtitle: "The Safety Net", 
+    subtitle: "The Turtle", // ปรับจาก The Safety Net
     color: "bg-teal-500", barColor: "bg-teal-400", emoji: "🛟", titleColor: "text-teal-500",
     desc: "คุณมองเงินเป็น **ชูชีพ** ที่ต้องหยิบใช้ได้ทันทียามฉุกเฉิน จุดแข็งคือ **ความอุ่นใจ** ในการบริหารกระแสเงินสด พร้อมรับมือกับทุกพายุด้วยความใจเย็น",
     motto: "ความเสี่ยงต่ำคือเซฟโซน ความสบายใจคือกำไรที่ประเมินค่าไม่ได้",
@@ -109,7 +109,7 @@ export const resultData: Record<string, any> = {
   // 🔴 วินัยต่ำ (Low Discipline)
   HIGH_RISK_LOW_DISC: {
     title: "ดมกาวสุดกราฟ", 
-    subtitle: "The Degen Gambler", 
+    subtitle: "The Phoenix", // ปรับจาก The Degen Gambler
     color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀", titleColor: "text-red-600",
     desc: "คุณมองเงินเป็น **ตั๋วเปลี่ยนชีวิต** ที่ต้องเดิมพันให้สุดในจังหวะที่ใช่ จุดแข็งคือ **ความกล้าที่ไม่มีใครเทียบได้** และวิสัยทัศน์ที่มองเห็นโอกาสในขณะที่คนอื่นกลัว",
     motto: "เงินน่ะหาใหม่ได้ แต่โอกาสเปลี่ยนชีวิตมันไม่ได้มีมาบ่อยๆ",
@@ -124,7 +124,7 @@ export const resultData: Record<string, any> = {
   },
   MID_RISK_LOW_DISC: {
     title: "ตัวตึงสายเปย์", 
-    subtitle: "The Lifestyle Spender", 
+    subtitle: "The Peacock", // ปรับจาก The Lifestyle Spender
     color: "bg-pink-500", barColor: "bg-pink-400", emoji: "🛍️", titleColor: "text-pink-500",
     desc: "คุณมองเงินเป็น **รางวัลของการใช้ชีวิต** ที่ต้องได้สัมผัส จุดแข็งคือ **ความสามารถในการสร้างความสุข** รวยในบัญชีสู้รวยประสบการณ์วันนี้ไม่ได้",
     motto: "ความมั่งคั่งคือภาพลวงตา แต่ของที่กดลงตะกร้าคือของจริง",
@@ -138,8 +138,8 @@ export const resultData: Record<string, any> = {
     }
   },
   LOW_RISK_LOW_DISC: {
-    title: "ผู้ประสบภัยวัยกลางคน", 
-    subtitle: "The Survivor", 
+    title: "ผู้ประสบภัย", // ตัด "วัยกลางคน" ออกตามภาพล่าสุดของพี่ฟุ้ย
+    subtitle: "The Deer", // ปรับจาก The Survivor
     color: "bg-slate-500", barColor: "bg-slate-400", emoji: "🛶", titleColor: "text-slate-600",
     desc: "คุณมองเงินเป็น **เกราะประคองชีวิต** ที่ต้องบริหารให้ผ่านไปได้ จุดแข็งคือ **ทักษะการเอาตัวรอด** ที่เป็นเลิศ แม้วันนี้จะเหนื่อย แต่หัวใจนักสู้จะพาไปเจอวันที่ดีกว่า",
     motto: "นักสู้วันต่อวัน แค่หมุนเงินรอดไปได้อีกเดือนก็คือชัยชนะแล้ว",
