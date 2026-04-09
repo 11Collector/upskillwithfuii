@@ -786,7 +786,7 @@ export default function Home() {
                   </button>
                   <Trophy size={28} className="text-white/80 mb-2 mt-2 drop-shadow-md" />
                   <p className="text-white/90 text-[10px] font-semibold tracking-widest uppercase mb-3 opacity-80">Money Avatar</p>
-                  <p className="relative z-20 text-white/95 text-[11px] bg-black/50 px-4 py-1.5 rounded-full font-medium tracking-wide border border-white/10">{currentResult.subtitle}</p>
+                  <p className="relative z-20 whitespace-nowrap text-white/95 text-[11px] bg-black/50 px-6 py-1.5 rounded-full font-medium tracking-wide border border-white/10">{currentResult.subtitle}</p>
                 </div>
 
              <div className="p-5 pt-10 flex flex-col relative">
