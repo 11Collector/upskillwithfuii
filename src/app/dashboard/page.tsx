@@ -3383,10 +3383,11 @@ const hasDoneWheelToday = completedQuests.includes(1);
     className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl"
     onClick={() => setShowShareModal(false)}
   >
-    <motion.div 
+   <motion.div 
       initial={{ scale: 0.8, y: 50, rotateY: 20 }}
       animate={{ scale: 1, y: 0, rotateY: 0 }}
-      className="relative max-w-[360px] w-full"
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className="relative max-w-[360px] w-full transform-gpu will-change-transform"
       onClick={(e) => e.stopPropagation()}
     >
       {/* 💳 ตัวการ์ด (The Card Canvas) */}
@@ -3433,13 +3434,16 @@ const hasDoneWheelToday = completedQuests.includes(1);
     <AvatarDisplay currentLevel={currentLevel} gender={gender} />
   </div>
 
-  {/* 🐾 สัตว์เลี้ยง - แก้ไขตำแหน่ง: เท้าแตะพื้นระนาบเดียวกับคนเป๊ะ */}
+{/* 🐾 สัตว์เลี้ยง */}
 {lastMoney?.resultKey && ( 
   <div className="absolute bottom-0 left-1/2 translate-x-[-25%] translate-y-[14px] z-20 w-40 h-40">
     <img 
       src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img} 
       alt="Pet"
       crossOrigin="anonymous" 
+fetchPriority="high"
+      decoding="async"
+      
       className="w-full h-full object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)]" 
     />
   </div>
