@@ -429,6 +429,62 @@ MONEY: {
   ]
 };
 
+const INSPIRATIONAL_MESSAGES = [
+  // --- หมวด: ขอบคุณตัวเองในอนาคต ---
+  "คุณในเวอร์ชันพรุ่งนี้ ต้องขอบคุณคุณในวันนี้แน่ๆ!",
+  "วันนี้คุณเพิ่งซื้อเวลาและความสำเร็จให้ตัวเองในอนาคตไปนะ เก่งมาก!",
+  "จดจำความรู้สึกตอนติ๊กถูกนี้ไว้ เพราะนี่คือรากฐานของความสำเร็จที่คุณฝันถึง",
+  "คุณกำลังสะสม 'แต้มบุญ' ของความสำเร็จไว้ในอนาคตนะเนี่ย",
+  "อนาคตที่สดใส เริ่มต้นจากการทำเรื่องเล็กๆ ในวันนี้ให้สำเร็จแบบที่คุณทำอยู่ครับ",
+
+  // --- หมวด: พลังของการทำสม่ำเสมอ (Consistency) ---
+  "Consistency is Key! คุณทำได้ดีมาก รักษาจังหวะนี้ไว้!",
+  "ความเก่งไม่ได้สร้างในวันเดียว แต่สร้างได้ในทุกวันแบบที่คุณทำอยู่",
+  "วินัยคือสะพานที่เชื่อมระหว่าง 'เป้าหมาย' กับ 'ความสำเร็จ' และคุณเพิ่งข้ามมาอีกขั้นแล้ว",
+  "ความสม่ำเสมอคือพลังวิเศษ และวันนี้คุณเพิ่งใช้พลังนั้นไป เก่งมากครับ!",
+  "เป้าหมายใหญ่แค่ไหน ก็แพ้ให้กับความสม่ำเสมอของคุณในวันนี้",
+
+  // --- หมวด: ก้าวเล็กๆ ที่ยิ่งใหญ่ (Small Wins) ---
+  "ก้าวเล็กๆ วันนี้ คือรากฐานของความสำเร็จที่ยิ่งใหญ่",
+  "ความก้าวหน้าเพียง 1% ในวันนี้ เมื่อรวมกันครบปีจะทำให้คุณเปลี่ยนไปมหาศาล!",
+  "อิฐก้อนแรกของความสำเร็จ ถูกวางลงอย่างสวยงามแล้วในวันนี้",
+  "วันนี้คุณชนะใจตัวเองไปได้อีกหนึ่งก้าว... และนั่นคือชัยชนะที่ยิ่งใหญ่ที่สุด",
+  "ไม่มีความพยายามไหนที่สูญเปล่า โดยเฉพาะความพยายามที่คุณทำในวันนี้",
+
+  // --- หมวด: การรักษาคำมั่นสัญญา (Integrity) ---
+  "คุณเก่งมากที่รักษาคำพูดกับตัวเองได้ในวันนี้ ภูมิใจแทนจริงๆ!",
+  "คุณไม่ได้แค่ทำเควสเสร็จ แต่คุณกำลังรักษาสัญญาที่ให้ไว้กับตัวเอง",
+  "ทำหน้าที่ของตัวเองได้ยอดเยี่ยมที่สุดแล้ว! Keep the momentum นะครับ",
+  "วันนี้เหนื่อยหน่อย แต่คุณจะภูมิใจที่ไม่ได้ยอมแพ้",
+  "ยินดีด้วย! คุณเพิ่งชนะความขี้เกียจของตัวเองไปได้อีก 1 ยก!",
+  // --- หมวด: ตัวตนคนใหม่ (Identity) ---
+  "ทุกครั้งที่ติ๊กถูก คือการยืนยันว่าคุณคือ 'คนจริง' ที่ลงมือทำตามคำพูดครับ",
+  "คุณกำลังสร้างหลักฐานใหม่! ว่าคุณคือคนที่พัฒนาตัวเองได้ในทุกๆ วัน",
+  "ตัวตนคนใหม่ของคุณ กำลังถูกสร้างขึ้นทีละนิดในทุกก้าวที่คุณเดิน!",
+  "ไม่ใช่แค่ทำเควสสำเร็จ! แต่คุณกำลังฝึกเป็นคนที่ 'คุมชีวิตตัวเอง' ได้อย่างยอดเยี่ยม",
+  "นี่แหละคือวิถีของคนสำเร็จ. ภูมิใจในตัวตนคนใหม่นี้ไว้นะครับ",
+
+  // --- หมวด: พลังใจ (Resilience) ---
+  "ถึงจะเหนื่อยแต่ก็ยังทำ! นี่แหละครับคือหัวใจของแชมป์ตัวจริง",
+  "ความกลัวทำอะไรคุณไม่ได้! เพราะความตั้งใจของคุณมันใหญ่กว่าเสมอ",
+  "ชนะใครก็ไม่ยิ่งใหญ่เท่าชนะใจตัวเอง. และวันนี้คุณทำได้แล้วครับ!",
+  "ในวันที่ไม่อยากทำแต่ยังทำได้! คือวันที่คุณเติบโตได้มากที่สุด",
+  "ความพยายามในวันนี้. คือเกราะป้องกันความล้มเหลวในวันหน้าครับ",
+
+  // --- หมวด: เห็นคุณค่าในปัจจุบัน (Mindfulness) ---
+  "ขอบคุณตัวเอง! ที่ให้ความสำคัญกับ 'ปัจจุบัน' อย่างเต็มที่ เก่งมากครับ",
+  "ความสุขไม่ได้อยู่ที่เส้นชัยอย่างเดียว! แต่อยู่ที่ความภูมิใจที่คุณทำสำเร็จในตอนนี้",
+  "คุณเก่งมากที่หาเวลาดูแลตัวเอง. ท่ามกลางวันที่วุ่นวายแบบนี้",
+  "สูดลมหายใจลึกๆ! แล้วยิ้มให้ความสำเร็จตรงหน้านี้สักนิดนะครับ",
+  "สิ่งเล็กๆ ที่ทำวันนี้. คือความหมายที่ยิ่งใหญ่ของคำว่า 'ชีวิตที่มีคุณภาพ'",
+
+  // --- หมวด: พลังของการแบ่งปัน (Contribution) ---
+  "สิ่งที่คุณทำวันนี้ไม่ใช่แค่เพื่อตัวเอง! แต่กำลังส่งต่อพลังงานดีๆ ให้คนรอบข้างครับ",
+  "การเติบโตของคุณ. คือแสงสว่างที่ช่วยนำทางให้คนอื่นได้เช่นกัน",
+  "โลกต้องการคนแบบคุณ! คนที่ตั้งใจพัฒนาตัวเองเพื่อไปสร้างสิ่งดีๆ ต่อไป"
+
+];
+
 // 💡 ฟังก์ชันแปลงข้อความ AI ให้สวยงาม (ไฮไลต์คำ, ใส่กรอบ, จัดบรรทัด)
 const formatAnalysisText = (text: string) => {
   if (!text) return null;
@@ -553,6 +609,7 @@ const calculateRelativeWeek = (joinDate: Date, targetDate = new Date()) => {
   };
 };
 
+
 // ใส่ไว้ใต้ const profileCenters = [...] ก็ได้ครับ
 const avatarImages: Record<string, string> = {
   "HIGH_RISK_LOW_DISC": "/avatars/phoenix.png",    // กาวสุดกราฟ
@@ -579,11 +636,14 @@ const PET_DATA: Record<string, { img: string; name: string }> = {
   "DEFAULT": { img: "/avatars/ant-pixel.png", name: "เพื่อนตัวจิ๋ว" }
 };
 
+
 export default function DashboardPage() {
 
   const [weeklyData, setWeeklyData] = useState({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0 ,momentum_count: 0});
 const [improvement, setImprovement] = useState(0);
 const [isFirstWeek, setIsFirstWeek] = useState(true); // เพิ่มตัวนี้ (Default เป็น true ไว้ก่อน)
+// เพิ่มไว้แถวๆ State อื่นๆ ครับ
+const [showSuccessToast, setShowSuccessToast] = useState<string | null>(null);
   // 🌟 เพิ่ม State เก็บข้อมูล Week ปัจจุบันของผู้ใช้
   const [relativeWeekInfo, setRelativeWeekInfo] = useState({ id: "week-1", label: "สัปดาห์ที่ 1", range: "กำลังโหลด..." });
  useEffect(() => {
@@ -1420,8 +1480,18 @@ const toggleQuest = async (id: number | string, xp: number) => {
   if (!user || isToggling) return; 
   setIsToggling(true);
 
-  const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
   const isDone = completedQuests.includes(id);
+
+if (!isDone) {
+  const randomIndex = Math.floor(Math.random() * INSPIRATIONAL_MESSAGES.length);
+  setShowSuccessToast(INSPIRATIONAL_MESSAGES[randomIndex]);
+  
+  // ตั้งเวลาปิด (2.5 วินาทีพอกำลังสวย ไม่นานเกินไป)
+  setTimeout(() => setShowSuccessToast(null), 2500);
+}
+
+
+  const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
   const userRef = doc(db, "users", user.uid);
   
   // 🚨 [ANTI-FARMING] 1. เช็กว่าหมวดนี้วันนี้รับแต้มไปหรือยัง?
@@ -1801,6 +1871,29 @@ const discThemes = {
 // เลือก theme ปัจจุบัน ถ้าไม่ตรงให้ใช้ค่า Default (C)
 // แก้บรรทัดที่ดึง theme เป็นแบบนี้ครับ
 const theme = discThemes[discType as keyof typeof discThemes] || discThemes.C;
+
+
+// เอาไปวางไว้ก่อน return ใน DashboardPage
+const formatInspirationalText = (text: string) => {
+  // หาจุดจบของประโยคแรก (ที่มี !, ?, .)
+  const match = text.match(/([^!?.]+)([!?.]+)(.*)/);
+  
+  if (match) {
+    return (
+      <>
+        <span className="block font-black text-slate-800 text-2xl md:text-3xl leading-tight mb-3">
+          {match[1]}{match[2]}
+        </span>
+        <span className="block font-medium text-slate-400 text-sm md:text-base tracking-wide">
+          {match[3].trim()}
+        </span>
+      </>
+    );
+  }
+  
+  // ถ้าไม่มีเครื่องหมายตัด ให้โชว์แบบปกติแต่เน้นหนา
+  return <span className="font-black text-slate-800 text-2xl">{text}</span>;
+};
 
   return (
 <div className="min-h-screen bg-transparent p-4"> 
@@ -3398,7 +3491,40 @@ const hasDoneWheelToday = completedQuests.includes(1);
     backgroundColor: theme.hexBg, // บังคับสีพื้นหลังด้วย Inline Style
     backgroundImage: `linear-gradient(to bottom, ${theme.hexGlow}, transparent)` // ใส่ Glow เป็น Gradient สำรอง
   }}
+  
 >
+{/* 🎨 Layer 1: Minimalist Monogram (จางกว่าเดิม 3 เท่า) */}
+<div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0 opacity-[0.015]"> {/* เหลือแค่ 1.5% */}
+  <div className="flex flex-col gap-4 rotate-[-15deg] scale-125 transform">
+    {[...Array(20)].map((_, rowIndex) => (
+      <div 
+        key={rowIndex} 
+        className={`flex gap-10 text-3xl font-black text-white italic ${rowIndex % 2 === 0 ? 'ml-[-30px]' : 'ml-[30px]'}`}
+      >
+        {[...Array(12)].map((_, colIndex) => (
+          <span key={colIndex}>{discType}</span>
+        ))}
+      </div>
+    ))}
+  </div>
+</div>
+
+{/* 🎨 Layer 2: Hero Centered Icon (Perfect Alignment) */}
+<div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0">
+  <span 
+    className={`text-[46rem] font-black ${theme.accent} leading-none transform italic rotate-[-12deg] -translate-y-8`} // ดันขึ้นบนนิดนึง (-translate-y-8)
+    style={{ 
+      WebkitTextStroke: `14px ${theme.hexGlow}`, // หนาขึ้นอีกนิดให้เส้นคมชัด
+      color: 'transparent',
+      opacity: 0.55, // ชัดขึ้นอีกนิดเพื่อให้สู้กับพื้นหลังน้ำเงินเข้มได้
+      filter: `drop-shadow(0 0 40px ${theme.hexGlow}99)`, // Glow สว่างขึ้น
+      lineHeight: 1,
+      display: 'inline-block'
+    }}
+  >
+    {discType}
+  </span>
+</div>
 {/* ✨ Premium Lighting Effects */}
 <div 
   className={`absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b ${theme.glow} to-transparent`} 
@@ -3561,6 +3687,51 @@ fetchPriority="high"
         >
           ไว้กดทีหลัง
         </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+{/* ✨ Center Screen Inspirational Popup (Premium Version) */}
+<AnimatePresence>
+  {showSuccessToast && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
+      onClick={() => setShowSuccessToast(null)}
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 20, rotate: -2 }}
+        animate={{ 
+          scale: 1, y: 0, rotate: 0,
+          transition: { type: "spring", bounce: 0.5, duration: 0.6 } 
+        }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        className="relative max-w-sm w-full bg-white/90 backdrop-blur-2xl p-10 rounded-[3.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.25)] border border-white text-center overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 🌈 แสงฟุ้งจางๆ (Soft Glow) ด้านหลัง */}
+        <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-rose-400/20 via-orange-400/20 to-amber-400/20 blur-[80px] rounded-full pointer-events-none" />
+        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-tr from-blue-400/10 via-emerald-400/10 to-teal-400/10 blur-[80px] rounded-full pointer-events-none" />
+
+        <div className="relative z-10">
+          {/* Icon ที่มีเงาสะท้อนสวยๆ */}
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-[0_15px_30px_-5px_rgba(249,115,22,0.4)] rotate-3">
+            <Sparkles size={32} className="text-white fill-current animate-pulse" />
+          </div>
+
+          <div className="space-y-2">
+            {formatInspirationalText(showSuccessToast)}
+          </div>
+
+          {/* แถบสีรุ้งจางๆ ปิดท้าย (Progress Indicator หลอกๆ) */}
+          <div className="mt-10 flex justify-center gap-1 opacity-30">
+            <div className="h-1 w-12 bg-rose-400 rounded-full" />
+            <div className="h-1 w-1 bg-orange-400 rounded-full" />
+            <div className="h-1 w-1 bg-amber-400 rounded-full" />
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   )}
