@@ -1,0 +1,40 @@
+{/* 💎 Premium Deep Report Card */} in grid
+<motion.div 
+  whileHover={{ y: -5 }}
+  className="md:col-span-3 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-8 border border-indigo-500/30 relative overflow-hidden group shadow-2xl"
+>
+  {/* ✨ Premium Decor */}
+  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700" />
+  
+  <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+    <div className="flex-1 text-center md:text-left">
+      <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full mb-4">
+        <Sparkles size={14} className="text-indigo-400" />
+        <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Unlock Deep Insight</span>
+      </div>
+      <h2 className="text-3xl font-black text-white mb-2">The Master Blueprint Report</h2>
+      <p className="text-slate-400 text-sm max-w-xl">
+        วิเคราะห์เจาะลึกความสัมพันธ์ของ **นิสัย (DISC)**, **การเงิน (Money)** และ **สมดุลชีวิต (Wheel)** ออกมาเป็นแผนผังชีวิต 30 วันสำหรับคุณโดยเฉพาะ (PDF 10+ หน้า)
+      </p>
+    </div>
+    
+ <button 
+  onClick={handleCheckout}
+  disabled={isRedirecting}
+  className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-black px-10 py-5 rounded-3xl shadow-xl hover:shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all min-w-[200px] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+>
+  {isRedirecting ? (
+    <div className="flex flex-col items-center gap-2">
+      {/* วงกลมหมุนๆ (Spinner) */}
+      <div className="w-6 h-6 border-4 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
+      <span className="text-[10px] uppercase tracking-widest">กำลังดำเนินการ...</span>
+    </div>
+  ) : (
+    <div className="flex flex-col items-center">
+      <span className="text-lg">ปลดล็อก Report</span>
+      <span className="text-[10px] opacity-80 mt-1">เพียง $4.99 (ประมาณ 179.-)</span>
+    </div>
+  )}
+</button>
+  </div>
+</motion.div>
