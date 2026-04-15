@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-04-10" as any, // หรือเวอร์ชันล่าสุดที่คุณฟุ้ยเห็นใน Dashboard
-});
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-04-10" as any, 
+    })
+  : null;
 
 export async function POST(req: Request) {
   try {
     const { uid, email, isSubscription } = await req.json();
     const origin = new URL(req.url).origin;
+
+    if (!stripe) {
+      console.error("❌ Stripe API Error: STRIPE_SECRET_KEY is missing");
+      return NextResponse.json({ error: "Stripe configuration error" }, { status: 500 });
+    }
 
     // 1. ตรวจสอบข้อมูลเบื้องต้น (อีเมลไม่มีไม่เป็นไร ให้กรอกใน Stripe ได้)
     if (!uid) {
