@@ -1542,7 +1542,7 @@ export default function DashboardPage() {
 
     // 🚨 [ANTI-FARMING] 1. เช็กว่าหมวดนี้วันนี้รับแต้มไปหรือยัง?
     const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
-    const questType = quest?.type || "";
+    const questType = quest?.type || (id === 'special-01' ? "SPECIAL" : "OTHER");
     const alreadyClaimedToday = dailyClaimed[questType] === todayStr;
 
     // 🌟 [NEW LOGIC] จัดการ Wheel Plan Day แยกต่างหาก
