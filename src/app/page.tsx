@@ -15,7 +15,7 @@ import { loadStripe } from '@stripe/stripe-js';
 const t = {
   heroTitle1: "การพัฒนาตัวเองที่สนุกกว่าที่คิด",
   heroTitle2: "ด้วย",
-  heroSub: "เครื่องมือวิเคราะห์ตนเอง เพื่อให้คุณเป็นคนสำเร็จในเวอร์ชันที่ดีกว่าเดิม",
+  heroSub: "เครื่องมือวิเคราะห์และอัพสกิล Level Up สู่เวอร์ชันที่เก่งกว่าเดิม",
   authWelcome: "สวัสดี, คุณ",
   authSub: "พร้อมที่จะขยับขีดจำกัดของตัวเองในวันนี้หรือยัง?",
   proMember: "Pro Member",
@@ -36,7 +36,7 @@ const t = {
   footer: "© 2026 อัพสกิลกับฟุ้ย",
   tools: {
     wheel: { name: "Wheel Of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", gimmick: "500K+ Views บน Social" },
-    disc: { name: "Who Are You ?", desc: "ค้นหาตัวตนและการสื่อสารในที่ทำงานผ่าน DISC", gimmick: "ผู้ใช้งาน 120K+" },
+    disc: { name: "Who Are You ?", desc: "ค้นหาตัวตนและการสื่อสารในที่ทำงานผ่าน DISC", gimmick: "ผู้ใช้งาน 120k+ คน" },
     money: { name: "Money Avatar", desc: "ถอดรหัสสไตล์การเงินของคุณ", gimmick: "วิเคราะห์เจาะลึกระดับ PRO" },
     quotes: { name: "คมสัดสัด", desc: "สร้างคำคมฮีลใจเฉพาะคุณ", gimmick: "Vibe ดี โดนใจ Gen Z" }
   }
@@ -51,7 +51,7 @@ const PRICE_IDS = {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -62,10 +62,10 @@ export default function Home() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          uid: user.uid, 
+        body: JSON.stringify({
+          uid: user.uid,
           email: user.email,
-          priceId: PRICE_IDS[billingPlan] 
+          priceId: PRICE_IDS[billingPlan]
         }),
       });
 
@@ -78,65 +78,65 @@ export default function Home() {
     }
   };
 
-// 1. เก็บสถานะ Auth ตามปกติ
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-    setUser(currentUser);
-    setLoading(false);
-  });
-  const timer = setTimeout(() => setLoading(false), 5000);
-  return () => {
-    unsubscribe();
-    clearTimeout(timer);
-  };
-}, []);
-
-// 2. แยก Logic การ Scroll มาไว้ตรงนี้ (Watch เฉพาะตอน user เปลี่ยนจาก null เป็นมีค่า)
-useEffect(() => {
-  if (user) {
-    // ใช้ requestAnimationFrame เพื่อรอให้ DOM เรนเดอร์ Dashboard เสร็จก่อนค่อยเลื่อน
-    // จะช่วยลดอาการหน้าจอกระตุกได้ครับ
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+  // 1. เก็บสถานะ Auth ตามปกติ
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
     });
-  }
-}, [user]); // ทำงานเฉพาะเมื่อตัวแปร user มีการเปลี่ยนแปลง
+    const timer = setTimeout(() => setLoading(false), 5000);
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
+  }, []);
 
-const handleLogin = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const loggedInUser = result.user;
-    
-    const userRef = doc(db, "users", loggedInUser.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        uid: loggedInUser.uid,
-        email: loggedInUser.email,
-        displayName: loggedInUser.displayName,
-        photoURL: loggedInUser.photoURL,
-        subscription_tier: "free",
-        createdAt: serverTimestamp(),
+  // 2. แยก Logic การ Scroll มาไว้ตรงนี้ (Watch เฉพาะตอน user เปลี่ยนจาก null เป็นมีค่า)
+  useEffect(() => {
+    if (user) {
+      // ใช้ requestAnimationFrame เพื่อรอให้ DOM เรนเดอร์ Dashboard เสร็จก่อนค่อยเลื่อน
+      // จะช่วยลดอาการหน้าจอกระตุกได้ครับ
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
       });
-    } 
-
-    // ✅ เพิ่มบรรทัดนี้ครับ: เพื่อให้หน้าเด้งกลับไปบนสุดแบบลื่นๆ
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
-  } catch (error: any) {
-    if (error.code !== 'auth/popup-closed-by-user') {
-      console.error("Login failed:", error);
     }
-  }
-};
+  }, [user]); // ทำงานเฉพาะเมื่อตัวแปร user มีการเปลี่ยนแปลง
+
+  const handleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const loggedInUser = result.user;
+
+      const userRef = doc(db, "users", loggedInUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid: loggedInUser.uid,
+          email: loggedInUser.email,
+          displayName: loggedInUser.displayName,
+          photoURL: loggedInUser.photoURL,
+          subscription_tier: "free",
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      // ✅ เพิ่มบรรทัดนี้ครับ: เพื่อให้หน้าเด้งกลับไปบนสุดแบบลื่นๆ
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error("Login failed:", error);
+      }
+    }
+  };
   const handleLogout = () => signOut(auth);
 
   // ==========================================
   // 2. จัดการข้อมูล Tools
   // ==========================================
   const getToolsData = () => [
-    { 
+    {
       id: "wheel", name: t.tools.wheel.name, desc: t.tools.wheel.desc, gimmick: t.tools.wheel.gimmick,
       icon: <PieChart size={28} className="text-red-600" />, path: "/tools/wheel-of-life", color: "bg-red-50 border-red-200",
       gimmickUI: (
@@ -146,7 +146,7 @@ const handleLogin = async () => {
         </div>
       )
     },
-    { 
+    {
       id: "disc", name: t.tools.disc.name, desc: t.tools.disc.desc, gimmick: t.tools.disc.gimmick,
       icon: <Users size={28} className="text-blue-600" />, path: "/tools/disc", color: "bg-blue-50 border-blue-200",
       gimmickUI: (
@@ -156,7 +156,7 @@ const handleLogin = async () => {
         </div>
       )
     },
-    { 
+    {
       id: "money", name: t.tools.money.name, desc: t.tools.money.desc, gimmick: t.tools.money.gimmick,
       icon: <Wallet size={28} className="text-amber-600" />, path: "/tools/money-avatar", color: "bg-amber-50 border-amber-200",
       gimmickUI: (
@@ -166,7 +166,7 @@ const handleLogin = async () => {
         </div>
       )
     },
-    { 
+    {
       id: "quotes", name: t.tools.quotes.name, desc: t.tools.quotes.desc, gimmick: t.tools.quotes.gimmick,
       icon: <Quote size={28} className="text-purple-600" />, path: "/tools/khomsatsat", color: "bg-purple-50 border-purple-200",
       gimmickUI: (
@@ -188,48 +188,112 @@ const handleLogin = async () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-6 font-sans">
-      
+
       {/* --- 1. Hero Section --- */}
       {!user ? (
-        <section className="text-center py-12 sm:py-16 mb-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm px-6 mt-12">
-          <div className="inline-flex w-24 h-24 sm:w-32 sm:h-32 p-4 sm:p-5 bg-red-50 rounded-3xl mb-8 shadow-inner items-center justify-center">
-            <img 
-              src="/logo-full.png" 
-              alt="Idea Logo" 
-              className="w-full h-full object-contain drop-shadow-sm opacity-90 transition-transform duration-300 hover:scale-105" 
-            />
+        <section className="relative py-10 sm:py-12 md:py-16 mb-10 px-6 lg:px-12 mt-2 sm:mt-4 z-0">
+          {/* Box Background and Gradient contained via absolute inset */}
+          <div className="absolute inset-0 bg-white rounded-[2.5rem] sm:rounded-[3rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] overflow-hidden -z-10">
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black mb-4 text-slate-900 leading-tight tracking-tight">
-            {t.heroTitle1} <br className="hidden sm:block"/>
-            {t.heroTitle2} <span className="text-red-800"> UPSKILL EVERYDAY</span>
-          </h1>
-          <p className="text-slate-500 mb-8 max-w-lg mx-auto text-base sm:text-lg font-medium">
-            {t.heroSub}
-          </p>
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16">
+
+            {/* Left side: Typography & CTA */}
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-20 w-full mb-0">
+              {/* Logo */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="inline-flex w-24 h-24 sm:w-28 sm:h-28 p-5 bg-red-50 rounded-[2rem] shadow-inner border border-red-100 items-center justify-center relative mb-8"
+              >
+                <img
+                  src="/logo-full.png"
+                  alt="Idea Logo"
+                  className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                className="flex flex-col md:items-start items-center"
+              >
+                <div className="mb-4">
+                  <span className="text-red-700 font-extrabold bg-red-50/80 px-4 py-2 rounded-2xl relative inline-flex items-center gap-2 border border-red-100 shadow-sm text-sm sm:text-base tracking-widest uppercase">
+                    UPSKILL EVERYDAY
+                    <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" style={{ transform: 'translate(40%, -40%)' }}></div>
+                  </span>
+                </div>
+                <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-black mb-6 text-slate-900 leading-[1.2] md:leading-[1.15] tracking-tight">
+                  <span className="whitespace-nowrap">การพัฒนาตัวเอง</span><br />
+                  สนุกกว่าที่คิด
+                </h1>
+                <p className="text-slate-500 mb-0 md:mb-8 max-w-lg text-base sm:text-lg font-medium leading-relaxed px-2 md:px-0">
+                  เครื่องมือวิเคราะห์และอัพสกิล<br />
+                  Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
+                </p>
+              </motion.div>
+            </div>
+
+            {/* Right side: Avatar image */}
+            <div className="flex-1 flex flex-col justify-end items-center md:items-end relative w-full -mx-4 md:mx-0 md:-mr-6 lg:-mr-12 xl:-mr-16 -mt-10 -mb-4 sm:-mt-16 sm:-mb-6 md:-mt-8 md:-mb-2">
+
+              <div className="relative w-full flex justify-center md:justify-end">
+
+                <motion.img
+                  initial={{ opacity: 0, scale: 0.85, x: 40 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ duration: 1, type: "spring", bounce: 0.4, delay: 0.1 }}
+                  src="/avatar.png"
+                  alt="Avatar Graphic"
+                  className="relative z-10 w-[115%] sm:w-[450px] md:w-[400px] lg:w-[450px] xl:w-[500px] max-w-[130%] md:max-w-[150%] lg:max-w-[150%] h-auto object-cover object-bottom hover:-translate-y-2 hover:scale-105 transition-all duration-500 origin-bottom md:origin-bottom-right pointer-events-auto"
+                />
+              </div>
+
+              {/* Login Remark under Avatar */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="relative z-20 mt-1 md:mt-0 px-4 md:px-0 md:pr-10 lg:pr-20 xl:pr-24 text-center md:text-right w-full flex justify-center md:justify-end"
+              >
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm text-left relative z-30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></div>
+                  <span className="text-[10px] sm:text-xs text-slate-500 font-semibold tracking-tight leading-snug">
+                    เพื่อเก็บข้อมูลและสร้าง Avatar ของคุณ <br className="md:hidden" />
+                    กรุณา <b>Login ด้วย Google</b> ก่อนเข้าใช้งาน
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+
+          </div>
         </section>
       ) : (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative flex flex-col md:flex-row justify-between items-center bg-white p-8 md:p-10 rounded-[3rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] border border-slate-100 mb-12 gap-8 overflow-hidden group"
         >
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-red-500/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-red-500/10 transition-colors duration-700" />
-          
-          <button 
-            onClick={handleLogout} 
+
+          <button
+            onClick={handleLogout}
             className="absolute top-4 right-4 z-50 flex items-center gap-2 p-4 sm:p-2 text-slate-400 hover:text-red-600 active:text-red-500 transition-all text-[11px] font-black uppercase tracking-[0.2em] group/logout active:scale-95"
           >
-            <LogOut size={18} className="group-hover/logout:-translate-x-1 transition-transform" /> 
+            <LogOut size={18} className="group-hover/logout:-translate-x-1 transition-transform" />
             <span className="hidden sm:inline">{t.logout}</span>
           </button>
 
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6 z-10 w-full md:w-auto">
             <div className="relative shrink-0">
               <div className="absolute inset-0 bg-red-600/20 blur-xl rounded-full scale-75 group-hover:scale-110 transition-transform duration-500" />
-              <img 
-                src={user.photoURL || "/default-avatar.png"} 
-                alt="Profile" 
-                className="relative w-24 h-24 rounded-full border-[6px] border-white shadow-xl object-cover" 
+              <img
+                src={user.photoURL || "/default-avatar.png"}
+                alt="Profile"
+                className="relative w-24 h-24 rounded-full border-[6px] border-white shadow-xl object-cover"
               />
             </div>
 
@@ -248,7 +312,7 @@ const handleLogin = async () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 w-full md:w-56 z-10 md:mt-6"> 
+          <div className="flex flex-col gap-2 w-full md:w-56 z-10 md:mt-6">
             <Link href="/dashboard" className="w-full group/btn">
               <button className="relative w-full overflow-hidden bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-sm hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-3">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
@@ -259,11 +323,11 @@ const handleLogin = async () => {
           </div>
 
           <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-50">
-            <motion.div 
+            <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: "0%" }}
               transition={{ duration: 1.5, ease: "easeOut" }}
-              className="h-full w-full bg-gradient-to-r from-red-800 via-amber-500 to-transparent opacity-30" 
+              className="h-full w-full bg-gradient-to-r from-red-800 via-amber-500 to-transparent opacity-30"
             />
           </div>
         </motion.div>
@@ -272,17 +336,17 @@ const handleLogin = async () => {
       {/* --- 2. Tools Grid --- */}
       <section className="mb-12">
         <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-           {t.toolsHeader}
+          {t.toolsHeader}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {getToolsData().map((tool) => (
             <Link key={tool.id} href={`${tool.path}/info`} className="block h-full group">
               <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 flex items-center gap-4 cursor-pointer hover:-translate-y-1 h-full relative overflow-hidden">
-                
+
                 <div className={`p-4 rounded-2xl border ${tool.color} group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 shrink-0 self-start`}>
                   {tool.icon}
                 </div>
-                
+
                 <div className="flex-1 flex flex-col h-full justify-center">
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg group-hover:text-red-600 transition-colors">{tool.name}</h3>
@@ -314,7 +378,7 @@ const handleLogin = async () => {
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 opacity-80" />
 
           <div className="relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 p-8 sm:p-20 items-center">
-            
+
             <div className="max-w-md mx-auto md:mx-0 text-left">
               <span className="text-amber-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-4 block">
                 {t.pitchBeta}
@@ -323,7 +387,7 @@ const handleLogin = async () => {
                 {t.pitchTitle1} <br />
                 <span className="text-blue-400">{t.pitchTitle2}</span>
               </h2>
-              
+
               <ul className="space-y-4 mb-10">
                 {t.pitchList.map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-slate-300 text-sm font-medium">
@@ -345,27 +409,27 @@ const handleLogin = async () => {
                   </svg>
                   {t.loginGoogle}
                 </button>
-                
+
                 <p className="text-[10px] text-slate-500 font-medium ml-2 mb-2">
                   {t.loginRemark}
                 </p>
 
                 <div className="w-full max-w-sm pt-5 border-t border-white/5">
-                   <div className="flex items-center gap-2 mb-2">
-                      <ShieldCheck size={14} className="text-emerald-500" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Privacy & Security</span>
-                   </div>
-                   <p className="text-[10.5px] text-slate-500 leading-relaxed font-bold tracking-tight">
-                     Personalized insights only. Industry-standard security. <br className="hidden sm:block"/>
-                     <span className="text-slate-400">Zero individual data sharing. Anonymous aggregate trends only.</span>
-                   </p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldCheck size={14} className="text-emerald-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Privacy & Security</span>
+                  </div>
+                  <p className="text-[10.5px] text-slate-500 leading-relaxed font-bold tracking-tight">
+                    Personalized insights only. Industry-standard security. <br className="hidden sm:block" />
+                    <span className="text-slate-400">Zero individual data sharing. Anonymous aggregate trends only.</span>
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Right Side: Decorative Mockup */}
             <div className="hidden md:flex justify-end relative h-full items-center">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
@@ -394,8 +458,8 @@ const handleLogin = async () => {
                         <motion.circle
                           cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="12" fill="transparent"
                           strokeDasharray="263.9" strokeDashoffset={263.9}
-                          animate={{ strokeDashoffset: 66 }} 
-                          transition={{ duration: 1.5, delay: 1 }} 
+                          animate={{ strokeDashoffset: 66 }}
+                          transition={{ duration: 1.5, delay: 1 }}
                           className="text-blue-500" strokeLinecap="round"
                         />
                       </svg>
@@ -431,7 +495,7 @@ const handleLogin = async () => {
                   transition={{ delay: 2.2, duration: 0.6, type: "spring", bounce: 0.6 }}
                   className="absolute -top-12 -right-8 z-50"
                 >
-                  <motion.div 
+                  <motion.div
                     animate={{ y: [0, -6, 0] }}
                     transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                     className="bg-blue-600 px-6 py-4 rounded-[2rem] border-4 border-slate-900 shadow-[0_20px_40px_rgba(37,99,235,0.4)] flex items-center gap-3"
@@ -443,8 +507,8 @@ const handleLogin = async () => {
                       <span className="text-blue-100 font-bold text-[9px] uppercase tracking-widest leading-tight">New Status</span>
                       <span className="text-white font-black text-lg leading-tight">LEVEL UP!</span>
                     </div>
-                    
-                    <motion.div 
+
+                    <motion.div
                       animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                       className="absolute -top-2 -right-2 text-amber-300"
@@ -454,9 +518,9 @@ const handleLogin = async () => {
                   </motion.div>
                 </motion.div>
 
-                <motion.div 
-                  animate={{ y: [0, -10, 0] }} 
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} 
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute -bottom-6 -left-12 bg-white/10 backdrop-blur-xl px-5 py-3.5 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 z-30"
                 >
                   <Zap size={18} className="text-amber-400 fill-current" />
@@ -466,8 +530,8 @@ const handleLogin = async () => {
             </div>
           </div>
         </section>
-      )} 
-      
+      )}
+
       <p className="mt-12 text-center text-xs text-slate-400 font-medium">
         {t.footer}
       </p>
@@ -475,7 +539,7 @@ const handleLogin = async () => {
       {/* --- Upgrade Modal --- */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -483,13 +547,13 @@ const handleLogin = async () => {
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
           />
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="relative w-full max-w-[360px] bg-slate-900/90 border border-white/10 rounded-[2.5rem] p-1 shadow-[0_0_50px_-12px_rgba(245,158,11,0.25)] overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
-            
+
             <div className="relative p-7 text-center">
               <div className="relative mx-auto w-16 h-16 mb-6">
                 <div className="absolute inset-0 bg-amber-500/30 blur-2xl rounded-full" />
@@ -506,23 +570,21 @@ const handleLogin = async () => {
               </p>
 
               <div className="flex bg-slate-950/50 p-1 rounded-2xl mb-8 border border-white/5">
-                <button 
+                <button
                   onClick={() => setBillingPlan('monthly')}
-                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 ${
-                    billingPlan === 'monthly' 
-                    ? 'bg-slate-800 text-amber-400 shadow-lg' 
-                    : 'text-slate-500 hover:text-slate-300'
-                  }`}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 ${billingPlan === 'monthly'
+                      ? 'bg-slate-800 text-amber-400 shadow-lg'
+                      : 'text-slate-500 hover:text-slate-300'
+                    }`}
                 >
                   MONTHLY
                 </button>
-                <button 
+                <button
                   onClick={() => setBillingPlan('yearly')}
-                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 relative ${
-                    billingPlan === 'yearly' 
-                    ? 'bg-slate-800 text-amber-400 shadow-lg' 
-                    : 'text-slate-500 hover:text-slate-300'
-                  }`}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 relative ${billingPlan === 'yearly'
+                      ? 'bg-slate-800 text-amber-400 shadow-lg'
+                      : 'text-slate-500 hover:text-slate-300'
+                    }`}
                 >
                   YEARLY
                   <div className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black border border-slate-900">
@@ -542,7 +604,7 @@ const handleLogin = async () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleUpgrade}
                 className="w-full bg-white text-slate-900 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-400 transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(255,255,255,0.1)] active:scale-95 flex items-center justify-center gap-2 group"
               >
@@ -550,7 +612,7 @@ const handleLogin = async () => {
                 <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
 
-              <button 
+              <button
                 onClick={() => setShowUpgradeModal(false)}
                 className="mt-5 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-slate-300 transition-colors"
               >
