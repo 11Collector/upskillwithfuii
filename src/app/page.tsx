@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, Sparkles, ShieldCheck, Zap, Award } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, Sparkles, ShieldCheck, Zap, Award, BookOpen } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
@@ -167,6 +167,17 @@ export default function Home() {
       )
     },
     {
+      id: "library-souls", name: "Library of Souls", desc: "สไตล์การอ่านสะท้อนตัวตน 16 รูปแบบ", gimmick: "ค้นหา Reading Soul",
+      icon: <BookOpen size={24} className="text-emerald-600" />,
+      path: "/tools/library-of-souls", color: "bg-emerald-50/50 border-emerald-100",
+      gimmickUI: (
+        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/50 text-emerald-600 rounded-full text-[10px] font-black tracking-widest border border-emerald-100 shadow-sm group-hover:bg-emerald-100 transition-colors duration-300">
+          <BookOpen size={12} className="text-emerald-500" />
+          <span>ค้นหา Reading Soul</span>
+        </div>
+      )
+    },
+    {
       id: "quotes", name: t.tools.quotes.name, desc: t.tools.quotes.desc, gimmick: t.tools.quotes.gimmick,
       icon: <Quote size={28} className="text-purple-600" />, path: "/tools/khomsatsat", color: "bg-purple-50 border-purple-200",
       gimmickUI: (
@@ -175,7 +186,7 @@ export default function Home() {
           <span>{t.tools.quotes.gimmick}</span>
         </div>
       )
-    }
+    },
   ];
 
   if (loading) {
@@ -253,7 +264,7 @@ export default function Home() {
               </div>
 
               {/* Login Remark under Avatar */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -573,8 +584,8 @@ export default function Home() {
                 <button
                   onClick={() => setBillingPlan('monthly')}
                   className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 ${billingPlan === 'monthly'
-                      ? 'bg-slate-800 text-amber-400 shadow-lg'
-                      : 'text-slate-500 hover:text-slate-300'
+                    ? 'bg-slate-800 text-amber-400 shadow-lg'
+                    : 'text-slate-500 hover:text-slate-300'
                     }`}
                 >
                   MONTHLY
@@ -582,8 +593,8 @@ export default function Home() {
                 <button
                   onClick={() => setBillingPlan('yearly')}
                   className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 relative ${billingPlan === 'yearly'
-                      ? 'bg-slate-800 text-amber-400 shadow-lg'
-                      : 'text-slate-500 hover:text-slate-300'
+                    ? 'bg-slate-800 text-amber-400 shadow-lg'
+                    : 'text-slate-500 hover:text-slate-300'
                     }`}
                 >
                   YEARLY

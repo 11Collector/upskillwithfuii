@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import React from 'react'
+import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
 
 // --- 💡 Dictionaries ---
 export const MONEY_DATA: Record<string, any> = {
@@ -726,6 +727,7 @@ export default function DashboardPage() {
   const [lastQuote, setLastQuote] = useState<any>(null);
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
+  const [lastLibrarySoul, setLastLibrarySoul] = useState<any>(null);
 
   const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
   const [totalXP, setTotalXP] = useState<number>(0);
@@ -800,11 +802,12 @@ export default function DashboardPage() {
 
           // 💡 1. ดึงข้อมูล User Profile และ Assessments อื่นๆ ก่อน เพื่อหา Join Date
           const [
-            authWheelSnap, discSnap, moneySnap, quoteSnap, userDocSnap
+            authWheelSnap, discSnap, moneySnap, librarySoulSnap, quoteSnap, userDocSnap
           ] = await Promise.all([
             getDocs(query(authWheelRef, orderBy("createdAt", "desc"), limit(5))),
             getDocs(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
             getDocs(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
+            getDocs(query(collection(db, "users", currentUser.uid, "library_souls"), orderBy("createdAt", "desc"), limit(1))),
             getDocs(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
             getDoc(doc(db, "users", currentUser.uid))
           ]);
@@ -857,6 +860,16 @@ export default function DashboardPage() {
           if (!moneySnap.empty) {
             moneyData = moneySnap.docs[0].data();
             setLastMoney(moneyData);
+          }
+
+          let librarySoulData = null;
+          if (!librarySoulSnap.empty) {
+            librarySoulData = librarySoulSnap.docs[0].data();
+            setLastLibrarySoul(librarySoulData);
+          } else if (userDocSnap.exists() && userDocSnap.data().lastLibrarySoul) {
+            // Fallback: ดึงจาก Field ใน User Doc ถ้าใน Collection ไม่มีหรือติด Permission
+            librarySoulData = { type: userDocSnap.data().lastLibrarySoul };
+            setLastLibrarySoul(librarySoulData);
           }
 
           if (!quoteSnap.empty) {
@@ -943,6 +956,10 @@ export default function DashboardPage() {
               xpToClaim += 50;
               xpUpdates.hasMoneyXP = true;
             }
+            if (librarySoulData && !userData.hasLibrarySoulXP) {
+              xpToClaim += 50;
+              xpUpdates.hasLibrarySoulXP = true;
+            }
 
             // ถ้ามี XP ที่ยังไม่ได้กดรับ ให้บวกเข้า DB ทันที
             if (xpToClaim > 0) {
@@ -1013,6 +1030,7 @@ export default function DashboardPage() {
         { name: "assessments", query: collection(db, "users", user.uid, "assessments") },
         { name: "readArticles", query: collection(db, "users", user.uid, "readArticles") },
         { name: "focusReflections", query: collection(db, "users", user.uid, "focusReflections") },
+        { name: "library_souls", query: collection(db, "users", user.uid, "library_souls") },
         { name: "weekly_stats", query: collection(db, "users", user.uid, "weekly_stats") },
         { name: "discResults", query: query(collection(db, "discResults"), where("userId", "==", user.uid)) },
         { name: "quiz_results", query: query(collection(db, "quiz_results"), where("userId", "==", user.uid)) },
@@ -1045,6 +1063,7 @@ export default function DashboardPage() {
         totalFocusMinutes: 0,     // 🆕 ล้างนาทีสะสม Deep Work
         focusReflections: [],
         readArticles: [],
+        lastLibrarySoul: null,
         customQuestTitle: "",
         lastQuestDate: null,
         lastActiveDate: null,
@@ -1052,6 +1071,7 @@ export default function DashboardPage() {
         hasWheelXP: false,
         hasDiscXP: false,
         hasMoneyXP: false,
+        hasLibrarySoulXP: false, // 🌟 รีเซ็ต XP Library Soul
         hasReadXP: false,  // 🌟 ปลดล็อกรีเซ็ต XP การอ่าน
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
         createdAt: resetDate // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
@@ -1068,6 +1088,7 @@ export default function DashboardPage() {
       setLastWheel(null);
       setLastDisc(null);
       setLastMoney(null);
+      setLastLibrarySoul(null);
       setLastQuote(null);
       setWeeklyData({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
       setIsFirstWeek(true);
@@ -1268,6 +1289,63 @@ export default function DashboardPage() {
       </div>
     );
     setInfoModal({ isOpen: true, title: "DISC STYLE", content });
+  };
+
+  const openLibrarySoulInfo = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!lastLibrarySoul) return;
+
+    const data = LIBRARY_SOULS_RESULTS[lastLibrarySoul.type];
+    if (!data) return;
+
+    const content = (
+      <div className="space-y-5 text-left -mt-2">
+        <div className="relative p-6 rounded-[2.5rem] bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 overflow-hidden shadow-sm">
+          <div className="absolute right-[-10px] bottom-[-20px] text-8xl opacity-10 pointer-events-none">{data.emoji}</div>
+
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full shadow-sm border border-white/50 bg-emerald-100 text-emerald-700">
+                <BookOpen size={16} />
+                <span className="text-[11px] font-black uppercase tracking-widest">{lastLibrarySoul.type} Soul</span>
+              </div>
+              <div className="hidden sm:flex w-20 h-24">
+                <img src={data.bookImage} alt={data.title} className="w-full h-full object-contain drop-shadow-md" />
+              </div>
+            </div>
+
+            <h4 className="font-black text-2xl text-slate-800 mb-2">{data.title}</h4>
+            <p className="text-[14px] text-slate-600 leading-relaxed font-medium mb-6">{data.description}</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white/80 shadow-sm">
+                <div className="text-emerald-600 font-black text-xs mb-1 flex items-center gap-2">
+                  <BrainCircuit size={14} /> DEEP INSIGHT
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">{data.insight}</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white/80 shadow-sm">
+                <div className="text-amber-600 font-black text-xs mb-1 flex items-center gap-2">
+                  <AlertCircle size={14} /> BLIND SPOT
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">{data.weakness}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 text-emerald-400 font-black text-xs mb-3 uppercase tracking-widest">
+              <Sparkles size={14} /> UPSKILL PATH
+            </div>
+            <h5 className="font-black text-lg mb-2">{data.upskillTitle}</h5>
+            <p className="text-xs text-emerald-100/70 leading-relaxed">{data.upskillDetail}</p>
+          </div>
+        </div>
+      </div>
+    );
+    setInfoModal({ isOpen: true, title: "วิเคราะห์จิตวิญญาณนักอ่าน", content });
   };
 
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";
@@ -2279,6 +2357,8 @@ export default function DashboardPage() {
                         />
                       </div>
                     )}
+
+                    {/* 📚 หนังสือ (Library of Souls) - ถูกนำออกไปแสดงใน Player Card แทน */}
                   </div>
                   {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
                   <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap sm:flex-nowrap px-2">
@@ -2307,6 +2387,16 @@ export default function DashboardPage() {
                         <Star size={12} className="text-amber-400 fill-current shrink-0" />
                         <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
                           {MONEY_DATA[lastMoney.resultKey]?.title}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Library of Souls Badge */}
+                    {lastLibrarySoul && (
+                      <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-emerald-500/20">
+                        <BookOpen size={12} className="text-emerald-400 shrink-0" />
+                        <span className="text-[9px] sm:text-[10px] font-black text-emerald-300 tracking-wide whitespace-nowrap">
+                          {lastLibrarySoul.type}
                         </span>
                       </div>
                     )}
@@ -2488,7 +2578,7 @@ export default function DashboardPage() {
                     { score: "26 - 35", emoji: "👑", name: "Legend", desc: "สุดยอดแห่งสัปดาห์ เข้าใกล้ความสมบูรณ์แบบ" },
                   ].map((rank, idx) => {
                     const isActive = totalWeeklyScore >= parseInt(rank.score.split(' - ')[0]) && totalWeeklyScore <= (rank.score.includes('35') ? 35 : parseInt(rank.score.split(' - ')[1]));
-                    
+
                     return (
                       <div
                         key={idx}
@@ -2552,10 +2642,10 @@ export default function DashboardPage() {
               </div>
               {/* --- ส่วนแสดงสถานะเป้าหมาย --- */}
               <span className={`text-xs font-black px-3 py-1 rounded-full transition-all duration-500 ${completedQuests.length > 3 // ⚡ เปลี่ยนจาก >= 5 เป็น > 3
-                  ? 'bg-yellow-400 text-white shadow-[0_0_15px_rgba(250,204,21,0.5)] animate-pulse'
-                  : completedQuests.length >= 3
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-orange-100 text-orange-600'
+                ? 'bg-yellow-400 text-white shadow-[0_0_15px_rgba(250,204,21,0.5)] animate-pulse'
+                : completedQuests.length >= 3
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-orange-100 text-orange-600'
                 }`}>
                 {completedQuests.length > 3 ? '🔥 SUPER UPSKILL' : `${completedQuests.length} / 3 GOAL`}
               </span>
@@ -2568,8 +2658,8 @@ export default function DashboardPage() {
                 initial={{ width: 0 }}
                 animate={{ width: `${(Math.min(completedQuests.length, 5) / 5) * 100}%` }}
                 className={`h-full rounded-full transition-all duration-700 relative ${completedQuests.length >= 5 ? 'bg-gradient-to-r from-green-400 via-emerald-500 to-yellow-400' :
-                    completedQuests.length >= 3 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
-                      'bg-gradient-to-r from-orange-400 to-red-500'
+                  completedQuests.length >= 3 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                    'bg-gradient-to-r from-orange-400 to-red-500'
                   }`}
               >
                 {completedQuests.length >= 5 && (
@@ -2769,6 +2859,18 @@ export default function DashboardPage() {
         </div>
         {/* --- 📦 3. Bento Grid --- */}
 
+
+        {/* 🎯 Section Header: เครื่องมือเฉพาะสำหรับคุณ */}
+        <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-12 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
+              <Sparkles className="text-amber-500 animate-pulse" size={20} />
+              เครื่องมือเฉพาะสำหรับคุณ
+            </h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -3019,7 +3121,6 @@ export default function DashboardPage() {
             </motion.div>
           </Link>
 
-
           {/* 🌟 3. DISC - ปรับโครงสร้างให้เท่ากับ Money Avatar */}
           <Link href="/tools/disc" className="group block h-full relative">
             {/* ปุ่ม Info */}
@@ -3047,8 +3148,8 @@ export default function DashboardPage() {
 
               {/* Ambient Glow */}
               <div className={`absolute top-0 right-0 w-80 h-80 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none opacity-10 transition-colors duration-700 ${discMainChar === 'D' ? 'bg-red-400' :
-                  discMainChar === 'I' ? 'bg-orange-400' :
-                    discMainChar === 'S' ? 'bg-emerald-400' : 'bg-blue-400'
+                discMainChar === 'I' ? 'bg-orange-400' :
+                  discMainChar === 'S' ? 'bg-emerald-400' : 'bg-blue-400'
                 }`} />
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-300 via-blue-600 to-blue-300 opacity-80" />
 
@@ -3266,7 +3367,102 @@ export default function DashboardPage() {
             </motion.div>
           </Link>
 
-          {/* 🌟 5. Upskill Library - Premium Library Style */}
+          {/* 🌟 4. Library of Souls - Personality Assessment */}
+          <Link href="/tools/library-of-souls/info" className="group block h-full relative">
+            {/* ปุ่ม Info */}
+            {lastLibrarySoul && (
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openLibrarySoulInfo(e); }}
+                className="absolute top-8 right-8 z-20 p-2.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100">
+                <Info size={18} />
+              </button>
+            )}
+            <motion.div
+              whileHover={{ y: -6 }}
+              className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-emerald-200 relative overflow-hidden group"
+            >
+              {!lastLibrarySoul && (
+                <motion.div
+                  initial={{ scale: 0, rotate: 10 }}
+                  animate={{ scale: 1, rotate: -5 }}
+                  className="absolute top-8 right-8 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-green-100 flex items-center gap-1 z-30"
+                >
+                  <Zap size={10} className="fill-white" /> +50 XP
+                </motion.div>
+              )}
+
+              <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-emerald-400/5 to-teal-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-emerald-400/10 transition-colors duration-700" />
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-300 via-teal-500 to-emerald-300 opacity-80 transition-all duration-500 group-hover:h-2" />
+
+              <div className="relative z-10 flex flex-col items-center h-full w-full">
+                {lastLibrarySoul ? (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-6 mt-2">
+                        <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
+                        <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
+                          <img
+                            src={`/books/${lastLibrarySoul.type}.png`}
+                            alt={lastLibrarySoul.type}
+                            className="w-[80%] h-[80%] object-contain drop-shadow-md"
+                          />
+                        </div>
+                      </div>
+
+                      <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> LIBRARY OF SOULS </h3>
+
+                      <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                        {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || lastLibrarySoul.type}
+                      </h2>
+
+                      <p className="text-[11px] font-black text-emerald-500/80 uppercase tracking-[0.2em] mb-4">
+                        {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.vibe || "The Reader"}
+                      </p>
+
+                      <div className="inline-flex items-center bg-emerald-50 text-emerald-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-emerald-100/50 shadow-sm">
+                        SOUL TYPE :  {lastLibrarySoul.type}
+                      </div>
+
+                      <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]">
+                        "{LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.description}"
+                      </p>
+                    </div>
+
+                    <div className="w-full px-4 mt-auto">
+                      <div className="group/btn-start relative">
+                        <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-emerald-300 active:scale-95">
+                          <RefreshCw size={16} className="text-white/80" />
+                          <span>ประเมินใหม่</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-between h-full w-full py-2">
+                    <div className="flex flex-col items-center justify-center pt-8">
+                      <div className="relative mb-6">
+                        <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
+                        <div className="relative w-24 h-24 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100 shadow-sm group-hover:bg-emerald-500 group-hover:text-white transition-all overflow-hidden">
+                          <BookOpen size={44} className="group-hover:text-white transition-colors" />
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-800 mb-2">Library of Souls</h3>
+                      <p className="text-slate-400 text-sm font-medium">ค้นหาจิตวิญญาณนักอ่านในตัวคุณ</p>
+                    </div>
+                    <div className="w-full px-4 mt-auto">
+                      <div className="group/btn-start relative">
+                        <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-emerald-300 active:scale-95">
+                          <Sparkles size={16} className="text-white/80" />
+                          <span>เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </Link>
+
+          {/* 🌟 5. BRAIN (Upskill Library) - Premium Gold & Black Style */}
           <Link
             href={currentLevel >= 5 ? "/library" : "#"}
             onClick={(e) => { if (currentLevel < 5) e.preventDefault(); }}
@@ -3274,18 +3470,20 @@ export default function DashboardPage() {
           >
             <motion.div
               whileHover={currentLevel >= 5 ? { y: -6 } : {}}
-              className={`h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 relative overflow-hidden 
-      ${currentLevel >= 5 ? 'hover:shadow-2xl hover:border-emerald-100' : 'opacity-90'}`}
+              className={`h-full p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center
+      ${currentLevel >= 5 
+        ? 'bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-amber-500/50' 
+        : 'bg-white border-slate-100 opacity-90'}`}
             >
 
-              {/* 🏷️ Status Badge (ตำแหน่ง Top 8 Right 8 เป๊ะ) */}
+              {/* 🏷️ Status Badge */}
               <div className="absolute top-8 right-8 z-30">
                 {currentLevel >= 5 ? (
                   <motion.div
                     initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-emerald-100 flex items-center gap-1.5 uppercase tracking-wider"
+                    className="bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-900/20 flex items-center gap-1.5 uppercase tracking-wider"
                   >
-                    <Unlock size={10} className="fill-white" /> Unlocked
+                    <Unlock size={10} className="fill-current" /> Unlocked
                   </motion.div>
                 ) : (
                   <div className="bg-slate-100 text-slate-400 text-[10px] font-black px-3 py-1 rounded-full border border-slate-200 flex items-center gap-1.5 uppercase tracking-wider">
@@ -3294,40 +3492,45 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* ✨ Ambient Light & Emerald Top Bar */}
+              {/* ✨ Ambient Light & Top Bar */}
               <div className={`absolute top-0 right-0 w-72 h-72 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none transition-colors duration-700 
-      ${currentLevel >= 5 ? 'bg-gradient-to-br from-emerald-400/5 to-teal-400/5 group-hover:from-emerald-400/10' : 'bg-slate-200/5'}`}
+      ${currentLevel >= 5 ? 'bg-amber-500/10 group-hover:bg-amber-500/20' : 'bg-slate-200/5'}`}
               />
               <div className={`absolute top-0 left-0 w-full h-1.5 opacity-80 transition-all duration-500 
-      ${currentLevel >= 5 ? 'bg-gradient-to-r from-emerald-300 via-teal-500 to-emerald-300' : 'bg-slate-200'}`}
+      ${currentLevel >= 5 ? 'bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300' : 'bg-slate-200'}`}
               />
 
               <div className="relative z-10 flex flex-col items-center h-full w-full">
 
-                {/* 📖 Logo Container (w-24 h-24 เท่ากับ Money Avatar) */}
+                {/* 🧠 Logo Container */}
                 <div className="relative mb-6 mt-2">
-                  <div className={`absolute inset-0 blur-3xl opacity-20 ${currentLevel >= 5 ? 'bg-emerald-100' : 'bg-slate-200'}`} />
-                  <div className={`relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl transition-transform duration-500 
-          ${currentLevel >= 5 ? 'group-hover:scale-110' : 'grayscale'}`}>
-                    {currentLevel >= 5 ? "📚" : "🔒"}
+                  <div className={`absolute inset-0 blur-3xl opacity-20 ${currentLevel >= 5 ? 'bg-amber-400/30' : 'bg-slate-200'}`} />
+                  <div className={`relative w-24 h-24 rounded-full border flex items-center justify-center text-6xl transition-transform duration-500 shadow-2xl
+          ${currentLevel >= 5 
+            ? 'bg-slate-900 border-amber-500/30 group-hover:scale-110 group-hover:border-amber-400 group-hover:shadow-amber-500/20' 
+            : 'bg-white border-slate-50 grayscale'}`}>
+                    {currentLevel >= 5 ? "🧠" : "🔒"}
                   </div>
                 </div>
 
-                <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> UPSKILL LIBRARY </h3>
+                <h3 className={`font-bold text-[10px] uppercase tracking-[0.3em] mb-2.5 ${currentLevel >= 5 ? 'text-amber-500/60' : 'text-slate-400'}`}> 
+                  SECOND BRAIN 
+                </h3>
                 <h2 className={`text-3xl font-black mb-3 leading-tight tracking-tight transition-colors 
-        ${currentLevel >= 5 ? 'text-slate-900 group-hover:text-emerald-600' : 'text-slate-400'}`}>
-                  คลังสมองอัพสกิล
+        ${currentLevel >= 5 ? 'text-white group-hover:text-amber-400' : 'text-slate-400'}`}>
+                  {currentLevel >= 5 ? 'คลังสมองที่สองของคุณ' : 'คลังสมอง SECOND BRAIN'}
                 </h2>
 
-                <p className="text-[14px] font-medium text-slate-500 mb-8 px-6 leading-relaxed opacity-80 max-w-[280px]">
+                <p className={`text-[14px] font-medium mb-8 px-6 leading-relaxed max-w-[280px] transition-colors
+        ${currentLevel >= 5 ? 'text-slate-400' : 'text-slate-500 opacity-80'}`}>
                   สรุปหนังสือและบทความเด็ดๆ <br /> ที่คัดมาเพื่อคุณโดยเฉพาะ
                 </p>
 
                 <div className="w-full px-4 mt-auto">
                   <div className="group/btn-library relative">
                     {currentLevel >= 5 ? (
-                      <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-library:scale-[1.02] group-hover/btn-library:shadow-emerald-300 active:scale-95">
-                        <BookOpen size={16} className="text-white/80" />
+                      <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-library:scale-[1.02] group-hover/btn-library:shadow-amber-500/50 active:scale-95">
+                        <Sparkles size={16} className="text-slate-950/80" />
                         <span>เปิดอ่านคลังสมอง</span>
                       </div>
                     ) : (
@@ -3689,25 +3892,30 @@ export default function DashboardPage() {
                 />
                 <div className={`absolute -bottom-20 -left-20 w-64 h-64 ${theme.glow.replace('from-', 'bg-')} blur-[80px] rounded-full`} />
 
-                {/* 1. Header: Logo & Title (ลด mb-8 เหลือ mb-4 เพื่อประหยัดพื้นที่แนวตั้ง) */}
-                <div className="relative z-10 w-full flex justify-between items-center mb-4">
-                  <div className="flex flex-col">
+                {/* 1. Header: Logo & Title (ลด mb เพื่อคืนพื้นที่ให้คอนเทนต์หลัก) */}
+                <div className="relative z-10 w-full flex justify-between items-start mb-0">
+                  <div className="flex flex-col pt-1">
                     <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Pro Member</span>
                     <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
                   </div>
-                  <div className="w-10 h-10 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden p-1.5">
-                    <img
-                      src="/logo-invert.png"
-                      alt="Upskill Logo"
-                      className="w-full h-full object-contain opacity-90 transition-opacity"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] border border-white/20 flex items-center justify-center backdrop-blur-xl overflow-hidden p-2.5 shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+                      <img
+                        src={lastLibrarySoul?.type ? `/books/${lastLibrarySoul.type}.png` : "/logo-invert.png"}
+                        alt="Soul Type"
+                        className="w-full h-full object-contain drop-shadow-lg"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/logo-invert.png"; }}
+                      />
+                    </div>
+                    {lastLibrarySoul?.type && (
+                      <span className="text-[11px] font-black text-white uppercase tracking-[0.25em] drop-shadow-md">{lastLibrarySoul.type}</span>
+                    )}
                   </div>
                 </div>
 
-                {/* 🏗️ 2. Avatar Section: แก้ปัญหาพื้นที่แนวตั้ง และสเกลตัวละคร */}
-                {/* 🎯 mt-12: ลด top margin อย่างมาก เพื่อประหยัดพื้นที่แนวตั้ง กัน Stats ทะลุขอบล่าง */}
-                <div className="relative z-10 mb-2 mt-12 h-48 flex justify-center items-end">
+                {/* 🏗️ 2. Avatar Section: ดึงตัวละครขึ้นมาเพื่อชดเชยขนาดรูปหนังสือด้านบน */}
+                {/* 🎯 mt-4: ลดจาก mt-12 เพื่อให้ตัวละครและ Stats อยู่ในระดับที่เหมาะสม */}
+                <div className="relative z-10 mb-2 mt-4 h-48 flex justify-center items-end">
 
                   {/* ✨ แสง Glow พื้นหลัง (จัดให้อยู่กึ่งกลางเป๊ะตามตัวคน) */}
                   <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
