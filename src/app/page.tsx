@@ -167,7 +167,7 @@ export default function Home() {
       )
     },
     {
-      id: "library-souls", name: "Library of Souls", desc: "สไตล์การอ่านสะท้อนตัวตน 16 รูปแบบ", gimmick: "ค้นหา Reading Soul",
+      id: "library-souls", name: "Library Of Souls", desc: "สไตล์การอ่านสะท้อนตัวตน 16 รูปแบบ", gimmick: "ค้นหา Reading Soul",
       icon: <BookOpen size={24} className="text-emerald-600" />,
       path: "/tools/library-of-souls", color: "bg-emerald-50/50 border-emerald-100",
       gimmickUI: (
