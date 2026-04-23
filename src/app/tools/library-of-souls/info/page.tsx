@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { results as resultsData } from "@/data/librarySoulsResults";
 import { toPng } from "html-to-image";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 // Correcting the import path for icons
 import {
@@ -28,6 +30,12 @@ function ResultView({ resultType }: { resultType: string }) {
   const data = resultsData[resultType];
   const printRef = useRef<HTMLDivElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [user, setUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsubscribe();
+  }, []);
 
   const handleSaveImage = async () => {
     if (!printRef.current) return;
@@ -154,8 +162,8 @@ function ResultView({ resultType }: { resultType: string }) {
       </div>
 
       <div className="text-center pb-10">
-        <Link href="/dashboard" className="text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors underline underline-offset-8 decoration-slate-200">
-          กลับสู่หน้าหลัก Dashboard
+        <Link href={user ? "/dashboard" : "/"} className="text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors underline underline-offset-8 decoration-slate-200">
+          {user ? "กลับสู่หน้าหลัก Dashboard" : "กลับสู่หน้าหลัก"}
         </Link>
       </div>
     </div>
@@ -320,14 +328,20 @@ function PageContent() {
     </main>
   );
 }
-
 export default function LibraryOfSoulsInfoPage() {
+  const [user, setUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsubscribe();
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-20">
       {/* --- Navbar --- */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
-          <Link href="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-sm">
+          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-sm">
             <ArrowLeftIcon size={18} /> กลับหน้าหลัก
           </Link>
         </div>

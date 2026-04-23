@@ -161,7 +161,9 @@ export default function ArticleDetail() {
               </div>
               <div className="text-center">
                 <span className="block text-amber-400 font-black text-lg tracking-wide">ตกผลึกความรู้</span>
-                <span className="text-amber-500/40 text-[10px] font-black uppercase tracking-[0.3em] mt-2 block">+5 XP Rewards</span>
+                <span className="text-amber-500/40 text-[10px] font-black uppercase tracking-[0.3em] mt-2 block">
+                  {xpClaimed ? "XP CLAIMED" : "+5 XP Rewards"}
+                </span>
               </div>
             </motion.button>
           ) : (
@@ -179,7 +181,7 @@ export default function ArticleDetail() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-black bg-emerald-500/10 w-fit px-6 py-3 rounded-2xl border border-emerald-500/20 uppercase tracking-widest">
-                    <CheckCircle2 size={18} /> <span>Insight Unlocked</span>
+                    <CheckCircle2 size={18} /> <span>อ่านแล้ว (XP CLAIMED)</span>
                   </div>
                 )}
               </div>

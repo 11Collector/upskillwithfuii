@@ -31,6 +31,7 @@ export default function DeepWorkPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const endTimeRef = useRef<number | null>(null);
   const wakeLockRef = useRef<any>(null);
+  const natureAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
@@ -106,6 +107,7 @@ useEffect(() => {
           setTimeLeft(0);
           setIsActive(false);
           setIsFinished(true);
+          playAlarm();
           localStorage.removeItem("deepWork_endTime");
         } else {
           setTimeLeft(remaining);
@@ -141,17 +143,55 @@ useEffect(() => {
       localStorage.setItem("deepWork_endTime", targetTime.toString());
       localStorage.setItem("deepWork_selectedTime", selectedTime.toString());
       setIsActive(true);
+      playNatureSound();
       await requestWakeLock();
     } else {
       setIsActive(false);
+      stopNatureSound();
       localStorage.removeItem("deepWork_endTime"); 
       if (timerRef.current) clearInterval(timerRef.current);
       await releaseWakeLock();
     }
   };
 
+  const playNatureSound = () => {
+    if (!natureAudioRef.current) {
+      const audio = new Audio("/sounds/nature.mp3");
+      audio.volume = 0.2;
+      
+      // Seamless loop hack: Restart slightly before the absolute end 
+      // to avoid the silent gap in MP3 encoding
+      audio.addEventListener('timeupdate', function() {
+        const buffer = 0.4;
+        if (this.currentTime > this.duration - buffer) {
+          this.currentTime = 0;
+          this.play();
+        }
+      });
+
+      // Backup: standard loop if timeupdate fails or isn't granular enough
+      audio.loop = true; 
+      natureAudioRef.current = audio;
+    }
+    natureAudioRef.current.play().catch(err => console.error("Nature sound failed:", err));
+  };
+
+  const stopNatureSound = () => {
+    if (natureAudioRef.current) {
+      natureAudioRef.current.pause();
+      natureAudioRef.current.currentTime = 0;
+    }
+  };
+
+  const playAlarm = () => {
+    stopNatureSound();
+    const audio = new Audio("/sounds/alarm.mp3");
+    audio.play().catch(err => console.error("Audio playback failed:", err));
+  };
+
   const handleReset = async () => {
     setIsActive(false);
+    stopNatureSound();
     setTimeLeft(selectedTime * 60);
     localStorage.removeItem("deepWork_endTime");
     localStorage.removeItem("deepWork_selectedTime");
@@ -169,6 +209,7 @@ useEffect(() => {
             setTimeLeft(0);
             setIsActive(false);
             setIsFinished(true);
+            playAlarm();
             releaseWakeLock();
             if (timerRef.current) clearInterval(timerRef.current);
           } else {
@@ -237,21 +278,21 @@ useEffect(() => {
         {!isFinished ? (
           <motion.div 
             key="timer" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-lg bg-white p-10 md:p-16 rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-white flex flex-col items-center relative overflow-hidden group"
+            className="w-full max-w-lg bg-white p-8 sm:p-10 md:p-16 rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-white flex flex-col items-center relative overflow-hidden group"
           >
             {/* Status Badge */}
             <motion.div 
               animate={isActive ? { y: [0, -5, 0] } : {}}
               transition={{ repeat: Infinity, duration: 2 }}
-              className={`absolute top-10 right-10 flex items-center gap-1.5 px-4 py-2 rounded-full shadow-lg z-20 border ${hasClaimedToday ? 'bg-zinc-100 text-zinc-400 border-zinc-200' : 'bg-zinc-900 text-white border-zinc-700'}`}
+              className={`absolute top-6 right-6 sm:top-10 sm:right-10 flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-lg z-20 border ${hasClaimedToday ? 'bg-zinc-100 text-zinc-400 border-zinc-200' : 'bg-zinc-900 text-white border-zinc-700'}`}
             >
               <Zap size={10} className={hasClaimedToday ? 'fill-zinc-300' : 'fill-yellow-400 text-yellow-400'} />
-              <span className="text-[9px] font-black tracking-widest">{hasClaimedToday ? 'DAILY LIMIT' : '+20 XP READY'}</span>
+              <span className="text-[8px] sm:text-[9px] font-black tracking-widest">{hasClaimedToday ? 'DAILY LIMIT' : '+20 XP READY'}</span>
             </motion.div>
 
             <div className="absolute top-0 left-0 w-full h-2 bg-zinc-900 opacity-90" />
             
-            <div className="flex flex-col items-center mb-10">
+            <div className="flex flex-col items-center mb-6 sm:mb-10">
               {/* Icon Container - ปรับเป็น rounded-full */}
               <div className="w-12 h-12 bg-zinc-50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-zinc-100 group-hover:rotate-12 transition-transform duration-500">
                 <BrainCircuit size={26} className="text-zinc-900" />
@@ -290,12 +331,12 @@ useEffect(() => {
               <div className="absolute flex flex-col items-center z-20">
                 <motion.span 
                   key={timeLeft}
-                  className={`${geist_mono.className} text-6xl sm:text-[5.5rem] font-black text-black tabular-nums tracking-[0.05em] leading-none drop-shadow-[0_10px_10px_rgba(0,0,0,0.1)]`}
+                  className={`${geist_mono.className} text-7xl sm:text-[7rem] font-black text-black tabular-nums tracking-[0.05em] leading-none drop-shadow-[0_10px_10px_rgba(0,0,0,0.1)]`}
                   style={{ background: "linear-gradient(to bottom, #000 60%, #444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
                 >
                   {formatTime(timeLeft)}
                 </motion.span>
-                <div className={`mt-6 flex flex-col items-center gap-2 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                <div className={`mt-10 flex flex-col items-center gap-2 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-[0.5em] ml-1">Focusing Now</span>
                    <div className="h-1 w-1 rounded-full bg-black animate-ping" />
                 </div>
@@ -316,6 +357,13 @@ useEffect(() => {
                 {isActive ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" className="ml-1" />}
               </button>
               <button onClick={() => router.push("/dashboard")} className="text-zinc-300 hover:text-red-500 transition-all p-2"><X size={22}/></button>
+            </div>
+
+            {/* Build Your Legacy - Moved here */}
+            <div className="mt-12 flex items-center gap-4 opacity-20 grayscale">
+              <div className="h-px w-8 bg-black" />
+              <p className="text-[8px] font-black text-black uppercase tracking-[0.4em]">Build Your Legacy</p>
+              <div className="h-px w-8 bg-black" />
             </div>
           </motion.div>
         ) : (
@@ -367,12 +415,6 @@ useEffect(() => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="absolute bottom-10 flex items-center gap-4 opacity-10 grayscale">
-         <div className="h-px w-16 bg-black" />
-         <p className="text-[9px] font-black text-black uppercase tracking-[0.5em]">Build Your Legacy</p>
-         <div className="h-px w-16 bg-black" />
-      </div>
     </div>
   );
 }
