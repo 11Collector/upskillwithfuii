@@ -384,7 +384,7 @@ export default function GalleryPage() {
                         {/* 💡 ลายน้ำแบรนด์ (Dark theme ทึบ) */}
                         <div className="flex flex-col items-center gap-1 mt-2 pb-2">
                           <div 
-                            className="text-[8px] font-black tracking-[0.3em] text-slate-300 uppercase px-3 py-1 rounded-full border border-slate-700/80"
+                            className="text-[8px] font-black tracking-[0.3em] text-slate-300 uppercase px-3 py-1 rounded-full border border-slate-700/80 whitespace-nowrap"
                             style={{ backgroundColor: '#1e293b' }} // slate-800 ทึบ
                           >
                             CREATED BY <span className="text-blue-500 mx-1">×</span> อัพสกิลกับฟุ้ย

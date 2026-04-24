@@ -821,9 +821,11 @@ export default function SwipeQuoteApp() {
                       className="flex flex-col items-center gap-2 mb-6"
                     >
                       {/* Name/Signature */}
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center px-4">
                         <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1 opacity-80">Insight By</span>
-                        <span className="text-[15px] font-black text-white tracking-tighter drop-shadow-md">
+                        <span className={`font-black text-white tracking-tighter drop-shadow-md text-center break-words max-w-[240px] leading-tight ${
+                          (currentUser.displayName || "").length > 20 ? "text-[12px]" : "text-[15px]"
+                        }`}>
                           {currentUser.displayName}
                         </span>
                         <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-white/30 to-transparent mt-1" />
@@ -833,7 +835,7 @@ export default function SwipeQuoteApp() {
 
                   <div className="relative flex flex-col items-center gap-2 w-full">
                     <div
-                      className="text-[9px] font-black tracking-[0.3em] text-slate-300 uppercase drop-shadow-sm bg-slate-800/80 backdrop-blur-md px-5 py-2 rounded-full border border-slate-700/50 flex items-center gap-2"
+                      className="text-[9px] font-black tracking-[0.3em] text-slate-300 uppercase drop-shadow-sm bg-slate-800/80 backdrop-blur-md px-5 py-2 rounded-full border border-slate-700/50 flex items-center gap-2 whitespace-nowrap"
                       style={{ backgroundColor: 'rgba(30, 41, 59, 0.8)' }}
                     >
                       <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
