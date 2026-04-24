@@ -360,8 +360,10 @@ export default function GalleryPage() {
                         </span>
                       </div>
 
-                      {/* 💡 ตัวคำคม (เรืองแสงนิดๆ บนพื้นดำ) */}
-                      <p className="text-[18px] sm:text-[20px] font-black leading-relaxed text-white whitespace-pre-line my-4 grow relative z-10 text-center tracking-wide break-words px-2 drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)]">
+                      {/* 💡 ตัวคำคม (ปรับให้ใหญ่ขึ้นตาม Ver เดิม) */}
+                      <p className={`font-black leading-relaxed text-white whitespace-pre-line my-4 grow relative z-10 text-center tracking-wide break-words px-2 drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)] ${
+                        item.quote.length > 80 ? "text-[18px] sm:text-[20px]" : "text-[22px] sm:text-[26px]"
+                      }`}>
                         {item.quote.replace(/\\n/g, '\n')}
                       </p>
 
