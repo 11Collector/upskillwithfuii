@@ -74,7 +74,7 @@ export default function SoulGuidePage() {
 
           setChatQuota({ used: usedToday, total: totalQuota });
 
-          const fullUserData = {
+          const fullUserData: any = {
             ...baseData,
             level,
             lastDisc: !discSnap.empty ? discSnap.docs[0].data() : baseData.lastDisc,
