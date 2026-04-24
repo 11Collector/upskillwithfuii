@@ -3,6 +3,7 @@ import { Kanit } from "next/font/google";
 import "@/app/globals.css";
 import Link from "next/link";
 import { Home, PieChart, Users, Wallet, Quote, BookOpen } from "lucide-react";
+import PWALogic from "./components/PWALogic";
 
 // ตั้งค่าฟอนต์ Kanit
 const kanit = Kanit({
@@ -23,9 +24,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      {/* 💡 1. ปลดล็อก Body: ลบ h-[100dvh] และ overflow-hidden ออก ปล่อยให้มัน Scroll ตามธรรมชาติ */}
-      {/* ในไฟล์ RootLayout */}
       <body className={`${kanit.className} bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] text-slate-800 antialiased`}>
+        <PWALogic />
 
         {/* === แถบ Navbar ด้านบน === */}
         {/* 💡 2. ใช้ fixed top-0 แปะติดขอบบนสุดเสมอ และตั้ง z-[100] ไม่ให้ใครทับ */}

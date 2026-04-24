@@ -3,11 +3,12 @@
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, Sparkles, ShieldCheck, Zap, Award, BookOpen } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
 import { loadStripe } from '@stripe/stripe-js';
+import { usePWAInstall } from "@/lib/pwa";
 
 // ==========================================
 // 1. Content (ภาษาไทย)
@@ -49,6 +50,7 @@ const PRICE_IDS = {
 };
 
 export default function Home() {
+  const { deferredPrompt, isIOS, handleInstallClick } = usePWAInstall();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -231,11 +233,26 @@ export default function Home() {
                 transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
                 className="flex flex-col md:items-start items-center"
               >
-                <div className="mb-4">
+                <div className="mb-4 flex flex-col md:items-start items-center gap-3">
                   <span className="text-red-700 font-extrabold bg-red-50/80 px-4 py-2 rounded-2xl relative inline-flex items-center gap-2 border border-red-100 shadow-sm text-sm sm:text-base tracking-widest uppercase">
                     UPSKILL EVERYDAY
                     <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" style={{ transform: 'translate(40%, -40%)' }}></div>
                   </span>
+
+                  {/* 📱 PWA Install Button (New Location) */}
+                  {(deferredPrompt || isIOS) && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={isIOS ? undefined : handleInstallClick}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-black active:scale-95 transition-all group border border-white/10"
+                    >
+                      <Download size={12} className="text-blue-400 group-hover:translate-y-0.5 transition-transform" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        {isIOS ? "App Download (Share > Home)" : "App Download"}
+                      </span>
+                    </motion.button>
+                  )}
                 </div>
                 <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-black mb-6 text-slate-900 leading-[1.2] md:leading-[1.15] tracking-tight">
                   <span className="whitespace-nowrap">การพัฒนาตัวเอง</span><br />

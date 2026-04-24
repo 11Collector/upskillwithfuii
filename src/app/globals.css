@@ -246,3 +246,11 @@ input[type=range] {
   outline: none;
 }
 .goal-input:focus { border-color: var(--primary); }
+/* 12. Utility Classes */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
