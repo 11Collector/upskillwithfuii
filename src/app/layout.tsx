@@ -4,6 +4,8 @@ import "@/app/globals.css";
 import Link from "next/link";
 import { Home, PieChart, Users, Wallet, Quote, BookOpen } from "lucide-react";
 import PWALogic from "./components/PWALogic";
+import BottomNavigation from "./components/BottomNavigation";
+import { Suspense } from "react";
 
 // ตั้งค่าฟอนต์ Kanit
 const kanit = Kanit({
@@ -30,13 +32,13 @@ export default function RootLayout({
         {/* === แถบ Navbar ด้านบน === */}
         {/* 💡 2. ใช้ fixed top-0 แปะติดขอบบนสุดเสมอ และตั้ง z-[100] ไม่ให้ใครทับ */}
         <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 z-[100] h-16">
-          <div className="max-w-5xl mx-auto px-4 h-full flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-8 h-full flex items-center justify-between gap-8">
             <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform">
               <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" />
             </Link>
 
             {/* เมนู Desktop */}
-            <div className="hidden md:flex gap-6">
+            <div className="hidden md:flex gap-8">
               <Link href="/tools/wheel-of-life" className="text-sm font-bold text-slate-500 hover:text-red-600 flex items-center gap-1.5 transition-colors">
                 <PieChart size={18} /> สมดุลชีวิต
               </Link>
@@ -58,34 +60,14 @@ export default function RootLayout({
 
 
         <main id="main-scroll-container" className="w-full relative min-h-screen flex flex-col pt-16 pb-[4.5rem] md:pb-0">
-          {children}
+          <Suspense>
+            {children}
+          </Suspense>
         </main>
 
-        {/* === แถบ Bottom Navigation ด้านล่าง === */}
-        {/* 💡 4. ใช้ fixed bottom-0 แปะติดขอบล่างสุดเสมอ */}
-        <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 flex justify-around items-center h-[4.5rem] pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-[100]">
-          <Link href="/" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-red-800 active:scale-95 transition-all">
-            <Home size={22} />
-            <span className="text-[10px] mt-1 font-bold">หน้าหลัก</span>
-          </Link>
-          <Link href="/tools/wheel-of-life" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-red-600 active:scale-95 transition-all">
-            <PieChart size={22} />
-            <span className="text-[10px] mt-1 font-bold">ชีวิต</span>
-          </Link>
-          <Link href="/tools/disc" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-blue-600 active:scale-95 transition-all">
-            <Users size={22} />
-            <span className="text-[10px] mt-1 font-bold">ทำงาน</span>
-          </Link>
-          <Link href="/tools/money-avatar" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-amber-600 active:scale-95 transition-all">
-            <Wallet size={22} />
-            <span className="text-[10px] mt-1 font-bold">การเงิน</span>
-          </Link>
-          <Link href="/tools/library-of-souls" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-emerald-600 active:scale-95 transition-all">
-            <BookOpen size={22} />
-            <span className="text-[10px] mt-1 font-bold">ตัวตน</span>
-          </Link>
-
-        </div>
+        <Suspense fallback={<div className="h-[5.5rem]" />}>
+          <BottomNavigation />
+        </Suspense>
 
       </body>
     </html>

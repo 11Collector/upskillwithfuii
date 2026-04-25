@@ -254,3 +254,8 @@ input[type=range] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* 🛡️ Hide Navigation during Modals */
+.hide-bottom-nav .bottom-nav {
+  display: none !important;
+}

@@ -33,6 +33,7 @@ export default function SoulGuidePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([]);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
+  const [showResetConfirm, setShowResetConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันล้างแชท
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -139,6 +140,16 @@ export default function SoulGuidePage() {
     };
   }, [router]);
 
+  // 🛡️ [UI Control]: ซ่อน Bottom Navigation เมื่อมี Modal ยืนยัน
+  useEffect(() => {
+    if (showResetConfirm) {
+      document.body.classList.add('hide-bottom-nav');
+    } else {
+      document.body.classList.remove('hide-bottom-nav');
+    }
+    return () => document.body.classList.remove('hide-bottom-nav');
+  }, [showResetConfirm]);
+
   useEffect(() => {
     // เลื่อนลงล่างสุดทุกครั้งที่ข้อความเปลี่ยน
     if (messages.length > 0) {
@@ -170,22 +181,19 @@ export default function SoulGuidePage() {
 
   const handleResetChat = async () => {
     if (!user) return;
-    if (!confirm("คุณต้องการล้างประวัติการสนทนาทั้งหมดใช่หรือไม่?")) return;
-
+    
+    setShowResetConfirm(false);
     setIsLoading(true);
     try {
       const chatHistoryRef = collection(db, "users", user.uid, "chat_history");
       const historySnap = await getDocs(chatHistoryRef);
       
-      // ลบทีละ Document (Firestore ไม่รองรับการลบทั้ง Collection ในคำสั่งเดียวบน Client)
       const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      alert("ล้างประวัติการสนทนาเรียบร้อยแล้วครับ ✨");
     } catch (error) {
       console.error("Error resetting chat:", error);
-      alert("ไม่สามารถล้างประวัติแชทได้ในขณะนี้");
     } finally {
       setIsLoading(false);
     }
@@ -317,38 +325,41 @@ export default function SoulGuidePage() {
         />
       </div>
 
-      {/* Header */}
-      <header className="w-full max-w-4xl px-6 py-8 flex items-center justify-between z-20 sticky top-0 bg-zinc-950/50 backdrop-blur-md border-b border-white/5">
-        <Link href="/dashboard" className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all text-zinc-400 hover:text-white">
-          <ArrowLeft size={18} />
-        </Link>
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-1">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${isTyping ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
-            <h1 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-200">AI Personal Mentor</h1>
+
+      {/* Header - ซ่อนเมื่อมี Modal ยืนยันล้างแชท */}
+      {!showResetConfirm && (
+        <header className="w-full max-w-4xl px-6 py-8 flex items-center justify-between z-20 sticky top-0 bg-zinc-950/50 backdrop-blur-md border-b border-white/5">
+          <Link href="/dashboard" className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all text-zinc-400 hover:text-white">
+            <ArrowLeft size={18} />
+          </Link>
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-1">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${isTyping ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
+              <h1 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-200">AI Personal Mentor</h1>
+            </div>
+
+            {/* 🔥 Quota Indicator */}
+            <div className="flex items-center gap-2 mt-1">
+              <Battery size={10} className={`${chatQuota.total !== Infinity && chatQuota.used >= chatQuota.total ? 'text-red-500' : 'text-zinc-500'}`} />
+              <span className="text-[8px] font-black tracking-widest text-zinc-500 uppercase">
+                Energy: {chatQuota.total === Infinity ? 'Unlimited ∞' : `${chatQuota.total - chatQuota.used}/${chatQuota.total}`}
+              </span>
+            </div>
           </div>
 
-          {/* 🔥 Quota Indicator */}
-          <div className="flex items-center gap-2 mt-1">
-            <Battery size={10} className={`${chatQuota.total !== Infinity && chatQuota.used >= chatQuota.total ? 'text-red-500' : 'text-zinc-500'}`} />
-            <span className="text-[8px] font-black tracking-widest text-zinc-500 uppercase">
-              Energy: {chatQuota.total === Infinity ? 'Unlimited ∞' : `${chatQuota.total - chatQuota.used}/${chatQuota.total}`}
-            </span>
-          </div>
-        </div>
-
-        <motion.div
-          animate={isTyping ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
-        >
-          {userData ? (
-            <img src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
-          ) : (
-            <UserIcon size={20} className="text-zinc-600" />
-          )}
-        </motion.div>
-      </header>
+          <motion.div
+            animate={isTyping ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
+          >
+            {userData ? (
+              <img src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
+            ) : (
+              <UserIcon size={20} className="text-zinc-600" />
+            )}
+          </motion.div>
+        </header>
+      )}
 
       {/* Chat Container */}
       <main className="flex-1 w-full max-w-3xl flex flex-col gap-6 p-6 z-10 overflow-y-auto pb-60 scroll-smooth no-scrollbar">
@@ -426,7 +437,7 @@ export default function SoulGuidePage() {
             <div className="w-full relative">
               <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
                 <button
-                  onClick={handleResetChat}
+                  onClick={() => setShowResetConfirm(true)}
                   className="w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
                   title="เริ่มบทสนทนาใหม่"
                 >
@@ -453,6 +464,50 @@ export default function SoulGuidePage() {
         </div>
       </div>
 
+      {/* 🗑️ Modal: ยืนยันการล้างประวัติแชท (Luxury Style) */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-xl"
+          >
+              <motion.div
+                initial={{ scale: 0.5, y: 100, opacity: 0 }}
+                animate={{ 
+                  scale: 1, 
+                  y: 0, 
+                  opacity: 1,
+                  transition: { type: "spring", damping: 20, stiffness: 300 } 
+                }}
+                exit={{ scale: 0.5, y: 100, opacity: 0 }}
+                className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
+              >
+              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <History className="text-blue-400" size={28} />
+              </div>
+              <h3 className="text-lg font-black text-white mb-2 uppercase tracking-wider">ล้างประวัติการสนทนา?</h3>
+              <p className="text-sm text-zinc-400 mb-8 leading-relaxed">บทสนทนาทั้งหมดจะถูกลบออกถาวร และคุณจะเริ่มการเดินทางครั้งใหม่กับ Mentor ครับ</p>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleResetChat}
+                  className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm hover:bg-zinc-200 transition-all active:scale-95"
+                >
+                  ยืนยันและเริ่มใหม่
+                </button>
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="w-full py-4 bg-white/5 text-zinc-400 rounded-2xl font-black text-sm hover:bg-white/10 transition-all"
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
