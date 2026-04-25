@@ -35,6 +35,7 @@ export default function SoulGuidePage() {
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
   const [showResetConfirm, setShowResetConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันล้างแชท
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
@@ -151,10 +152,16 @@ export default function SoulGuidePage() {
   }, [showResetConfirm]);
 
   useEffect(() => {
-    // เลื่อนลงล่างสุดทุกครั้งที่ข้อความเปลี่ยน
-    if (messages.length > 0) {
+    // เลื่อนลงล่างสุดทุกครั้งที่มีการตอบโต้ (ตั้งแต่ข้อความที่ 2 เป็นต้นไป)
+    if (messages.length > 1) {
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } else if (messages.length === 1) {
+      // สำหรับแชทแรก (คำทักทาย) ให้เด้งขึ้นบนสุดเสมอ
+      setTimeout(() => {
+        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
     }
   }, [messages]);
@@ -191,7 +198,10 @@ export default function SoulGuidePage() {
       const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
       
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     } catch (error) {
       console.error("Error resetting chat:", error);
     } finally {
@@ -362,7 +372,7 @@ export default function SoulGuidePage() {
       )}
 
       {/* Chat Container */}
-      <main className="flex-1 w-full max-w-3xl flex flex-col gap-6 p-6 z-10 overflow-y-auto pb-60 scroll-smooth no-scrollbar">
+      <main ref={mainRef} className="flex-1 w-full max-w-3xl flex flex-col gap-6 p-6 z-10 overflow-y-auto pb-60 scroll-smooth no-scrollbar">
         <AnimatePresence mode="popLayout">
           {messages.map((msg, idx) => (
             <motion.div
