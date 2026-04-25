@@ -217,7 +217,7 @@ export default function SwipeQuoteApp() {
     try {
       // 💡 1. เตรียมความพร้อมของ Font และรูปภาพ
       await document.fonts.ready;
-      
+
       // 💡 2. ปรับ Style ชั่วคราวเพื่อให้ Capture ได้ครบถ้วน (ลดโอกาสภาพขาดในมือถือ)
       const originalStyle = {
         height: element.style.height,
@@ -228,7 +228,7 @@ export default function SwipeQuoteApp() {
       element.style.overflow = 'visible';
 
       await new Promise(r => setTimeout(r, 500)); // รอให้ Browser Re-render แป๊บนึง
-      
+
       const dataUrl = await domToPng(element, {
         quality: 1,
         scale: 4, // เพิ่มความชัดเป็น 4 เท่าให้สะใจ
@@ -237,7 +237,7 @@ export default function SwipeQuoteApp() {
           removeControlCharacter: true,
         }
       });
-      
+
       // คืนค่าเดิม
       element.style.height = originalStyle.height;
       element.style.overflow = originalStyle.overflow;
@@ -245,12 +245,12 @@ export default function SwipeQuoteApp() {
       if (!dataUrl) throw new Error("Failed to generate image data URL");
 
       const link = document.createElement("a");
-      link.download = `khomsatsat-${Date.now()}.png`; 
+      link.download = `khomsatsat-${Date.now()}.png`;
       link.href = dataUrl;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
     } catch (err: any) {
       console.error("Save image failed", err);
       alert("ไม่สามารถบันทึกรูปภาพได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง หรือใช้วิธีการแคปหน้าจอแทนนะครับ");
@@ -517,8 +517,8 @@ export default function SwipeQuoteApp() {
                     <div
                       key={slot}
                       className={`w-20 h-10 rounded-full flex items-center justify-center text-[11px] font-black transition-all duration-300 ${hasWord
-                          ? 'text-white shadow-lg border-2'
-                          : 'bg-white/50 border-2 border-dashed border-stone-300 text-transparent'
+                        ? 'text-white shadow-lg border-2'
+                        : 'bg-white/50 border-2 border-dashed border-stone-300 text-transparent'
                         }`}
                       style={hasWord ? { backgroundColor: activeColor, borderColor: activeColor, boxShadow: `0 8px 15px -3px ${activeColor}60` } : {}}
                     >
@@ -571,10 +571,10 @@ export default function SwipeQuoteApp() {
                   {/* ตัวคำ (จัด Font ให้เท่ขึ้น และแก้ปัญหาคำฉีก) */}
                   <h3
                     className={`font-black text-stone-900 text-center leading-tight tracking-tighter drop-shadow-sm px-2 whitespace-nowrap transition-all duration-300 ${deck[currentCardIndex]?.length > 10
-                        ? 'text-[24px] sm:text-[30px]' // ปรับให้เล็กลงตามที่แจ้ง
-                        : deck[currentCardIndex]?.length > 7
-                          ? 'text-[28px] sm:text-[36px]' 
-                          : 'text-[34px] sm:text-[42px]' 
+                      ? 'text-[24px] sm:text-[30px]' // ปรับให้เล็กลงตามที่แจ้ง
+                      : deck[currentCardIndex]?.length > 7
+                        ? 'text-[28px] sm:text-[36px]'
+                        : 'text-[34px] sm:text-[42px]'
                       }`}
                   >
                     {deck[currentCardIndex]}
@@ -823,11 +823,10 @@ export default function SwipeQuoteApp() {
                       {/* Name/Signature */}
                       <div className="flex flex-col items-center px-2 w-full max-w-[280px]">
                         <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1 opacity-80">Insight By</span>
-                        <span className={`font-black text-white tracking-tighter drop-shadow-md text-center leading-tight break-words w-full ${
-                          (currentUser?.displayName || "").length > 25 ? "text-[10px]" : 
-                          (currentUser?.displayName || "").length > 15 ? "text-[12px]" : 
-                          "text-[16px]"
-                        }`}>
+                        <span className={`font-black text-white tracking-tighter drop-shadow-md text-center leading-tight break-words w-full ${(currentUser?.displayName || "").length > 25 ? "text-[10px]" :
+                            (currentUser?.displayName || "").length > 15 ? "text-[12px]" :
+                              "text-[16px]"
+                          }`}>
                           {currentUser?.displayName}
                         </span>
                         <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-white/30 to-transparent mt-1" />

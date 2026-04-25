@@ -51,11 +51,8 @@ export default function SoulGuidePage() {
           if (docSnap.exists()) {
             const baseData = docSnap.data();
             const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
-            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-            let usedToday = baseData.chatUsageDate === today ? (baseData.dailyChatCount || 0) : 0;
-            let totalQuota = (currentUser.email === 'emotion.tuii@gmail.com' || level > 10) ? Infinity : level;
-            
-            setChatQuota({ used: usedToday, total: totalQuota });
+            // ✅ [NO ENERGY LIMIT] ทุกคนใช้ได้ไม่จำกัด
+            setChatQuota({ used: 0, total: Infinity });
             setUserData((prev: any) => ({ ...prev, ...baseData, level }));
           }
         });
@@ -213,11 +210,7 @@ export default function SoulGuidePage() {
     const messageText = text || input;
     if (!messageText.trim() || isLoading) return;
 
-    // 🔥 Quota Validation
-    if (chatQuota.total !== Infinity && chatQuota.used >= chatQuota.total) {
-      alert(`โควตาคำถามวันนี้หมดแล้วครับ (LV.${chatQuota.total} ได้ ${chatQuota.total} คำถาม/วัน) \n\nมาอัปเลเวลถึง LV.11 เพื่อคุยแบบไม่จำกัดนะ! 🚀`);
-      return;
-    }
+    // 🚫 ลบการเช็กโควตา Energy ออกเพื่อให้ใช้ได้ Unlimited
 
     const userMessage: Message = { role: "user", content: messageText.trim() };
     setMessages(prev => [...prev, userMessage]);
@@ -253,7 +246,7 @@ export default function SoulGuidePage() {
             totalFocusMinutes: userData?.totalFocusMinutes,
             characterTier: getCharacterTier(userData?.totalXP || 0),
             level: userData?.level,
-            dailyChatCount: chatQuota.used
+            // 🚫 ไม่ต้องบันทึก dailyChatCount แล้ว
           }
         })
       });
@@ -269,23 +262,7 @@ export default function SoulGuidePage() {
           createdAt: serverTimestamp()
         });
 
-        // 🔥 Update Usage in Firebase
-        const now = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-        if (!user) return;
-        const userRef = doc(db, "users", user.uid);
-
-        await setDoc(userRef, {
-          dailyChatCount: userData.chatUsageDate === now ? increment(1) : 1,
-          chatUsageDate: now
-        }, { merge: true });
-
-        // 🔥 Sync Local State to prevent stale data
-        setChatQuota(prev => ({ ...prev, used: prev.used + 1 }));
-        setUserData((prev: any) => ({
-          ...prev,
-          dailyChatCount: prev.chatUsageDate === now ? (prev.dailyChatCount || 0) + 1 : 1,
-          chatUsageDate: now
-        }));
+        // 🚫 [NO USAGE TRACKING]
 
       } else {
         setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบเชื่อมต่อขัดข้องนิดหน่อย ลองใหม่อีกครั้งนะครับ" }]);
@@ -348,12 +325,15 @@ export default function SoulGuidePage() {
               <h1 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-200">AI Personal Mentor</h1>
             </div>
 
-            {/* 🔥 Quota Indicator */}
-            <div className="flex items-center gap-2 mt-1">
-              <Battery size={10} className={`${chatQuota.total !== Infinity && chatQuota.used >= chatQuota.total ? 'text-red-500' : 'text-zinc-500'}`} />
-              <span className="text-[8px] font-black tracking-widest text-zinc-500 uppercase">
-                Energy: {chatQuota.total === Infinity ? 'Unlimited ∞' : `${chatQuota.total - chatQuota.used}/${chatQuota.total}`}
-              </span>
+            {/* 🏷️ [AI ACTIVE] Status Badge */}
+            <div className="flex items-center gap-2 mt-2">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-blue-500/10 text-blue-400 text-[9px] font-black px-2.5 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1 uppercase tracking-[0.2em]"
+              >
+                <Zap size={10} className="fill-blue-400" /> AI ACTIVE
+              </motion.div>
             </div>
           </div>
 
@@ -414,7 +394,7 @@ export default function SoulGuidePage() {
         <div className="max-w-3xl mx-auto flex flex-col items-center">
 
           <AnimatePresence>
-            {!isLoading && dynamicButtons.length > 0 && (chatQuota.total === Infinity || chatQuota.used < chatQuota.total) && (
+            {!isLoading && dynamicButtons.length > 0 && (
               <div className="flex overflow-x-auto gap-3 mb-5 w-full no-scrollbar pb-2">
                 {dynamicButtons.map((btn) => (
                   <button
@@ -429,48 +409,33 @@ export default function SoulGuidePage() {
             )}
           </AnimatePresence>
 
-          {chatQuota.total !== Infinity && chatQuota.used >= chatQuota.total ? (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-center mb-4"
-            >
-              <div className="flex items-center justify-center gap-2 text-red-400 mb-1">
-                <AlertCircle size={16} />
-                <span className="text-xs font-black uppercase tracking-widest">Energy Depleted</span>
-              </div>
-              <p className="text-[10px] text-zinc-400">วันนี้ Mentor ใช้พลังงานไปครบ {chatQuota.total} ครั้งแล้วครับ</p>
-              <p className="text-[10px] text-zinc-500 font-bold mt-1">พักผ่อนให้เต็มที่ แล้วมาคุยกันใหม่พรุ่งนี้นะครับ! 🌙</p>
-              <p className="text-[9px] text-indigo-400/60 mt-2 italic">(หรืออัปเลเวลเพิ่มโควตาได้จากการอ่านหนังสือนะ! 🚀)</p>
-            </motion.div>
-          ) : (
-            <div className="w-full relative">
-              <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
-                <button
-                  onClick={() => setShowResetConfirm(true)}
-                  className="w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
-                  title="เริ่มบทสนทนาใหม่"
-                >
-                  <Plus size={18} />
-                </button>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  placeholder="คุยกับ Mentor..."
-                  className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600 ml-2"
-                />
-                <button
-                  onClick={() => handleSendMessage()}
-                  disabled={isLoading || !input.trim()}
-                  className="w-11 h-11 bg-zinc-200 text-black rounded-full flex items-center justify-center hover:bg-white active:scale-95 transition-all disabled:opacity-20"
-                >
-                  <Send size={16} />
-                </button>
-              </div>
+          {/* 🚫 [UNLIMITED] แสดงช่อง Input เสมอ */}
+          <div className="w-full relative">
+            <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
+                title="เริ่มบทสนทนาใหม่"
+              >
+                <Plus size={18} />
+              </button>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                placeholder="คุยกับ Mentor..."
+                className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600 ml-2"
+              />
+              <button
+                onClick={() => handleSendMessage()}
+                disabled={isLoading || !input.trim()}
+                className="w-11 h-11 bg-zinc-200 text-black rounded-full flex items-center justify-center hover:bg-white active:scale-95 transition-all disabled:opacity-20"
+              >
+                <Send size={16} />
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
