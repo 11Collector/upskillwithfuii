@@ -3,11 +3,10 @@
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, HelpCircle, X, ArrowRight } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
-import { AnimatePresence } from "framer-motion";
 import { loadStripe } from '@stripe/stripe-js';
 import { usePWAInstall } from "@/lib/pwa";
 
@@ -58,11 +57,6 @@ export default function Home() {
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'yearly'>('monthly');
-
-  // --- 🧭 App Guide State ---
-  const [showGuide, setShowGuide] = useState(false);
-  const [guideStep, setGuideStep] = useState(1);
-  const totalGuideSteps = 6;
 
   const handleUpgrade = async () => {
     if (!user) return alert("Please login first");
@@ -218,8 +212,7 @@ export default function Home() {
   }
 
   return (
-    <>
-      <div className="w-full max-w-4xl mx-auto px-4 py-6 font-sans">
+    <div className="w-full max-w-4xl mx-auto px-4 py-6 font-sans">
 
       {/* --- 1. Hero Section --- */}
       {!user ? (
@@ -539,16 +532,39 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0, rotate: -20 }}
                   animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  transition={{ duration: 0.8, delay: 0.5 }}
-                  className="absolute -bottom-6 -left-6 bg-slate-900/80 backdrop-blur-sm border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-3 z-20"
+                  transition={{ delay: 2.2, duration: 0.6, type: "spring", bounce: 0.6 }}
+                  className="absolute -top-12 -right-8 z-50"
                 >
-                  <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                    <Zap size={20} className="text-amber-400 fill-amber-400" />
-                  </div>
-                  <div>
-                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest">7-Day Plan</div>
-                    <div className="text-[11px] text-white font-black">AI Ready! ⚡️</div>
-                  </div>
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="bg-blue-600 px-6 py-4 rounded-[2rem] border-4 border-slate-900 shadow-[0_20px_40px_rgba(37,99,235,0.4)] flex items-center gap-3"
+                  >
+                    <div className="bg-white p-2 rounded-full shadow-lg">
+                      <Award size={22} className="text-blue-600 fill-current" />
+                    </div>
+                    <div className="flex flex-col pr-2">
+                      <span className="text-blue-100 font-bold text-[9px] uppercase tracking-widest leading-tight">New Status</span>
+                      <span className="text-white font-black text-lg leading-tight">LEVEL UP!</span>
+                    </div>
+
+                    <motion.div
+                      animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute -top-2 -right-2 text-amber-300"
+                    >
+                      <Star size={20} className="fill-current" />
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -bottom-6 -left-12 bg-white/10 backdrop-blur-xl px-5 py-3.5 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 z-30"
+                >
+                  <Zap size={18} className="text-amber-400 fill-current" />
+                  <span className="text-white font-black text-sm">+150 XP</span>
                 </motion.div>
               </motion.div>
             </div>
@@ -658,7 +674,6 @@ export default function Home() {
         </div>
       )}
     </div>
-
     {/* --- 🧭 Floating App Guide Button (Top Right) --- */}
     {!user && (
       <div className="fixed top-24 right-4 sm:top-28 sm:right-6 z-[999]">

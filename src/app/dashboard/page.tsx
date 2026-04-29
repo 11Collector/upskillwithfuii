@@ -1802,7 +1802,13 @@ export default function DashboardPage() {
     let wheelQuestSet = false;
 
     if (lastSkipDate === todayDateStr) {
-      qList[0].title = `🌱 พักกายพักใจก่อนนะ พรุ่งนี้ค่อยลุย DAY ${Math.min(7, wheelPlanDay + 1)}/7 ต่อ!`;
+      if (wheelPlanDay >= 8) {
+        qList[0].title = `🏆 จบแผนสำเร็จแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
+      } else if (wheelPlanDay === 7) {
+        qList[0].title = `🌱 พักผ่อนให้เต็มที่! พรุ่งนี้ค่อยมารับสรุปผลและเริ่มแผนใหม่นะ`;
+      } else {
+        qList[0].title = `🌱 พักกายพักใจก่อนนะ พรุ่งนี้ค่อยลุย DAY ${Math.min(7, wheelPlanDay + 1)}/7 ต่อ!`;
+      }
       qList[0].xp = 0;
       wheelQuestSet = true;
     }
@@ -2014,12 +2020,15 @@ export default function DashboardPage() {
 
     // 🌟 [NEW LOGIC] จัดการ Wheel Plan Day แยกต่างหาก
     let newWheelDay = wheelPlanDay;
+    let bonusXpFromPlan = 0;
+
     if (id === 1) { // ข้อ Wheel เสมอ
       // 🌟 รับโบนัสจบแผน
       if (wheelPlanDay >= 7 && !isDone) {
         // ไม่ต้องอัปเดต wheelPlanDay แล้ว (รอเขากดเริ่มประเมินใหม่)
         // หรือตั้งค่าเป็น 8 เพื่อไม่ให้ขึ้นซ้ำ
         setWheelPlanDay(8);
+        newWheelDay = 8;
       } else {
         newWheelDay = isDone ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay + 1;
         setWheelPlanDay(newWheelDay);
@@ -2970,6 +2979,7 @@ export default function DashboardPage() {
 
                       </div>
 
+<<<<<<< HEAD
                       {/* Row 2: DISC, Money, Library of Souls */}
                       {(lastDisc || lastMoney || lastLibrarySoul) && (
                         <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap">
@@ -2982,6 +2992,26 @@ export default function DashboardPage() {
                               </span>
                             </div>
                           )}
+=======
+                      {/* DISC Badge */}
+                      {lastDisc && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                          <Zap size={12} className="text-blue-400 shrink-0" />
+                          <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
+                            {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Perfect Week Badge */}
+                      {perfectWeeks > 0 && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-yellow-500/30 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-yellow-500/20" title="ทำแผน Wheel of Life 7 วันสำเร็จแบบ 100%">
+                          <span className="text-[9px] sm:text-[10px] font-black text-yellow-400 tracking-wide whitespace-nowrap">
+                            🎖️ Perfect x{perfectWeeks}
+                          </span>
+                        </div>
+                      )}
+>>>>>>> b7a321a (bug)
 
                           {/* Money Badge */}
                           {lastMoney && (
@@ -3220,8 +3250,9 @@ export default function DashboardPage() {
                   <Flame size={28} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+                    </div>
                     <button
                       onClick={handleOpenRerollConfirm}
                       disabled={isToggling}
@@ -3252,7 +3283,7 @@ export default function DashboardPage() {
                   <span className="text-base sm:text-xl font-black text-slate-800">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
                 </div>
               </div>
-            </div>
+            
 
             {/* Progress Bar แบบ Super State (Full at 3, Bonus after) */}
             <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
@@ -3427,7 +3458,7 @@ export default function DashboardPage() {
                     <div className="shrink-0 text-right flex flex-col items-end gap-2">
                       {isNotice || quest.title.includes('สรุปผล') ? (
                         <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 uppercase tracking-widest cursor-pointer">
-                          {quest.title.includes('สรุปผล') ? 'Claim Bonus' : quest.title.includes('พักกายพักใจ') ? 'พักผ่อน 💤' : 'INFO'}
+                          {quest.title.includes('สรุปผล') ? 'Claim Bonus' : (quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'INFO'}
                         </span>
                       ) : (
                         <div className="flex flex-col items-end gap-1.5">
@@ -5466,8 +5497,13 @@ export default function DashboardPage() {
                   else finishTutorial();
                 }}
                 className={`w-full py-4 rounded-2xl font-black text-[15px] transition-all duration-300 z-10 shadow-[0_8px_20px_rgba(0,0,0,0.1)] active:scale-95 ${tutorialStep === 4
+<<<<<<< HEAD
                   ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400'
                   : 'bg-slate-900 text-white hover:bg-slate-800'
+=======
+                    ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400'
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+>>>>>>> b7a321a (bug)
                   }`}
               >
                 {tutorialStep < 4 ? 'ถัดไป' : 'เข้าใจแล้ว ลุยเลย! 🚀'}
