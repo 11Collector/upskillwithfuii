@@ -2017,7 +2017,6 @@ export default function DashboardPage() {
     if (id === 1) { // ข้อ Wheel เสมอ
       // 🌟 รับโบนัสจบแผน
       if (wheelPlanDay >= 7 && !isDone) {
-        setTotalXP(prev => prev + xp);
         // ไม่ต้องอัปเดต wheelPlanDay แล้ว (รอเขากดเริ่มประเมินใหม่)
         // หรือตั้งค่าเป็น 8 เพื่อไม่ให้ขึ้นซ้ำ
         setWheelPlanDay(8);
@@ -2064,7 +2063,6 @@ export default function DashboardPage() {
 
             // 🌟 [FIX]: รวมโบนัสเข้ากับ xpChange เพื่อให้บันทึกทีเดียวท้ายฟังก์ชัน
             xpChange += bonusXP;
-            setTotalXP(prev => prev + bonusXP);
             setShowPerfectWeekModal(true);
           }
         }
@@ -2077,7 +2075,6 @@ export default function DashboardPage() {
 
           if (bonusToSubtract > 0) {
             xpChange -= bonusToSubtract;
-            setTotalXP(prev => prev - bonusToSubtract);
             if (wheelPlanSkips === 0) setPerfectWeeks(prev => Math.max(0, prev - 1));
           }
         }
