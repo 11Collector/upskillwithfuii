@@ -1,16 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, doc, updateDoc, increment, limit, startAfter, where } from "firebase/firestore";
-import { db } from "@/lib/firebase"; 
+import { db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Quote, Loader2, Heart, Share2, CheckCircle, Download } from "lucide-react"; 
+import { ChevronLeft, Quote, Loader2, Heart, Share2, CheckCircle, Download } from "lucide-react";
 import Link from "next/link";
 import { Kanit } from "next/font/google";
-import { toPng } from "html-to-image"; 
+import { toPng } from "html-to-image";
 
-const kanit = Kanit({ 
-  subsets: ["thai", "latin"], 
-  weight: ["300", "400", "500", "600", "700", "800", "900"] 
+const kanit = Kanit({
+  subsets: ["thai", "latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"]
 });
 
 const moodCategories = [
@@ -56,9 +56,9 @@ export default function GalleryPage() {
   const [activeFilter, setActiveFilter] = useState<string>("ทั้งหมด");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const [lastDoc, setLastDoc] = useState<any>(null); 
-  const [hasMore, setHasMore] = useState(true); 
-  const [loadingMore, setLoadingMore] = useState(false); 
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchInitialQuotes = async () => {
     setLoading(true);
@@ -75,15 +75,15 @@ export default function GalleryPage() {
       querySnapshot.forEach((document) => {
         data.push({ id: document.id, ...document.data(), likes: document.data().likes || 0 } as QuoteData);
       });
-      
+
       setQuotes(data);
-      
+
       if (querySnapshot.docs.length > 0) {
         setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
-        setHasMore(querySnapshot.docs.length === FETCH_LIMIT); 
+        setHasMore(querySnapshot.docs.length === FETCH_LIMIT);
       } else {
         setLastDoc(null);
-        setHasMore(false); 
+        setHasMore(false);
       }
     } catch (error) {
       console.error("Error fetching initial quotes: ", error);
@@ -94,7 +94,7 @@ export default function GalleryPage() {
 
   const loadMoreQuotes = async () => {
     if (!lastDoc || loadingMore || !hasMore) return;
-    
+
     setLoadingMore(true);
     try {
       let q;
@@ -109,9 +109,9 @@ export default function GalleryPage() {
       querySnapshot.forEach((document) => {
         data.push({ id: document.id, ...document.data(), likes: document.data().likes || 0 } as QuoteData);
       });
-      
+
       setQuotes(prev => [...prev, ...data]);
-      
+
       if (querySnapshot.docs.length > 0) {
         setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
         setHasMore(querySnapshot.docs.length === FETCH_LIMIT);
@@ -125,7 +125,7 @@ export default function GalleryPage() {
     }
   };
 
-// 💡 1. โหลดข้อมูลการไลค์จากเครื่องผู้ใช้ (ทำแค่ครั้งเดียวตอนเข้าหน้าเว็บ)
+  // 💡 1. โหลดข้อมูลการไลค์จากเครื่องผู้ใช้ (ทำแค่ครั้งเดียวตอนเข้าหน้าเว็บ)
   useEffect(() => {
     try {
       const savedLikes = localStorage.getItem("khomsatsat_likes");
@@ -142,7 +142,7 @@ export default function GalleryPage() {
     fetchInitialQuotes();
   }, [activeFilter]);
 
-// 💡 3. ปรับระบบกดไลค์
+  // 💡 3. ปรับระบบกดไลค์
   const handleLike = async (quoteId: string) => {
     // 1) เช็คว่าเคยไลค์รูปนี้ไปหรือยังจาก State ปัจจุบัน
     const isLiked = likedQuotes.includes(quoteId);
@@ -172,8 +172,8 @@ export default function GalleryPage() {
     // 5) ส่งข้อมูลไปอัปเดตยอดไลค์รวมที่ Firebase (ทำงานเบื้องหลัง)
     try {
       const quoteRef = doc(db, "quotes", quoteId);
-      await updateDoc(quoteRef, { 
-        likes: isLiked ? increment(-1) : increment(1) 
+      await updateDoc(quoteRef, {
+        likes: isLiked ? increment(-1) : increment(1)
       });
     } catch (error) {
       console.error("Error updating like in Firebase:", error);
@@ -183,7 +183,7 @@ export default function GalleryPage() {
   const handleShare = async (item: QuoteData) => {
     const textToShare = `"${item.quote.replace(/\\n/g, '\n')}"\n\nอารมณ์: ${item.mood}\n#${item.words.join(" #")}\n\nสร้างคำคมของคุณได้ที่: ${window.location.origin}`;
     if (navigator.share) {
-      try { await navigator.share({ title: 'คมสัดสัด x Upskill with Fuii', text: textToShare }); } catch (error) {}
+      try { await navigator.share({ title: 'คมสัดสัด x Upskill with Fuii', text: textToShare }); } catch (error) { }
     } else {
       navigator.clipboard.writeText(textToShare);
       setCopiedId(item.id);
@@ -217,14 +217,14 @@ export default function GalleryPage() {
 
       const dataUrl = await toPng(element, {
         quality: 1.0,
-        pixelRatio: 3, 
+        pixelRatio: 3,
         // 💡 บังคับให้พื้นหลังเป็นสี slate-900 (สีทึบ) เสมอเวลาแบคกราวด์อ่านค่าเป็นใส
-        backgroundColor: actualBgColor === 'rgba(0, 0, 0, 0)' ? '#0f172a' : actualBgColor, 
+        backgroundColor: actualBgColor === 'rgba(0, 0, 0, 0)' ? '#0f172a' : actualBgColor,
         cacheBust: true,
         style: {
           transform: 'scale(1)',
           margin: '0',
-          borderRadius: '2.5rem', 
+          borderRadius: '2.5rem',
         },
         filter: (node) => {
           if (node instanceof HTMLElement && node.getAttribute('data-html2canvas-ignore') === 'true') {
@@ -256,14 +256,14 @@ export default function GalleryPage() {
   return (
     // 💡 1. ปรับ Theme หลักเป็น Dark Slate (bg-slate-950)
     <div className={`min-h-[100dvh] bg-slate-950 text-slate-100 ${kanit.className} overflow-x-hidden relative flex flex-col`}>
-      
+
       {/* 💡 2. ลายจุด Polkadot โทนดาร์ก */}
       <div className="fixed inset-0 z-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none"></div>
 
-     {/* 💡 3. Header กระจกดำใส (Dark Glassmorphism) */}
+      {/* 💡 3. Header กระจกดำใส (Dark Glassmorphism) */}
       <header className="pt-12 pb-4 flex flex-col items-center relative z-20 bg-slate-900/60 backdrop-blur-xl sticky top-0 border-b border-slate-800 shadow-sm">
         <div className="px-6 w-full flex items-center justify-center relative mb-4">
-          
+
           {/* 💡 แก้ไข: เพิ่ม top-0 และขยับลงมานิดนึงด้วย mt-1 เพื่อให้ขอบปุ่มพอดีกับคำว่า "แกลเลอรี" */}
           <Link href="/" className="absolute left-6 top-0 mt-1 p-2.5 bg-slate-800 rounded-full hover:bg-slate-700 shadow-sm transition-colors border border-slate-700">
             <ChevronLeft size={20} className="text-slate-300" />
@@ -284,11 +284,10 @@ export default function GalleryPage() {
                 <button
                   key={cat.id}
                   onClick={() => setActiveFilter(cat.title)}
-                  className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-[13px] font-bold transition-all active:scale-95 shadow-sm border-[2px] ${
-                    isActive 
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-[0_4px_15px_-3px_rgba(37,99,235,0.4)]' 
+                  className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-[13px] font-bold transition-all active:scale-95 shadow-sm border-[2px] ${isActive
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-[0_4px_15px_-3px_rgba(37,99,235,0.4)]'
                       : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
-                  }`}
+                    }`}
                 >
                   <span className="text-[14px]">{cat.icon}</span>
                   {cat.title}
@@ -298,8 +297,9 @@ export default function GalleryPage() {
           </div>
         </div>
       </header>
-      
-      <style dangerouslySetInnerHTML={{__html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
@@ -320,7 +320,7 @@ export default function GalleryPage() {
           </motion.div>
         ) : (
           <div className="w-full flex flex-col items-center">
-            
+
             {/* 💡 5. Grid การ์ด (Dark Glass Card) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
               <AnimatePresence mode="popLayout">
@@ -328,22 +328,22 @@ export default function GalleryPage() {
                   const hasLiked = likedQuotes.includes(item.id);
                   const isCopied = copiedId === item.id;
                   const moodColor = getMoodColor(item.mood);
-                  
+
                   return (
-                    <motion.div 
+                    <motion.div
                       layout
-                      id={`quote-card-${item.id}`} 
+                      id={`quote-card-${item.id}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                       transition={{ delay: (index % FETCH_LIMIT) * 0.05 }}
-                      key={item.id} 
+                      key={item.id}
                       // 💡 ใช้ bg-slate-900 และกำหนดสีกำกับไว้เพื่อให้ toPng เซฟได้ทึบแสง
                       className="bg-slate-900 border-[2px] border-slate-700/50 rounded-[2.5rem] p-8 sm:p-10 relative flex flex-col shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] hover:scale-[1.02] transition-all duration-300 group overflow-hidden"
                       style={{ backgroundColor: '#0f172a' }} // slate-900
                     >
                       {/* แสง Glow หลังการ์ดจางๆ ตามสีอารมณ์ */}
-                      <div 
+                      <div
                         className="absolute inset-0 opacity-10 pointer-events-none transition-all duration-500 group-hover:opacity-25 blur-[60px]"
                         style={{ background: `radial-gradient(circle at top left, ${moodColor} 0%, transparent 60%)` }}
                       ></div>
@@ -352,7 +352,7 @@ export default function GalleryPage() {
                       <div className="absolute top-6 left-6 bg-slate-800 p-3 rounded-full shadow-sm border-[2px] border-slate-700/50 rotate-[-10deg] z-10">
                         <Quote size={20} className="text-blue-400" />
                       </div>
-                      
+
                       {/* 💡 ป้ายกำกับอารมณ์ (บนขวา) */}
                       <div className="flex justify-end mb-6 relative z-10" data-html2canvas-ignore="true">
                         <span className="text-[11px] font-black tracking-wide bg-slate-800 px-4 py-1.5 rounded-full text-slate-300 shadow-sm border border-slate-700 flex items-center gap-1.5">
@@ -361,9 +361,8 @@ export default function GalleryPage() {
                       </div>
 
                       {/* 💡 ตัวคำคม (ปรับให้ใหญ่ขึ้นตาม Ver เดิม) */}
-                      <p className={`font-black leading-relaxed text-white whitespace-pre-line my-4 grow relative z-10 text-center tracking-wide break-words px-2 drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)] ${
-                        item.quote.length > 80 ? "text-[18px] sm:text-[20px]" : "text-[22px] sm:text-[26px]"
-                      }`}>
+                      <p className={`font-black leading-relaxed text-white whitespace-pre-line my-4 grow relative z-10 text-center tracking-wide break-words px-2 drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)] ${item.quote.length > 80 ? "text-[18px] sm:text-[20px]" : "text-[22px] sm:text-[26px]"
+                        }`}>
                         {item.quote.replace(/\\n/g, '\n')}
                       </p>
 
@@ -371,8 +370,8 @@ export default function GalleryPage() {
                         {/* 💡 แท็กคำศัพท์ โทนดาร์กทึบ */}
                         <div className="flex flex-wrap justify-center gap-2">
                           {item.words?.map((word, wIdx) => (
-                            <span 
-                              key={wIdx} 
+                            <span
+                              key={wIdx}
                               className="text-[11px] font-extrabold px-3 py-1 rounded-full border shadow-sm whitespace-nowrap bg-slate-800"
                               style={{ color: moodColor, borderColor: `${moodColor}50`, backgroundColor: 'rgba(30,41,59,0.9)' }}
                             >
@@ -380,10 +379,10 @@ export default function GalleryPage() {
                             </span>
                           ))}
                         </div>
-                        
+
                         {/* 💡 ลายน้ำแบรนด์ (Dark theme ทึบ) */}
                         <div className="flex flex-col items-center gap-1 mt-2 pb-2">
-                          <div 
+                          <div
                             className="text-[8px] font-black tracking-[0.3em] text-slate-300 uppercase px-3 py-1 rounded-full border border-slate-700/80 whitespace-nowrap"
                             style={{ backgroundColor: '#1e293b' }} // slate-800 ทึบ
                           >
@@ -393,7 +392,7 @@ export default function GalleryPage() {
 
                         {/* 💡 ปุ่ม Action (ปุ่มกดด้านล่างแบบดาร์ก) */}
                         <div className="flex items-center justify-between pt-5 border-t border-slate-800/80" data-html2canvas-ignore="true">
-                          <button 
+                          <button
                             onClick={() => handleLike(item.id)}
                             className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all active:scale-90 font-bold text-[13px] shadow-sm border ${hasLiked ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-500/30'}`}
                           >
@@ -402,14 +401,14 @@ export default function GalleryPage() {
                           </button>
 
                           <div className="flex items-center gap-2">
-                            <button 
+                            <button
                               onClick={() => handleDownloadImage(item.id)}
                               disabled={downloadingId === item.id}
                               className="p-2.5 rounded-full transition-all bg-slate-800 border border-slate-700 text-slate-400 shadow-sm hover:text-white hover:bg-slate-700 active:scale-90 disabled:opacity-50"
                             >
                               {downloadingId === item.id ? <Loader2 size={16} className="animate-spin text-blue-400" /> : <Download size={16} />}
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleShare(item)}
                               className={`p-2.5 rounded-full transition-all shadow-sm active:scale-90 border ${isCopied ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-blue-400 hover:border-blue-500/30'}`}
                             >
@@ -426,7 +425,7 @@ export default function GalleryPage() {
             </div>
 
             {hasMore && (
-              <motion.button 
+              <motion.button
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 onClick={loadMoreQuotes}
                 disabled={loadingMore}

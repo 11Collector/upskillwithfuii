@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function KhomsatsatInfoPage() {
-  
+
   return (
     <div className="min-h-screen bg-fuchsia-50/50 text-slate-800 font-sans pb-20">
-      
+
       {/* --- Navbar (แบบย่อ) --- */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-fuchsia-100 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
@@ -24,23 +24,23 @@ export default function KhomsatsatInfoPage() {
 
       {/* --- Main Content (บทความ SEO เจาะกลุ่ม Gen Z & ฮีลใจ) --- */}
       <main className="max-w-3xl mx-auto px-4 mt-8">
-        
+
         {/* Hero Section (H1) */}
         <header className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-fuchsia-100 text-fuchsia-600 rounded-[2rem] mb-6 rotate-3 shadow-inner">
             <Quote size={40} />
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
-            คมสัดสัด <br/>
+            คมสัดสัด <br />
             <span className="text-fuchsia-700 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-pink-500">
               ให้ AI ช่วยเขียนคำคมแทนใจคุณ
             </span>
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto leading-relaxed">
-            หมดแพสชัน? อกหัก? หรือกำลังอินเลิฟ? <br className="hidden md:block"/>
+            หมดแพสชัน? อกหัก? หรือกำลังอินเลิฟ? <br className="hidden md:block" />
             ไม่ต้องคิดแคปชั่นเองให้ปวดหัว แค่ปัดเลือกคำที่ &quot;ทัชใจ&quot; แล้วปล่อยให้ AI ร้อยเรียงความรู้สึกของคุณออกมาเป็นงานอาร์ต
           </p>
-          
+
           <Link href="/tools/khomsatsat">
             <button className="bg-gradient-to-r from-slate-900 to-slate-800 text-fuchsia-400 px-8 py-4 rounded-full font-black text-lg hover:from-black hover:to-slate-900 shadow-xl transition-all hover:-translate-y-1 flex items-center gap-2 mx-auto border border-slate-700">
               <Sparkles size={20} /> เริ่มสร้างคำคมของคุณ
@@ -80,21 +80,21 @@ export default function KhomsatsatInfoPage() {
             <h2 className="text-2xl font-black mb-6 text-fuchsia-400">ทำไมแอปนี้ถึงดีต่อใจ?</h2>
             <div className="space-y-6">
               <div className="flex gap-4">
-                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><Feather className="text-pink-400" size={24}/></div>
+                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><Feather className="text-pink-400" size={24} /></div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Poetic AI Engine</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">เบื้องหลังคือ AI ที่ถูกเทรนมาให้เขียนภาษาแบบกวี ไม่ใช่หุ่นยนต์ เพื่อให้ได้ข้อคิดที่ลึกซึ้ง กระแทกใจแบบสุดๆ</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><Download className="text-cyan-400" size={24}/></div>
+                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><Download className="text-cyan-400" size={24} /></div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Ready for Social</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">ผลลัพธ์มาในรูปแบบ Typography Art สวยงามสไตล์มินิมอล พร้อมปุ่มให้คุณกดเซฟรูปไปลง IG Story ได้ทันที</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><Heart className="text-fuchsia-400" size={24}/></div>
+                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><Heart className="text-fuchsia-400" size={24} /></div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Journaling Effect</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">การได้สะท้อนความรู้สึกตัวเองผ่านการเลือกคำศัพท์ ถือเป็นการระบายความเครียดและฮีลใจ (Therapy) ชั้นดี</p>
@@ -102,7 +102,7 @@ export default function KhomsatsatInfoPage() {
               </div>
             </div>
           </div>
-          
+
           {/* ของตกแต่ง Background */}
           <div className="absolute -right-10 -bottom-10 opacity-5">
             <Quote size={200} />
@@ -117,12 +117,12 @@ export default function KhomsatsatInfoPage() {
               <ArrowRight size={22} className="text-fuchsia-400" />
             </button>
           </Link>
-          
+
           {/* คำเตือนสไตล์ฮีลใจ */}
           <p className="text-slate-400 text-[13px] mt-6 font-medium">
             อนุญาตให้ตัวเองรู้สึกอย่างที่รู้สึก เพราะทุกอารมณ์ล้วนมีความหมาย
           </p>
-          
+
           <Link href="/" className="inline-block mt-10 text-slate-500 hover:text-slate-800 font-bold text-base transition-colors underline underline-offset-8 decoration-slate-300">
             กลับสู่หน้าหลัก
           </Link>

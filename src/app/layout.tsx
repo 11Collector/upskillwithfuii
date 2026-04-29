@@ -27,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      <body className={`${kanit.className} bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] text-slate-800 antialiased`}>
+      <body className={`${kanit.className} bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] text-slate-800 antialiased overflow-x-hidden`}>
         <PWALogic />
 
         <Header />
