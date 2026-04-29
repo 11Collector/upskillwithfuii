@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -886,6 +886,7 @@ export default function DashboardPage() {
   const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
   const [totalXP, setTotalXP] = useState<number>(0);
   const [showLevelInfo, setShowLevelInfo] = useState(false);
+  const [showFloatingXP, setShowFloatingXP] = useState(false);
 
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean, title: string, content: string | React.ReactNode } | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
@@ -2465,7 +2466,13 @@ export default function DashboardPage() {
             exit={{ scale: 0.5, opacity: 0, rotate: 45 }}
             className="fixed top-20 right-4 md:right-8 z-[90] pointer-events-auto"
           >
-            <div className="relative flex flex-col items-center justify-center w-[56px] h-[56px] md:w-[64px] md:h-[64px] rounded-full cursor-pointer group hover:scale-105 active:scale-95 transition-transform duration-300">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowFloatingXP(!showFloatingXP);
+              }}
+              className="relative flex flex-col items-center justify-center w-[56px] h-[56px] md:w-[64px] md:h-[64px] rounded-full cursor-pointer group hover:scale-105 active:scale-95 transition-transform duration-300 focus:outline-none"
+            >
               
               {/* Premium Glass Background */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/80" />
@@ -2505,13 +2512,16 @@ export default function DashboardPage() {
               </svg>
               
               {/* Center Content */}
-              <div className="relative z-10 flex flex-col items-center justify-center pt-0.5 drop-shadow-sm">
+              <div className="relative z-10 flex flex-col items-center justify-center pt-0.5 drop-shadow-sm pointer-events-none">
                 <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-[2px]">LV</span>
                 <span className="text-[18px] md:text-[22px] font-black bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 bg-clip-text text-transparent leading-none">{currentLevel}</span>
               </div>
               
               {/* Tooltip on Tap/Hover (Premium Style) */}
-              <div className="absolute top-[calc(100%+12px)] right-[-8px] bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-[0_10px_25px_rgba(0,0,0,0.2)] pointer-events-none border border-white/10 transform translate-y-2 group-hover:translate-y-0 origin-top-right">
+              <div 
+                className={`absolute top-[calc(100%+12px)] right-[-8px] bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[11px] font-bold transition-all duration-300 whitespace-nowrap shadow-[0_10px_25px_rgba(0,0,0,0.2)] pointer-events-none border border-white/10 origin-top-right z-50
+                ${showFloatingXP ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+              >
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                   <span>อีก <span className="text-orange-400 font-black">{100 - currentLevelXP}</span> XP อัปเลเวล!</span>
@@ -2519,10 +2529,11 @@ export default function DashboardPage() {
                 {/* สามเหลี่ยมชี้ขึ้น */}
                 <div className="absolute -top-[5px] right-[30px] md:right-[34px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[6px] border-b-slate-900/90" />
               </div>
-            </div>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       <div className="max-w-6xl mx-auto">
 
@@ -3090,7 +3101,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+                    <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
                     <button
                       onClick={handleOpenRerollConfirm}
                       disabled={isToggling}
@@ -3106,19 +3117,19 @@ export default function DashboardPage() {
                       </span>
                     </button>
                   </div>
-                  <p className="text-sm text-slate-500 font-bold flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm text-slate-500 font-bold flex items-center gap-1.5">
                     <Sparkles size={14} className="text-orange-400" /> เลือกทำได้ทุกข้อ เพื่ออัพสกิลสัปดาห์นี้ของคุณ
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 bg-slate-50 px-5 py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md">
+              <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md">
                 <div className="p-2 bg-gradient-to-br from-yellow-300 to-yellow-500 text-white rounded-full shadow-sm group-hover/reward:rotate-12 group-hover/reward:scale-110 transition-all duration-300">
-                  <Trophy size={20} className="fill-current" />
+                  <Trophy size={18} className="sm:w-5 sm:h-5 fill-current" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Reward Today</span>
-                  <span className="text-xl font-black text-slate-800">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
+                  <span className="text-base sm:text-xl font-black text-slate-800">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
                 </div>
               </div>
             </div>
@@ -3238,7 +3249,7 @@ export default function DashboardPage() {
                     key={quest.id}
                     // 🚩 ถ้าเป็น Notice ไม่ต้องมี Hover Effect ของเควสปกติ
                     whileHover={(!isDone && !isNotice) ? { y: -3, scale: 1.01 } : {}}
-                    className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] border-2 transition-all duration-300 
+                    className={`group/card relative flex items-center gap-3 sm:gap-5 p-4 sm:p-5 rounded-[1.8rem] border-2 transition-all duration-300 
         ${isDone ? 'bg-green-50 border-green-200 shadow-sm' :
                         isNotice
                           ? 'bg-amber-50/40 border-amber-100 cursor-default opacity-95' // 🚩 สไตล์สำหรับประกาศ
@@ -3278,7 +3289,7 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      <p className={`text-[14px] md:text-[15px] font-bold leading-snug 
+                      <p className={`text-[13px] sm:text-[15px] font-bold leading-snug 
           ${isDone ? 'line-through text-slate-400' : isNotice || quest.title.includes('สรุปผล') ? 'text-amber-900' : 'text-slate-700'}`}>
                         {quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title}
                       </p>
@@ -3300,7 +3311,7 @@ export default function DashboardPage() {
                         </span>
                       ) : (
                         <div className="flex flex-col items-end gap-1.5">
-                          <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all ${isDone ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'}`}>
+                          <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border shadow-sm transition-all ${isDone ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'}`}>
                             +{quest.xp} XP
                           </span>
                           
@@ -3328,7 +3339,7 @@ export default function DashboardPage() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="relative group/locked p-5 rounded-[1.8rem] border-2 border-dashed border-slate-300 bg-slate-50 flex items-center gap-5 overflow-hidden grayscale-[20%] opacity-80"
+                    className="relative group/locked p-4 sm:p-5 rounded-[1.8rem] border-2 border-dashed border-slate-300 bg-slate-50 flex items-center gap-3 sm:gap-5 overflow-hidden grayscale-[20%] opacity-80"
                   >
                     <div className="shrink-0 relative z-10">
                       <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm text-slate-400">
@@ -3342,7 +3353,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-slate-200 text-slate-500 shadow-inner">Personalized</span>
                       </div>
-                      <p className="text-[15px] font-bold leading-tight text-slate-400 italic">ภารกิจพิเศษเฉพาะคุณ...</p>
+                      <p className="text-[13px] sm:text-[15px] font-bold leading-tight text-slate-400 italic">ภารกิจพิเศษเฉพาะคุณ...</p>
                     </div>
                     <div className="shrink-0 text-right relative z-10">
                       <div className="flex flex-col items-end gap-1">
@@ -3364,7 +3375,7 @@ export default function DashboardPage() {
                         toggleQuest('special-01', 20);
                       }
                     }}
-                    className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] border-2 transition-all duration-300 overflow-hidden
+                    className={`group/card relative flex items-center gap-3 sm:gap-5 p-4 sm:p-5 rounded-[1.8rem] border-2 transition-all duration-300 overflow-hidden
             ${completedQuests.includes('special-01')
                         ? 'bg-emerald-50/50 border-emerald-200 shadow-sm'
                         : 'bg-white border-amber-100/60 hover:border-amber-400 cursor-pointer shadow-[0_5px_15px_rgba(251,191,36,0.05)] hover:shadow-[0_10px_30px_rgba(251,191,36,0.15)]'}
@@ -3386,7 +3397,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>Personalized Mission</span>
                       </div>
-                      <p className={`text-[15px] font-bold leading-tight truncate ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>{customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}</p>
+                      <p className={`text-[13px] sm:text-[15px] font-bold leading-tight truncate ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>{customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}</p>
                     </div>
                     <div className="shrink-0 text-right relative z-10">
                       <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all ${completedQuests.includes('special-01') ? 'bg-stone-100 border-stone-200 text-stone-400' : 'bg-white border-amber-200 text-amber-700 group-hover/card:bg-gradient-to-r group-hover/card:from-amber-400 group-hover/card:to-yellow-600 group-hover/card:text-white group-hover/card:border-transparent'}`}>+20 XP</span>
@@ -3712,7 +3723,7 @@ export default function DashboardPage() {
                       {lastDisc ? (
                         <>
                           {/* ห่อเนื้อหาด้านบน */}
-                          <div className="flex flex-col items-center">
+                          <div className="flex flex-col items-center mb-8">
                             {/* 🛡️ Logo Container (ย้ายขึ้นมาเหมือน Money) */}
                             <div className="relative mb-6 mt-2">
                               <div className={`absolute inset-0 blur-3xl opacity-30 ${discColors.light}`} />
@@ -3769,7 +3780,7 @@ export default function DashboardPage() {
                       ) : (
                         /* 🎁 Empty State (ปรับโครงสร้าง justify-between ให้เหมือน Money) */
                         <div className="flex flex-col items-center justify-between h-full w-full py-2">
-                          <div className="flex flex-col items-center justify-center pt-8">
+                          <div className="flex flex-col items-center justify-center pt-8 mb-8">
                             <div className="relative mb-6">
                               <div className="absolute inset-0 bg-blue-100 blur-3xl opacity-20" />
                               <div className="relative w-24 h-24 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100 shadow-sm group-hover:bg-blue-500 group-hover:text-white transition-all">
@@ -3825,7 +3836,7 @@ export default function DashboardPage() {
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastMoney ? (
                         <>
-                          <div className="flex flex-col items-center">
+                          <div className="flex flex-col items-center mb-8">
                             <div className="relative mb-6 mt-2">
                               <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
                               <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden">
@@ -3895,7 +3906,7 @@ export default function DashboardPage() {
                       ) : (
                         // ... ส่วนของ Empty State เหมือนเดิม ...
                         <div className="flex flex-col items-center justify-between h-full w-full py-2">
-                          <div className="flex flex-col items-center justify-center pt-8">
+                          <div className="flex flex-col items-center justify-center pt-8 mb-8">
                             <div className="relative mb-6">
                               <div className="absolute inset-0 bg-amber-200 blur-2xl opacity-20" />
                               <div className="relative w-24 h-24 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100 shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all">
@@ -3950,7 +3961,7 @@ export default function DashboardPage() {
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastLibrarySoul ? (
                         <>
-                          <div className="flex flex-col items-center">
+                          <div className="flex flex-col items-center mb-8">
                             <div className="relative mb-6 mt-2">
                               <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
                               <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
@@ -3992,7 +4003,7 @@ export default function DashboardPage() {
                         </>
                       ) : (
                         <div className="flex flex-col items-center justify-between h-full w-full py-2">
-                          <div className="flex flex-col items-center justify-center pt-8">
+                          <div className="flex flex-col items-center justify-center pt-8 mb-8">
                             <div className="relative mb-6">
                               <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
                               <div className="relative w-24 h-24 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100 shadow-sm group-hover:bg-emerald-500 group-hover:text-white transition-all">
