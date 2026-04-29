@@ -810,67 +810,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSkipWheelQuest = async () => {
-    if (!user) return;
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-
-    if (lastSkipDate === today) return;
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const newSkips = wheelPlanSkips + 1;
-      const newDay = wheelPlanDay + 1;
-
-      // 🏆 [NEW] จ่ายโบนัสถ้าข้ามวันสุดท้าย (จบแผน)
-      if (newDay === 7) {
-        let bonusXP = 0;
-        let milestoneName = "";
-        let modalType: "GREAT" | "GOOD" = "GOOD";
-
-        if (newSkips >= 1 && newSkips <= 2) {
-          bonusXP = 50;
-          milestoneName = "GREAT RUN!";
-          modalType = "GREAT";
-        } else {
-          bonusXP = 20;
-          milestoneName = "GOOD RUN!";
-          modalType = "GOOD";
-        }
-
-        setRewardModalData({
-          title: milestoneName,
-          bonusXP: bonusXP,
-          message: `จบแผน 7 วันแล้ว! วันนี้คุณเลือกที่จะพักผ่อน รวมทำสำเร็จทั้งหมด ${7 - newSkips} วันครับ`,
-          type: modalType
-        });
-
-        await updateDoc(userRef, {
-          wheelPlanSkips: newSkips,
-          wheelPlanDay: newDay,
-          lastSkipDate: today,
-          totalXP: increment(bonusXP)
-        });
-
-        setWheelPlanSkips(newSkips);
-        setWheelPlanDay(newDay);
-        setLastSkipDate(today);
-        setTotalXP(prev => prev + bonusXP);
-        setShowPerfectWeekModal(true);
-      } else {
-        // กรณีข้ามวันปกติ (1-6)
-        await updateDoc(userRef, {
-          wheelPlanSkips: newSkips,
-          wheelPlanDay: newDay,
-          lastSkipDate: today
-        });
-        setWheelPlanSkips(newSkips);
-        setWheelPlanDay(newDay);
-        setLastSkipDate(today);
-        alert("ดีแล้วที่รู้ลิมิตตัวเอง วันนี้พักก่อนน้า พรุ่งนี้ค่อยมาลุย Day ถัดไปกัน! 🌱");
-      }
-    } catch (e) { console.error(e); }
-  };
-
+  // 1. ฟังก์ชันสุ่มใหม่ (Reroll)
   const handleShuffleQuests = async () => {
     if (!user || !QUEST_POOL?.WHEEL) return;
 
@@ -880,36 +820,40 @@ export default function DashboardPage() {
       const randomTask = allWheelTasks[Math.floor(Math.random() * allWheelTasks.length)];
 
       await updateDoc(userRef, {
-        wheelPlanDay: 0,
+        wheelPlanDay: 1, // เริ่มที่ Day 1 ทันที
         isRandomMode: true,
-        customQuestTitle: randomTask,
+        randomWheelQuestTitle: randomTask,
+        wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่
       });
 
-      setWheelPlanDay(0);
+      setWheelPlanDay(1);
       setIsRandomMode(true);
-      setCustomQuestTitle(randomTask);
+      setRandomWheelQuestTitle(randomTask);
+      setWheelCompletions(0);
 
-      alert("✨ สุ่มภารกิจใหม่จากหมวด Wheel ให้คุณแล้ว!");
+      alert("✨ สุ่มภารกิจใหม่จากหมวด Wheel และเริ่ม Day 1 ให้คุณแล้ว!");
     } catch (e) {
       console.error("Shuffle Error:", e);
     }
   };
 
-  // 2. ฟังก์ชันใช้แผนเดิม (แก้ Bug XP ซ้ำ)
+  // 2. ฟังก์ชันใช้แผนเดิม
   const handleRestartCycle = async () => {
     if (!user) return;
     try {
       const userRef = doc(db, "users", user.uid);
 
       await updateDoc(userRef, {
-        wheelPlanDay: 0,
+        wheelPlanDay: 1, // เริ่มที่ Day 1 ทันที
         isRandomMode: false,
-        // ❌ ห้ามล้าง completedQuestIds ทันทีถ้าวันยังเป็นวันเดิม
-        // ให้ระบบไปล้างเองตอน Check-in วันพรุ่งนี้
+        completedQuestIds: [],
+        wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
       });
 
-      setWheelPlanDay(0);
-      alert("เริ่มรอบใหม่แล้ว! เควส Wheel ใหม่จะมาให้ทำในวันพรุ่งนี้ครับ (เพื่อป้องกัน XP ซ้ำซ้อน)");
+      setWheelPlanDay(1);
+      setCompletedQuests([]);
+      setWheelCompletions(0);
+      alert("เริ่มรอบใหม่ (Day 1) ให้คุณแล้ว! ลุยกันต่อเลยครับ");
     } catch (e) { console.error(e); }
   };
 
@@ -954,18 +898,20 @@ export default function DashboardPage() {
   // 🕒 1. State สำหรับเช็กวันที่ปัจจุบัน (เพื่ออัพเดตรายวันและตอนเที่ยงคืน)
   const [todayDateStr, setTodayDateStr] = useState<string>("");
   const [showSpecialQuestModal, setShowSpecialQuestModal] = useState(false);
-  const [customQuestTitle, setCustomQuestTitle] = useState(""); // เก็บชื่อเควสที่กรอก
+  const [customQuestTitle, setCustomQuestTitle] = useState(""); // สำหรับ Personalized Mission (ID: special-01)
+  const [randomWheelQuestTitle, setRandomWheelQuestTitle] = useState(""); // สำหรับ Randomized Wheel Quest (ID: 1)
   const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เปิด/ปิด Modal
   const [pendingDailySuccess, setPendingDailySuccess] = useState(false); // 👈 คิวรอโชว์ Daily Success
   const [rerollCount, setRerollCount] = useState(0); // 👈 สถานะการสุ่มเควสใหม่
   const [lastRerollDate, setLastRerollDate] = useState(""); // 👈 วันที่สุ่มล่าสุด
+  const [wheelCompletions, setWheelCompletions] = useState(0); // 👈 นับจำนวนวันที่ทำสำเร็จจริง
   const [slotSeeds, setSlotSeeds] = useState<number[]>([0, 0, 0, 0, 0, 0]); // 👈 Seeds รายข้อ
   const [showRerollConfirm, setShowRerollConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันสุ่มเควส
   const [showPerfectWeekModal, setShowPerfectWeekModal] = useState(false);
   const [rewardModalData, setRewardModalData] = useState({
     title: "PERFECT WEEK!",
     bonusXP: 100,
-    message: "ยินดีด้วย! คุณทำแผนครบ 7 วันต่อเนื่องโดยไม่กดข้ามเลย",
+    message: "ยินดีด้วย! คุณทำแผนครบ 7 วันต่อเนื่องได้อย่างยอดเยี่ยม",
     type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
   });
 
@@ -1273,8 +1219,27 @@ export default function DashboardPage() {
               setCompletedQuests(userData.completedQuestIds || []);
               setCustomQuestTitle(userData.customQuestTitle || "");
             } else {
+              // 🆕 [AUTOMATED PROGRESSION] วันเปลี่ยนไปแล้ว! ขยับแผนอัตโนมัติ
               setCompletedQuests([]);
               setCustomQuestTitle("");
+              
+              let currentPlanDay = userData.wheelPlanDay || 0;
+              let nextPlanDay = currentPlanDay;
+
+              // ถ้ายังอยู่ในวงจร 0-7 ให้ขยับวันขึ้น (0->1, 1->2, ..., 6->7)
+              // ถ้าเป็น 7 อยู่แล้ว ให้ขึ้น 8 เพื่อรอสรุปผล
+              if (currentPlanDay < 8) {
+                nextPlanDay = currentPlanDay + 1;
+              }
+
+              const userRef = doc(db, "users", currentUser.uid);
+              await updateDoc(userRef, {
+                wheelPlanDay: nextPlanDay,
+                lastActiveDate: todayStr,
+                completedQuestIds: []
+              });
+              
+              setWheelPlanDay(nextPlanDay);
             }
 
             // --- 4. จัดการสถานะคำคม ---
@@ -1393,6 +1358,8 @@ export default function DashboardPage() {
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
         dailyChatCount: 0,  // 🤖 รีเซ็ตพลังงาน AI Mentor
         chatUsageDate: null,
+        perfectWeeks: 0,    // 🏆 ล้างจำนวนสัปดาห์ที่สมบูรณ์
+        wheelCompletions: 0, // 🎡 ล้างตัวนับความสำเร็จรายวัน
         createdAt: resetDate // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
       }, { merge: true });
 
@@ -1404,6 +1371,8 @@ export default function DashboardPage() {
       setStreakCount(0);
       setWheelPlanDay(0);
       setWheelPlanSkips(0);
+      setWheelCompletions(0); // 🎡 ล้างตัวนับความสำเร็จ
+      setPerfectWeeks(0);    // 🏆 ล้าง Badge สะสม
       setCompletedQuests([]);
       setLastWheel(null);
       setLastDisc(null);
@@ -1801,24 +1770,10 @@ export default function DashboardPage() {
     // 🎯 [NEW LOGIC] จัดการแผน AI: ให้เวลา 1 วันสำหรับ Audit
     let wheelQuestSet = false;
 
-    if (lastSkipDate === todayDateStr) {
-      if (wheelPlanDay >= 8) {
-        qList[0].title = `🏆 จบแผนสำเร็จแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
-      } else if (wheelPlanDay === 7) {
-        qList[0].title = `🌱 พักผ่อนให้เต็มที่! พรุ่งนี้ค่อยมารับสรุปผลและเริ่มแผนใหม่นะ`;
-      } else {
-        qList[0].title = `🌱 พักกายพักใจก่อนนะ พรุ่งนี้ค่อยลุย DAY ${Math.min(7, wheelPlanDay + 1)}/7 ต่อ!`;
-      }
-      qList[0].xp = 0;
+    if (!wheelQuestSet && isRandomMode && randomWheelQuestTitle) {
+      qList[0].title = randomWheelQuestTitle;
       wheelQuestSet = true;
     }
-
-    if (!wheelQuestSet && isRandomMode && customQuestTitle) {
-      qList[0].title = customQuestTitle;
-      wheelQuestSet = true;
-    }
-
-    // ลำดับ 2: ถ้าไม่ได้สุ่ม ค่อยไปเช็คแผน AI 7 วัน
     if (!wheelQuestSet && lastWheel?.analysis) {
       const planSection = lastWheel.analysis.split('📅')[1];
       if (planSection) {
@@ -1828,21 +1783,16 @@ export default function DashboardPage() {
 
         if (planItems.length > 0) {
           const isWheelDoneToday = completedQuests.includes(1);
-          const currentDisplayDay = isWheelDoneToday ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay;
-
-          if (currentDisplayDay < 7) {
-            const dayIdx = currentDisplayDay;
+          
+          if (wheelPlanDay <= 7) {
+            const dayIdx = Math.min(6, wheelPlanDay - 1);
             let currentDayPlan = planItems[dayIdx] || planItems[0];
-            qList[0].title = `DAY ${dayIdx + 1}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
+            qList[0].title = `DAY ${wheelPlanDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
             wheelQuestSet = true;
           } else {
-            const completedDays = Math.max(0, 7 - (wheelPlanSkips || 0));
-            let bonusXp = 20;
-            if (completedDays === 7) { bonusXp = 100; }
-            else if (completedDays >= 5) { bonusXp = 50; }
-            qList[0].id = 1;
-            qList[0].xp = bonusXp;
-            qList[0].title = `🌟 สรุปผล: สำเร็จ ${completedDays}/7 วัน! (โบนัส +${bonusXp} XP)`;
+            // จบแผนแล้ว (Day 8+)
+            qList[0].title = `🏆 จบแผน 7 วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
+            qList[0].xp = 0;
             wheelQuestSet = true;
           }
         }
@@ -1902,7 +1852,7 @@ export default function DashboardPage() {
     qList[5].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 5);
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds]);
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
@@ -1991,6 +1941,51 @@ export default function DashboardPage() {
     setShowRerollConfirm(true);
   };
 
+  // 🏆 ฟังก์ชันคำนวณและแจกรางวัลจบแผน
+  const triggerPlanSummary = async (completions: number) => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    let bonusXP = 0;
+    let milestoneName = "";
+    let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
+
+    if (completions >= 7) {
+      bonusXP = 100;
+      milestoneName = "PERFECT RUN!";
+      modalType = "PERFECT";
+    } else if (completions >= 5) {
+      bonusXP = 50;
+      milestoneName = "GREAT RUN!";
+      modalType = "GREAT";
+    } else {
+      bonusXP = 20;
+      milestoneName = "GOOD RUN!";
+      modalType = "GOOD";
+    }
+
+    setRewardModalData({
+      title: milestoneName,
+      bonusXP: bonusXP,
+      message: `จบแผน 7 วันแล้ว! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!`,
+      type: modalType
+    });
+
+    const finalUpdates: any = {
+      totalXP: increment(bonusXP),
+      wheelPlanDay: 8, // เข้าสู่สถานะรอประเมินใหม่
+    };
+
+    // 🏆 ถ้าเป็น Perfect Run ให้บวก Badge Perfect Week สะสมด้วย
+    if (modalType === 'PERFECT') {
+      finalUpdates.perfectWeeks = increment(1);
+    }
+
+    await updateDoc(userRef, finalUpdates);
+    setWheelPlanDay(8);
+    setTotalXP(prev => prev + bonusXP);
+    setShowPerfectWeekModal(true);
+  };
+
   const toggleQuest = async (id: number | string, xp: number) => {
     // 🌟 บล็อกไม่ให้กดซ้ำถ้าระบบกำลังเซฟอยู่
     if (!user || isToggling) return;
@@ -2020,72 +2015,28 @@ export default function DashboardPage() {
 
     // 🌟 [NEW LOGIC] จัดการ Wheel Plan Day แยกต่างหาก
     let newWheelDay = wheelPlanDay;
-    let bonusXpFromPlan = 0;
 
     if (id === 1) { // ข้อ Wheel เสมอ
       // 🌟 รับโบนัสจบแผน
       if (wheelPlanDay >= 7 && !isDone) {
-        // ไม่ต้องอัปเดต wheelPlanDay แล้ว (รอเขากดเริ่มประเมินใหม่)
-        // หรือตั้งค่าเป็น 8 เพื่อไม่ให้ขึ้นซ้ำ
         setWheelPlanDay(8);
         newWheelDay = 8;
       } else {
-        newWheelDay = isDone ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay + 1;
-        setWheelPlanDay(newWheelDay);
+        // 🎡 [NEW LOGIC] ไม่บวกวันเพิ่มในวันเดียวกัน แต่ให้นับความสำเร็จ (Completions)
+        if (!isDone) {
+          const newCompletions = wheelCompletions + 1;
+          setWheelCompletions(newCompletions);
+          
+          updateDoc(userRef, { wheelCompletions: newCompletions });
 
-        // 🏆 [REVISED] Final Plan Rewards (จ่ายโบนัสก้อนเดียวตอนจบวันที่ 7)
-        if (!isDone && newWheelDay === 7 && user) {
-          let bonusXP = 0;
-          let milestoneName = "";
-          let isPerfect = false;
-
-          // คำนวณตามจำนวนวันที่ "ไม่ข้าม" (Skips)
-          if (wheelPlanSkips === 0) {
-            bonusXP = 100;
-            milestoneName = "PERFECT WEEK!";
-            isPerfect = true;
-          } else if (wheelPlanSkips >= 1 && wheelPlanSkips <= 2) {
-            bonusXP = 50;
-            milestoneName = "GREAT RUN!";
-          } else if (wheelPlanSkips >= 3 && wheelPlanSkips <= 6) {
-            bonusXP = 20;
-            milestoneName = "GOOD RUN!";
+          if (wheelPlanDay === 7 && newCompletions >= 7) {
+             triggerPlanSummary(newCompletions);
           }
-
-          if (bonusXP > 0) {
-            let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
-            if (isPerfect) modalType = "PERFECT";
-            else if (wheelPlanSkips <= 2) modalType = "GREAT";
-
-            setRewardModalData({
-              title: milestoneName,
-              bonusXP: bonusXP,
-              message: isPerfect
-                ? "คุณพิชิตแผน Wheel of Life ครบ 7 วันต่อเนื่องโดยไม่มีการกดข้ามแม้แต่วันเดียว!"
-                : `จบแผน 7 วันแล้ว! คุณทำสำเร็จทั้งหมด ${7 - wheelPlanSkips} วัน พยายามต่อไปนะครับ!`,
-              type: modalType
-            });
-
-            if (isPerfect) {
-              setPerfectWeeks(prev => prev + 1);
-            }
-
-            // 🌟 [FIX]: รวมโบนัสเข้ากับ xpChange เพื่อให้บันทึกทีเดียวท้ายฟังก์ชัน
-            xpChange += bonusXP;
-            setShowPerfectWeekModal(true);
-          }
-        }
-        // 🛡️ [ANTI-EXPLOIT]: ถ้ากดยกเลิก Day 7 ให้ดึงโบนัสคืนด้วย
-        else if (isDone && wheelPlanDay === 7) {
-          let bonusToSubtract = 0;
-          if (wheelPlanSkips === 0) bonusToSubtract = 100;
-          else if (wheelPlanSkips <= 2) bonusToSubtract = 50;
-          else if (wheelPlanSkips <= 6) bonusToSubtract = 20;
-
-          if (bonusToSubtract > 0) {
-            xpChange -= bonusToSubtract;
-            if (wheelPlanSkips === 0) setPerfectWeeks(prev => Math.max(0, prev - 1));
-          }
+        } else {
+          // กรณี "กดยกเลิก" (Uncheck)
+          const newCompletions = Math.max(0, wheelCompletions - 1);
+          setWheelCompletions(newCompletions);
+          updateDoc(userRef, { wheelCompletions: newCompletions });
         }
       }
     }
@@ -2218,7 +2169,7 @@ export default function DashboardPage() {
         setTimeout(() => setShowLevelUp(null), 4000);
       }
 
-      // 4. บันทึกลง Firebase (User Profile หลัก)
+      // บันทึกลง Firebase (User Profile หลัก)
       const finalUpdates: any = {
         totalXP: finalNewXP,
         completedQuestIds: newCompleted,
@@ -2227,15 +2178,6 @@ export default function DashboardPage() {
         streakCount: newStreak,
         wheelPlanDay: newWheelDay
       };
-
-      // เพิ่ม/ลด Perfect Week ตามความเหมาะสม
-      if (id === 1 && wheelPlanSkips === 0) {
-        if (!isDone && newWheelDay === 7) {
-          finalUpdates.perfectWeeks = increment(1);
-        } else if (isDone && wheelPlanDay === 7) {
-          finalUpdates.perfectWeeks = increment(-1);
-        }
-      }
 
       await setDoc(userRef, finalUpdates, { merge: true });
 
@@ -2975,13 +2917,20 @@ export default function DashboardPage() {
                             {streakCount} Days
                           </span>
                         </div>
-
-
+                        
+                        {/* Perfect Week Badge */}
+                        {perfectWeeks > 0 && (
+                          <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-amber-400/10 border border-amber-400/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-amber-400/20">
+                            <Trophy size={12} className="text-amber-400 shrink-0" />
+                            <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
+                              {perfectWeeks} Perfect
+                            </span>
+                          </div>
+                        )}
                       </div>
 
-<<<<<<< HEAD
-                      {/* Row 2: DISC, Money, Library of Souls */}
-                      {(lastDisc || lastMoney || lastLibrarySoul) && (
+                      {/* Row 2: DISC, Money, Library of Souls, Perfect Week */}
+                      {(lastDisc || lastMoney || lastLibrarySoul || perfectWeeks > 0) && (
                         <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap">
                           {/* DISC Badge */}
                           {lastDisc && (
@@ -2992,27 +2941,8 @@ export default function DashboardPage() {
                               </span>
                             </div>
                           )}
-=======
-                      {/* DISC Badge */}
-                      {lastDisc && (
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                          <Zap size={12} className="text-blue-400 shrink-0" />
-                          <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
-                            {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
-                          </span>
-                        </div>
-                      )}
 
-                      {/* Perfect Week Badge */}
-                      {perfectWeeks > 0 && (
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-yellow-500/30 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-yellow-500/20" title="ทำแผน Wheel of Life 7 วันสำเร็จแบบ 100%">
-                          <span className="text-[9px] sm:text-[10px] font-black text-yellow-400 tracking-wide whitespace-nowrap">
-                            🎖️ Perfect x{perfectWeeks}
-                          </span>
-                        </div>
-                      )}
->>>>>>> b7a321a (bug)
-
+                          {/* Perfect Week Badge */}
                           {/* Money Badge */}
                           {lastMoney && (
                             <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
@@ -3244,46 +3174,48 @@ export default function DashboardPage() {
             {/* เส้นขอบสีด้านบน */}
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-400 to-red-500 opacity-90 group-hover:h-3 transition-all duration-300" />
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative z-10">
+            {/* 🎲 Reroll Button - มุมขวาบนสุดของการ์ด */}
+            <div className="absolute top-6 right-6 sm:top-10 sm:right-10 z-20">
+              <button
+                onClick={handleOpenRerollConfirm}
+                disabled={isToggling}
+                className={`flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border transition-all duration-300 group/reroll ${isToggling
+                  ? 'opacity-40 bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                  : 'bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-orange-500 hover:border-orange-200 hover:shadow-[0_8px_20px_-5px_rgba(249,115,22,0.15)] hover:scale-105 active:scale-95'
+                  }`}
+                title="สุ่มใหม่ (ใช้ 5 XP)"
+              >
+                <RotateCcw size={14} className={`transition-transform duration-500 ${isToggling ? 'animate-spin' : 'group-hover/reroll:rotate-180'}`} />
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight">
+                  {isToggling ? "Rerolling..." : "Reroll"}
+                </span>
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
               <div className="flex items-center gap-4">
-                <div className="p-3.5 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)] group-hover:scale-110 transition-transform duration-300">
-                  <Flame size={28} strokeWidth={2.5} className="animate-pulse" />
+                <div className="p-3 sm:p-3.5 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)] group-hover:scale-110 transition-transform duration-300">
+                  <Flame size={26} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
-                    </div>
-                    <button
-                      onClick={handleOpenRerollConfirm}
-                      disabled={isToggling}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all duration-300 group/reroll ${isToggling
-                        ? 'opacity-40 bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-                        : 'bg-white text-slate-400 border-slate-100 hover:text-orange-500 hover:border-orange-200 hover:shadow-sm'
-                        }`}
-                      title="สุ่มใหม่ (ใช้ 5 XP)"
-                    >
-                      <RotateCcw size={14} className={`transition-transform duration-500 ${isToggling ? 'animate-spin' : 'group-hover/reroll:rotate-180'}`} />
-                      <span className="text-[10px] font-black uppercase tracking-tight">
-                        {isToggling ? "Rerolling..." : "Reroll Quests"}
-                      </span>
-                    </button>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-500 font-bold flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-orange-400" /> เลือกทำได้ทุกข้อ เพื่ออัพสกิลสัปดาห์นี้ของคุณ
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
+                    <Sparkles size={12} className="text-orange-400" /> ทำเพื่ออัพสกิลสัปดาห์นี้ของคุณ
                   </p>
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md">
-                <div className="p-2 bg-gradient-to-br from-yellow-300 to-yellow-500 text-white rounded-full shadow-sm group-hover/reward:rotate-12 group-hover/reward:scale-110 transition-all duration-300">
-                  <Trophy size={18} className="sm:w-5 sm:h-5 fill-current" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Reward Today</span>
-                  <span className="text-base sm:text-xl font-black text-slate-800">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
-                </div>
+            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md mb-6">
+              <div className="p-2 bg-gradient-to-br from-yellow-300 to-yellow-500 text-white rounded-full shadow-sm group-hover/reward:rotate-12 group-hover/reward:scale-110 transition-all duration-300">
+                <Trophy size={18} className="sm:w-5 sm:h-5 fill-current" />
               </div>
-            
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Reward Today</span>
+                <span className="text-base sm:text-xl font-black text-slate-800">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
+              </div>
+            </div>
 
             {/* Progress Bar แบบ Super State (Full at 3, Bonus after) */}
             <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
@@ -3466,15 +3398,7 @@ export default function DashboardPage() {
                             +{quest.xp} XP
                           </span>
 
-                          {quest.id === 1 && !isDone && quest.title.includes('DAY') && lastSkipDate !== todayDateStr && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleSkipWheelQuest(); }}
-                              className="text-[10px] text-slate-400 hover:text-red-500 font-bold bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm transition-all flex items-center gap-1 z-10"
-                              title="ข้ามไปทำแผนของวันพรุ่งนี้ (จำกัดวันละ 1 ครั้ง)"
-                            >
-                              ⏭️ ข้าม (Skip)
-                            </button>
-                          )}
+
                         </div>
                       )}
                     </div>
@@ -4278,6 +4202,7 @@ export default function DashboardPage() {
                             🤖
                           </div>
                         </div>
+
 
                         <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> AI Personal Mentor </h3>
                         <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
@@ -5497,13 +5422,8 @@ export default function DashboardPage() {
                   else finishTutorial();
                 }}
                 className={`w-full py-4 rounded-2xl font-black text-[15px] transition-all duration-300 z-10 shadow-[0_8px_20px_rgba(0,0,0,0.1)] active:scale-95 ${tutorialStep === 4
-<<<<<<< HEAD
                   ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400'
                   : 'bg-slate-900 text-white hover:bg-slate-800'
-=======
-                    ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400'
-                    : 'bg-slate-900 text-white hover:bg-slate-800'
->>>>>>> b7a321a (bug)
                   }`}
               >
                 {tutorialStep < 4 ? 'ถัดไป' : 'เข้าใจแล้ว ลุยเลย! 🚀'}
@@ -5546,7 +5466,7 @@ export default function DashboardPage() {
                   <div className="text-2xl drop-shadow-sm">🏆</div>
                   <div>
                     <div className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Perfect Run (7/7 วัน)</div>
-                    <div className="text-sm font-black text-amber-600">รับ 100 XP + ตรา Perfect Week</div>
+                    <div className="text-sm font-black text-amber-600">รับ 100 XP</div>
                   </div>
                 </div>
 
@@ -5568,8 +5488,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 mb-6">
-                <p className="text-xs text-orange-800 font-medium leading-relaxed">
-                  <span className="font-bold">💡 รู้หรือไม่?</span> หากวันไหนรู้สึกว่าภารกิจยากเกินไป คุณสามารถกด <span className="font-black">"⏭️ ข้าม"</span> ได้วันละ 1 ครั้ง โดยจะไม่เสียสถิติ Active ของวันนั้น (แต่จะพลาด Perfect Run นะ)
+                <p className="text-xs text-orange-800 font-medium leading-relaxed text-center">
+                  <span className="font-bold">💡 รู้หรือไม่?</span> ความสม่ำเสมอคือหัวใจสำคัญ! พยายามทำภารกิจให้ครบทุกวันเพื่อรับโบนัส XP ก้อนใหญ่ และสะสมรางวัลระดับ <span className="font-black">PERFECT</span> เมื่อจบแผน 7 วันนะครับ
                 </p>
               </div>
 
@@ -5587,7 +5507,7 @@ export default function DashboardPage() {
       {/* --- 🎖️ Modal: Plan Rewards Celebration (Dynamic) --- */}
       <AnimatePresence>
         {showPerfectWeekModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100001] flex items-center justify-center p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
