@@ -437,7 +437,7 @@ const analyzeWithAI = async () => {
 
 📌 ภาพรวมของคุณ : ทักทายเพื่อน สรุปความสมดุลปัจจุบัน และบอกว่าด้านที่เขาเลือกโฟกัสจะช่วยพาเขาไปถึงเป้าหมายได้ยังไง
 💡 คำแนะนำ (Tips) : ให้คำแนะนำหรือ Mindset เจ๋งๆ 1-2 ข้อ เพื่อปลดล็อกเรื่องที่เขาโฟกัส
-📅 แผนปฏิบัติการ (Action Plan) : แนะนำขั้นตอนการลงมือทำ (Step-by-step) ที่เห็นภาพชัดเจนและเริ่มทำได้ทันที
+📅 แผนปฏิบัติการ 7 วัน (7-Day Action Plan) : **สำคัญมาก** ให้สร้างแผนรายวันสำหรับ 7 วัน โดยใช้รูปแบบ "Day 1: [กิจกรรม]", "Day 2: [กิจกรรม]" ไปจนถึง "Day 7: [กิจกรรม]" โดยแต่ละวันต้องเป็น 1 กิจกรรมสั้นๆ ที่ทำได้จริงและสอดคล้องกับเป้าหมายที่เขาอยากโฟกัส เพื่อให้เพื่อนเอาไปพิชิตในหน้า Dashboard ทีละวัน
 🔥 ข้อคิดส่งท้าย : ประโยคให้กำลังใจสั้นๆ ทรงพลัง
 
 3. **Format:** อนุญาตให้ใช้ตัวหนา (ใส่เครื่องหมาย **ครอบคำ**) เพื่อเน้นคำสำคัญได้ แต่อย่าใช้ Markdown แบบอื่นๆ เช่น Heading หรือ Italic
@@ -744,12 +744,12 @@ const analyzeWithAI = async () => {
             <div className="card" style={{ padding: isMobile ? '20px' : '40px', boxSizing: 'border-box', width: '100%' }}>
               
               <div style={{ maxWidth: '450px', margin: '0 auto', width: '100%' }}>
-                {!isAnalyzing ? (
-                  <button className="primary-btn" onClick={analyzeWithAI} style={{ width: '100%' }}>✨ AI วิเคราะห์ผล & จัดแผนปฏิบัติการ</button>
+                                {!isAnalyzing ? (
+                  <button className="primary-btn" onClick={analyzeWithAI} style={{ width: '100%' }}>✨ AI วิเคราะห์ผล & สร้างแผน 7 วัน</button>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fff5f5', borderRadius: '15px', border: '2px dashed #f08080' }}>
                      <div className="lds-dual-ring-small"></div>
-                     <p className="blinking-text" style={{ fontSize: '12px', color: '#800000', marginTop: '10px' }}>AI กำลังจัดแผนปฏิบัติการให้คุณ...</p>
+                     <p className="blinking-text" style={{ fontSize: '12px', color: '#800000', marginTop: '10px' }}>AI กำลังออกแบบแผน 7 วันให้คุณ...</p>
                   </div>
                 )}
               </div>
