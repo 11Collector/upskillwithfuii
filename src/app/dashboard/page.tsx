@@ -2629,7 +2629,7 @@ export default function DashboardPage() {
         {(activeTab === "home" || activeTab === "overview") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-            <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative flex flex-col group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700">
+            <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative flex flex-col group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700 overflow-hidden">
 
               {/* 💡 ฉากหลังและเอฟเฟกต์แสง */}
               <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none z-0">
@@ -2887,12 +2887,28 @@ export default function DashboardPage() {
                   {/* ➡️ ฝั่งขวา: Avatar + Pet + Badge (รวมร่างกันสมบูรณ์!) */}
                   <div className="flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center mt-4 lg:mt-0 lg:ml-8">
                     {/* 🏗️ Container หลัก: เพิ่ม -translate-x-8 (หรือตามใจชอบ) เพื่อดึงทั้งกลุ่มไปทางซ้าย */}
-                    <div className="relative mb-6 flex justify-center items-end scale-95 sm:scale-100 origin-bottom -translate-x-2 sm:-translate-x-10">
+                    <div className="relative mb-6 flex flex-col items-center justify-center scale-95 sm:scale-100 origin-bottom -translate-x-2 sm:-translate-x-10">
 
                       {/* 1. รูป Avatar หลัก */}
                       <div className="relative z-10 translate-y-[2px]">
                         <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
                       </div>
+
+                      {/* 🧪 ปุ่ม Test Aura (เฉพาะช่วงทดสอบ) */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStreakCount(prev => {
+                            if (prev < 7) return 7;
+                            if (prev < 14) return 14;
+                            if (prev < 30) return 30;
+                            return 0;
+                          });
+                        }}
+                        className="mt-20 px-4 py-1.5 bg-slate-900/10 hover:bg-slate-900/20 text-slate-500 text-[10px] font-black rounded-full transition-all active:scale-95 border border-slate-200 z-30"
+                      >
+                        ✨ TEST AURA: {streakCount} DAYS
+                      </button>
 
                       {/* 🐾 สัตว์เลี้ยง (หน้า Dashboard) - โชว์ทันที ไม่มี Fade-in */}
                       {lastMoney?.resultKey && (
