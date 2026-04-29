@@ -148,17 +148,28 @@ export default function SoulGuidePage() {
     return () => document.body.classList.remove('hide-bottom-nav');
   }, [showResetConfirm]);
 
+  const isFirstScroll = useRef(true);
+
   useEffect(() => {
-    // เลื่อนลงล่างสุดทุกครั้งที่มีการตอบโต้ (ตั้งแต่ข้อความที่ 2 เป็นต้นไป)
+    // เลื่อนลงล่างสุดทุกครั้งที่มีการตอบโต้
     if (messages.length > 1) {
+      const scrollBehavior = isFirstScroll.current ? "auto" : "smooth";
+      
       setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+        chatEndRef.current?.scrollIntoView({ behavior: scrollBehavior as any });
+        if (isFirstScroll.current) {
+          isFirstScroll.current = false;
+        }
+      }, isFirstScroll.current ? 0 : 100);
     } else if (messages.length === 1) {
       // สำหรับแชทแรก (คำทักทาย) ให้เด้งขึ้นบนสุดเสมอ
       setTimeout(() => {
-        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mainRef.current?.scrollTo({ top: 0, behavior: isFirstScroll.current ? 'auto' : 'smooth' });
+        window.scrollTo({ top: 0, behavior: isFirstScroll.current ? 'auto' : 'smooth' });
+        if (isFirstScroll.current && messages[0].role === "assistant") {
+          // ถ้ามีแค่ข้อความทักทาย และเป็นครั้งแรก ไม่ต้องปิด flag เพราะอาจจะมีประวัติโหลดมาทีหลัง
+          // แต่ปกติประวัติจะโหลดมาทีเดียวใน onSnapshot
+        }
       }, 100);
     }
   }, [messages]);
@@ -352,7 +363,7 @@ export default function SoulGuidePage() {
       )}
 
       {/* Chat Container */}
-      <main ref={mainRef} className="flex-1 w-full max-w-3xl flex flex-col gap-6 p-6 z-10 overflow-y-auto pb-60 scroll-smooth no-scrollbar">
+      <main ref={mainRef} className="flex-1 w-full max-w-3xl flex flex-col gap-6 p-6 z-10 overflow-y-auto pb-60 no-scrollbar">
         <AnimatePresence mode="popLayout">
           {messages.map((msg, idx) => (
             <motion.div
