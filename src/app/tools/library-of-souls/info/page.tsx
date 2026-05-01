@@ -162,8 +162,8 @@ function ResultView({ resultType }: { resultType: string }) {
       </div>
 
       <div className="text-center pb-10">
-        <Link href={user ? "/dashboard" : "/"} className="text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors underline underline-offset-8 decoration-slate-200">
-          {user ? "กลับสู่หน้าหลัก Dashboard" : "กลับสู่หน้าหลัก"}
+        <Link href="/" className="text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors underline underline-offset-8 decoration-slate-200">
+          กลับสู่หน้าหลัก
         </Link>
       </div>
     </div>
@@ -341,7 +341,7 @@ export default function LibraryOfSoulsInfoPage() {
       {/* --- Navbar --- */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-sm">
+          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-sm">
             <ArrowLeftIcon size={18} /> กลับหน้าหลัก
           </Link>
         </div>

@@ -59,7 +59,7 @@ export default function AiMentorInfoPage() {
       {/* --- Navbar --- */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-sm">
+          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-sm">
             <ArrowLeft size={18} /> กลับหน้าหลัก
           </Link>
         </div>
@@ -289,8 +289,8 @@ export default function AiMentorInfoPage() {
             "เพราะการมี Mentor ที่ดี คือทางลัดที่สั้นที่สุดสู่ความสำเร็จ"
           </p>
           
-          <Link href={user ? "/dashboard" : "/"} className="inline-block mt-12 text-slate-500 hover:text-slate-800 font-bold text-base transition-colors underline underline-offset-8 decoration-slate-200">
-            {user ? "กลับสู่หน้าหลัก Dashboard" : "กลับสู่หน้าหลัก"}
+          <Link href="/" className="inline-block mt-12 text-slate-500 hover:text-slate-800 font-bold text-base transition-colors underline underline-offset-8 decoration-slate-200">
+            กลับสู่หน้าหลัก
           </Link>
 
 
