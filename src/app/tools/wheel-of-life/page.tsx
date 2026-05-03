@@ -568,7 +568,7 @@ const analyzeWithAI = async () => {
       {step === 'home' && (
           <div className="card">
             
-            <img 
+            <img loading="lazy" decoding="async" 
               src="/logo-wheel.png" 
               alt="Wheel Of Life" 
               style={{ width: '100%', maxWidth: '350px', display: 'block', margin: '0 auto 15px auto' }} 
@@ -699,7 +699,7 @@ const analyzeWithAI = async () => {
         {step === 'result' && (
           <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
             
-            <img 
+            <img loading="lazy" decoding="async" 
               src="/logo-analysis.png" 
               alt="Wheel Of Life Analysis" 
               style={{ width: '100%', maxWidth: '300px', display: 'block', margin: '0 auto' }} 

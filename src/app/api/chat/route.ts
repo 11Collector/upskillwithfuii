@@ -29,9 +29,9 @@ export async function POST(req: Request) {
 - ใช้ข้อมูล Context เพื่อให้คำแนะนำที่ "ตรงจุด" กับนิสัยและสถานะของผู้ใช้ที่สุด โดยทำเหมือนว่าคุณแค่ "เดาใจเก่ง" เท่านั้นพอ`;
 
     // สร้าง Context Reminder สั้นๆ เพื่อย้ำเตือน AI
-    const contextReminder = { 
-      role: "system", 
-      content: `[Secret Update: ผู้ใช้รู้สึก '${userData.lastMood}' - ห้ามทักเรื่องนี้ตรงๆ ให้ใช้แค่ปรับโทนการตอบเท่านั้น]` 
+    const contextReminder = {
+      role: "system",
+      content: `[Secret Update: ผู้ใช้รู้สึก '${userData.lastMood}' - ห้ามทักเรื่องนี้ตรงๆ ให้ใช้แค่ปรับโทนการตอบเท่านั้น]`
     };
 
     const response = await fetch("https://api.deepseek.com/chat/completions", {

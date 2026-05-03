@@ -1,0 +1,234 @@
+
+> upskillwithfuii-web@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/thanawatlovitayaolan/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/thanawatlovitayaolan/upskillwithfuii-web/package-lock.json
+
+▲ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 8 errors:
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:6:1
+Export DISC_DATA doesn't exist in target module
+  [90m4 |[0m ...[36mmport[0m { motion } [36mfrom[0m [32m'framer-motion'[0m;
+  [90m5 |[0m ...[36mmport[0m { [33mQuote[0m, [33mSparkles[0m, [33mPieChart[0m, [33mInfo[0m, [33mZap[0m, [33mCheckCircle2[0m, [33mTrophy[0m, [33m...[0m
+[31m[1m>[0m [90m6 |[0m ...[36mmport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, avatarImages } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m ...[36mmport[0m { formatAnalysisText } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+  [90m8 |[0m ...[36mnterface[0m [33mIdentityTabProps[0m {
+  [90m9 |[0m ... lastQuote: any;
+
+The export DISC_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-client] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:5:1
+Export DISC_DATA doesn't exist in target module
+  [90m3 |[0m ...[36mmport[0m { motion } [36mfrom[0m [32m'framer-motion'[0m;
+  [90m4 |[0m ...[36mmport[0m { [33mQuote[0m, [33mSparkles[0m, [33mPieChart[0m, [33mInfo[0m, [33mZap[0m, [33mCheckCircle2[0m, [33mTrophy[0m, [33m...[0m
+[31m[1m>[0m [90m5 |[0m ...[36mmport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, avatarImages } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m ...[36mmport[0m { formatAnalysisText } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+  [90m7 |[0m ...
+  [90m8 |[0m ...[36mnterface[0m [33mIdentityTabProps[0m {
+
+The export DISC_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-ssr] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:6:1
+Export DISC_DATA doesn't exist in target module
+  [90m4 |[0m [36mimport[0m { [33mSparkles[0m, [33mTrophy[0m, [33mCheckCircle2[0m, [33mLogOut[0m, [33mInfo[0m, [33mX[0m, [33mCamera[0m, [33mFlame[0m..[33m.[0m
+  [90m5 |[0m [36mimport[0m { [33mAvatarDisplay[0m } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, [33mPET_DATA[0m } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36minterface[0m [33mOverviewTabProps[0m {
+  [90m8 |[0m   user: any;
+  [90m9 |[0m   isEditingName: boolean;
+
+The export DISC_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-client] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:5:1
+Export DISC_DATA doesn't exist in target module
+  [90m3 |[0m [36mimport[0m { [33mSparkles[0m, [33mTrophy[0m, [33mCheckCircle2[0m, [33mLogOut[0m, [33mInfo[0m, [33mX[0m, [33mCamera[0m, [33mFlame[0m..[33m.[0m
+  [90m4 |[0m [36mimport[0m { [33mAvatarDisplay[0m } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, [33mPET_DATA[0m } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m
+  [90m7 |[0m [36minterface[0m [33mOverviewTabProps[0m {
+  [90m8 |[0m   user: any;
+
+The export DISC_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-ssr] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:6:1
+Export MONEY_DATA doesn't exist in target module
+  [90m4 |[0m ...[36mmport[0m { motion } [36mfrom[0m [32m'framer-motion'[0m;
+  [90m5 |[0m ...[36mmport[0m { [33mQuote[0m, [33mSparkles[0m, [33mPieChart[0m, [33mInfo[0m, [33mZap[0m, [33mCheckCircle2[0m, [33mTrophy[0m, [33m...[0m
+[31m[1m>[0m [90m6 |[0m ...[36mmport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, avatarImages } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m ...[36mmport[0m { formatAnalysisText } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+  [90m8 |[0m ...[36mnterface[0m [33mIdentityTabProps[0m {
+  [90m9 |[0m ... lastQuote: any;
+
+The export MONEY_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-client] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:5:1
+Export MONEY_DATA doesn't exist in target module
+  [90m3 |[0m ...[36mmport[0m { motion } [36mfrom[0m [32m'framer-motion'[0m;
+  [90m4 |[0m ...[36mmport[0m { [33mQuote[0m, [33mSparkles[0m, [33mPieChart[0m, [33mInfo[0m, [33mZap[0m, [33mCheckCircle2[0m, [33mTrophy[0m, [33m...[0m
+[31m[1m>[0m [90m5 |[0m ...[36mmport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, avatarImages } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m ...[36mmport[0m { formatAnalysisText } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+  [90m7 |[0m ...
+  [90m8 |[0m ...[36mnterface[0m [33mIdentityTabProps[0m {
+
+The export MONEY_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-ssr] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:6:1
+Export MONEY_DATA doesn't exist in target module
+  [90m4 |[0m [36mimport[0m { [33mSparkles[0m, [33mTrophy[0m, [33mCheckCircle2[0m, [33mLogOut[0m, [33mInfo[0m, [33mX[0m, [33mCamera[0m, [33mFlame[0m..[33m.[0m
+  [90m5 |[0m [36mimport[0m { [33mAvatarDisplay[0m } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, [33mPET_DATA[0m } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36minterface[0m [33mOverviewTabProps[0m {
+  [90m8 |[0m   user: any;
+  [90m9 |[0m   isEditingName: boolean;
+
+The export MONEY_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-client] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:5:1
+Export MONEY_DATA doesn't exist in target module
+  [90m3 |[0m [36mimport[0m { [33mSparkles[0m, [33mTrophy[0m, [33mCheckCircle2[0m, [33mLogOut[0m, [33mInfo[0m, [33mX[0m, [33mCamera[0m, [33mFlame[0m..[33m.[0m
+  [90m4 |[0m [36mimport[0m { [33mAvatarDisplay[0m } [36mfrom[0m [32m'@/utils/dashboardHelpers'[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m { [33mDISC_DATA[0m, [33mMONEY_DATA[0m, [33mPET_DATA[0m } [36mfrom[0m [32m'@/data/constants'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m
+  [90m7 |[0m [36minterface[0m [33mOverviewTabProps[0m {
+  [90m8 |[0m   user: any;
+
+The export MONEY_DATA was not found in module [project]/upskillwithfuii-web/src/data/constants.ts [app-ssr] (ecmascript).
+Did you mean to import PET_DATA?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component Browser]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Client Component SSR]
+    ./upskillwithfuii-web/src/app/dashboard/page.tsx [Server Component]
+
+
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:6:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:5:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:6:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:5:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:6:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardIdentityTab.tsx:5:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:6:1)
+    at <unknown> (./upskillwithfuii-web/src/app/dashboard/_components/tabs/DashboardOverviewTab.tsx:5:1)

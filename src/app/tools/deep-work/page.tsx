@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BrainCircuit, Zap, ArrowLeft, X, Play, Pause,
-  RotateCcw, Trophy, BookOpen
+  RotateCcw, Trophy, BookOpen, Volume2, VolumeX
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,8 @@ export default function DeepWorkPage() {
   const [characterTier, setCharacterTier] = useState("rookie");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const isSoundEnabledRef = useRef(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const endTimeRef = useRef<number | null>(null);
@@ -112,6 +114,14 @@ export default function DeepWorkPage() {
             localStorage.removeItem("deepWork_endTime");
           }
         }
+
+        // Load sound preference
+        const savedSound = localStorage.getItem("deepWork_soundEnabled");
+        if (savedSound !== null) {
+          const isEnabled = savedSound === "true";
+          setIsSoundEnabled(isEnabled);
+          isSoundEnabledRef.current = isEnabled;
+        }
       } else {
         router.push("/");
       }
@@ -177,6 +187,23 @@ export default function DeepWorkPage() {
     }
   };
 
+  const toggleSound = () => {
+    const newState = !isSoundEnabled;
+    setIsSoundEnabled(newState);
+    isSoundEnabledRef.current = newState;
+    localStorage.setItem("deepWork_soundEnabled", newState.toString());
+
+    if (isActive) {
+      if (newState) {
+        playNatureSound();
+      } else {
+        if (natureAudioRef.current) {
+          natureAudioRef.current.pause();
+        }
+      }
+    }
+  };
+
   const playNatureSound = () => {
     if (!natureAudioRef.current) {
       const audio = new Audio("/sounds/nature.mp3");
@@ -186,14 +213,17 @@ export default function DeepWorkPage() {
         const buffer = 0.4;
         if (this.currentTime > this.duration - buffer) {
           this.currentTime = 0;
-          this.play();
+          if (isSoundEnabledRef.current) this.play().catch(() => { });
         }
       });
 
       audio.loop = true;
       natureAudioRef.current = audio;
     }
-    natureAudioRef.current.play().catch(err => console.error("Nature sound failed:", err));
+
+    if (isSoundEnabledRef.current) {
+      natureAudioRef.current.play().catch(err => console.error("Nature sound failed:", err));
+    }
   };
 
   const stopNatureSound = () => {
@@ -205,6 +235,7 @@ export default function DeepWorkPage() {
 
   const playAlarm = () => {
     stopNatureSound();
+    if (!isSoundEnabledRef.current) return;
     const audio = new Audio("/sounds/alarm.mp3");
     audio.play().catch(err => console.error("Audio playback failed:", err));
   };
@@ -328,7 +359,7 @@ export default function DeepWorkPage() {
             key="timer" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }}
             className={`w-full max-w-lg p-8 sm:p-10 md:p-16 rounded-[4rem] shadow-2xl border transition-all duration-1000 flex flex-col items-center relative overflow-hidden group ${isActive ? 'bg-zinc-900 border-zinc-800 shadow-black/50' : 'bg-white border-white shadow-zinc-200'}`}
           >
-            {/* Status Badge */}
+            {/* Status Badge - Top Right of Card */}
             <motion.div
               animate={isActive ? { y: [0, -5, 0] } : {}}
               transition={{ repeat: Infinity, duration: 2 }}
@@ -346,6 +377,30 @@ export default function DeepWorkPage() {
               </div>
               <h1 className={`text-sm font-black tracking-[0.4em] uppercase mb-1 transition-colors duration-1000 ${isActive ? 'text-zinc-600' : 'text-zinc-400'}`}>Deep Work Engine</h1>
               <div className={`h-px w-12 transition-colors duration-1000 ${isActive ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
+
+              <AnimatePresence>
+                {isActive && (
+                  <motion.button
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    onClick={toggleSound}
+                    className="mt-6 p-2 rounded-full transition-all duration-300 text-zinc-600 hover:text-blue-400"
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={isSoundEnabled ? 'on' : 'off'}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {isSoundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
             {!isActive && (
@@ -407,7 +462,6 @@ export default function DeepWorkPage() {
               </motion.div>
 
               <svg className="absolute inset-0 w-full h-full transform -rotate-90 z-20 pointer-events-none">
-                <circle cx="50%" cy="50%" r={radius} className={`fill-none transition-colors duration-1000 ${isActive ? 'stroke-zinc-800' : 'stroke-zinc-100'}`} strokeWidth="1" strokeDasharray="1 12" />
                 <motion.circle
                   cx="50%" cy="50%" r={radius} className={`fill-none shadow-2xl transition-colors duration-1000 ${isActive ? 'stroke-blue-500' : 'stroke-zinc-900'}`} strokeWidth="4" strokeLinecap="round"
                   style={{ strokeDasharray: circumference, strokeDashoffset: (timeLeft / (selectedTime * 60)) * circumference }}
@@ -426,9 +480,14 @@ export default function DeepWorkPage() {
               </div>
             </div>
 
-            <div className="mb-12 text-center px-6">
-              <p className={`text-[10px] font-bold leading-relaxed max-w-[260px] mx-auto italic transition-colors duration-1000 ${isActive ? 'text-zinc-500' : 'text-zinc-500'}`}>"{getGuideText()}"</p>
-            </div>
+            <motion.p
+              key={selectedTime}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`text-[9px] font-bold text-center max-w-[250px] leading-relaxed italic mt-4 mb-8 transition-colors duration-1000 ${isActive ? 'text-zinc-500' : 'text-zinc-400'}`}
+            >
+              {getGuideText()}
+            </motion.p>
 
             {/* Control Buttons */}
             <div className="flex items-center gap-12">
@@ -442,10 +501,8 @@ export default function DeepWorkPage() {
               <button onClick={() => router.push("/dashboard")} className={`transition-all p-2 ${isActive ? 'text-zinc-700 hover:text-red-500' : 'text-zinc-300 hover:text-red-500'}`}><X size={22} /></button>
             </div>
 
-            <div className={`mt-12 flex items-center gap-4 opacity-20 transition-all duration-1000 ${isActive ? 'grayscale-0 text-blue-500' : 'grayscale text-black'}`}>
-              <div className="h-px w-8 bg-current" />
-              <p className="text-[8px] font-black uppercase tracking-[0.4em]">Build Your Legacy</p>
-              <div className={`h-px w-8 bg-current ${isActive ? 'bg-blue-500' : 'bg-black'}`} />
+            <div className="mt-12 flex flex-col items-center opacity-20">
+              <span className="text-[10px] font-black tracking-[0.5em] uppercase text-zinc-500">Build Your Legacy</span>
             </div>
           </motion.div>
         ) : (

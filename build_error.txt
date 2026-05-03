@@ -1,0 +1,32 @@
+
+> upskillwithfuii-web@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/thanawatlovitayaolan/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/thanawatlovitayaolan/upskillwithfuii-web/package-lock.json
+
+▲ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./upskillwithfuii-web/src/app/page.tsx:373:11
+Expression expected
+  [90m371 |[0m           </div>
+  [90m372 |[0m
+[31m[1m>[0m [90m373 |[0m           <div className=[32m"flex flex-col gap-2 w-full md:w-56 z-10 md:...[0m
+  [90m    |[0m           [31m[1m^[0m
+  [90m374 |[0m             <[33mLink[0m href=[32m"/dashboard"[0m className=[32m"w-full group/btn"[0m>
+  [90m375 |[0m               <button className=[32m"relative w-full overflow-hidden bg-s...[0m
+  [90m376 |[0m                 <div className=[32m"absolute inset-0 bg-gradient-to-r fro...[0m
+
+Parsing ecmascript source code failed
+
+
+    at <unknown> (./upskillwithfuii-web/src/app/page.tsx:373:11)
