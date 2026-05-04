@@ -2,7 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Trophy, CheckCircle2, LogOut, Info, X, Camera, Flame, Zap, Star, BookOpen, BrainCircuit, PieChart, Users, Wallet, Target } from 'lucide-react';
 import { AvatarDisplay } from '@/utils/dashboardHelpers';
-import { DISC_DATA, MONEY_DATA, PET_DATA } from '@/data/constants';
+import { PET_DATA } from '@/data/constants';
+import { DISC_DATA, MONEY_DATA } from '@/data/quests';
 
 interface OverviewTabProps {
   user: any;
@@ -18,8 +19,8 @@ interface OverviewTabProps {
   setShowLevelInfo: (val: boolean) => void;
   getLevelTitle: (level: number) => string;
   totalXP: number;
-  handleGenderChange: (gender: string) => void;
-  gender: string;
+  handleGenderChange: (gender: 'male' | 'female') => void;
+  gender: 'male' | 'female';
   setShowShareModal: (val: boolean) => void;
   streakCount: number;
   perfectWeeks: number;
