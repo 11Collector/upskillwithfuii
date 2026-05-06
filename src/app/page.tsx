@@ -681,27 +681,35 @@ export default function Home() {
     </div>
     {/* --- 🧭 Floating App Guide Button (Top Right) --- */}
     {!user && (
-      <div className="fixed top-24 right-4 sm:top-28 sm:right-6 z-[999]">
-      <motion.button
-        whileHover={{ scale: 1.05, y: -1 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, scale: 0.5, x: 20 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        onClick={() => {
-          setGuideStep(1);
-          setShowGuide(true);
-        }}
-        className="relative group flex items-center gap-2.5 bg-slate-900/95 hover:bg-slate-800 backdrop-blur-md px-3 py-1.5 rounded-full border border-red-500/20 shadow-2xl transition-all duration-300"
-      >
-        <div className="flex flex-col items-start pl-1">
-          <span className="text-[9px] font-black text-red-400 uppercase tracking-[0.2em] leading-none mb-0.5">GUIDE</span>
-          <span className="text-[11px] font-bold text-white leading-none">เริ่มต้น</span>
-        </div>
-        <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform">
-          <HelpCircle size={14} className="text-white" />
-        </div>
-      </motion.button>
-    </div>
+      <div className="fixed top-24 right-4 sm:top-28 sm:right-6 z-[999] group/floating">
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-600 rounded-full blur-md opacity-40 group-hover/floating:opacity-100 group-hover/floating:scale-110 transition-all duration-700 animate-pulse" />
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.5, y: -20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          onClick={() => {
+            setGuideStep(1);
+            setShowGuide(true);
+          }}
+          className="relative flex items-center gap-3 bg-slate-900/40 hover:bg-slate-900/60 backdrop-blur-xl px-2 py-2 pr-5 rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all overflow-hidden group"
+        >
+          {/* Animated Glass Shine */}
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000" />
+          
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-inner group-hover:rotate-180 transition-transform duration-700">
+            <Sparkles size={16} className="text-white drop-shadow-md" />
+          </div>
+          <div className="flex flex-col items-start pr-1">
+            <span className="text-[8px] sm:text-[9px] font-black bg-gradient-to-r from-pink-300 to-violet-300 bg-clip-text text-transparent uppercase tracking-[0.3em] leading-none mb-1">
+              NEW HERE?
+            </span>
+            <span className="text-[11px] sm:text-[12px] font-black text-white leading-none tracking-wide">
+              คู่มือเริ่มต้น 🚀
+            </span>
+          </div>
+        </motion.button>
+      </div>
     )}
 
     {/* --- 🎓 App Guide Modal (Fixed to Viewport) --- */}
@@ -716,76 +724,71 @@ export default function Home() {
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.8, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-[440px] bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] overflow-hidden"
+            exit={{ opacity: 0, scale: 0.8, y: 30 }}
+            className="relative w-full max-w-[420px] bg-[#0A0A0A]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] sm:rounded-[3.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
           >
-            {/* Header with Visual Icon */}
-            <div className={`relative h-44 flex items-center justify-center transition-colors duration-1000 ${
-              guideStep === 1 ? 'bg-red-500/10' : 
-              guideStep === 2 ? 'bg-blue-500/10' : 
-              guideStep === 3 ? 'bg-amber-500/10' : 
-              guideStep === 4 ? 'bg-emerald-500/10' : 
-              guideStep === 5 ? 'bg-purple-500/10' : 
-              'bg-indigo-500/10'
-            }`}>
-              {/* Animated Background Shapes */}
-              <div className="absolute inset-0 overflow-hidden">
-                <motion.div 
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                  transition={{ duration: 8, repeat: Infinity }}
-                  className={`absolute -top-1/2 -left-1/2 w-full h-full rounded-full blur-[100px] ${
-                    guideStep === 1 ? 'bg-red-500' : guideStep === 2 ? 'bg-blue-500' : guideStep === 3 ? 'bg-amber-500' : guideStep === 4 ? 'bg-emerald-500' : guideStep === 5 ? 'bg-purple-500' : 'bg-indigo-500'
-                  } opacity-20`}
-                />
-              </div>
-
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900" />
+            {/* --- Dynamic Glowing Header --- */}
+            <div className="relative h-48 sm:h-56 flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-slate-950/40 z-10" />
               
-              {/* Floating Icon Container */}
-              <div className="relative">
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 backdrop-blur-md transition-all duration-700 ${
-                    guideStep === 1 ? 'bg-red-600 text-white' : 
-                    guideStep === 2 ? 'bg-blue-600 text-white' : 
-                    guideStep === 3 ? 'bg-amber-500 text-white' : 
-                    guideStep === 4 ? 'bg-emerald-600 text-white' : 
-                    guideStep === 5 ? 'bg-purple-600 text-white' : 
-                    'bg-white text-slate-900'
-                  }`}
-                >
-                  {guideStep === 1 && <PieChart size={40} strokeWidth={2.5} />}
-                  {guideStep === 2 && <Users size={40} strokeWidth={2.5} />}
-                  {guideStep === 3 && <Wallet size={40} strokeWidth={2.5} />}
-                  {guideStep === 4 && <BookOpen size={40} strokeWidth={2.5} />}
-                  {guideStep === 5 && <Quote size={40} strokeWidth={2.5} />}
-                  {guideStep === 6 && <Star size={40} strokeWidth={2.5} className="fill-current" />}
-                </motion.div>
-              </div>
+              {/* Background Gradients per Step */}
+              <motion.div
+                className="absolute inset-0 z-0 opacity-90"
+                animate={{
+                  background: guideStep === 1 ? 'radial-gradient(120% 120% at 50% 0%, #9f1239 0%, #4c0519 100%)' :
+                              guideStep === 2 ? 'radial-gradient(120% 120% at 50% 0%, #1d4ed8 0%, #0f172a 100%)' :
+                              guideStep === 3 ? 'radial-gradient(120% 120% at 50% 0%, #b45309 0%, #451a03 100%)' :
+                              guideStep === 4 ? 'radial-gradient(120% 120% at 50% 0%, #047857 0%, #022c22 100%)' :
+                              guideStep === 5 ? 'radial-gradient(120% 120% at 50% 0%, #6b21a8 0%, #2e1065 100%)' :
+                              'radial-gradient(120% 120% at 50% 0%, #3f3f46 0%, #09090b 100%)'
+                }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+              />
+              
+              <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay z-0" />
 
-              {/* Close Button - Properly Positioned */}
+              {/* Floating Icon Container */}
+              <motion.div
+                key={`icon-${guideStep}`}
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", bounce: 0.6, duration: 0.8 }}
+                className="relative z-20 w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+              >
+                {/* Inner Glow */}
+                <div className="absolute inset-2 rounded-full bg-white/20 blur-md" />
+                <div className="relative text-white drop-shadow-lg">
+                  {guideStep === 1 && <PieChart size={48} strokeWidth={2.5} />}
+                  {guideStep === 2 && <Users size={48} strokeWidth={2.5} />}
+                  {guideStep === 3 && <Wallet size={48} strokeWidth={2.5} />}
+                  {guideStep === 4 && <BookOpen size={48} strokeWidth={2.5} />}
+                  {guideStep === 5 && <Quote size={48} strokeWidth={2.5} />}
+                  {guideStep === 6 && <Star size={48} strokeWidth={2.5} className="fill-current text-amber-300" />}
+                </div>
+              </motion.div>
+
+              {/* Close Button */}
               <button 
                 onClick={() => setShowGuide(false)}
-                className="absolute top-8 right-8 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all backdrop-blur-sm z-50"
+                className="absolute top-6 right-6 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/20 border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:bg-black/40 hover:scale-105 active:scale-95 transition-all backdrop-blur-md z-50"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="px-6 sm:px-10 pb-12 pt-2 text-center flex flex-col items-center">
+            <div className="px-6 sm:px-10 pb-10 pt-8 text-center flex flex-col items-center relative z-20">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={guideStep}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
                   className="w-full"
                 >
-                  
-                  <h3 className="text-3xl font-black text-white mb-5 leading-tight tracking-tight">
+                  <h3 className="text-2xl sm:text-3xl font-black text-white mb-4 leading-tight tracking-tight drop-shadow-sm">
                     {guideStep === 1 && "Wheel of Life"}
                     {guideStep === 2 && "DISC (Who are you?)"}
                     {guideStep === 3 && "Money Avatar"}
@@ -794,7 +797,7 @@ export default function Home() {
                     {guideStep === 6 && "Master Your Growth"}
                   </h3>
 
-                  <p className="text-slate-400 text-[15px] font-medium leading-relaxed mb-10 px-2 max-w-[340px] mx-auto">
+                  <p className="text-slate-400 text-sm sm:text-[15px] font-medium leading-relaxed mb-8 px-2 max-w-[340px] mx-auto min-h-[70px]">
                     {guideStep === 1 && "วิเคราะห์ความสมดุลชีวิต 8 ด้านของคุณ พร้อมรับ AI Action Plan 7 วันเพื่อพัฒนาตัวเองแบบก้าวกระโดด!"}
                     {guideStep === 2 && "ค้นหาตัวตนและสไตล์การสื่อสารของคุณผ่านแบบทดสอบ DISC เพื่อความสัมพันธ์และการทำงานที่ราบรื่น"}
                     {guideStep === 3 && "ถอดรหัสพฤติกรรมการใช้เงินของคุณผ่าน Avatar สัตว์ เพื่อวางแผนการเงินที่ฉลาดและเข้ากับไลฟ์สไตล์"}
@@ -805,22 +808,24 @@ export default function Home() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Progress Dots */}
-              <div className="flex gap-3 mb-10">
+              {/* Progress Dots Gen-Z Style */}
+              <div className="flex gap-2.5 mb-10 items-center justify-center">
                 {Array.from({ length: totalGuideSteps }).map((_, i) => (
                   <div 
                     key={i} 
-                    className={`h-2 rounded-full transition-all duration-700 ${
+                    className={`rounded-full transition-all duration-500 ${
                       i + 1 === guideStep 
-                        ? 'w-12 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
-                        : 'w-2 bg-white/10'
+                        ? 'h-2.5 w-8 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)]' 
+                        : 'h-2 w-2 bg-white/20'
                     }`} 
                   />
                 ))}
               </div>
 
               {/* Action Button */}
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   if (guideStep < totalGuideSteps) setGuideStep(prev => prev + 1);
                   else {
@@ -828,49 +833,43 @@ export default function Home() {
                     if (!user) handleLogin();
                   }
                 }}
-                className={`w-full py-5 rounded-[2rem] font-black text-[12px] sm:text-sm tracking-[0.1em] sm:tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-2 sm:gap-3 active:scale-95 shadow-2xl ${
+                className={`relative w-full py-4 sm:py-5 rounded-full font-black text-xs sm:text-sm tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl overflow-hidden group/btn ${
                   guideStep === totalGuideSteps 
-                    ? 'bg-white text-slate-900 hover:bg-slate-50' 
-                    : 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-500 hover:to-blue-500 shadow-blue-900/20'
+                    ? 'bg-white text-black' 
+                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                 }`}
               >
-                {guideStep === totalGuideSteps ? (
-                  <>
-                    <svg className="w-5 h-5 mr-1" viewBox="0 0 24 24">
-                      <path
-                        fill="currentColor"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        style={{ fill: "#4285F4" }}
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        style={{ fill: "#34A853" }}
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        style={{ fill: "#FBBC05" }}
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        style={{ fill: "#EA4335" }}
-                      />
-                    </svg>
-                    เข้าสู่ระบบด้วย Google
-                  </>
-                ) : "ถัดไป"}
-                <ArrowRight size={18} strokeWidth={3} />
-              </button>
+                {/* Shine Effect */}
+                <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700" />
+                
+                <span className="relative z-10 flex items-center gap-2">
+                  {guideStep === totalGuideSteps ? (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 48 48" className="mr-1 drop-shadow-sm">
+                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C40.486,35.33,44,30.075,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                      </svg>
+                      <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent font-black">
+                        เข้าสู่ระบบฟรี
+                      </span>
+                    </>
+                  ) : "ถัดไป"}
+                </span>
+                
+                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${guideStep === totalGuideSteps ? 'bg-black text-white' : 'bg-white text-black'}`}>
+                  <ArrowRight size={14} strokeWidth={4} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                </div>
+              </motion.button>
 
               <button 
                 onClick={() => setShowGuide(false)}
-                className="mt-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] hover:text-white transition-all flex items-center gap-2 group"
+                className="mt-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] hover:text-white transition-all flex items-center gap-3 group"
               >
-                <span className="w-8 h-[1px] bg-slate-800 group-hover:w-12 transition-all" />
+                <span className="w-6 h-[1px] bg-slate-700 group-hover:w-10 transition-all" />
                 SKIP GUIDE
-                <span className="w-8 h-[1px] bg-slate-800 group-hover:w-12 transition-all" />
+                <span className="w-6 h-[1px] bg-slate-700 group-hover:w-10 transition-all" />
               </button>
             </div>
 

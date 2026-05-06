@@ -359,6 +359,7 @@ export default function DashboardPage() {
             setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
             setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
             setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
+            setWheelCompletions(userData.wheelCompletions || 0); // 👈 สำคัญ! โหลดจำนวนวันที่ทำสำเร็จ
 
             let xpToClaim = 0;
             // ... (โค้ดดึงตัวแปร xpToClaim และอื่นๆ ด้านล่างปล่อยไว้เหมือนเดิมครับ)
@@ -411,18 +412,79 @@ export default function DashboardPage() {
               let currentPlanDay = userData.wheelPlanDay || 0;
               let nextPlanDay = currentPlanDay;
 
-              // ถ้ายังอยู่ในวงจร 0-7 ให้ขยับวันขึ้น (0->1, 1->2, ..., 6->7)
-              // ถ้าเป็น 7 อยู่แล้ว ให้ขึ้น 8 เพื่อรอสรุปผล
-              if (currentPlanDay < 8) {
-                nextPlanDay = currentPlanDay + 1;
-              }
+              // 🎯 [NEW LOGIC] การเปลี่ยนวันเมื่อครบ 7 วัน
+              if (currentPlanDay >= 7) {
+                // ให้วนลูปกลับไปเป็น Day 1 อัตโนมัติ
+                nextPlanDay = 1;
+                
+                // 1. ถ้าค้างอยู่ที่ Day 7 แสดงว่าเมื่อวานไม่ได้กด Check box วันสุดท้าย ให้ทำการสรุปผลและแจก XP ย้อนหลังให้
+                if (currentPlanDay === 7) {
+                  const completions = userData.wheelCompletions || 0;
+                  let bonusXP = 0;
+                  let milestoneName = "";
+                  let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
 
-              const userRef = doc(db, "users", currentUser.uid);
-              await updateDoc(userRef, {
-                wheelPlanDay: nextPlanDay,
-                lastActiveDate: todayStr,
-                completedQuestIds: []
-              });
+                  if (completions >= 7) {
+                    bonusXP = 100;
+                    milestoneName = "PERFECT RUN!";
+                    modalType = "PERFECT";
+                  } else if (completions >= 5) {
+                    bonusXP = 50;
+                    milestoneName = "GREAT RUN!";
+                    modalType = "GREAT";
+                  } else {
+                    bonusXP = 20;
+                    milestoneName = "GOOD RUN!";
+                    modalType = "GOOD";
+                  }
+
+                  setRewardModalData({
+                    title: milestoneName,
+                    bonusXP: bonusXP,
+                    message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
+                    type: modalType
+                  });
+
+                  let xpToAdd = bonusXP;
+                  let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
+                  
+                  const userRef = doc(db, "users", currentUser.uid);
+                  await updateDoc(userRef, {
+                    wheelPlanDay: nextPlanDay,
+                    lastActiveDate: todayStr,
+                    completedQuestIds: [],
+                    wheelCompletions: 0,
+                    totalXP: increment(xpToAdd),
+                    perfectWeeks: increment(perfectWeekInc)
+                  });
+                  
+                  setTotalXP((userData.totalXP || 0) + xpToAdd);
+                  setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
+                  setShowPerfectWeekModal(true);
+                  
+                } else {
+                  // 2. ถ้าเป็น Day 8 อยู่แล้ว แสดงว่าเมื่อวานกด Check box และรับรางวัลไปแล้ว วันนี้ก็แค่รีเซ็ตเป็น Day 1 เงียบๆ
+                  const userRef = doc(db, "users", currentUser.uid);
+                  await updateDoc(userRef, {
+                    wheelPlanDay: nextPlanDay,
+                    lastActiveDate: todayStr,
+                    completedQuestIds: [],
+                    wheelCompletions: 0
+                  });
+                }
+                
+                setWheelCompletions(0);
+
+              } else {
+                // ถ้ายังไม่ครบ 7 วัน ให้ขยับวันขึ้น (0->1, 1->2, ..., 6->7)
+                nextPlanDay = currentPlanDay + 1;
+                const userRef = doc(db, "users", currentUser.uid);
+                await updateDoc(userRef, {
+                  wheelPlanDay: nextPlanDay,
+                  lastActiveDate: todayStr,
+                  completedQuestIds: []
+                });
+              }
 
               setWheelPlanDay(nextPlanDay);
             }
@@ -971,11 +1033,14 @@ export default function DashboardPage() {
 
         if (planItems.length > 0) {
           const isWheelDoneToday = completedQuests.includes(1);
+          
+          // ถ้าวันนี้ทำไปแล้ว แสดงว่า wheelPlanDay เพิ่งถูกเลื่อนขึ้นไปเป็น 8 ให้ถอยกลับมาแสดงของอันเดิมก่อน
+          const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
 
-          if (wheelPlanDay > 0 && wheelPlanDay <= 7) {
-            const dayIdx = Math.min(6, wheelPlanDay - 1);
+          if (displayDay > 0 && displayDay <= 7) {
+            const dayIdx = Math.min(6, displayDay - 1);
             let currentDayPlan = planItems[dayIdx] || planItems[0];
-            qList[0].title = `DAY ${wheelPlanDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
+            qList[0].title = `DAY ${displayDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
             wheelQuestSet = true;
           } else {
             // จบแผนแล้ว (Day 8+)
@@ -1205,27 +1270,16 @@ export default function DashboardPage() {
     let newWheelDay = wheelPlanDay;
 
     if (id === 1) { // ข้อ Wheel เสมอ
-      // 🌟 รับโบนัสจบแผน
-      if (wheelPlanDay >= 7 && !isDone) {
-        setWheelPlanDay(8);
-        newWheelDay = 8;
+      // 🎡 [NEW LOGIC] ไม่บวกวันเพิ่มในวันเดียวกัน แต่ให้นับความสำเร็จ (Completions)
+      if (!isDone) {
+        const newCompletions = wheelCompletions + 1;
+        setWheelCompletions(newCompletions);
+        updateDoc(userRef, { wheelCompletions: newCompletions });
       } else {
-        // 🎡 [NEW LOGIC] ไม่บวกวันเพิ่มในวันเดียวกัน แต่ให้นับความสำเร็จ (Completions)
-        if (!isDone) {
-          const newCompletions = wheelCompletions + 1;
-          setWheelCompletions(newCompletions);
-
-          updateDoc(userRef, { wheelCompletions: newCompletions });
-
-          if (wheelPlanDay === 7 && newCompletions >= 7) {
-            triggerPlanSummary(newCompletions);
-          }
-        } else {
-          // กรณี "กดยกเลิก" (Uncheck)
-          const newCompletions = Math.max(0, wheelCompletions - 1);
-          setWheelCompletions(newCompletions);
-          updateDoc(userRef, { wheelCompletions: newCompletions });
-        }
+        // กรณี "กดยกเลิก" (Uncheck)
+        const newCompletions = Math.max(0, wheelCompletions - 1);
+        setWheelCompletions(newCompletions);
+        updateDoc(userRef, { wheelCompletions: newCompletions });
       }
     }
 
@@ -2731,7 +2785,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* ⚡ ส่วนที่ 2: สถานะรายสัปดาห์ (เปลี่ยนตามสถานะ 7 วัน) */}
-                            {wheelPlanDay >= 7 ? (
+                            {wheelPlanDay > 7 ? (
                               !hasDoneWheelToday ? (
                                 /* 🎯 CASE 1: ครบ 7 วัน -> โชว์ 2 ปุ่มหลัก */
                                 <div
@@ -2790,18 +2844,18 @@ export default function DashboardPage() {
                         )}
 
                         {/* 🔘 ปุ่ม Action หลัก (จะซ่อนตัวอัตโนมัติถ้ามีแผง 3 ปุ่มโชว์อยู่) */}
-                        {!(lastWheel && wheelPlanDay >= 7 && !hasDoneWheelToday) && (
+                        {!(lastWheel && wheelPlanDay > 7 && !hasDoneWheelToday) && (
                           <div className={`inline-flex items-center gap-1.5 px-6 py-3 rounded-full border text-[13px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm w-fit 
                       ${!lastWheel
                               ? 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(239,68,68,0.5)] hover:scale-[1.03]'
-                              : wheelPlanDay >= 7
+                              : wheelPlanDay > 7
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(16,185,129,0.5)] hover:scale-[1.03]'
                                 : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200'
                             }`}>
 
                             {!lastWheel ? (
                               <Sparkles size={14} />
-                            ) : wheelPlanDay >= 7 ? (
+                            ) : wheelPlanDay > 7 ? (
                               <CheckCircle2 size={14} className="fill-white" />
                             ) : (
                               <RefreshCw size={14} />
@@ -2810,7 +2864,7 @@ export default function DashboardPage() {
                             <span>
                               {!lastWheel
                                 ? "เริ่มประเมินครั้งแรก (+50 XP)"
-                                : wheelPlanDay >= 7
+                                : wheelPlanDay > 7
                                   ? "พรุ่งนี้มาลุยต่อกัน"
                                   : "ประเมินใหม่"
                               }
@@ -4030,7 +4084,7 @@ export default function DashboardPage() {
 
       {/* 🏆 Modal: ฉลองความสำเร็จรายวัน (Daily Success Celebration) */}
       <AnimatePresence>
-        {showDailySuccess && (
+        {showDailySuccess && !showLevelUp && !showPerfectWeekModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -4206,7 +4260,7 @@ export default function DashboardPage() {
 
       {/* 🔮 Modal: Welcome Quote Invitation (Premium Purple Redesign) */}
       <AnimatePresence>
-        {showWelcomeQuotePopup && (
+        {showWelcomeQuotePopup && !showLevelUp && !showPerfectWeekModal && !showDailySuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -4626,7 +4680,7 @@ export default function DashboardPage() {
 
       {/* --- 🎖️ Modal: Plan Rewards Celebration (Dynamic) --- */}
       <AnimatePresence>
-        {showPerfectWeekModal && (
+        {showPerfectWeekModal && !showLevelUp && (
           <div className="fixed inset-0 z-[100001] flex items-center justify-center p-6">
             <motion.div
               initial={{ opacity: 0 }}
