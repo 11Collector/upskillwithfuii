@@ -79,13 +79,13 @@ export default function AiMentorInfoPage() {
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
             AI MENTOR <br/>
             <span className="text-slate-400 bg-clip-text text-transparent bg-gradient-to-r from-slate-600 via-zinc-500 to-slate-400">
               Personalized Growth Companion
             </span>
           </h1>
-          <p className="text-xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
+          <p className="text-lg text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             ปลดล็อกศักยภาพสูงสุดของคุณด้วย "ที่ปรึกษาส่วนตัว" <br className="hidden md:block"/>
             ที่วิเคราะห์คุณจากทุกมิติ เพื่อการเติบโตที่ไม่มีขีดจำกัด
           </p>
@@ -94,7 +94,7 @@ export default function AiMentorInfoPage() {
             <div className="h-[72px] w-[260px] bg-slate-100 animate-pulse rounded-[2rem] mx-auto" />
           ) : user ? (
             <Link href="/tools/ai-mentor">
-              <button className="group relative bg-slate-900 text-white px-12 py-5 rounded-[2rem] font-black text-xl hover:bg-black transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden">
+              <button className="group relative bg-slate-900 text-white px-8 py-4 rounded-full font-black text-lg hover:bg-black transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <Bot size={24} className="text-slate-400" /> 
                 เข้าพบ AI Mentor
@@ -105,7 +105,7 @@ export default function AiMentorInfoPage() {
             <button 
               onClick={handleLogin}
               disabled={isLoggingIn}
-              className="group relative bg-white text-slate-900 px-10 py-5 rounded-[2rem] font-black text-xl hover:bg-slate-50 transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden border border-slate-200"
+              className="group relative bg-white text-slate-900 px-8 py-4 rounded-full font-black text-lg hover:bg-slate-50 transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden border border-slate-200"
             >
               <img loading="lazy" decoding="async" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
               {isLoggingIn ? "กำลังเข้าสู่ระบบ..." : "เข้าใช้งานด้วย Google"}
@@ -160,7 +160,7 @@ export default function AiMentorInfoPage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/10 text-xs font-bold uppercase tracking-widest text-slate-300 mb-6">
                 <Lock size={12} className="text-slate-400" /> Privacy First
               </div>
-              <h2 className="text-3xl md:text-4xl font-black mb-6 leading-tight">ความปลอดภัย <br/><span className="text-slate-400">คือหัวใจสำคัญ</span></h2>
+              <h2 className="text-2xl font-black mb-6 leading-tight">ความปลอดภัย <br/><span className="text-slate-400">คือหัวใจสำคัญ</span></h2>
               <div className="space-y-6">
                 <div className="flex gap-4">
                   <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/5">
@@ -230,45 +230,94 @@ export default function AiMentorInfoPage() {
         </section>
 
         {/* --- 2.5 Unified Apps Visual --- */}
-        <section className="mb-20 animate-in fade-in zoom-in duration-1000 delay-300">
-          <div className="bg-gradient-to-br from-slate-100 to-zinc-200 p-8 md:p-12 rounded-[3.5rem] border border-white shadow-xl text-center relative overflow-hidden">
+        {/* --- 2.5 Unified Apps Visual --- */}
+        <section className="mb-16 animate-in fade-in zoom-in duration-1000 delay-300 max-w-3xl mx-auto">
+          <div className="bg-gradient-to-br from-slate-100 to-zinc-200 p-6 md:p-8 rounded-[2.5rem] border border-white shadow-xl text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-10 pointer-events-none" />
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em] mb-10 relative z-10">Integrated Ecosystem</h3>
-            <div className="flex flex-col gap-6 md:gap-10 relative z-10">
-              {/* บรรทัดแรก 3 อัน */}
-              <div className="flex justify-center gap-6 md:gap-10">
+            <h3 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.4em] mb-2 relative z-10">Integrated Ecosystem</h3>
+            
+            <div className="relative w-full max-w-[280px] md:max-w-[400px] mx-auto aspect-square my-6 z-10">
+              {/* SVG Connecting Lines (Animated) */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 100 100" preserveAspectRatio="none">
                 {[
-                  { icon: <PieChart size={28} />, name: "Wheel of Life", color: "text-red-500" },
-                  { icon: <Users size={28} />, name: "DISC", color: "text-blue-500" },
-                  { icon: <Wallet size={28} />, name: "Money Avatar", color: "text-amber-500" },
-                ].map((app, i) => (
-                  <div key={i} className="flex flex-col items-center gap-3 group">
-                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-[1.5rem] flex items-center justify-center shadow-lg border border-white group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500 group-hover:shadow-2xl">
-                      <div className={app.color}>{app.icon}</div>
-                    </div>
-                    <span className="text-[10px] font-black text-slate-500 group-hover:text-slate-900 tracking-tighter transition-colors uppercase">{app.name}</span>
-                  </div>
+                  { path: "M 50 15 L 50 50", color: "#ef4444", dur: "2s" }, // Red
+                  { path: "M 85 30 L 50 50", color: "#3b82f6", dur: "2.5s" }, // Blue
+                  { path: "M 75 85 L 50 50", color: "#f59e0b", dur: "3s" }, // Amber
+                  { path: "M 25 85 L 50 50", color: "#10b981", dur: "2.2s" }, // Emerald
+                  { path: "M 15 30 L 50 50", color: "#a855f7", dur: "2.8s" }, // Purple
+                ].map((p, i) => (
+                  <g key={i}>
+                    {/* Base Path */}
+                    <path d={p.path} stroke="#cbd5e1" strokeWidth="0.3" strokeDasharray="1 2" fill="none" />
+                    {/* Flowing Line */}
+                    <path d={p.path} stroke={p.color} strokeWidth="0.8" strokeDasharray="4 4" fill="none" opacity="0.4">
+                      <animate attributeName="stroke-dashoffset" from="8" to="0" dur="1s" repeatCount="indefinite" />
+                    </path>
+                    {/* Moving Particle */}
+                    <circle r="1.5" fill={p.color} filter="blur(0.5px)">
+                      <animateMotion dur={p.dur} repeatCount="indefinite" path={p.path} />
+                      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.2;0.8;1" dur={p.dur} repeatCount="indefinite" />
+                    </circle>
+                  </g>
                 ))}
+                
+
+              </svg>
+
+              {/* Center Node (AI Mentor / You) */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.3)] border-4 border-white relative group transition-transform hover:scale-105 cursor-default">
+                  <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors" />
+                  <Bot size={28} className="text-white relative z-10 md:w-10 md:h-10" />
+                </div>
+                <span className="text-[9px] md:text-[10px] font-black text-slate-800 mt-2 bg-white px-2.5 py-0.5 rounded-full shadow-sm border border-slate-100 z-10">AI MENTOR</span>
               </div>
-              {/* บรรทัดที่สอง 2 อัน */}
-              <div className="flex justify-center gap-6 md:gap-10">
-                {[
-                  { icon: <BookOpen size={28} />, name: "Library of Souls", color: "text-emerald-500" },
-                  { icon: <Quote size={28} />, name: "คมสัดสัด", color: "text-purple-500" },
-                ].map((app, i) => (
-                  <div key={i} className="flex flex-col items-center gap-3 group">
-                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-[1.5rem] flex items-center justify-center shadow-lg border border-white group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500 group-hover:shadow-2xl">
-                      <div className={app.color}>{app.icon}</div>
-                    </div>
-                    <span className="text-[10px] font-black text-slate-500 group-hover:text-slate-900 tracking-tighter transition-colors uppercase">{app.name}</span>
-                  </div>
-                ))}
+
+              {/* Node 1: Top */}
+              <div className="absolute top-[0%] left-[50%] -translate-x-1/2 flex flex-col items-center gap-1.5 z-10 group">
+                <div className="w-10 h-10 md:w-14 md:h-14 bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                  <PieChart size={20} className="text-red-500 md:w-6 md:h-6" />
+                </div>
+                <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-tighter whitespace-nowrap bg-white/50 px-1.5 rounded">Wheel of Life</span>
+              </div>
+
+              {/* Node 2: Top Right */}
+              <div className="absolute top-[18%] right-[0%] flex flex-col items-center gap-1.5 z-10 group">
+                <div className="w-10 h-10 md:w-14 md:h-14 bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                  <Users size={20} className="text-blue-500 md:w-6 md:h-6" />
+                </div>
+                <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-tighter whitespace-nowrap bg-white/50 px-1.5 rounded">DISC</span>
+              </div>
+
+              {/* Node 3: Bottom Right */}
+              <div className="absolute bottom-[0%] right-[10%] flex flex-col items-center gap-1.5 z-10 group">
+                <div className="w-10 h-10 md:w-14 md:h-14 bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                  <Wallet size={20} className="text-amber-500 md:w-6 md:h-6" />
+                </div>
+                <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-tighter whitespace-nowrap bg-white/50 px-1.5 rounded">Money Avatar</span>
+              </div>
+
+              {/* Node 4: Bottom Left */}
+              <div className="absolute bottom-[0%] left-[10%] flex flex-col items-center gap-1.5 z-10 group">
+                <div className="w-10 h-10 md:w-14 md:h-14 bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                  <BookOpen size={20} className="text-emerald-500 md:w-6 md:h-6" />
+                </div>
+                <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-tighter whitespace-nowrap bg-white/50 px-1.5 rounded">Library</span>
+              </div>
+
+              {/* Node 5: Top Left */}
+              <div className="absolute top-[18%] left-[0%] flex flex-col items-center gap-1.5 z-10 group">
+                <div className="w-10 h-10 md:w-14 md:h-14 bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                  <Quote size={20} className="text-purple-500 md:w-6 md:h-6" />
+                </div>
+                <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-tighter whitespace-nowrap bg-white/50 px-1.5 rounded">คมสัดสัด</span>
               </div>
             </div>
-            <div className="mt-10 pt-8 border-t border-slate-300/50 relative z-10">
-              <p className="text-base text-slate-600 font-bold max-w-lg mx-auto leading-relaxed">
-                <span className="text-slate-900 bg-white px-2 py-0.5 rounded-lg shadow-sm">AI Mentor</span> จะรวบรวมจิ๊กซอว์จากทุกแอป <br className="md:hidden" /> 
-                มาประมวลผลเป็น <span className="text-slate-900 underline decoration-slate-400 underline-offset-4">Insight เดียวที่แม่นยำที่สุด</span> สำหรับคุณ
+
+            <div className="mt-4 pt-6 border-t border-slate-300/50 relative z-10">
+              <p className="text-sm md:text-base text-slate-600 font-bold max-w-sm mx-auto leading-relaxed">
+                <span className="text-slate-900 bg-white px-2 py-0.5 rounded-lg shadow-sm">AI Mentor</span> จะประมวลผลการกระทำจากแอปทั้งหมด <br className="md:hidden" /> 
+                และเชื่อมโยงมาหาคุณ เพื่อสร้าง <span className="text-slate-900 underline decoration-slate-400 underline-offset-4">Insight เดียวที่แม่นยำที่สุด</span>
               </p>
             </div>
           </div>
@@ -278,7 +327,7 @@ export default function AiMentorInfoPage() {
         <div className="text-center pb-20">
           {!authLoading && user && (
             <Link href="/tools/ai-mentor">
-              <button className="bg-slate-900 text-white px-12 py-5 rounded-full font-black text-[22px] hover:bg-black transition-all hover:scale-110 shadow-2xl flex items-center gap-4 mx-auto border border-slate-800 group">
+              <button className="bg-slate-900 text-white px-10 py-4 rounded-full font-black text-[17px] hover:bg-black transition-all hover:scale-110 shadow-2xl flex items-center gap-4 mx-auto border border-slate-800 group">
                 คุยกับ Mentor เดี๋ยวนี้
                 <ArrowRight size={28} className="text-slate-500 group-hover:translate-x-2 transition-transform" />
               </button>
