@@ -6,7 +6,7 @@ import { Users, Swords, Play, ArrowLeft, Zap, User as UserIcon, Globe, Sparkles,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, setDoc, onSnapshot, collection, query, serverTimestamp, deleteDoc, updateDoc, deleteField } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, collection, query, serverTimestamp, deleteDoc, updateDoc, deleteField, increment } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 
 import { Inter, Geist_Mono } from "next/font/google";
