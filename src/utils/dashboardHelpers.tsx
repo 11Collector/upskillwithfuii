@@ -96,7 +96,7 @@ export const AvatarDisplay = ({ currentLevel, gender, streak = 0, isCompact = fa
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className={`absolute top-1/2 left-1/2 ${isCompact ? 'w-[115%] h-[115%] blur-[30px]' : 'w-[140%] h-[140%] blur-[60px]'} rounded-full z-[-1] pointer-events-none will-change-transform
+          className={`absolute top-1/2 left-1/2 ${isCompact ? 'w-[100%] h-[100%] blur-[20px]' : 'w-[115%] h-[115%] blur-[40px]'} rounded-full z-[-1] pointer-events-none will-change-transform
              ${streak >= 30 ? 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600' :
               streak >= 14 ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-indigo-600' :
                 'bg-gradient-to-tr from-blue-400 via-cyan-400 to-teal-400'}`}
