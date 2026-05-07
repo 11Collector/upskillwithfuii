@@ -916,9 +916,9 @@ export default function FocusRoomPage() {
                         />
     
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-black text-white truncate leading-none mb-1">
+                          <h4 className="text-sm font-black text-white truncate leading-relaxed mb-1 flex items-center">
                             {item.displayName || "Spirit of Focus"}
-                            {item.id === user?.uid && <span className="ml-2 text-[8px] text-blue-300 bg-blue-500/30 px-1.5 py-0.5 rounded-md uppercase">คุณ</span>}
+                            {item.id === user?.uid && <span className="ml-2 text-[9px] text-blue-100 bg-blue-500/40 px-2 py-0.5 rounded-lg font-bold border border-blue-400/30">คุณ</span>}
                           </h4>
                           <p className="text-[9px] text-blue-300/40 uppercase tracking-widest font-black">{tier}</p>
                         </div>
@@ -971,7 +971,7 @@ export default function FocusRoomPage() {
                         />
 
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-black text-white truncate leading-none mb-1">{user.displayName || "Upskiller (You)"}</h4>
+                          <h4 className="text-sm font-black text-white truncate leading-relaxed mb-1">{user.displayName || "Upskiller (You)"}</h4>
                           <p className="text-[9px] text-blue-300/40 uppercase tracking-widest font-black">{myTier}</p>
                         </div>
 
