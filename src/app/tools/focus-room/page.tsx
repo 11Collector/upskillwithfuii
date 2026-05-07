@@ -53,6 +53,11 @@ export default function FocusRoomPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Scroll to top when switching views (Selection <-> Lounge)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [viewMode]);
+
   // Heartbeat System: Update lastActive every 60 seconds if joined
   useEffect(() => {
     if (!user || !isJoined) return;
