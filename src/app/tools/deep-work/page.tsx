@@ -9,8 +9,9 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, setDoc, increment, arrayUnion, getDoc, updateDoc, collection, query, getDocs, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, increment, arrayUnion, getDoc, updateDoc, collection, query, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { getStartOfMonday, getCalendarWeekId } from "@/utils/dashboardHelpers";
 
 import { Inter, Geist_Mono } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
@@ -87,21 +88,32 @@ export default function DeepWorkPage() {
               localStorage.setItem("lastFocusDate_cache", dbLastFocusDate);
             }
 
-            // Calculate weekly focus time
+            // Calculate weekly focus time (Calendar Week - Monday Start)
+            const currentWeekId = getCalendarWeekId();
+            const startOfWeek = getStartOfMonday(new Date());
             const reflections = userData.focusReflections || [];
-            const now = new Date();
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday as start
-            startOfWeek.setHours(0, 0, 0, 0);
-
-            const weeklyTotal = reflections.reduce((acc: number, ref: any) => {
+            
+            // 🔄 [Sync Logic] ตรวจสอบว่าข้อมูลในฟิลด์ weeklyFocusMinutes ตรงกับรายการ reflections หรือไม่
+            const calculatedWeeklyTotal = reflections.reduce((acc: number, ref: any) => {
               const refDate = new Date(ref.date);
               if (refDate >= startOfWeek) {
                 return acc + (ref.duration || 0);
               }
               return acc;
             }, 0);
-            setWeeklyMinutes(weeklyTotal);
+
+            let displayWeeklyMinutes = calculatedWeeklyTotal;
+
+            // ถ้าข้อมูลใน Firestore ไม่ตรง หรือยังไม่มี ให้ Update เพื่อให้ Leaderboard ตรงกัน
+            if (userData.lastFocusWeek !== currentWeekId || userData.weeklyFocusMinutes !== calculatedWeeklyTotal) {
+              const userRef = doc(db, "users", currentUser.uid);
+              updateDoc(userRef, {
+                weeklyFocusMinutes: calculatedWeeklyTotal,
+                lastFocusWeek: currentWeekId
+              }).catch(console.error);
+            }
+
+            setWeeklyMinutes(displayWeeklyMinutes);
 
             // Determine character tier based on XP
             const xp = userData.totalXP || 0;
@@ -401,12 +413,16 @@ export default function DeepWorkPage() {
     if (!user || isSaving) return;
     setIsSaving(true);
     try {
-      let finalXpReward = xpReward;
-
+      const currentWeekId = getCalendarWeekId();
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
+      const userData = userSnap.data() || {};
+      
       const payload: any = {
         totalFocusMinutes: increment(selectedTime),
         totalXP: increment(finalXpReward),
         lastFocusDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+        lastFocusWeek: currentWeekId,
         focusReflections: arrayUnion({
           date: new Date().toISOString(),
           duration: selectedTime,
@@ -414,7 +430,22 @@ export default function DeepWorkPage() {
         })
       };
 
-      await setDoc(doc(db, "users", user.uid), payload, { merge: true });
+      // Reset weeklyFocusMinutes if it's a new week
+      if (userData.lastFocusWeek !== currentWeekId) {
+        payload.weeklyFocusMinutes = selectedTime;
+      } else {
+        payload.weeklyFocusMinutes = increment(selectedTime);
+      }
+
+      // 📊 Sync to weekly_stats collection for Dashboard consistency
+      const { calculateRelativeWeek } = await import("@/utils/dashboardHelpers");
+      const joinDate = userData.joinDate ? new Date(userData.joinDate) : new Date();
+      const relWeek = calculateRelativeWeek(joinDate);
+      const weeklyStatsRef = doc(db, "users", user.uid, "weekly_stats", relWeek.id);
+      
+      await setDoc(userDocRef, payload, { merge: true });
+      await setDoc(weeklyStatsRef, { focusMinutes: increment(selectedTime) }, { merge: true });
+
       await updateSessionStatus("idle"); // รีเซ็ตสถานะเป็น idle เมื่อเคลมแต้มเสร็จ
       router.push("/dashboard?tab=resources");
     } catch (e) {

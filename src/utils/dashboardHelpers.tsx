@@ -146,20 +146,38 @@ export const AvatarDisplay = ({ currentLevel, gender, streak = 0, isCompact = fa
   );
 };
 
-// 🌟 [NEW LOGIC] ฟังก์ชันคำนวณ Relative Week
+// 📅 ฟังก์ชันหา "วันจันทร์" ของสัปดาห์นั้นๆ
+export const getStartOfMonday = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // ปรับให้เป็นวันจันทร์ (ถ้าเป็นวันอาทิตย์ให้ลบไป 6 วัน)
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+// 🆔 ฟังก์ชันสร้าง ID สัปดาห์ตามปฏิทิน (เช่น 2024-W19)
+export const getCalendarWeekId = (date = new Date()) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  // หาพฤหัสบดีของสัปดาห์นี้เพื่อคำนวณเลขสัปดาห์ ISO
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getFullYear()}-W${weekNo}`;
+};
+
+// 🌟 [NEW LOGIC] ฟังก์ชันคำนวณ Relative Week (อิงตามปฏิทินจันทร์-อาทิตย์)
 export const calculateRelativeWeek = (joinDate: Date, targetDate = new Date()) => {
-  const start = new Date(joinDate);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(targetDate);
-  end.setHours(0, 0, 0, 0);
+  const startMonday = getStartOfMonday(joinDate);
+  const targetMonday = getStartOfMonday(targetDate);
 
-  const diffTime = end.getTime() - start.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = targetMonday.getTime() - startMonday.getTime();
+  const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
 
-  const weekNumber = Math.max(1, Math.floor(diffDays / 7) + 1);
+  const weekNumber = Math.max(1, diffWeeks + 1);
 
-  const startOfWeek = new Date(start);
-  startOfWeek.setDate(start.getDate() + (weekNumber - 1) * 7);
+  const startOfWeek = new Date(targetMonday);
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
 

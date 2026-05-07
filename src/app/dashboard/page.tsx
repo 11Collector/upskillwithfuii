@@ -915,6 +915,14 @@ export default function DashboardPage() {
     { label: "Library", count: weeklyData.library || 0, max: 7, color: "bg-teal-500", icon: <BookOpen size={14} /> },
     { label: "Wild", count: weeklyData.wildcard || 0, max: 7, color: "bg-emerald-500", icon: <Zap size={14} /> },
     { label: "Challenge", count: weeklyData.challenge || 0, max: 7, color: "bg-purple-500", icon: <Target size={14} /> },
+    { 
+      label: "Focus", 
+      count: Math.floor((weeklyData as any).focusMinutes / 60) || 0, 
+      max: 10, 
+      suffix: "h",
+      color: "bg-zinc-800", 
+      icon: <BrainCircuit size={14} /> 
+    },
   ], [weeklyData]);
 
   const focusAreas = useMemo(() => {
