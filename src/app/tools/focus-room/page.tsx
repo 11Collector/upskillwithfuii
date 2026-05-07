@@ -20,6 +20,7 @@ type ActiveUser = {
   gender: string;
   status: "idle" | "focusing";
   taskMessage: string;
+  duration?: number;
   endTime?: number;
   challengeRequest?: { fromUid: string; fromName: string; fromTask: string; duration: number };
   challengeAccepted?: boolean;
@@ -39,7 +40,29 @@ export default function FocusRoomPage() {
   const [selectedDuration, setSelectedDuration] = useState(25);
 
   const [viewMode, setViewMode] = useState<"selection" | "lounge">("selection");
+  const [currentTime, setCurrentTime] = useState(Date.now());
 
+  // Update currentTime every second for UI purposes
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Heartbeat System: Update lastActive every 60 seconds if joined
+  useEffect(() => {
+    if (!user || !isJoined) return;
+    
+    const heartbeat = setInterval(async () => {
+      try {
+        const sessionRef = doc(db, "active_sessions", user.uid);
+        await updateDoc(sessionRef, { lastActive: serverTimestamp() });
+      } catch (e) {
+        // Silent error
+      }
+    }, 60000);
+
+    return () => clearInterval(heartbeat);
+  }, [user, isJoined]);
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -70,10 +93,18 @@ export default function FocusRoomPage() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const users: ActiveUser[] = [];
       let currentUserInSession = false;
+      const threeMinutesAgo = Date.now() - (3 * 60 * 1000);
 
       snapshot.forEach((docSnapshot) => {
-        const data = docSnapshot.data() as ActiveUser;
-        users.push(data);
+        const data = docSnapshot.data() as any;
+        // แปลง Firebase Timestamp เป็น Milliseconds
+        const lastActiveTime = data.lastActive?.toMillis?.() || Date.now();
+        
+        // กรองเฉพาะคนที่ Active ภายใน 3 นาทีล่าสุด
+        if (lastActiveTime >= threeMinutesAgo) {
+          users.push(data as ActiveUser);
+        }
+
         if (data.uid === user.uid) {
           currentUserInSession = true;
           if (data.challengeRequest) {
@@ -90,6 +121,8 @@ export default function FocusRoomPage() {
 
     return () => unsubscribe();
   }, [user]);
+
+
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -112,6 +145,7 @@ export default function FocusRoomPage() {
         gender: userData.gender || "male",
         status: "idle",
         taskMessage: taskMessage,
+        duration: selectedDuration,
         lastActive: serverTimestamp(),
       });
       setIsJoined(true);
@@ -146,7 +180,15 @@ export default function FocusRoomPage() {
   };
 
   const handleStartLoungeFocus = async () => {
-    if (!isJoined) await handleJoinLounge();
+    if (!isJoined) {
+      await handleJoinLounge();
+    } else {
+      // อัปเดตเป้าหมายล่าสุดก่อนเริ่มจริง
+      await updateDoc(doc(db, "active_sessions", user!.uid), { 
+        taskMessage,
+        duration: selectedDuration 
+      });
+    }
     
     // ล้างข้อมูลเวลาเก่าทิ้งให้เกลี้ยง
     localStorage.removeItem("deepWork_endTime");
@@ -399,7 +441,12 @@ export default function FocusRoomPage() {
                     {[15, 25, 45, 60].map((mins) => (
                       <button
                         key={mins}
-                        onClick={() => setSelectedDuration(mins)}
+                        onClick={() => {
+                          setSelectedDuration(mins);
+                          if (isJoined && user) {
+                            updateDoc(doc(db, "active_sessions", user.uid), { duration: mins });
+                          }
+                        }}
                         className={`flex-1 py-3 rounded-2xl text-[10px] font-black transition-all border ${selectedDuration === mins
                           ? 'bg-cyan-500 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
                           : 'bg-blue-900/20 text-blue-300 border-blue-500/20 hover:border-blue-400/50'
@@ -473,6 +520,16 @@ export default function FocusRoomPage() {
                         <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
                       )}
 
+                      {/* Duration Badge - Top Right (Clock Style) */}
+                      <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-blue-500/10 backdrop-blur-md border border-blue-400/30 z-20 flex flex-col items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                        <span className="text-[11px] font-black text-blue-50 leading-none">
+                          {u.duration || 25}
+                        </span>
+                        <span className="text-[6px] font-bold text-blue-400 uppercase tracking-tighter mt-0.5">
+                          MIN
+                        </span>
+                      </div>
+
                       <div className="relative mb-4 mt-2">
                         {u.status === 'focusing' && (
                           <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full animate-pulse" />
@@ -485,9 +542,18 @@ export default function FocusRoomPage() {
                       </div>
 
                       <h3 className="text-xs font-black text-blue-50 mb-1 truncate w-full tracking-wide">{u.displayName}</h3>
-                      <p className={`text-[9px] font-bold uppercase tracking-widest mb-4 truncate w-full ${u.status === 'focusing' ? 'text-cyan-400' : 'text-blue-300/50'}`}>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest mb-2 truncate w-full ${u.status === 'focusing' ? 'text-cyan-400' : 'text-blue-300/50'}`}>
                         {u.status === 'focusing' ? 'กำลังโฟกัส' : 'รอในห้อง'}
                       </p>
+
+                      {/* User's Goal */}
+                      <div className="w-full flex flex-col gap-1.5 mb-4">
+                        <div className="bg-black/20 rounded-xl p-2.5 border border-white/5">
+                          <p className="text-[10px] text-blue-200/60 leading-tight line-clamp-2">
+                            "{u.taskMessage || 'ตั้งใจโฟกัส'}"
+                          </p>
+                        </div>
+                      </div>
 
                       {u.uid !== user?.uid && (
                         <button
