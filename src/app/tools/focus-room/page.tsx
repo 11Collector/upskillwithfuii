@@ -77,7 +77,7 @@ export default function FocusRoomPage() {
           if (userDoc.exists()) {
             const data = userDoc.data();
             setUserData(data);
-            setTaskMessage(data.lastFocusTask || "กำลังจะเริ่มอ่านหนังสือ...");
+            setTaskMessage(data.lastFocusTask || "");
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -269,9 +269,13 @@ export default function FocusRoomPage() {
     if (!user || !incomingChallenge) return;
     try {
       await updateDoc(doc(db, "active_sessions", user.uid), {
-        challengeRequest: deleteField()
+        challengeRequest: deleteField(),
+        taskMessage: incomingChallenge.fromTask,
+        duration: incomingChallenge.duration
       });
       setIncomingChallenge(null);
+      setTaskMessage(incomingChallenge.fromTask);
+      setSelectedDuration(incomingChallenge.duration);
       
       // ล้างข้อมูลเวลาเก่าทิ้งให้เกลี้ยง
       localStorage.removeItem("deepWork_endTime");
@@ -524,7 +528,7 @@ export default function FocusRoomPage() {
                         updateDoc(doc(db, "active_sessions", user.uid), { taskMessage });
                       }
                     }}
-                    placeholder="เช่น อ่านหนังสือแนวพัฒนาตัวเองกัน"
+                    placeholder="วันนี้โฟกัสอะไรดี"
                     className="w-full bg-[#020813]/60 backdrop-blur-md border border-blue-800/50 rounded-2xl px-5 py-4 text-sm text-blue-50 focus:outline-none focus:border-cyan-500/50 focus:bg-blue-900/20 transition-all shadow-inner placeholder:text-blue-200/30"
                   />
                 </div>
