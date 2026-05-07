@@ -314,7 +314,7 @@ export default function FocusRoomPage() {
 
                 <div className="mt-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/50 border border-blue-900/50 text-[10px] font-black uppercase tracking-widest relative z-10">
                   <Zap size={12} className="text-blue-400 fill-blue-500/20" />
-                  <span className="text-blue-300">รับรางวัล: +20 XP</span>
+                  <span className="text-blue-300">รับรางวัล: +10 XP</span>
                 </div>
               </motion.div>
 
@@ -343,7 +343,7 @@ export default function FocusRoomPage() {
 
                 <div className="mt-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-900/40 border border-cyan-500/30 text-[10px] font-black uppercase tracking-widest relative z-10">
                   <Sparkles size={12} className="text-cyan-300" />
-                  <span className="text-cyan-200">โบนัสห้องรวม: +25 XP</span>
+                  <span className="text-cyan-200">โบนัสห้องรวม: +15 XP</span>
                 </div>
               </motion.div>
 
@@ -618,7 +618,7 @@ export default function FocusRoomPage() {
                   <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 text-[10px] font-black border border-white/10 text-blue-300">01</div>
                   <div>
                     <h4 className="text-sm font-black text-blue-100 mb-1">เลือกโหมดที่ต้องการ</h4>
-                    <p className="text-xs text-blue-300/60 leading-relaxed">Solo เพื่อฝึกคนเดียว (+20 XP) หรือ Lounge เพื่อรวมกลุ่มกับเพื่อน (+25 XP)</p>
+                    <p className="text-xs text-blue-300/60 leading-relaxed">Solo เพื่อฝึกคนเดียว (+10 XP) หรือ Lounge เพื่อรวมกลุ่มกับเพื่อน (+15 XP)</p>
                   </div>
                 </div>
 
