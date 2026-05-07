@@ -111,10 +111,18 @@ export default function FocusRoomPage() {
         }
 
         if (data.uid === user.uid) {
-          currentUserInSession = true;
-          if (data.challengeRequest) {
-            setIncomingChallenge(data.challengeRequest);
+          // ตรวจสอบว่า Session ของเราเองยังสดใหม่หรือไม่ (ไม่เกิน 3 นาที)
+          if (lastActiveTime >= threeMinutesAgo) {
+            currentUserInSession = true;
+            if (data.challengeRequest) {
+              setIncomingChallenge(data.challengeRequest);
+            } else {
+              setIncomingChallenge(null);
+            }
           } else {
+            // ถ้า Session เราเก่าเกินไป (เน็ตหลุด/Inactive นาน) ให้ลบทิ้งจาก DB
+            deleteDoc(docSnapshot.ref);
+            currentUserInSession = false;
             setIncomingChallenge(null);
           }
         }
@@ -126,6 +134,13 @@ export default function FocusRoomPage() {
 
     return () => unsubscribe();
   }, [user]);
+
+  // ซิงค์ viewMode เมื่อสถานะ Joined เปลี่ยนแปลง (เช่น กรณี Session หมดอายุ/โดน Cleanup)
+  useEffect(() => {
+    if (!isJoined && viewMode === "lounge") {
+      setViewMode("selection");
+    }
+  }, [isJoined, viewMode]);
   
   // 3. Fetch Leaderboard Data
   useEffect(() => {
