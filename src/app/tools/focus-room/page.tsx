@@ -254,7 +254,7 @@ export default function FocusRoomPage() {
         challengeRequest: {
           fromUid: user.uid,
           fromName: userData.displayName || "Unknown User",
-          fromTask: taskMessage || "ตั้งใจทำงาน",
+          fromTask: taskMessage || "พร้อมลุยไปกับทุกคน",
           duration: selectedDuration
         }
       });
@@ -641,14 +641,14 @@ export default function FocusRoomPage() {
 
                       <h3 className="text-xs font-black text-blue-50 mb-1 truncate w-full tracking-wide">{u.displayName}</h3>
                       <p className={`text-[9px] font-bold uppercase tracking-widest mb-2 truncate w-full ${u.status === 'focusing' ? 'text-cyan-400' : 'text-blue-300/50'}`}>
-                        {u.status === 'focusing' ? 'กำลังโฟกัส' : 'รอในห้อง'}
+                        {u.status === 'focusing' ? 'กำลังโฟกัส' : 'สแตนด์บาย'}
                       </p>
 
                       {/* User's Goal */}
                       <div className="w-full flex flex-col gap-1.5 mb-4">
                         <div className="bg-black/20 rounded-xl p-2.5 border border-white/5">
                           <p className="text-[10px] text-blue-200/60 leading-tight line-clamp-2">
-                            "{u.taskMessage || 'ตั้งใจโฟกัส'}"
+                            "{u.taskMessage || 'พร้อมลุยไปกับทุกคน'}"
                           </p>
                         </div>
                       </div>
