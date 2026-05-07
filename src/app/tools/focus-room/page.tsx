@@ -825,7 +825,7 @@ export default function FocusRoomPage() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020813] sm:bg-[#020813]/95 sm:backdrop-blur-2xl p-0 sm:p-6"
+            className="fixed inset-0 z-[20000] flex items-center justify-center bg-[#020813] sm:bg-[#020813]/95 sm:backdrop-blur-2xl p-0 sm:p-6"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
