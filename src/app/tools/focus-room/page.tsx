@@ -822,69 +822,67 @@ export default function FocusRoomPage() {
       <AnimatePresence>
         {showLeaderboard && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[20000] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020813] sm:bg-[#020813]/95 sm:backdrop-blur-2xl p-0 sm:p-6"
           >
-            <div className="absolute inset-0 bg-[#020813]/90 backdrop-blur-2xl" onClick={() => setShowLeaderboard(false)} />
-
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-blue-950/40 border border-blue-500/30 rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)] overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-md bg-blue-950 sm:rounded-[3rem] border-none sm:border sm:border-blue-500/20 flex flex-col relative overflow-hidden shadow-[0_0_80px_rgba(30,58,138,0.5)]"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-blue-500 to-cyan-400" />
+              {/* ✨ Animated Background Decor */}
+              <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-blue-600/20 to-transparent pointer-events-none" />
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-400/30">
-                    <Trophy size={24} className="text-amber-400" />
+              {/* Modal Header */}
+              <div className="relative z-10 p-6 sm:p-8 pb-2 flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="text-amber-500 fill-amber-500/20" size={24} />
+                    <h2 className={`text-2xl font-black text-white tracking-tighter ${geist_mono.className}`}>
+                      HALL OF FAME
+                    </h2>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-wider">หอเกียรติยศแห่งการโฟกัส</h3>
-                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Focus Hall of Fame</p>
-                  </div>
+                  <p className="text-[10px] text-blue-300/60 font-black uppercase tracking-[0.2em]">
+                    {leaderboardMode === 'weekly' ? 'จัดอันดับสัปดาห์นี้' : 'สถิติสะสมทั้งหมด'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowLeaderboard(false)}
+                  className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-blue-300 transition-all active:scale-90"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+              </div>
+
+              {/* Tabs Toggle */}
+              <div className="px-6 sm:px-8 mt-4 mb-6 relative z-10">
+                <div className="flex bg-blue-900/30 p-1.5 rounded-2xl border border-blue-500/10 shadow-inner">
+                  <button 
+                    onClick={() => setLeaderboardMode('weekly')}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${leaderboardMode === 'weekly' ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-400/50 hover:text-blue-300'}`}
+                  >
+                    Weekly
+                  </button>
+                  <button 
+                    onClick={() => setLeaderboardMode('allTime')}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${leaderboardMode === 'allTime' ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-400/50 hover:text-blue-300'}`}
+                  >
+                    All-Time
+                  </button>
                 </div>
               </div>
 
-              {/* Mode Toggle */}
-              <div className="flex bg-black/40 p-1.5 rounded-2xl border border-blue-500/10 mb-6 shadow-inner">
-                <button
-                  onClick={() => setLeaderboardMode("weekly")}
-                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${leaderboardMode === "weekly" ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-400/50 hover:text-blue-300'}`}
-                >
-                  Weekly
-                </button>
-                <button
-                  onClick={() => setLeaderboardMode("allTime")}
-                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${leaderboardMode === "allTime" ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-400/50 hover:text-blue-300'}`}
-                >
-                  All Time
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3 mb-6 px-4 py-2.5 rounded-2xl bg-blue-500/5 border border-blue-500/10">
-                <Info size={14} className="text-blue-400 shrink-0" />
-                <p className="text-[10px] text-blue-300/70 font-bold uppercase tracking-wider leading-relaxed">
-                  {leaderboardMode === 'weekly' 
-                    ? `อันดับประจำสัปดาห์ (${(() => {
-                        const start = getStartOfMonday(new Date());
-                        const end = new Date(start);
-                        end.setDate(start.getDate() + 6);
-                        const options = { month: 'short', day: 'numeric' } as const;
-                        return `${start.toLocaleDateString('th-TH', options)} - ${end.toLocaleDateString('th-TH', options)}`;
-                      })()})` 
-                    : "อันดับคำนวณจากเวลาโฟกัสรวมทั้งหมดตั้งแต่เริ่มต้น"}
-                </p>
-              </div>
-
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 no-scrollbar min-h-[200px] flex flex-col justify-start">
+              {/* Scrollable Leaderboard Area */}
+              <div className="flex-1 overflow-y-auto px-6 sm:px-8 space-y-3 custom-scrollbar py-2 relative z-10 min-h-[300px]">
                 {loadingLeaderboard ? (
-                  <div className="flex-1 flex flex-col items-center justify-center py-10">
-                    <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-400 rounded-full animate-spin mb-4" />
-                    <p className="text-[10px] font-black text-amber-500/50 uppercase tracking-widest">กำลังดึงข้อมูลระดับตำนาน...</p>
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-400 rounded-full animate-spin mb-4" />
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest animate-pulse">กำลังเรียกขานเหล่าผู้กล้า...</p>
                   </div>
                 ) : leaderboardData.length > 0 ? (
                   leaderboardData.map((item, idx) => {
@@ -895,8 +893,15 @@ export default function FocusRoomPage() {
                     const mins = focusValue % 60;
                     
                     return (
-                      <div key={item.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${rank === 1 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-blue-900/10 border-blue-500/10'}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${
+                      <div 
+                        key={item.id} 
+                        className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                          item.id === user?.uid 
+                            ? 'bg-blue-500/20 border-blue-400/40 shadow-[0_0_20px_rgba(59,130,246,0.15)]' 
+                            : 'bg-blue-900/10 border-blue-500/10'
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
                           rank === 1 ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 
                           rank === 2 ? 'bg-slate-300 text-black' :
                           rank === 3 ? 'bg-amber-800 text-white' : 'text-blue-400 border border-blue-500/20'
@@ -907,71 +912,85 @@ export default function FocusRoomPage() {
                         <img 
                           src={getAvatarPath(tier, item.gender || 'male')} 
                           alt="" 
-                          className={`w-10 h-10 object-contain drop-shadow-sm ${rank === 1 ? 'scale-125' : ''}`}
+                          className={`w-10 h-10 object-contain drop-shadow-md ${rank === 1 ? 'scale-125' : ''}`}
                         />
     
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-black text-white truncate">{item.displayName || "Unknown Spirit"}</h4>
-                          <p className="text-[10px] text-blue-300/50 uppercase tracking-widest font-bold">{tier}</p>
+                          <h4 className="text-sm font-black text-white truncate leading-none mb-1">
+                            {item.displayName || "Spirit of Focus"}
+                            {item.id === user?.uid && <span className="ml-2 text-[8px] text-blue-300 bg-blue-500/30 px-1.5 py-0.5 rounded-md uppercase">คุณ</span>}
+                          </h4>
+                          <p className="text-[9px] text-blue-300/40 uppercase tracking-widest font-black">{tier}</p>
                         </div>
     
                         <div className="text-right shrink-0">
-                          <div className="text-sm font-black text-blue-50">{hours}h {mins}m</div>
-                          <div className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">LV. {Math.floor((item.totalXP || 0) / 100) + 1}</div>
+                          <div className="text-[13px] font-black text-blue-50 leading-none mb-1">{hours}h {mins}m</div>
+                          <div className="text-[8px] font-black text-amber-500 uppercase tracking-widest">LV. {Math.floor((item.totalXP || 0) / 100) + 1}</div>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-50">
-                    <Trophy size={48} className="text-blue-900 mb-4" />
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">ยังไม่มีข้อมูลอันดับในขณะนี้</p>
+                  <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                    <Clock size={40} className="text-blue-400 mb-4" />
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">ยังไม่มีสถิติในหมวดนี้</p>
                   </div>
                 )}
               </div>
 
-              {/* 🏆 Section: Your Current Rank (Fixed if not in Top 10) */}
-              {user && !leaderboardData.find(u => u.id === user.uid) && (
-                <div className="mt-4 pt-4 border-t border-blue-900/30">
-                  <div className="bg-blue-600/10 rounded-2xl p-4 border border-blue-500/20 flex items-center gap-4 group">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px] text-blue-400 border border-blue-500/20 italic">
-                      YOU
-                    </div>
+              {/* 🏆 Bottom Section: Your Rank (Matching Style) */}
+              {user && (
+                <div className="p-6 sm:p-8 bg-blue-900/20 border-t border-blue-500/10 relative z-10">
+                  {(() => {
+                    const isMyRankInTop10 = leaderboardData.some(u => u.id === user.uid);
                     
-                    <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-2xl overflow-hidden shrink-0">
-                      🧘‍♂️
-                    </div>
+                    if (isMyRankInTop10) return (
+                      <p className="text-[9px] text-blue-400/40 font-black uppercase tracking-[0.3em] text-center italic">
+                        — You are in the Top 10 —
+                      </p>
+                    );
 
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-black text-white truncate">{user.displayName || "Upskiller (You)"}</h4>
-                      <p className="text-[10px] text-blue-300/50 uppercase tracking-widest font-bold">สถิติของคุณ</p>
-                    </div>
+                    const currentWeekId = getCalendarWeekId();
+                    const isCurrentWeek = userData?.lastFocusWeek === currentWeekId;
+                    const myMins = leaderboardMode === 'weekly' 
+                      ? (isCurrentWeek ? (userData?.weeklyFocusMinutes || 0) : 0)
+                      : (userData?.totalFocusMinutes || 0);
+                    
+                    const myTier = getTierFromXP(userData?.totalXP || 0);
 
-                    <div className="text-right shrink-0">
-                      <div className="text-sm font-black text-blue-50">
-                        {(() => {
-                          const currentWeekId = getCalendarWeekId();
-                          const isCurrentWeek = userData?.lastFocusWeek === currentWeekId;
-                          const mins = leaderboardMode === 'weekly' 
-                            ? (isCurrentWeek ? (userData?.weeklyFocusMinutes || 0) : 0)
-                            : (userData?.totalFocusMinutes || 0);
-                          return `${Math.floor(mins / 60)}h ${mins % 60}m`;
-                        })()}
+                    return (
+                      <div className="flex items-center gap-4 p-4 rounded-2xl border bg-blue-500/20 border-blue-400/50 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-[9px] text-blue-200 border border-blue-500/40 italic shrink-0">
+                          YOU
+                        </div>
+                        
+                        <img 
+                          src={getAvatarPath(myTier, userData?.gender || 'male')} 
+                          alt="" 
+                          className="w-10 h-10 object-contain drop-shadow-md"
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-black text-white truncate leading-none mb-1">{user.displayName || "Upskiller (You)"}</h4>
+                          <p className="text-[9px] text-blue-300/40 uppercase tracking-widest font-black">{myTier}</p>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <div className="text-[13px] font-black text-blue-50 leading-none mb-1">{Math.floor(myMins / 60)}h {myMins % 60}m</div>
+                          <div className="text-[8px] font-black text-amber-500 uppercase tracking-widest">LV. {Math.floor((userData?.totalXP || 0) / 100) + 1}</div>
+                        </div>
                       </div>
-                      <div className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">
-                        Ready to climb!
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
+                  
+                  <button
+                    onClick={() => setShowLeaderboard(false)}
+                    className="w-full mt-6 bg-white text-blue-950 py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-50 transition-all shadow-[0_10px_40px_rgba(255,255,255,0.15)] active:scale-95"
+                  >
+                    กลับสู่หน้าเดิม
+                  </button>
                 </div>
               )}
-
-              <button
-                onClick={() => setShowLeaderboard(false)}
-                className="w-full mt-8 bg-white text-blue-950 py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-              >
-                ปิดหน้าต่าง
-              </button>
             </motion.div>
           </motion.div>
         )}
