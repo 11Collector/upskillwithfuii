@@ -204,7 +204,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                           </li>
                           <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-yellow-500 transition-all">
                             <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
-                            <span>LV 10-19 : Master</span>
+                            <span>LV 10-19 : Habit Master</span>
                           </li>
                           <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
                             <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
@@ -212,7 +212,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                           </li>
                           <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-red-500 transition-all">
                             <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                            <span>LV 30+ : Legacy</span>
+                            <span>LV 30+ : Legacy Shaper</span>
                           </li>
                         </ul>
 

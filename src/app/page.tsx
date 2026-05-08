@@ -115,6 +115,12 @@ export default function Home() {
       const loggedInUser = result.user;
 
       const userRef = doc(db, "users", loggedInUser.uid);
+      
+      // ✅ บันทึกเวลา Login ล่าสุดเสมอ
+      await setDoc(userRef, {
+        lastLoginAt: serverTimestamp(),
+      }, { merge: true });
+
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {

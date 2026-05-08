@@ -340,15 +340,38 @@ export default function FocusRoomPage() {
 
   const getTierFromXP = (xp: number) => {
     const level = Math.floor(xp / 100) + 1;
-    if (level >= 30) return "legacy";
+    if (level >= 30) return "legacy shaper";
     if (level >= 20) return "architect";
-    if (level >= 10) return "master";
+    if (level >= 10) return "habit master";
     return "rookie";
   };
 
-  const getAvatarPath = (tier: string, gender: string) => {
+  const getAvatarPath = (tier: string = 'rookie', gender: string = 'male') => {
     const suffix = gender === 'female' ? '-w' : '';
-    return `/avatars/${tier}-meditation${suffix}.png`;
+    let fileName = (tier || 'rookie').toLowerCase().trim();
+    if (fileName === "habit master") fileName = "master";
+    if (fileName === "legacy shaper") fileName = "legacy";
+    
+    // Ensure we only use valid file names
+    const validTiers = ['rookie', 'master', 'architect', 'legacy'];
+    if (!validTiers.includes(fileName)) fileName = 'rookie';
+    
+    return `/avatars/${fileName}-meditation${suffix}.png`;
+  };
+
+  const AvatarThumbnail = ({ src, alt, status }: { src: string; alt: string; status: string }) => {
+    return (
+      <div className="relative w-20 h-20 flex items-center justify-center">
+        <img
+          src={src}
+          alt={alt}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/avatars/rookie-meditation.png";
+          }}
+          className={`w-full h-full object-contain relative z-10 ${status === 'idle' ? 'opacity-70 drop-shadow-none' : 'drop-shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-110'}`}
+        />
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -655,10 +678,10 @@ export default function FocusRoomPage() {
                         {u.status === 'focusing' && (
                           <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full animate-pulse" />
                         )}
-                        <img
-                          src={getAvatarPath(u.characterTier, u.gender)}
-                          alt={u.displayName}
-                          className={`w-20 h-20 object-contain relative z-10 transition-all duration-500 ${u.status === 'idle' ? 'opacity-70 drop-shadow-none' : 'drop-shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-110'}`}
+                        <AvatarThumbnail 
+                          src={getAvatarPath(u.characterTier, u.gender)} 
+                          alt={u.displayName} 
+                          status={u.status}
                         />
                       </div>
 

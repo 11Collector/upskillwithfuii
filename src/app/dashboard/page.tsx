@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight } from "lucide-react";
@@ -285,6 +285,11 @@ export default function DashboardPage() {
       if (currentUser) {
         setUser(currentUser);
         setNewName(currentUser.displayName || ""); // 👈 เพิ่มบรรทัดนี้ครับ!
+        
+        // ✅ อัปเดต Last Login ใน DB ทุกครั้งที่เปิดหน้า Dashboard (เพื่อให้ Admin เห็น Active Users)
+        updateDoc(doc(db, "users", currentUser.uid), {
+          lastLoginAt: serverTimestamp()
+        }).catch(e => console.error("Failed to update lastLoginAt:", e));
 
         try {
           const data = await fetchDashboardData(currentUser.uid, currentUser.email);
@@ -1161,9 +1166,9 @@ export default function DashboardPage() {
 
   const getLevelTitle = (level: number) => {
     if (level < 10) return "Rookie Upskiller (ผู้เริ่มต้น)";
-    if (level < 20) return "Master (เซียนระบบ)";
+    if (level < 20) return "Habit Master (เซียนระบบ)";
     if (level < 30) return "Life Architect (สถาปนิกออกแบบชีวิต)";
-    return "Legacy (ผู้จารึกตำนานชีวิต)";
+    return "Legacy Shaper (ผู้จารึกตำนานชีวิต)";
   };
 
   const handleRerollQuests = async () => {
@@ -1964,7 +1969,7 @@ export default function DashboardPage() {
                                 </li>
                                 <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-yellow-500 transition-all">
                                   <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
-                                  <span>LV 10-19 : Master</span>
+                                  <span>LV 10-19 : Habit Master</span>
                                 </li>
                                 <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
                                   <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
@@ -1972,7 +1977,7 @@ export default function DashboardPage() {
                                 </li>
                                 <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-red-500 transition-all">
                                   <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                                  <span>LV 30+ : Legacy</span>
+                                  <span>LV 30+ : Legacy Shaper</span>
                                 </li>
                               </ul>
 
@@ -4053,9 +4058,9 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 gap-3 mb-8">
                   {[
                     { lv: "1-9", title: "Rookie Upskiller", color: "bg-slate-500", desc: "ผู้เริ่มต้น" },
-                    { lv: "10-19", title: "Master", color: "bg-yellow-500", desc: "เซียนระบบ" },
+                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "เซียนระบบ" },
                     { lv: "20-29", title: "Life Architect", color: "bg-orange-500", desc: "สถาปนิกออกแบบชีวิต" },
-                    { lv: "30+", title: "Legacy", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
+                    { lv: "30+", title: "Legacy Shaper", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
                   ].map((item, i) => (
                     <div key={i} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
                       <div className="flex items-center gap-4">

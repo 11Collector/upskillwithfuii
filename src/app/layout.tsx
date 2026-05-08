@@ -7,6 +7,7 @@ import PWALogic from "./components/PWALogic";
 import BottomNavigation from "./components/BottomNavigation";
 import Header from "./components/Header";
 import { Suspense } from "react";
+import { PreloadAssets } from "./components/PreloadAssets";
 
 // ตั้งค่าฟอนต์ Kanit
 const kanit = Kanit({
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="th">
       <body className={`${kanit.className} bg-slate-50 text-slate-800 antialiased overflow-x-hidden`}>
         <PWALogic />
+        <PreloadAssets />
 
         <Header />
 
