@@ -469,7 +469,8 @@ export default function DashboardPage() {
                   let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
 
                   const userRef = doc(db, "users", currentUser.uid);
-                  await updateDoc(userRef, {
+                  // 🚀 ทำการอัปเดตแบบ Non-blocking เพื่อให้หน้า Dashboard โหลดเร็วขึ้น
+                  updateDoc(userRef, {
                     wheelPlanDay: nextPlanDay,
                     lastActiveDate: todayStr,
                     completedQuestIds: [],
@@ -477,7 +478,7 @@ export default function DashboardPage() {
                     wheelCompletions: 0,
                     totalXP: increment(xpToAdd),
                     perfectWeeks: increment(perfectWeekInc)
-                  });
+                  }).catch(e => console.error("Auto-progression error:", e));
 
                   setTotalXP((userData.totalXP || 0) + xpToAdd);
                   setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
@@ -486,13 +487,13 @@ export default function DashboardPage() {
                 } else {
                   // 2. ถ้าเป็น Day 8 อยู่แล้ว แสดงว่าเมื่อวานกด Check box และรับรางวัลไปแล้ว วันนี้ก็แค่รีเซ็ตเป็น Day 1 เงียบๆ
                   const userRef = doc(db, "users", currentUser.uid);
-                  await updateDoc(userRef, {
+                  updateDoc(userRef, {
                     wheelPlanDay: nextPlanDay,
                     lastActiveDate: todayStr,
                     completedQuestIds: [],
                     customQuestTitle: "",
                     wheelCompletions: 0
-                  });
+                  }).catch(e => console.error("Auto-reset error:", e));
                 }
 
                 setWheelCompletions(0);
@@ -501,12 +502,12 @@ export default function DashboardPage() {
                 // ถ้ายังไม่ครบ 7 วัน ให้ขยับวันขึ้น (0->1, 1->2, ..., 6->7)
                 nextPlanDay = currentPlanDay + 1;
                 const userRef = doc(db, "users", currentUser.uid);
-                await updateDoc(userRef, {
+                updateDoc(userRef, {
                   wheelPlanDay: nextPlanDay,
                   lastActiveDate: todayStr,
                   completedQuestIds: [],
                   customQuestTitle: ""
-                });
+                }).catch(e => console.error("Day progression error:", e));
               }
 
               setWheelPlanDay(nextPlanDay);
@@ -528,14 +529,15 @@ export default function DashboardPage() {
 
         } catch (error) {
           console.error("Error fetching Dashboard data:", error);
+        } finally {
+          // ✅ ปิด Loading ให้เร็วที่สุดเพื่อให้ผู้ใช้เห็นหน้าจอทันที
+          setLoading(false);
         }
 
       } else {
         router.push("/");
+        setLoading(false);
       }
-
-      // โหลดทุกอย่างเสร็จแล้ว ปิด Spinner ปล่อยของโชว์ได้เลย
-      setLoading(false);
     });
 
     return () => unsubscribe();
