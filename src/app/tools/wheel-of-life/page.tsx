@@ -446,10 +446,14 @@ const analyzeWithAI = async () => {
 4. **ความถูกต้อง:** ตรวจสอบให้มั่นใจว่าไม่มีภาษาจีนปนมาในคำตอบก่อนส่งทุกครั้ง`;
 
     try {
-      const response = await fetch('/api/quote', { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ prompt: promptText }) 
+      const idToken = currentUser ? await currentUser.getIdToken() : null;
+      const response = await fetch('/api/quote', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {}),
+        },
+        body: JSON.stringify({ prompt: promptText })
       });
 
       const data = await response.json();
