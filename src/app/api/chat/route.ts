@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 - ข้อมูล DISC: ${JSON.stringify(userData.lastDisc || 'ไม่มี')}
 - ข้อมูลการเงิน: ${JSON.stringify(userData.lastMoney || 'ไม่มี')}
 - ข้อมูล Library Soul (Reading Soul Type): ${JSON.stringify(userData.lastLibrarySoul || 'ไม่มี')}
-- เป้าหมายชีวิต: ${userData.lastWheel?.goal || 'ไม่ได้ระบุ'}
+- เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 
 คำแนะนำในการสนทนา:
 - ทักทายแบบปกติ เป็นกันเอง ตามประวัติการคุย
