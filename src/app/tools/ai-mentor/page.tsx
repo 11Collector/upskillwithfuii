@@ -10,11 +10,12 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp, onSnapshot, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, addDoc, serverTimestamp, onSnapshot, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import Image from "next/image";
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -45,71 +46,59 @@ export default function SoulGuidePage() {
       if (currentUser) {
         setUser(currentUser);
         const userName = currentUser.displayName || 'นักเดินทาง';
+        const uid = currentUser.uid;
 
-        // 1. Listen to User Base Data
-        const userRef = doc(db, "users", currentUser.uid);
-        const unsubUser = onSnapshot(userRef, (docSnap) => {
+        // 1. Real-time: User Base Data
+        const unsubUser = onSnapshot(doc(db, "users", uid), (docSnap) => {
           if (docSnap.exists()) {
             const baseData = docSnap.data();
             const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
-            // ✅ [NO ENERGY LIMIT] ทุกคนใช้ได้ไม่จำกัด
             setChatQuota({ used: 0, total: Infinity });
             setUserData((prev: any) => ({ ...prev, ...baseData, level }));
           }
         });
         unsubs.push(unsubUser);
 
-        // 2. Listen to DISC
-        const unsubDisc = onSnapshot(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
-          if (!snap.empty) setUserData((prev: any) => ({ ...prev, lastDisc: snap.docs[0].data() }));
-        });
-        unsubs.push(unsubDisc);
+        // 2–6. One-time fetch: DISC, Money, Library Soul, Wheel, Quotes (ข้อมูลเหล่านี้ไม่ค่อยเปลี่ยนระหว่างแชท)
+        try {
+          const [discSnap, moneySnap, soulSnap, wheelSnap, quoteSnap] = await Promise.all([
+            getDocs(query(collection(db, "discResults"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(1))),
+            getDocs(query(collection(db, "quiz_results"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(1))),
+            getDocs(query(collection(db, "users", uid, "library_souls"), orderBy("createdAt", "desc"), limit(1))),
+            getDocs(query(collection(db, "users", uid, "assessments"), orderBy("createdAt", "desc"), limit(1))),
+            getDocs(query(collection(db, "quotes"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(1))),
+          ]);
 
-        // 3. Listen to Money Avatar
-        const unsubMoney = onSnapshot(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
-          if (!snap.empty) setUserData((prev: any) => ({ ...prev, lastMoney: snap.docs[0].data() }));
-        });
-        unsubs.push(unsubMoney);
+          setUserData((prev: any) => {
+            const updates: Record<string, unknown> = {};
+            if (!discSnap.empty) updates.lastDisc = discSnap.docs[0].data();
+            if (!moneySnap.empty) updates.lastMoney = moneySnap.docs[0].data();
+            if (!soulSnap.empty) updates.lastLibrarySoul = soulSnap.docs[0].data();
+            if (!wheelSnap.empty) {
+              const w = wheelSnap.docs[0].data();
+              updates.lastWheel = {
+                scores: w.currentScores || w.scores,
+                targetScores: w.targetScores,
+                goal: w.goal || w.futureGoal,
+                analysis: w.analysis,
+                focusAreas: w.selectedFocusAreas,
+              };
+            }
+            if (!quoteSnap.empty) {
+              const q = quoteSnap.docs[0].data();
+              updates.lastMood = q.mood;
+              updates.lastQuote = q.quote;
+              updates.lastQuoteWords = q.words;
+              updates.lastQuoteTime = q.createdAt?.toMillis() || Date.now();
+            }
+            return { ...prev, ...updates };
+          });
+        } catch (e) {
+          console.error("Failed to fetch context data:", e);
+        }
 
-        // 4. Listen to Library Souls
-        const unsubSoul = onSnapshot(query(collection(db, "users", currentUser.uid, "library_souls"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
-          if (!snap.empty) setUserData((prev: any) => ({ ...prev, lastLibrarySoul: snap.docs[0].data() }));
-        });
-        unsubs.push(unsubSoul);
-
-        // 5. Listen to Wheel of Life
-        const unsubWheel = onSnapshot(query(collection(db, "users", currentUser.uid, "assessments"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
-          if (!snap.empty) {
-            const wheelData = snap.docs[0].data();
-            const wheelDetails = {
-              scores: wheelData.currentScores || wheelData.scores,
-              targetScores: wheelData.targetScores,
-              goal: wheelData.goal || wheelData.futureGoal,
-              analysis: wheelData.analysis,
-              focusAreas: wheelData.selectedFocusAreas
-            };
-            setUserData((prev: any) => ({ ...prev, lastWheel: wheelDetails }));
-          }
-        });
-        unsubs.push(unsubWheel);
-
-        // 6. Listen to Khomsatsat (Mood)
-        const unsubQuote = onSnapshot(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
-          if (!snap.empty) {
-            const q = snap.docs[0].data();
-            setUserData((prev: any) => ({
-              ...prev,
-              lastMood: q.mood,
-              lastQuote: q.quote,
-              lastQuoteWords: q.words,
-              lastQuoteTime: q.createdAt?.toMillis() || Date.now()
-            }));
-          }
-        });
-        unsubs.push(unsubQuote);
-
-        // 7. Listen to Chat History
-        const unsubChat = onSnapshot(query(collection(db, "users", currentUser.uid, "chat_history"), orderBy("createdAt", "desc"), limit(50)), (snapshot) => {
+        // 7. Real-time: Chat History
+        const unsubChat = onSnapshot(query(collection(db, "users", uid, "chat_history"), orderBy("createdAt", "desc"), limit(50)), (snapshot) => {
           const history = snapshot.docs.map(doc => ({
             role: doc.data().role as "user" | "assistant",
             content: doc.data().content,
@@ -119,10 +108,9 @@ export default function SoulGuidePage() {
           if (history.length > 0) {
             setMessages(history);
           } else {
-            const name = userName;
             setMessages([{
               role: "assistant",
-              content: `ยินดีที่ได้พบกันครับคุณ **${name}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
+              content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
             }]);
           }
         });
@@ -281,9 +269,10 @@ export default function SoulGuidePage() {
         createdAt: serverTimestamp()
       });
 
+      const idToken = await user.getIdToken();
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           userData: {
@@ -393,7 +382,7 @@ export default function SoulGuidePage() {
               className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
             >
               {userData ? (
-                <img loading="lazy" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
+                <Image src={getAvatarPath()} alt="User Avatar" width={40} height={40} className="w-full h-full object-cover scale-125 translate-y-1" />
               ) : (
                 <UserIcon size={20} className="text-zinc-600" />
               )}

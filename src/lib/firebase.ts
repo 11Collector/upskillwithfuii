@@ -1,7 +1,20 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
+
+const requiredEnvVars = [
+  "NEXT_PUBLIC_FIREBASE_API_KEY",
+  "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+  "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+  "NEXT_PUBLIC_FIREBASE_APP_ID",
+] as const;
+
+for (const key of requiredEnvVars) {
+  if (!process.env[key]) {
+    console.warn(`[firebase] Missing environment variable: ${key}`);
+  }
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,15 +26,13 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// ป้องกันการ Initialize Firebase ซ้ำซ้อนใน Next.js
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// จัดการ Google Analytics ให้ทำงานเฉพาะฝั่ง Client
-let analytics: any = null;
+let analytics: Analytics | null = null;
 if (typeof window !== "undefined") {
   isSupported().then((yes) => {
     if (yes) {

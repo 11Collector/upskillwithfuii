@@ -1,9 +1,42 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const ChatSchema = z.object({
+  messages: z.array(z.object({ role: z.enum(["user", "assistant", "system"]), content: z.string() })),
+  userData: z.object({
+    displayName: z.string().optional(),
+    lastDisc: z.unknown().optional(),
+    lastMoney: z.unknown().optional(),
+    lastLibrarySoul: z.unknown().optional(),
+    lastWheel: z.unknown().optional(),
+    lastMood: z.string().optional(),
+    lastQuote: z.string().optional(),
+    lastQuoteWords: z.unknown().optional(),
+    totalFocusMinutes: z.number().optional(),
+    characterTier: z.string().optional(),
+    level: z.number().optional(),
+  }),
+});
 
 export async function POST(req: Request) {
-  try {
-    const { messages, userData } = await req.json();
+  const authResult = await verifyAuthToken(req);
+  if (isAuthError(authResult)) return authResult;
 
+  const rl = checkRateLimit(`chat:${authResult.uid}`, 20, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
+  }
+
+  const body = await req.json().catch(() => null);
+  const parsed = ChatSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
+  }
+  const { messages, userData } = parsed.data;
+
+  try {
     const systemPrompt = `คุณคือ 'AI Personal Mentor' เพื่อนสนิทอัจฉริยะของคุณ ${userData.displayName || 'นักเดินทาง'} ในแพลตฟอร์ม Upskill with Fuii
 
 !!! กฎเหล็ก (CRITICAL RULES) !!!:
@@ -22,7 +55,7 @@ export async function POST(req: Request) {
 - ข้อมูล DISC: ${JSON.stringify(userData.lastDisc || 'ไม่มี')}
 - ข้อมูลการเงิน: ${JSON.stringify(userData.lastMoney || 'ไม่มี')}
 - ข้อมูล Library Soul (Reading Soul Type): ${JSON.stringify(userData.lastLibrarySoul || 'ไม่มี')}
-- เป้าหมายชีวิต: ${userData.lastWheel?.goal || 'ไม่ได้ระบุ'}
+- เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 
 คำแนะนำในการสนทนา:
 - ทักทายแบบปกติ เป็นกันเอง ตามประวัติการคุย

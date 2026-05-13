@@ -65,10 +65,10 @@ function ReportReviewContent() {
           return;
         }
 
-        // Call API
+        const idToken = await currentUser.getIdToken();
         const response = await fetch("/api/generate-report", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
           body: JSON.stringify({
             displayName: currentUser.displayName || "ผู้ใช้งาน",
             lastDisc,

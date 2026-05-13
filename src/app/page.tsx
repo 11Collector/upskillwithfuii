@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
@@ -46,8 +47,8 @@ const t = {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const PRICE_IDS = {
-  monthly: "price_1TLp5jPpEmfCgSDJz9g1hugr", // ใส่รหัสจาก Stripe Dashboard
-  yearly: "price_1TLpCUPpEmfCgSDJCYozJS15"    // ใส่รหัสจาก Stripe Dashboard
+  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
+  yearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
 };
 
 export default function Home() {
@@ -60,15 +61,16 @@ export default function Home() {
 
   const [guideStep, setGuideStep] = useState(1);
   const [showGuide, setShowGuide] = useState(false);
-  const totalGuideSteps = 6;
+  const totalGuideSteps = 4;
 
   const handleUpgrade = async () => {
     if (!user) return alert("Please login first");
 
     try {
+      const idToken = await user.getIdToken();
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
@@ -243,9 +245,11 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="inline-flex w-24 h-24 sm:w-28 sm:h-28 p-5 bg-red-50 rounded-[2rem] shadow-inner border border-red-100 items-center justify-center relative mb-8"
               >
-                <img
+                <Image
                   src="/logo-full.png"
                   alt="Idea Logo"
+                  width={112}
+                  height={112}
                   className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
                 />
               </motion.div>
@@ -341,9 +345,11 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6 z-10 w-full md:w-auto">
             <div className="relative shrink-0">
               <div className="absolute inset-0 bg-red-600/20 blur-xl rounded-full scale-75 group-hover:scale-110 transition-transform duration-500" />
-              <img
+              <Image
                 src={user.photoURL || "/default-avatar.png"}
                 alt="Profile"
+                width={96}
+                height={96}
                 className="relative w-24 h-24 rounded-full border-[6px] border-white shadow-xl object-cover"
               />
             </div>
@@ -733,10 +739,10 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.8, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 30 }}
-            className="relative w-full max-w-[420px] bg-[#0A0A0A]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] sm:rounded-[3.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
+            className="relative w-full max-w-[400px] bg-[#0A0A0A]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
           >
             {/* --- Dynamic Glowing Header --- */}
-            <div className="relative h-48 sm:h-56 flex items-center justify-center overflow-hidden">
+            <div className="relative h-44 flex items-center justify-center overflow-hidden">
               <div className="absolute inset-0 bg-slate-950/40 z-10" />
               
               {/* Background Gradients per Step */}
@@ -745,9 +751,7 @@ export default function Home() {
                 animate={{
                   background: guideStep === 1 ? 'radial-gradient(120% 120% at 50% 0%, #9f1239 0%, #4c0519 100%)' :
                               guideStep === 2 ? 'radial-gradient(120% 120% at 50% 0%, #1d4ed8 0%, #0f172a 100%)' :
-                              guideStep === 3 ? 'radial-gradient(120% 120% at 50% 0%, #b45309 0%, #451a03 100%)' :
-                              guideStep === 4 ? 'radial-gradient(120% 120% at 50% 0%, #047857 0%, #022c22 100%)' :
-                              guideStep === 5 ? 'radial-gradient(120% 120% at 50% 0%, #6b21a8 0%, #2e1065 100%)' :
+                              guideStep === 3 ? 'radial-gradient(120% 120% at 50% 0%, #6b21a8 0%, #2e1065 100%)' :
                               'radial-gradient(120% 120% at 50% 0%, #3f3f46 0%, #09090b 100%)'
                 }}
                 transition={{ duration: 1.2, ease: "easeInOut" }}
@@ -761,18 +765,86 @@ export default function Home() {
                 initial={{ scale: 0, rotate: -45 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", bounce: 0.6, duration: 0.8 }}
-                className="relative z-20 w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+                className="relative z-20"
               >
-                {/* Inner Glow */}
-                <div className="absolute inset-2 rounded-full bg-white/20 blur-md" />
-                <div className="relative text-white drop-shadow-lg">
-                  {guideStep === 1 && <PieChart size={48} strokeWidth={2.5} />}
-                  {guideStep === 2 && <Users size={48} strokeWidth={2.5} />}
-                  {guideStep === 3 && <Wallet size={48} strokeWidth={2.5} />}
-                  {guideStep === 4 && <BookOpen size={48} strokeWidth={2.5} />}
-                  {guideStep === 5 && <Quote size={48} strokeWidth={2.5} />}
-                  {guideStep === 6 && <Star size={48} strokeWidth={2.5} className="fill-current text-amber-300" />}
-                </div>
+                {guideStep === 1 ? (
+                  <Image
+                    src="/avatars/rookie-static.png"
+                    alt="Rookie Avatar"
+                    width={140}
+                    height={140}
+                    className="drop-shadow-2xl"
+                  />
+                ) : guideStep === 2 ? (
+                  <div className="flex gap-2.5 items-center">
+                    {[
+                      { icon: <PieChart size={20} className="text-red-400" />, label: "Wheel" },
+                      { icon: <Users size={20} className="text-blue-400" />, label: "DISC" },
+                      { icon: <Wallet size={20} className="text-amber-400" />, label: "Money" },
+                      { icon: <BookOpen size={20} className="text-emerald-400" />, label: "Library" },
+                      { icon: <Quote size={20} className="text-purple-400" />, label: "คมสัดสัด" },
+                    ].map((t, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1">
+                        <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-md">
+                          {t.icon}
+                        </div>
+                        <span className="text-[8px] font-bold text-white/50 tracking-tight">{t.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : guideStep === 3 ? (
+                  <div className="relative w-44 h-36">
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 110 90" preserveAspectRatio="none">
+                      {[
+                        { path: "M 55 10 L 55 45", color: "#ef4444", dur: "2s" },
+                        { path: "M 100 25 L 55 45", color: "#3b82f6", dur: "2.5s" },
+                        { path: "M 90 80 L 55 45", color: "#f59e0b", dur: "3s" },
+                        { path: "M 20 80 L 55 45", color: "#10b981", dur: "2.2s" },
+                        { path: "M 10 25 L 55 45", color: "#a855f7", dur: "2.8s" },
+                      ].map((p, i) => (
+                        <g key={i}>
+                          <path d={p.path} stroke="#475569" strokeWidth="0.5" strokeDasharray="1 2" fill="none" />
+                          <path d={p.path} stroke={p.color} strokeWidth="1" strokeDasharray="4 4" fill="none" opacity="0.6">
+                            <animate attributeName="stroke-dashoffset" from="8" to="0" dur="1s" repeatCount="indefinite" />
+                          </path>
+                          <circle r="1.8" fill={p.color}>
+                            <animateMotion dur={p.dur} repeatCount="indefinite" path={p.path} />
+                            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.2;0.8;1" dur={p.dur} repeatCount="indefinite" />
+                          </circle>
+                        </g>
+                      ))}
+                    </svg>
+                    {/* Center AI node */}
+                    <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                      <div className="relative">
+                        <div className="w-11 h-11 bg-gradient-to-br from-slate-100 to-zinc-300 rounded-xl rotate-3 flex items-center justify-center shadow-lg border border-white">
+                          <MessageSquareMore size={20} className="text-slate-700" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 bg-slate-900 text-white p-[3px] rounded-full shadow-md border border-white/20 animate-bounce">
+                          <Sparkles size={8} />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Tool nodes — inset จากขอบเพื่อไม่ให้ถูกตัด */}
+                    {[
+                      { cls: "top-[0%] left-1/2 -translate-x-1/2", icon: <PieChart size={11} className="text-red-500" /> },
+                      { cls: "top-[18%] right-[2%]",                icon: <Users size={11} className="text-blue-500" /> },
+                      { cls: "bottom-[2%] right-[12%]",             icon: <Wallet size={11} className="text-amber-500" /> },
+                      { cls: "bottom-[2%] left-[12%]",              icon: <BookOpen size={11} className="text-emerald-500" /> },
+                      { cls: "top-[18%] left-[2%]",                 icon: <Quote size={11} className="text-purple-500" /> },
+                    ].map((n, i) => (
+                      <div key={i} className={`absolute z-10 ${n.cls}`}>
+                        <div className="w-7 h-7 bg-white/15 border border-white/25 rounded-lg flex items-center justify-center">
+                          {n.icon}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+                    <Star size={44} strokeWidth={2} className="fill-amber-300 text-amber-300" />
+                  </div>
+                )}
               </motion.div>
 
               {/* Close Button */}
@@ -784,7 +856,10 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="px-6 sm:px-10 pb-10 pt-8 text-center flex flex-col items-center relative z-20">
+            <div className="px-7 pb-7 pt-6 text-center flex flex-col items-center relative z-20 flex-1">
+
+              {/* Middle: title + description — flex-1 vertically centered */}
+              <div className="flex-1 flex flex-col items-center justify-center w-full">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={guideStep}
@@ -794,28 +869,59 @@ export default function Home() {
                   transition={{ duration: 0.3 }}
                   className="w-full"
                 >
-                  <h3 className="text-2xl sm:text-3xl font-black text-white mb-4 leading-tight tracking-tight drop-shadow-sm">
-                    {guideStep === 1 && "Wheel of Life"}
-                    {guideStep === 2 && "DISC (Who are you?)"}
-                    {guideStep === 3 && "Money Avatar"}
-                    {guideStep === 4 && "Library of Souls"}
-                    {guideStep === 5 && "คมสัดสัด (Quotes)"}
-                    {guideStep === 6 && "Master Your Growth"}
+                  <h3 className="text-[22px] font-black text-white mb-2.5 leading-tight tracking-tight">
+                    {guideStep === 1 && "เว็บประเมินตัวตนเฉพาะคุณ"}
+                    {guideStep === 2 && "แบบประเมินของเรา"}
+                    {guideStep === 3 && "ให้ AI รู้จักคุณมากที่สุด"}
+                    {guideStep === 4 && "พร้อมเริ่มต้นแล้ว?"}
                   </h3>
 
-                  <p className="text-slate-400 text-sm sm:text-[15px] font-medium leading-relaxed mb-8 px-2 max-w-[340px] mx-auto min-h-[70px]">
-                    {guideStep === 1 && "วิเคราะห์ความสมดุลชีวิต 8 ด้านของคุณ พร้อมรับ AI Action Plan 7 วันเพื่อพัฒนาตัวเองแบบก้าวกระโดด!"}
-                    {guideStep === 2 && "ค้นหาตัวตนและสไตล์การสื่อสารของคุณผ่านแบบทดสอบ DISC เพื่อความสัมพันธ์และการทำงานที่ราบรื่น"}
-                    {guideStep === 3 && "ถอดรหัสพฤติกรรมการใช้เงินของคุณผ่าน Avatar สัตว์ เพื่อวางแผนการเงินที่ฉลาดและเข้ากับไลฟ์สไตล์"}
-                    {guideStep === 4 && "สไตล์การอ่านหนังสือสะท้อนตัวตน 16 รูปแบบ ค้นพบ Reading Soul ของคุณว่าตรงกับนักอ่านสายไหน"}
-                    {guideStep === 5 && "สร้างคำคมฮีลใจหรือแคปชันสุด Vibe เฉพาะตัวคุณด้วย AI ที่เข้าใจอารมณ์ของคุณที่สุดในตอนนี้"}
-                    {guideStep === 6 && "เก็บสถิติ XP, เลเวล, ความสำเร็จรายวัน และรับ AI Insight ส่วนตัวใน Dashboard สุดพรีเมียม!"}
-                  </p>
+                  {guideStep === 1 && (
+                    <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
+                      แพลตฟอร์มวิเคราะห์ตัวตนที่{" "}
+                      <span className="text-white font-semibold">เข้าใจคุณในแบบที่ไม่มีใครทำได้</span>{" "}
+                      ผ่านแบบประเมินที่ออกแบบมาเพื่อคุณโดยเฉพาะ
+                    </p>
+                  )}
+                  {guideStep === 2 && (
+                    <div className="w-full max-w-[280px] mx-auto space-y-2 text-left mt-1">
+                      {[
+                        { color: "bg-red-500",     name: "Wheel of Life",    desc: "สมดุลชีวิต 8 ด้าน + AI แผน 7 วัน" },
+                        { color: "bg-blue-500",    name: "DISC",             desc: "ค้นหาตัวตนและสไตล์การสื่อสาร" },
+                        { color: "bg-amber-500",   name: "Money Avatar",     desc: "ถอดรหัสพฤติกรรมการเงินของคุณ" },
+                        { color: "bg-emerald-500", name: "Library of Souls", desc: "สไตล์การอ่าน สะท้อนตัวตน 16 แบบ" },
+                        { color: "bg-purple-500",  name: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจเฉพาะตัวด้วย AI" },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-2.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${item.color} shrink-0`} />
+                          <span className="text-white font-bold text-[12px] shrink-0">{item.name}</span>
+                          <span className="text-slate-500 text-[11px] truncate">{item.desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {guideStep === 3 && (
+                    <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
+                      ยิ่งทำแบบประเมิน<span className="text-white font-semibold">ครบมากเท่าไหร่</span>{" "}
+                      AI Mentor ยิ่งรู้จักนิสัยและเป้าหมายของคุณ{" "}
+                      เพื่อให้คำแนะนำที่<span className="text-white font-semibold">แม่นที่สุด</span>
+                    </p>
+                  )}
+                  {guideStep === 4 && (
+                    <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
+                      <span className="text-white font-semibold">Login ฟรีด้วย Google</span>{" "}
+                      บันทึกผลประเมิน สะสม XP อัพ Level และให้ AI ดูแลการพัฒนาตัวเองของคุณ
+                      <span className="text-white font-semibold"> แบบส่วนตัวทุกวัน</span>
+                    </p>
+                  )}
                 </motion.div>
               </AnimatePresence>
+              </div>
 
-              {/* Progress Dots Gen-Z Style */}
-              <div className="flex gap-2.5 mb-10 items-center justify-center">
+              {/* Bottom: dots + button */}
+              <div className="w-full flex flex-col items-center mt-5">
+              {/* Progress Dots */}
+              <div className="flex gap-2 mb-3 items-center justify-center">
                 {Array.from({ length: totalGuideSteps }).map((_, i) => (
                   <div 
                     key={i} 
@@ -833,13 +939,14 @@ export default function Home() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  if (guideStep < totalGuideSteps) setGuideStep(prev => prev + 1);
-                  else {
+                  if (guideStep < totalGuideSteps) {
+                    setGuideStep(prev => prev + 1);
+                  } else {
                     setShowGuide(false);
                     if (!user) handleLogin();
                   }
                 }}
-                className={`relative w-full py-4 sm:py-5 rounded-full font-black text-xs sm:text-sm tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl overflow-hidden group/btn ${
+                className={`relative w-full py-3.5 rounded-full font-black text-xs tracking-[0.15em] uppercase transition-all flex items-center justify-center gap-3 shadow-xl overflow-hidden group/btn ${
                   guideStep === totalGuideSteps 
                     ? 'bg-white text-black' 
                     : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
@@ -861,7 +968,7 @@ export default function Home() {
                         เข้าสู่ระบบฟรี
                       </span>
                     </>
-                  ) : "ถัดไป"}
+                  ) : guideStep === 3 ? "เข้าใจแล้ว ต่อไปเลย" : "ถัดไป"}
                 </span>
                 
                 <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${guideStep === totalGuideSteps ? 'bg-black text-white' : 'bg-white text-black'}`}>
@@ -869,14 +976,13 @@ export default function Home() {
                 </div>
               </motion.button>
 
-              <button 
+              <button
                 onClick={() => setShowGuide(false)}
-                className="mt-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] hover:text-white transition-all flex items-center gap-3 group"
+                className="mt-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-slate-400 transition-colors"
               >
-                <span className="w-6 h-[1px] bg-slate-700 group-hover:w-10 transition-all" />
-                SKIP GUIDE
-                <span className="w-6 h-[1px] bg-slate-700 group-hover:w-10 transition-all" />
+                SKIP
               </button>
+              </div>
             </div>
 
             {/* Subtle Progress Bar (Bottom) */}

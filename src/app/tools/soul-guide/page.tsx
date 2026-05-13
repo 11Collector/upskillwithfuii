@@ -281,9 +281,10 @@ export default function SoulGuidePage() {
         createdAt: serverTimestamp()
       });
 
+      const idToken = await user.getIdToken();
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           userData: {
