@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, setDoc, increment, arrayUnion, getDoc, updateDoc, collection, query, getDocs } from "firebase/firestore";
+import { doc, setDoc, increment, arrayUnion, getDoc, updateDoc, collection, query, getDocs, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 
 import { Inter, Geist_Mono } from "next/font/google";
