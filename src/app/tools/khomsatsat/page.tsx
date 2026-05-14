@@ -144,18 +144,18 @@ const Circle = ({ mood, pos, delay, index, onStart }: any) => {
     <motion.button
       animate={floatingAnimation(delay, duration)}
       onClick={() => onStart(mood)}
-      // 💡 เปลี่ยน w-[110px] h-[110px] เป็น w-[90px] h-[90px]
-      className={`absolute ${pos} w-[90px] h-[90px] rounded-full border-[2.5px] flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all bg-white/90 backdrop-blur-sm shrink-0 z-20 hover:scale-105`}
+      // 💡 คืนค่าขนาดเดิม w-[110px] h-[110px]
+      className={`absolute ${pos} w-[110px] h-[110px] rounded-full border-[2.5px] flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all bg-white/90 backdrop-blur-sm shrink-0 z-20 hover:scale-105`}
       style={{
         borderColor: theme.border,
         boxShadow: `0 10px 25px -5px ${theme.shadow}, 0 8px 10px -6px ${theme.shadow}`
       }}
     >
-      {/* 💡 ลดขนาด Emoji จาก 5xl เป็น 4xl */}
-      <span className="text-4xl mb-0.5 drop-shadow-sm">{mood.icon}</span>
+      {/* 💡 คืนขนาด Emoji เป็น 5xl */}
+      <span className="text-5xl mb-0.5 drop-shadow-sm">{mood.icon}</span>
 
-      {/* 💡 ลดขนาด Text จาก 12px เป็น 11px */}
-      <span className="font-extrabold text-[11px] text-stone-700 tracking-tight text-center px-1 leading-none">{mood.title}</span>
+      {/* 💡 คืนขนาด Text เป็น 13px */}
+      <span className="font-extrabold text-[13px] text-stone-700 tracking-tight text-center px-1 leading-none">{mood.title}</span>
     </motion.button>
   );
 };
@@ -210,20 +210,38 @@ export default function SwipeQuoteApp() {
   }, [gameState]);
 
   const handleSaveImage = async () => {
-    if (!quoteCardRef.current) return;
+    const element = quoteCardRef.current;
+    if (!element) return;
 
     setIsSaving(true);
     try {
       // 💡 1. เตรียมความพร้อมของ Font และรูปภาพ
       await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 800)); // เพิ่มเวลาให้รูปโหลดชัวร์ๆ
       
-      const dataUrl = await domToPng(quoteCardRef.current, {
+      // 💡 2. ปรับ Style ชั่วคราวเพื่อให้ Capture ได้ครบถ้วน (ลดโอกาสภาพขาดในมือถือ)
+      const originalStyle = {
+        height: element.style.height,
+        overflow: element.style.overflow,
+      };
+
+      element.style.height = 'auto';
+      element.style.overflow = 'visible';
+
+      await new Promise(r => setTimeout(r, 500)); // รอให้ Browser Re-render แป๊บนึง
+      
+      const dataUrl = await domToPng(element, {
         quality: 1,
-        scale: 3, // เพิ่มความชัดเป็น 3 เท่า
+        scale: 4, // เพิ่มความชัดเป็น 4 เท่าให้สะใจ
         backgroundColor: "#020617",
+        features: {
+          removeControlCharacter: true,
+        }
       });
       
+      // คืนค่าเดิม
+      element.style.height = originalStyle.height;
+      element.style.overflow = originalStyle.overflow;
+
       if (!dataUrl) throw new Error("Failed to generate image data URL");
 
       const link = document.createElement("a");
@@ -553,10 +571,10 @@ export default function SwipeQuoteApp() {
                   {/* ตัวคำ (จัด Font ให้เท่ขึ้น และแก้ปัญหาคำฉีก) */}
                   <h3
                     className={`font-black text-stone-900 text-center leading-tight tracking-tighter drop-shadow-sm px-2 whitespace-nowrap transition-all duration-300 ${deck[currentCardIndex]?.length > 10
-                        ? 'text-[26px] sm:text-[32px]' // ถ้าคำยาวมาก (เช่น ความว่างเปล่า) ให้ฟอนต์เล็กลง
+                        ? 'text-[24px] sm:text-[30px]' // ปรับให้เล็กลงตามที่แจ้ง
                         : deck[currentCardIndex]?.length > 7
-                          ? 'text-[30px] sm:text-[36px]' // ถ้าคำยาวปานกลาง (เช่น หายใจไม่ออก)
-                          : 'text-[34px] sm:text-[42px]' // ถ้าคำสั้นปกติ ฟอนต์ใหญ่สะใจ
+                          ? 'text-[28px] sm:text-[36px]' 
+                          : 'text-[34px] sm:text-[42px]' 
                       }`}
                   >
                     {deck[currentCardIndex]}
@@ -758,20 +776,12 @@ export default function SwipeQuoteApp() {
                     {(() => {
                       const quoteLines = (finalQuote || "").replace(/\\n/g, '\n').split('\n').filter(l => l.trim() !== "");
                       const longestLine = Math.max(...quoteLines.map(l => l.trim().length), 0);
-
-                      // 💡 ปรับขนาดฟอนต์อัตโนมัติถ้าเจอประโยคยาว
-                      let fontSizeClass = "text-[clamp(0.7rem,3.5vw,1.5rem)]";
-                      if (longestLine > 25) fontSizeClass = "text-[clamp(0.6rem,2.5vw,1.1rem)]";
-                      else if (longestLine > 20) fontSizeClass = "text-[clamp(0.65rem,3vw,1.3rem)]";
+                      // 💡 ปรับขนาดฟอนต์ให้พอดี (ไม่ใหญ่ไปตามที่แจ้ง)
+                      let fontSizeClass = "text-[clamp(1.2rem,5vw,2.2rem)]";
+                      if (longestLine > 25) fontSizeClass = "text-[clamp(0.9rem,3.5vw,1.6rem)]";
+                      else if (longestLine > 20) fontSizeClass = "text-[clamp(1.1rem,4vw,1.9rem)]";
 
                       return quoteLines.map((line, idx) => {
-                        const moodColor = playerMood ? ({
-                          happy: "#ca8a04", sad: "#2563eb", angry: "#dc2626",
-                          fear: "#9333ea", love: "#db2777", lonely: "#57534e",
-                          hope: "#059669", confused: "#4f46e5", apathetic: "#475569",
-                          exhausted: "#ea580c"
-                        })[playerMood.id] : "#2563eb";
-
                         return (
                           <div key={idx} className="mb-2.5 flex justify-center w-full px-4">
                             <span
@@ -779,9 +789,6 @@ export default function SwipeQuoteApp() {
                               style={{
                                 display: 'inline',
                                 backgroundColor: 'transparent',
-                                backgroundImage: `linear-gradient(to bottom, transparent 65%, ${moodColor}dd 65%)`,
-                                boxDecorationBreak: 'clone',
-                                WebkitBoxDecorationBreak: 'clone',
                                 padding: '0 4px',
                               }}
                             >
