@@ -2615,7 +2615,7 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
         {/* Header: Logo & Title */}
         <div className="relative z-10 w-full flex justify-between items-center mb-8">
           <div className="flex flex-col">
-             <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Official Pro Member</span>
+             <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Pro Member</span>
              <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
           </div>
          <div className="w-10 h-10 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden p-1.5">
