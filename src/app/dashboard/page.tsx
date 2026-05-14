@@ -4408,15 +4408,8 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 💬 Inspirational Quote */}
-                    <div className="mt-1 px-8 text-center max-w-[200px] h-[24px] flex items-center justify-center">
-                      <p 
-                        className="text-[9px] font-bold text-slate-400 italic leading-tight overflow-hidden"
-                        style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
+                    <div className="mt-1 px-2 text-center w-full min-h-[34px] flex items-center justify-center">
+                      <p className="text-[11px] font-bold text-slate-400 italic leading-snug">
                         "{currentSuccessQuote}"
                       </p>
                     </div>
@@ -4424,7 +4417,7 @@ export default function DashboardPage() {
 
                   {/* 👤 Large Avatar */}
                   <div className="relative mb-0 flex flex-col items-center flex-1 justify-start pt-0">
-                    <div className="relative z-10 scale-[1.15] origin-bottom translate-y-0">
+                    <div className="relative z-10 scale-[1.15] origin-bottom -translate-y-5">
                       <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
                     </div>
                   </div>
