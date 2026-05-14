@@ -576,15 +576,7 @@ export default function Home() {
               <button onClick={() => setShowInfo(true)} className="mb-6 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-100/80 hover:bg-amber-200 px-3 py-1.5 rounded-full transition-colors border border-amber-300/50 shadow-sm">
                 <Info size={14} /> ทรง AVATAR ทางการเงิน
               </button>
-              <div className="w-full bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-red-200 mb-6 flex items-start gap-3 text-left">
-                <span className="text-2xl mt-0.5 drop-shadow-sm">⚠️</span>
-                <div>
-                  <p className="font-bold text-red-600 text-[13px] mb-1">คำเตือน</p>
-                  <p className="text-[12px] text-stone-600 leading-relaxed font-light">
-                    โปรดใช้วิจารณญาณก่อนการใช้เงิน เพื่อหาสไตล์ตัวเอง กดเลือก <span className="font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">"ตามสัญชาตญาณ"</span> คิดเยอะๆ เพราะเงินคุณไม่ใช่เงินผม !
-                  </p>
-                </div>
-              </div>
+             
 {/* 🟢 ส่วนรูป Capybara แบบคลีนๆ ไม่มีขอบบนล่าง */}
 <div className="w-full flex justify-center">
   <img
