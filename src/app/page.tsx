@@ -123,9 +123,10 @@ export default function Home() {
         <section className="mb-12 bg-slate-900 rounded-[3rem] p-8 sm:p-12 text-white relative overflow-hidden">
           <div className="relative z-10 max-w-md">
             <span className="text-amber-400 font-bold text-xs uppercase tracking-[0.2em] mb-4 block">Coming Soon / Premium</span>
-          <h2 className="text-3xl md:text-4xl font-black mb-4 text-white">
-      ปลดล็อก Dashboard ส่วนตัวเพื่อเก็บสถิติ
-    </h2>
+         <h2 className="text-3xl md:text-4xl font-black mb-4 text-white leading-tight">
+  ปลดล็อก Dashboard <br />
+  <span className="text-blue-400">เพื่อเก็บสถิติส่วนตัว</span>
+</h2>
             <ul className="space-y-3 mb-8">
               <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> บันทึกผลทดสอบของทุก App</li>
               <li className="flex items-center gap-2 text-slate-300 text-sm"><Star size={16} className="text-amber-400" /> สะสม XP พัฒนา Level การเรียนรู้ของคุณ</li>

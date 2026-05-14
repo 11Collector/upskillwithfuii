@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { motion, AnimatePresence } from "framer-motion"; // เพิ่ม AnimatePresence
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, ArrowRight, BookOpen ,RefreshCw, LogOut, BrainCircuit, Target, Star} from "lucide-react"; // เพิ่ม Icon ใหม่
+import { motion, AnimatePresence } from "framer-motion"; 
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen ,RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock } from "lucide-react"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 
-// 💡 พจนานุกรมสำหรับแปลรหัสการเงิน (เอาไว้นอก Component เพื่อให้ Logic สังเคราะห์เรียกใช้ได้ง่าย)
+// --- 💡 Dictionaries ---
 const MONEY_MAP: Record<string, { title: string, concept: string }> = {
   HIGH_RISK_HIGH_DISC: { title: "เซียนระบบสุดตึง", concept: "มองเงินเป็น Code ที่ต้องดีบัก" },
   MID_RISK_HIGH_DISC: { title: "นักปั้นพอร์ตมือฉมัง", concept: "มองเงินเป็นเมล็ดพันธุ์บ่มเพาะ" },
   LOW_RISK_HIGH_DISC: { title: "ผู้พิทักษ์เงินต้น", concept: "มองเงินเป็นปราสาทที่ต้องรักษา" },
   HIGH_RISK_MID_DISC: { title: "ล่าเทรนด์(ติดดอย)", concept: "มองเงินเป็นคลื่นต้องรีบขี่" },
   MID_RISK_MID_DISC: { title: "มนุษย์สุดสมดุล", concept: "มองเงินเป็นจิ๊กซอว์ของชีวิต" },
-  LOW_RISK_MID_DISC: { title: "สายโคตรเซฟโซน", concept: "มองเงินเป็นชูชีพยามฉุกเฉิน" },
+  LOW_RISK_LOW_DISC: { title: "สายโคตรเซฟโซน", concept: "มองเงินเป็นชูชีพยามฉุกเฉิน" },
   HIGH_RISK_LOW_DISC: { title: "ดมกาวสุดกราฟ", concept: "มองเงินเป็นตั๋วเปลี่ยนชีวิต" },
   MID_RISK_LOW_DISC: { title: "ตัวตึงสายเปย์", concept: "มองเงินเป็นรางวัลการใช้ชีวิต" },
   LOW_RISK_LOW_DISC: { title: "ผู้ประสบภัยวัยกลางคน", concept: "มองเงินเป็นเกราะประคองชีวิต" },
@@ -25,8 +25,33 @@ const MONEY_MAP: Record<string, { title: string, concept: string }> = {
 
 const categoryNames = ["สุขภาพ", "การเงิน", "การงาน", "ครอบครัว", "เพื่อนฝูง", "พัฒนาตนเอง", "จิตใจ", "ช่วยเหลือสังคม"];
 
+// 🎯 คลัง Quest ชุดใหญ่ (สลับเปลี่ยนทุกวัน)
+const QUEST_POOL = {
+  WHEEL: {
+    "สุขภาพ": ["ดื่มน้ำเปล่าให้ครบ 2 ลิตร", "เดินหรือขยับร่างกายอย่างน้อย 15 นาที", "เข้านอนก่อนเที่ยงคืนคืนนี้", "งดน้ำหวานหรือขนมกรุบกรอบ 1 วัน", "ยืดเหยียดร่างกายแก้ Office Syndrome"],
+    "การเงิน": ["บันทึกรายจ่ายทั้งหมดของวันนี้", "งดซื้อของออนไลน์ (F ของ) 1 วัน", "หยอดกระปุกหรือโอนเก็บ 50 บาท", "อ่านทบทวนเป้าหมายการเงินตัวเอง", "จัดระเบียบสลิปและแอปธนาคาร"],
+    "การงาน": ["เคลียร์ Inbox ให้โล่งที่สุด", "เขียน 3 Priority ที่ต้องทำพรุ่งนี้", "จัดโต๊ะทำงานให้สะอาดน่านั่ง", "พักสายตาจากจอ 5 นาทีทุกชั่วโมง", "สรุปงานที่ทำสำเร็จวันนี้ 1 อย่าง"],
+    "ครอบครัว": ["ทักแชทหรือโทรหาคนในครอบครัว", "ทานข้าวพร้อมหน้าหรือวิดีโอคอล", "บอกรักหรือขอบคุณคนในบ้าน", "ช่วยทำงานบ้าน 1 อย่าง", "วางแผนทริปหรือมื้อพิเศษล่วงหน้า"],
+    "เพื่อนฝูง": ["ทักทายเพื่อนที่ไม่ได้คุยด้วยนานแล้ว", "แชร์บทความหรือมีมตลกๆ ให้เพื่อน", "คอมเมนต์ทักทายเพื่อนในโซเชียล", "นัดกินข้าวหรือจิบกาแฟกับเพื่อน", "ชวนเพื่อนคุยเรื่องสัพเพเหระ 10 นาที"],
+    "พัฒนาตนเอง": ["ฟัง Podcast สาระดีๆ 1 ตอน", "อ่านหนังสืออย่างน้อย 15 นาที", "เรียนรู้คำศัพท์หรือทักษะใหม่ 1 อย่าง", "จดบันทึก 1 สิ่งที่ได้เรียนรู้วันนี้", "ดูคลิปสอนเรื่องเทคโนโลยี/AI 1 คลิป"],
+    "จิตใจ": ["นั่งสมาธิหรืออยู่เงียบๆ 5 นาที", "เขียน 3 สิ่งที่รู้สึกขอบคุณวันนี้", "งดเสพโซเชียล 30 นาทีก่อนนอน", "ฟังเพลงบรรเลงผ่อนคลายสมอง", "ให้อภัยตัวเองในเรื่องที่ผิดพลาดวันนี้"],
+    "ช่วยเหลือสังคม": ["โอนเงินทำบุญ/บริจาคเล็กๆ น้อยๆ", "ช่วยเหลือเพื่อนร่วมงาน 1 อย่าง", "แยกขยะก่อนนำไปทิ้ง", "กล่าวชื่นชมคนแปลกหน้าหรือแม่ค้า", "แชร์โพสต์ที่เป็นประโยชน์ต่อสังคม"]
+  },
+  DISC: {
+    "D": ["กล่าวคำชื่นชมเพื่อนร่วมงาน 1 คน", "ฟังคนอื่นพูดจนจบโดยไม่พูดแทรก", "มอบหมายงานให้คนอื่นทำแทน 1 อย่าง", "ถามความเห็นทีมก่อนตัดสินใจ", "ยิ้มทักทายคนอื่นก่อนเริ่มงาน"],
+    "I": ["ทำงานเงียบๆ โฟกัส 25 นาทีรวด", "จดลิสต์สิ่งที่ต้องทำก่อนเริ่มพูดคุย", "ตรวจทานงานอย่างละเอียด 1 รอบก่อนส่ง", "ปฏิเสธคำชวนที่ไม่จำเป็น 1 อย่าง", "จัดระเบียบไฟล์งานบนหน้าจอ"],
+    "S": ["เสนอไอเดียของตัวเอง 1 อย่างในวันนี้", "กล้าปฏิเสธสิ่งที่ตัวเองทำไม่ไหว", "ตัดสินใจเรื่องเล็กๆ ด้วยตัวเองทันที", "ลองทำอะไรนอกรูทีนเดิมๆ 1 อย่าง", "เป็นผู้นำบทสนทนาในวงกินข้าว"],
+    "C": ["ปล่อยผ่านเรื่องเล็กๆ ที่ไม่ได้ดั่งใจ 1 เรื่อง", "ส่งงานแบบ 'เสร็จดีกว่าสมบูรณ์แบบ' 1 ชิ้น", "ชวนเพื่อนร่วมงานคุยเรื่องสบายๆ 5 นาที", "ลดการจับผิดหรือตำหนิตัวเอง 1 วัน", "แชร์ความรู้สึกของตัวเองให้คนอื่นฟัง"]
+  },
+  MONEY: {
+    "HIGH": ["พักของในตะกร้าช้อปปิ้งไว้ก่อน 24 ชม.", "ทบทวนจุดตัดขาดทุน (Stop Loss) ในพอร์ต", "อ่านบทความบริหารความเสี่ยง 10 นาที", "แบ่งกำไรนิดหน่อยไปซื้อความสุขให้ตัวเอง", "งดเช็กพอร์ตหุ้น/คริปโต 1 วันเต็มๆ"],
+    "MID": ["เช็กยอดเงินคงเหลือและเป้าหมายระยะสั้น", "อัปเดตสถานะพอร์ตการเงินรายสัปดาห์", "หาอ่านไอเดียการลงทุนแนวใหม่ๆ", "จดบันทึกอารมณ์ก่อนตัดสินใจซื้อของชิ้นใหญ่", "จัดสรรเงินออมอัตโนมัติ (DCA) เพิ่ม 1%"],
+    "LOW": ["หาไอเดียเพิ่มรายได้ช่องทางที่ 2 (15 นาที)", "อ่านบทความเรื่องการเอาชนะเงินเฟ้อ", "ลองศึกษาการลงทุนความเสี่ยงต่ำแบบใหม่", "ให้รางวัลตัวเองด้วยของอร่อย 1 อย่าง (ฝึกเปย์)", "เช็กดอกเบี้ยเงินฝากธนาคารว่าคุ้มไหม"]
+  }
+};
+
 export default function DashboardPage() {
-const router = useRouter();
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,32 +60,46 @@ const router = useRouter();
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
 
+  // 🎮 State สำหรับ Gamification
+  const [completedQuests, setCompletedQuests] = useState<number[]>([]);
+  const [totalXP, setTotalXP] = useState<number>(0);
+  const [showLevelInfo, setShowLevelInfo] = useState(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         try {
-          // 1-4️⃣ ดึงข้อมูลเดิม (เหมือนเดิมเป๊ะ)
           const wheelRef = collection(db, "users", currentUser.uid, "assessments");
-          const wheelQ = query(wheelRef, orderBy("createdAt", "desc"), limit(1));
-          const wheelSnap = await getDocs(wheelQ);
+          const wheelSnap = await getDocs(query(wheelRef, orderBy("createdAt", "desc"), limit(1)));
           if (!wheelSnap.empty) setLastWheel(wheelSnap.docs[0].data());
 
           const quoteRef = collection(db, "quotes");
-          const quoteQ = query(quoteRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1));
-          const quoteSnap = await getDocs(quoteQ);
+          const quoteSnap = await getDocs(query(quoteRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
           if (!quoteSnap.empty) setLastQuote(quoteSnap.docs[0].data());
 
           const discRef = collection(db, "discResults");
-          const discQ = query(discRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1));
-          const discSnap = await getDocs(discQ);
+          const discSnap = await getDocs(query(discRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
           if (!discSnap.empty) setLastDisc(discSnap.docs[0].data());
 
           const moneyRef = collection(db, "quiz_results"); 
-          const moneyQ = query(moneyRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1));
-          const moneySnap = await getDocs(moneyQ);
+          const moneySnap = await getDocs(query(moneyRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
           if (!moneySnap.empty) setLastMoney(moneySnap.docs[0].data());
 
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+          
+          if (userDocSnap.exists()) {
+             const userData = userDocSnap.data();
+             setTotalXP(userData.totalXP || 0);
+             if (userData.lastQuestDate === todayStr) {
+                setCompletedQuests(userData.completedQuestIds || []);
+             } else {
+                setCompletedQuests([]);
+             }
+          }
         } catch (error) { console.error("ดึงข้อมูลพลาด:", error); }
       } else { router.push("/"); }
       setLoading(false);
@@ -71,6 +110,169 @@ const router = useRouter();
   const handleLogout = async () => {
     try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
   };
+
+  const focusAreas = useMemo(() => {
+    const areas = [];
+    if (lastWheel?.currentScores) {
+      const scoresWithLabels = lastWheel.currentScores.map((score: number, i: number) => ({ score, label: categoryNames[i] }));
+      const lowestThree = scoresWithLabels.sort((a: any, b: any) => a.score - b.score).slice(0, 3);
+      const labelsWithScores = lowestThree.map((item: any) => `${item.label} (${item.score}/10)`).join(", ");
+      areas.push({ type: 'wheel', title: 'Wheel of Life', desc: `ช่วงนี้ลองจัดเวลาโฟกัสและดูแลด้าน ${labelsWithScores} เพิ่มขึ้นอีกนิดนะครับ`, color: 'bg-red-500', textColor: 'text-red-400' });
+    }
+
+    if (lastDisc) {
+      let discWarning = lastDisc?.resultData?.warning || lastDisc?.warning;
+      if (!discWarning) {
+        const type = lastDisc.finalResult || lastDisc.result || "";
+        if (type.includes("D")) discWarning = "ระวังการตัดสินใจที่รวดเร็วเกินไป จนอาจมองข้ามรายละเอียดหรือความรู้สึกของทีม";
+        else if (type.includes("I")) discWarning = "ระวังการมองข้ามรายละเอียดเล็กๆ น้อยๆ และการบริหารเวลาที่อาจหลุดโฟกัสได้ง่าย";
+        else if (type.includes("S")) discWarning = "ระวังการโอนอ่อนตามคนอื่นมากเกินไป จนลืมใส่ใจความต้องการและเป้าหมายของตัวเอง";
+        else if (type.includes("C")) discWarning = "ระวังความยึดติดความสมบูรณ์แบบ (Perfectionist) ที่อาจทำให้งานล่าช้ากว่ากำหนด";
+        else discWarning = "ลองเปิดรับมุมมองใหม่ๆ เพื่อพัฒนาการสื่อสารให้ยืดหยุ่นขึ้นในสถานการณ์ที่แตกต่างกันครับ";
+      }
+      areas.push({ type: 'disc', title: 'จุดระวัง (DISC)', desc: discWarning, color: 'bg-blue-500', textColor: 'text-blue-400' });
+    }
+
+    if (lastMoney) {
+      let moneyKryptonite = lastMoney?.resultData?.kryptonite || lastMoney?.kryptonite;
+      if (!moneyKryptonite) {
+        const risk = lastMoney.resultKey?.split('_')[0] || "";
+        if (risk === "HIGH") moneyKryptonite = "ระวังความมั่นใจและความกล้าเสี่ยงที่มากเกินไป อาจทำให้พลาดจุดตัดขาดทุนได้ง่าย";
+        else if (risk === "MID") moneyKryptonite = "ระวังการรอคอยจังหวะที่สมบูรณ์แบบมากเกินไป อาจทำให้พลาดโอกาสดีๆ ในช่วงเวลาสั้นๆ";
+        else if (risk === "LOW") moneyKryptonite = "ระวังความกลัวความเสี่ยงที่มากเกินไป จะทำให้ผลตอบแทนระยะยาวโตไม่ทันเงินเฟ้อ";
+        else moneyKryptonite = "ระวังการใช้จ่ายตามอารมณ์ ควรจัดสรรเงินสำรองฉุกเฉินให้เพียงพอเสมอ";
+      }
+      areas.push({ type: 'money', title: 'หลุมพรางการเงิน', desc: moneyKryptonite, color: 'bg-amber-500', textColor: 'text-amber-400' });
+    }
+    return areas;
+  }, [lastWheel, lastDisc, lastMoney]);
+
+  const dailyQuests = useMemo(() => {
+    const dayIndex = new Date().getDate(); 
+    let q1 = { id: 1, title: "ดื่มน้ำเปล่าให้ครบ 2 ลิตร", xp: 15 };
+    let q2 = { id: 2, title: "ลิสต์ 3 สิ่งที่ต้องทำก่อนเริ่มงาน", xp: 15 };
+    let q3 = { id: 3, title: "หยอดกระปุกหรือออมเงิน 50 บาท", xp: 20 };
+
+    if (lastWheel?.currentScores) {
+      const minScoreIdx = lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores));
+      const area = categoryNames[minScoreIdx] as keyof typeof QUEST_POOL.WHEEL;
+      if (QUEST_POOL.WHEEL[area]) {
+        const questList = QUEST_POOL.WHEEL[area];
+        q1.title = questList[dayIndex % questList.length];
+      }
+    }
+
+    if (lastDisc) {
+      const typeStr = lastDisc.finalResult || lastDisc.result || "C";
+      const mainType = typeStr.charAt(0) as keyof typeof QUEST_POOL.DISC; 
+      if (QUEST_POOL.DISC[mainType]) {
+        const questList = QUEST_POOL.DISC[mainType];
+        q2.title = questList[dayIndex % questList.length];
+      }
+    }
+
+    if (lastMoney) {
+      const risk = (lastMoney.resultKey?.split('_')[0] || "MID") as keyof typeof QUEST_POOL.MONEY;
+      if (QUEST_POOL.MONEY[risk]) {
+        const questList = QUEST_POOL.MONEY[risk];
+        q3.title = questList[dayIndex % questList.length];
+      }
+    }
+
+    return [q1, q2, q3];
+  }, [lastWheel, lastDisc, lastMoney]);
+
+  const dailyXPGained = completedQuests.reduce((sum, id) => {
+    const quest = dailyQuests.find(q => q.id === id);
+    return sum + (quest?.xp || 0);
+  }, 0);
+
+  const currentLevel = Math.floor(totalXP / 100) + 1;
+  const currentLevelXP = totalXP % 100;
+  
+  const getLevelTitle = (level: number) => {
+    if (level < 10) return "Rookie Upskiller (ผู้เริ่มต้น)";
+    if (level < 20) return "Habit Master (เซียนสร้างนิสัย)";
+    return "Life Architect (สถาปนิกออกแบบชีวิต)";
+  };
+
+  const toggleQuest = async (id: number, xp: number) => {
+    if (!user) return;
+    const isDone = completedQuests.includes(id);
+    const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+    const userRef = doc(db, "users", user.uid);
+
+    let newCompleted = [];
+    let xpChange = 0;
+
+    if (isDone) {
+      newCompleted = completedQuests.filter(qId => qId !== id);
+      xpChange = -xp;
+    } else {
+      newCompleted = [...completedQuests, id];
+      xpChange = xp;
+    }
+
+    setCompletedQuests(newCompleted);
+    setTotalXP(prev => prev + xpChange);
+
+    try {
+      await setDoc(userRef, {
+        totalXP: increment(xpChange),
+        completedQuestIds: newCompleted,
+        lastQuestDate: todayStr
+      }, { merge: true });
+    } catch (error) {
+      console.error("Error updating quest:", error);
+    }
+  };
+
+  // 💡 ขยายกราฟ Wheel of Life ให้เต็มตามากขึ้น
+  const renderRadarChart = (scores: number[]) => {
+    // ขยายขนาดกรอบให้ใหญ่ขึ้นเพื่อรองรับพื้นที่ในมือถือได้เต็มที่
+    const size = 280; 
+    const center = size / 2;
+    const radius = size / 2 - 40; // เผื่อระยะ Padding ให้ Label ไม่ตกขอบ
+    const getCoordinates = (val: number, index: number) => {
+      const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
+      const r = radius * (val / 10);
+      return { x: center + r * Math.cos(angle), y: center + r * Math.sin(angle) };
+    };
+    const points = scores.map((s, i) => `${getCoordinates(s, i).x},${getCoordinates(s, i).y}`).join(" ");
+
+    return (
+      <div className="relative w-full max-w-[340px] aspect-square mx-auto flex items-center justify-center pt-4 md:pt-0">
+        <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+          {[2, 4, 6, 8, 10].map(l => <circle key={l} cx={center} cy={center} r={radius * (l / 10)} fill="none" stroke="#f1f5f9" strokeWidth="1" />)}
+          {scores.map((_, i) => <line key={i} x1={center} y1={center} x2={getCoordinates(10, i).x} y2={getCoordinates(10, i).y} stroke="#f1f5f9" strokeWidth="1" />)}
+          {scores.map((_, i) => {
+             const { x, y } = getCoordinates(13.5, i); // ดันข้อความออกไปให้พ้นกราฟ
+             return <text key={`label-${i}`} x={x} y={y} fontSize="11" fill="#94a3b8" textAnchor="middle" dominantBaseline="middle" className="font-bold">{categoryNames[i]}</text>
+          })}
+          <polygon points={points} fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="2" className="transition-all duration-500" />
+          {scores.map((s, i) => {
+             const pos = getCoordinates(s, i);
+             const labelPos = getCoordinates(s + 2.5, i); // ดันตัวเลขให้ออกห่างจุดแดง
+             return (
+               <g key={`point-${i}`}>
+                 <circle cx={pos.x} cy={pos.y} r="5" fill="#ef4444" className="hover:r-7 transition-all" />
+                 <text x={labelPos.x} y={labelPos.y} fontSize="12" fill="#dc2626" textAnchor="middle" dominantBaseline="middle" className="font-black drop-shadow-sm">{s}</text>
+               </g>
+             )
+          })}
+        </svg>
+      </div>
+    );
+  };
+
+  const getDiscColors = (type: string = "C") => {
+    if (type.includes("D")) return { main: "bg-red-600", light: "bg-red-50", border: "border-red-100", text: "text-red-700", hover: "group-hover:border-red-300" };
+    if (type.includes("I")) return { main: "bg-amber-500", light: "bg-amber-50", border: "border-amber-100", text: "text-amber-700", hover: "group-hover:border-amber-300" };
+    if (type.includes("S")) return { main: "bg-green-500", light: "bg-green-50", border: "border-green-100", text: "text-green-700", hover: "group-hover:border-green-300" };
+    return { main: "bg-blue-600", light: "bg-blue-50", border: "border-blue-100", text: "text-blue-700", hover: "group-hover:border-blue-300" }; 
+  };
+  const currentDiscType = lastDisc?.finalResult || lastDisc?.result || "C";
+  const discColors = getDiscColors(currentDiscType);
 
   if (loading) {
     return (
@@ -85,341 +287,331 @@ const router = useRouter();
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto">
         
-{/* --- 🧭 1. Premium Dark Header --- */}
-<header className="mb-8 bg-slate-900 text-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
-  {/* Abstract background décor */}
-  <div className="absolute top-10 -right-20 opacity-10 rotate-12 hidden md:block">
-     <BrainCircuit size={300} strokeWidth={1} />
-  </div>
+        {/* --- 🧭 1. Top Section --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          
+          <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative flex flex-col justify-between">
+            <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none">
+              <div className="absolute top-10 -right-20 opacity-10 rotate-12 hidden md:block">
+                <BrainCircuit size={300} strokeWidth={1} />
+              </div>
+            </div>
 
-  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-    <div>
-      <div className="flex items-center gap-2.5 mb-3 bg-red-950/50 w-fit px-4 py-1.5 rounded-full border border-red-800/30">
-        <Sparkles className="text-yellow-400" size={18} />
-        {/* 💡 ปรับคำให้อบอุ่นขึ้น */}
-        <span className="text-[11px] font-black text-red-200 uppercase tracking-[0.2em]">
-        Upskill Insight
-        </span>
-      </div>
-     <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mt-2 mb-2">
-  ยินดีต้อนรับกลับมา, <br className="md:hidden" />
-  <span className="text-red-400 font-extrabold">{user?.displayName?.split(' ')[0]}! 🚀</span>
-</h1>
-      <p className="text-slate-300 mt-3 font-medium max-w-lg">
-        เช็กภาพรวมและอัปเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน
-      </p>
-    </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2.5 mb-6 bg-red-950/50 w-fit px-4 py-1.5 rounded-full border border-red-800/30">
+                <Sparkles className="text-yellow-400" size={18} />
+                <span className="text-[11px] font-black text-red-200 uppercase tracking-[0.2em]">Upskill Insight</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-4">
+                ยินดีต้อนรับกลับมา, <br className="md:hidden" />
+                <span className="text-red-400 font-extrabold">{user?.displayName?.split(' ')[0]}! 🚀</span>
+              </h1>
+              <p className="text-slate-300 font-medium max-w-lg">เช็กภาพรวมและอัปเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
+            </div>
 
-    {/* Profile Capsule (เหมือนเดิม) */}
-    <div className="flex items-center gap-4 self-start md:self-center bg-white/5 p-3 pr-5 rounded-full border border-white/10 backdrop-blur-sm shadow-xl">
-      <img src={user?.photoURL || "/default-avatar.png"} alt="Profile" className="w-12 h-12 rounded-full border-2 border-slate-50 shadow-md" />
-      <div>
-        <p className="text-sm font-black text-white">{user?.displayName}</p>
-        <p className="text-xs text-slate-400 font-medium">{user?.email}</p>
-      </div>
-      <button onClick={handleLogout} className="ml-3 p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-950/50 rounded-full transition-all group">
-        <LogOut size={18} className="group-hover:-translate-x-0.5 transition-transform" />
-      </button>
-    </div>
-  </div>
-</header>
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8 relative z-20">
+              <div className="flex items-center gap-4 bg-white/5 p-3 pr-5 rounded-full border border-white/10 backdrop-blur-sm shadow-xl">
+                <img src={user?.photoURL || "/default-avatar.png"} alt="Profile" className="w-12 h-12 rounded-full border-2 border-slate-50 shadow-md" />
+                <div>
+                  <p className="text-sm font-black text-white">{user?.displayName}</p>
+                  <p className="text-xs text-slate-400 font-medium">{user?.email}</p>
+                </div>
+                <button onClick={handleLogout} className="ml-3 p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-950/50 rounded-full transition-all group">
+                  <LogOut size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+                </button>
+              </div>
 
-{/* --- 🧠 2. Insight & Focus Section --- */}
-{(lastWheel || lastDisc || lastMoney) && (
-  <motion.section initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}} className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    
- {/* Insight Card (ตัวใหญ่) */}
-<div className="md:col-span-3 bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100 relative overflow-hidden hover:shadow-xl transition-all hover:border-red-100">
-   <BrainCircuit className="absolute -top-6 -right-6 text-slate-50 group-hover:text-red-50 transition-colors" size={140} />
-   
-   <div className="relative z-10">
-      <div className="flex items-center gap-2 mb-6">
-         <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.6)]" />
-         <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-            วิเคราะห์ทิศทางชีวิต
-         </span>
-      </div>
-      
-      {/* 💡 1. ปรับขนาดเป็น text-base md:text-lg, สีอ่อนลงเป็น text-slate-600 และเพิ่มระยะบรรทัด leading-[1.8] */}
-      <div className="text-base md:text-lg text-slate-600 leading-[1.8] max-w-3xl">
-         {(() => {
-            const hasDisc = !!lastDisc;
-            const hasMoney = !!lastMoney;
-            const hasWheel = !!lastWheel && !!lastWheel.currentScores;
+              <div className="flex items-center gap-4 bg-slate-800/80 p-3 px-5 rounded-full border border-slate-700 backdrop-blur-sm shadow-xl relative">
+                <div className="p-2.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.2)]">
+                  <Trophy size={20} className="fill-current" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-white">LV.{currentLevel}</span>
+                    <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors">
+                      <Info size={14} />
+                    </button>
+                  </div>
+                  <p className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-1">{getLevelTitle(currentLevel)}</p>
+                  <div className="w-32 h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden flex items-center relative group">
+                    <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000" style={{ width: `${currentLevelXP}%` }} />
+                    <span className="absolute right-0 top-3 text-[9px] text-slate-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                      {currentLevelXP}/100 XP
+                    </span>
+                  </div>
+                </div>
 
-            if (!hasDisc && !hasMoney && !hasWheel) {
-               return (
-                 <span className="font-medium text-slate-700">
-                   ข้อมูลคุณยังโล่งอยู่เลยครับ! <br className="hidden md:block"/>
-                   ลองเริ่มเช็กสุขภาพใจด้วย <span className="text-red-500 font-bold">Wheel of Life</span> ด้านล่าง เพื่อให้ผมช่วยดูภาพรวมชีวิตให้นะครับ
-                 </span>
-               );
-            }
+                <AnimatePresence>
+                  {showLevelInfo && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full left-0 md:left-auto md:right-0 mt-4 w-72 bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-2xl z-[100] text-left"
+                    >
+                      <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                        <Sparkles size={14} className="text-yellow-400"/> ระบบ Level & ฉายา
+                      </h4>
+                      <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัป Level และเปลี่ยนฉายาของคุณ!</p>
+                      <ul className="text-[11px] font-medium space-y-2.5 text-slate-300">
+                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9: Rookie Upskiller</li>
+                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19: Habit Master</li>
+                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"/> LV 20+: Life Architect</li>
+                      </ul>
+                      <div className="mt-4 pt-3 border-t border-slate-700 flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-400">Total XP สะสม</span>
+                        <span className="text-sm font-black text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-lg">{totalXP} XP</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </header>
 
-            let synthesis = "";
-            let strengths = [];
+          <div className="lg:col-span-1 bg-slate-800 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-center border border-slate-700">
+            <div className="absolute -right-10 -bottom-10 opacity-5 text-red-400">
+              <Target size={180} />
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-red-500/20 text-red-400 rounded-xl border border-red-500/30">
+                  <AlertCircle size={20} strokeWidth={2.5} />
+                </div>
+                <h2 className="text-xl font-black text-white tracking-wide">จุดที่ควรโฟกัส</h2>
+              </div>
 
-            if (hasDisc) {
-               const style = lastDisc.finalResult || lastDisc.result;
-               if (style.includes('D')) strengths.push("ความเด็ดขาดและการเป็นผู้นำ");
-               else if (style.includes('I')) strengths.push("ทักษะการสื่อสารและการเข้าสังคม");
-               else if (style.includes('S')) strengths.push("ความใจเย็นและการทำงานเป็นทีม");
-               else if (style.includes('C')) strengths.push("ความละเอียดรอบคอบและมีเหตุผล");
-            }
-
-            if (hasMoney) {
-               const risk = lastMoney.resultKey.split('_')[0];
-               if (risk === 'HIGH') strengths.push("ความกล้ารับความเสี่ยงเพื่อโอกาสใหม่ๆ");
-               else if (risk === 'MID') strengths.push("ความสมดุลและการวางแผนที่รัดกุม");
-               else if (risk === 'LOW') strengths.push("ความมีวินัยและการจัดการที่ปลอดภัย");
-            }
-
-            if (strengths.length > 0) {
-               // 💡 2. ลดความดำเข้มของจุดแข็งลง เปลี่ยนเป็น font-semibold สี slate-800
-               synthesis += `จากประวัติของคุณ คุณมีจุดแข็งเรื่อง <span class="font-semibold text-slate-800">${strengths.join(" และ ")}</span> ถือเป็นต้นทุนที่ดีมากครับ `;
-            }
-
-            if (hasWheel) {
-               const scores = lastWheel.currentScores;
-               const minScore = Math.min(...scores);
-               const minArea = categoryNames[scores.indexOf(minScore)];
-               const avgScore = (scores.reduce((a:number, b:number) => a + b, 0) / scores.length).toFixed(1);
-
-               // 💡 3. เอาพื้นหลังสีแดงออก เปลี่ยนเป็นตัวหนาพร้อมขีดเส้นใต้สีแดงอ่อนๆ (มินิมอลขึ้นมาก)
-               synthesis += `<br/><br/>ถึงแม้ภาพรวมชีวิตตอนนี้จะอยู่ที่ ${avgScore}/10 แต่ช่วงนี้ <span class="font-bold text-red-500 underline decoration-red-200 decoration-2 underline-offset-4">"${minArea}"</span> ดูเหมือนจะดรอปลงไปนิดนึง (${minScore}/10) `;
-               
-               if (strengths.length > 0) {
-                  synthesis += `ลองดึงจุดแข็งของคุณมาปรับใช้เพื่อดึงคะแนนหมวดนี้กลับมาดูนะครับ! 💪`;
-               } else {
-                  synthesis += `สัปดาห์นี้ลองหาเวลาดูแลตัวเองในด้านนี้เพิ่มขึ้นอีกนิดนะครับ 💪`;
-               }
-            } else {
-               synthesis += "ลองประเมิน Wheel of Life เพิ่มเติม เพื่อดูว่าเราจะเอาความสามารถนี้ไปอัปเกรดชีวิตด้านไหนได้บ้างครับ";
-            }
-
-            return <span dangerouslySetInnerHTML={{ __html: synthesis }} />;
-         })()}
-      </div>
-   </div>
-</div>
-
-    {/* Weekly Focus Card (ปรับให้เป็นข้อความสั้นๆ ไม่มีปุ่ม) */}
-    {lastWheel && lastWheel.currentScores && (
-       <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-xl hover:shadow-blue-900/20 transition-all flex flex-col justify-center">
-          <div className="absolute -right-10 -bottom-10 opacity-10 text-yellow-400">
-             <Target size={150} />
+              {focusAreas.length > 0 ? (
+                <ul className="space-y-5">
+                  {focusAreas.map((area, idx) => (
+                    <li key={idx} className="flex gap-4 items-start">
+                      <div className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${area.color} shadow-[0_0_8px_rgba(255,255,255,0.2)]`} />
+                      <div>
+                        <span className={`text-[11px] font-black uppercase tracking-wider ${area.textColor}`}>{area.title}</span>
+                        <p className="text-sm font-medium text-slate-300 mt-1 leading-relaxed">{area.desc}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate-400 leading-relaxed font-medium">ทำแบบทดสอบด้านล่างเพื่อให้ระบบวิเคราะห์จุดที่ควรโฟกัสให้นะครับ 🎯</p>
+              )}
+            </div>
           </div>
-          <div className="relative z-10">
-             <div className="inline-block px-3 py-1 bg-amber-400 text-slate-900 text-[10px] font-black rounded-md mb-4 uppercase tracking-widest w-fit">
-                จุดที่ควรเติมเต็ม
-             </div>
-             
-             {(() => {
-                const scores = lastWheel.currentScores;
-                const minScore = Math.min(...scores);
-                const minArea = categoryNames[scores.indexOf(minScore)];
-                
-                // 💡 สร้างข้อความแนะนำสั้นๆ (Actionable Advice) ตามหมวดที่ได้คะแนนต่ำ
-                let advice = "ลองหาเวลาว่างสัก 15 นาที เพื่อทบทวนและวางแผนในเรื่องนี้ดูนะครับ";
-                if (minArea === "สุขภาพ") advice = "พักผ่อนให้เพียงพอ ดื่มน้ำเยอะๆ และอย่าลืมขยับร่างกายบ้างนะครับ";
-                else if (minArea === "การเงิน") advice = "ลองจดบันทึกรายรับรายจ่ายสัปดาห์นี้ดู จะช่วยให้เห็นภาพรวมชัดขึ้นครับ";
-                else if (minArea === "ครอบครัว") advice = "สัปดาห์นี้หาเวลาโทรหาคนในครอบครัว หรือทานข้าวด้วยกันสักมื้อนะครับ";
-                else if (minArea === "การงาน") advice = "จัดลำดับความสำคัญของงาน (Prioritize) จะช่วยลดความเครียดได้เยอะเลยครับ";
 
-                return (
-                   <>
-                     <h3 className="text-3xl font-black tracking-tight text-white leading-tight mb-3">
-                        {minArea} <span className="text-lg text-amber-400 font-bold ml-1">({minScore}/10)</span>
-                     </h3>
-                     <p className="text-sm font-medium text-slate-400 leading-relaxed">
-                       {advice}
-                     </p>
-                   </>
-                );
-             })()}
-          </div>
-       </div>
-    )}
-  </motion.section>
-)}
-        {/* --- 📦 3. Bento Grid (เครื่องมือเดิม แต่ปรับดีไซน์นิดหน่อยให้ดูสมดุล) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {/* Wheel of Life Card (ตัวใหญ่) */}
-<Link href="/tools/wheel-of-life" className="md:col-span-2 group block h-full">
-  <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden transition-all hover:shadow-xl hover:border-red-200">
-    
-    {/* 💡 1. เติม Gradient Accent สีแดงด้านบนให้เหมือนเพื่อนๆ */}
-    <div className="absolute top-0 left-0 w-full h-1.5 bg-red-500 group-hover:h-3 transition-all duration-300" />
-
-    <div className="flex justify-between items-start relative z-10 pt-2"> {/* เติม pt-2 ดันคอนเทนต์ลงมานิดนึงไม่ให้ติดขอบสี */}
-      <div className="flex-1">
-        <div className="flex items-center gap-3.5 mb-3">
-          <div className="p-3 bg-red-50 text-red-600 rounded-full group-hover:bg-red-600 group-hover:text-white transition-colors border border-red-100 shadow-sm group-hover:scale-110 duration-300">
-            <PieChart size={28} />
-          </div>
-          <h2 className="text-2xl font-black text-slate-800">Wheel of Life</h2>
         </div>
-        <p className="text-sm font-medium text-slate-500 mb-1">เป้าหมาย 1 ปีของคุณ:</p>
-        <p className="text-lg font-bold text-slate-700 line-clamp-2 max-w-xl">
-          {lastWheel?.goal || "ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายแรกกันเถอะ!"}
-        </p>
-      </div>
-      
-      {/* ปุ่มมุมขวาบน (ปรับให้เข้าธีม) */}
-      <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-slate-50 border border-slate-100 text-slate-500 text-[11px] font-black uppercase tracking-wider group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-100 transition-all shadow-sm">
-        <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-        <span>{lastWheel ? "ประเมินใหม่" : "เริ่มประเมิน"}</span>
-      </div>
-    </div>
 
-    {/* คะแนน Wheel of Life ด้านล่าง */}
-    {lastWheel?.currentScores && (
-      <div className="mt-10 flex gap-2 overflow-x-auto pb-2 scrollbar-hide relative z-10">
-        {lastWheel.currentScores.map((score: number, idx: number) => (
-          <div key={idx} className="flex-1 min-w-[60px] bg-slate-50 rounded-2xl flex flex-col items-center py-4 border border-slate-100 group-hover:border-red-100 group-hover:bg-white transition-colors duration-300">
-            <span className="text-[10px] text-slate-400 font-bold mb-1.5 truncate w-full text-center px-1"> 
-              {categoryNames[idx]} 
-            </span>
-            {/* ดึงสีแดงมาใช้ตรงตัวเลขคะแนนตอน hover */}
-            <span className="text-2xl font-black text-slate-800 group-hover:text-red-600 transition-colors">
-              {score}
-            </span>
+        {/* --- 🎮 2. Daily Quests Section --- */}
+        <div className="mb-8 bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-orange-50 text-orange-500 rounded-xl border border-orange-100">
+                <Flame size={24} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-800">Daily Quests 🎯</h2>
+                <p className="text-sm text-slate-500 font-medium">Small Win วันนี้ที่จัดมาให้ตรงกับสไตล์คุณ (รีเซ็ตทุกเที่ยงคืน)</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-100 w-fit">
+              <Trophy className="text-yellow-500" size={20} />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">XP ที่ได้วันนี้</span>
+                <span className="text-lg font-black text-slate-800 leading-none">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
-    )}
-  </motion.div>
-</Link>
 
-          {/* คมสัดสัด Card */}
-          <Link href="/tools/khomsatsat" className="group block h-full">
-       {/* เปลี่ยนจาก bg-slate-900 เป็นโทนสว่าง */}
-<motion.div whileHover={{ y: -6 }} className="h-full bg-gradient-to-br from-indigo-50 via-blue-50 to-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-indigo-100 relative overflow-hidden flex flex-col justify-between group">
-  <Quote className="absolute -top-6 -right-6 text-indigo-100/50 rotate-12" size={140} />
-  <div className="relative z-10">
-    <div className="flex items-center justify-between mb-6">
-      <div className="p-3 bg-white text-indigo-500 rounded-xl border border-indigo-100 shadow-sm">
-        <Quote size={24} />
-      </div>
-      {/* ปุ่มสุ่มใหม่สีกลืนกับพื้นหลัง */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/50 text-indigo-600 text-[10px] font-black uppercase tracking-wider group-hover:bg-indigo-100 transition-colors border border-indigo-100">
-        <RefreshCw size={12} className="group-hover:rotate-180 transition-transform duration-500" />
-        <span>สุ่มใหม่</span>
-      </div>
-    </div>
-    <h2 className="text-lg font-bold text-slate-400 mb-6">คำคมที่ทัชใจล่าสุด</h2>
-    <div className="h-28 flex items-center">
-       {/* เปลี่ยนสีตัวหนังสือเป็นสีเข้ม */}
-       <p className="text-lg font-medium leading-relaxed italic text-slate-700 line-clamp-4">
-         "{lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปเล่น 'คมสัดสัด' ดูสิ!"}"
-       </p>
-    </div>
-  </div>
-</motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {dailyQuests.map((quest) => {
+              const isDone = completedQuests.includes(quest.id);
+              return (
+                <div 
+                  key={quest.id} 
+                  onClick={() => toggleQuest(quest.id, quest.xp)}
+                  className={`relative cursor-pointer flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 hover:shadow-md ${isDone ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-orange-200'}`}
+                >
+                  <div className="shrink-0">
+                    {isDone ? (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                        <CheckCircle2 size={26} className="text-green-500" />
+                      </motion.div>
+                    ) : (
+                      <Circle size={26} className="text-slate-300 group-hover:text-orange-300 transition-colors" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <p className={`text-sm font-bold transition-all duration-300 ${isDone ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                      {quest.title}
+                    </p>
+                    <span className="text-[10px] font-black text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full mt-1.5 inline-block">
+                      +{quest.xp} XP
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* --- 📦 3. Bento Grid --- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <Link href="/tools/wheel-of-life" className="md:col-span-2 group block h-full">
+            <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden transition-all hover:shadow-xl hover:border-red-200 flex flex-col justify-center">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-red-500 group-hover:h-3 transition-all duration-300" />
+              <div className="flex flex-col md:flex-row gap-8 items-center relative z-10 pt-2 h-full">
+                <div className="flex-1 w-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="p-3 bg-red-50 text-red-600 rounded-full group-hover:bg-red-600 group-hover:text-white transition-colors border border-red-100 shadow-sm group-hover:scale-110 duration-300">
+                        <PieChart size={28} />
+                      </div>
+                      <h2 className="text-2xl font-black text-slate-800">Wheel of Life</h2>
+                    </div>
+                  </div>
+                  <div className="mb-6">
+                    <p className="text-sm font-medium text-slate-500 mb-2">เป้าหมาย 1 ปีของคุณ:</p>
+                    <p className="text-lg font-bold text-slate-700 line-clamp-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      {lastWheel?.goal || "ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายแรกกันเถอะ!"}
+                    </p>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-slate-50 border border-slate-100 text-slate-500 text-[12px] font-black uppercase tracking-wider group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-100 transition-all shadow-sm">
+                    <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                    <span>{lastWheel ? "ประเมินใหม่" : "เริ่มประเมิน"}</span>
+                  </div>
+                </div>
+                <div className="w-full md:w-1/2 flex justify-center items-center rounded-[3rem] p-2 aspect-square md:aspect-auto">
+                  {lastWheel?.currentScores ? renderRadarChart(lastWheel.currentScores) : (
+                    <div className="text-center p-8"><PieChart size={48} className="mx-auto text-slate-200 mb-3" /><p className="text-sm font-bold text-slate-400">ยังไม่มีข้อมูลกราฟ</p></div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           </Link>
 
-        {/* DISC Card */}
-<Link href="/tools/disc" className="group block h-full">
-  <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center justify-center transition-all hover:border-blue-200 hover:shadow-xl relative overflow-hidden">
-    
-    <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500 group-hover:h-3 transition-all duration-300" />
-{/* แก้ตรง div วงกลมของ DISC */}
-<div className="p-3 bg-blue-50 text-blue-600 rounded-full mb-5 flex items-center justify-center aspect-square w-fit group-hover:bg-blue-600 group-hover:text-white transition-colors border border-blue-100 shadow-sm group-hover:scale-110 duration-300">
-  <Users size={24} />
-</div>
+          {/* 💡 คมสัดสัด เพิ่มปุ่มประเมินใหม่กลับเข้ามา */}
+          <Link href="/tools/khomsatsat" className="group block h-full">
+            <motion.div whileHover={{ y: -6 }} className="h-full bg-gradient-to-br from-indigo-50 via-blue-50 to-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-indigo-100 relative overflow-hidden flex flex-col justify-between group">
+              <Quote className="absolute -top-6 -right-6 text-indigo-100/50 rotate-12" size={140} />
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="p-3 bg-white text-indigo-500 rounded-xl border border-indigo-100 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <Quote size={24} />
+                  </div>
+                </div>
+                <h2 className="text-lg font-bold text-slate-400 mb-4">คำคมที่ทัชใจล่าสุด</h2>
+                <div className="h-24 flex items-center mb-6">
+                  <p className="text-lg font-medium leading-relaxed italic text-slate-700 line-clamp-4">
+                    "{lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปเล่น 'คมสัดสัด' ดูสิ!"}"
+                  </p>
+                </div>
+                
+                {/* ปุ่มสุ่มใหม่ ที่เพิ่มเข้ามา */}
+                <div className="mt-auto flex items-center gap-1.5 px-4 py-2 w-fit rounded-full bg-white/50 text-indigo-600 text-[11px] font-black uppercase tracking-wider group-hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm">
+                  <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                  <span>สุ่มใหม่</span>
+                </div>
 
-    {lastDisc ? (
-      <>
-        <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-1.5"> สไตล์การสื่อสารของคุณ </h3>
-        <h2 className="text-2xl font-black text-slate-800 mb-1.5 leading-tight"> {lastDisc.title || "จอมวางแผน"} </h2>
+              </div>
+            </motion.div>
+          </Link>
 
-        <div className="flex items-center gap-2 mb-6 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 shadow-inner group-hover:border-blue-300 transition-colors">
-          <span className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition-transform"> {lastDisc.finalResult || lastDisc.result} </span>
-          <span className="text-sm font-bold text-blue-700 italic">Style</span>
-        </div>
+          {/* 💡 DISC เพิ่มปุ่มประเมินใหม่กลับเข้ามา */}
+          <Link href="/tools/disc" className="group block h-full">
+            <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all hover:shadow-xl relative overflow-hidden group-hover:border-blue-200">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500 group-hover:h-3 transition-all duration-300" />
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-full mb-5 flex items-center justify-center aspect-square w-fit group-hover:bg-blue-600 group-hover:text-white transition-colors border border-blue-100 shadow-sm group-hover:scale-110 duration-300">
+                <Users size={24} />
+              </div>
 
-        <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-[11px] font-black uppercase tracking-wider group-hover:bg-blue-50 group-hover:text-blue-600 transition-all border border-transparent group-hover:border-blue-100 shadow-sm">
-          <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-          <span>ประเมินใหม่</span>
-        </div>
-      </>
-    ) : (
-      <>
-        <h3 className="font-black text-xl text-slate-800">สำรวจตัวตน DISC</h3>
-        <p className="text-slate-400 text-sm mt-2 mb-6 max-w-xs">ค้นหาสไตล์การทำงานแบบคุณ</p>
-        <span className="text-xs font-bold text-blue-600 flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
-          เริ่มทดสอบ <ChevronRight size={16} />
-        </span>
-      </>
-    )}
-  </motion.div>
-</Link>
+              {lastDisc ? (
+                <>
+                  <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-1.5"> สไตล์การสื่อสารของคุณ </h3>
+                  <h2 className="text-2xl font-black text-slate-800 mb-1.5 leading-tight"> {lastDisc.title || "จอมวางแผน"} </h2>
+                  <div className={`flex items-center gap-2 mb-6 px-3 py-1 rounded-full border shadow-inner transition-colors ${discColors.light} ${discColors.border} ${discColors.hover}`}>
+                    <span className={`w-9 h-9 rounded-full ${discColors.main} text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition-transform`}> {currentDiscType} </span>
+                    <span className={`text-sm font-bold italic ${discColors.text}`}>Style</span>
+                  </div>
+                  
+                  {/* ปุ่มประเมินใหม่ ที่เพิ่มเข้ามา */}
+                  <div className="mt-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-[11px] font-black uppercase tracking-wider group-hover:bg-blue-50 group-hover:text-blue-600 transition-all border border-transparent group-hover:border-blue-100 shadow-sm">
+                    <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                    <span>ประเมินใหม่</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-black text-xl text-slate-800 mt-auto">สำรวจตัวตน DISC</h3>
+                  <p className="text-slate-400 text-sm mt-2 mb-6 max-w-xs">ค้นหาสไตล์การทำงานแบบคุณ</p>
+                  <span className="text-xs font-bold text-blue-600 flex items-center gap-1.5 group-hover:gap-2.5 transition-all mt-auto">เริ่มทดสอบ <ChevronRight size={16} /></span>
+                </>
+              )}
+            </motion.div>
+          </Link>
 
-      {/* Money Avatar Card */}
-<Link href="/tools/money-avatar" className="group block h-full">
-  <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center justify-center transition-all hover:border-amber-200 hover:shadow-xl relative overflow-hidden">
-    
-    <div className="absolute top-0 left-0 w-full h-1.5 bg-amber-400 group-hover:h-3 transition-all duration-300" />
+          {/* 💡 Money Avatar เพิ่มปุ่มประเมินใหม่กลับเข้ามา */}
+          <Link href="/tools/money-avatar" className="group block h-full">
+            <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all hover:border-amber-200 hover:shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-amber-400 group-hover:h-3 transition-all duration-300" />
+              <div className="p-3 bg-amber-50 text-amber-600 rounded-full mb-5 flex items-center justify-center aspect-square w-fit group-hover:bg-amber-500 group-hover:text-white transition-colors border border-amber-100 shadow-sm group-hover:scale-110 duration-300">
+                <Wallet size={24} />
+              </div>
 
- {/* แก้ตรง div วงกลมของ Money Avatar */}
-<div className="p-3 bg-amber-50 text-amber-600 rounded-full mb-5 flex items-center justify-center aspect-square w-fit group-hover:bg-amber-500 group-hover:text-white transition-colors border border-amber-100 shadow-sm group-hover:scale-110 duration-300">
-  <Wallet size={24} />
-</div>
- {lastMoney ? (
-  <>
-    {(() => {
-      const details = MONEY_MAP[lastMoney.resultKey] || { title: lastMoney.avatarType || "นักวางแผนการเงิน", concept: "ค้นหาตัวตนทางการเงินของคุณ" };
-      return (
-        <>
-          <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-1.5"> สไตล์การเงินของคุณ </h3>
-          <h2 className="text-2xl font-black text-slate-800 mb-1 leading-tight"> {details.title} </h2>
+              {lastMoney ? (
+                <>
+                  <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-1.5"> สไตล์การเงินของคุณ </h3>
+                  <h2 className="text-2xl font-black text-slate-800 mb-1 leading-tight"> {MONEY_MAP[lastMoney.resultKey]?.title || "นักวางแผน"} </h2>
+                  <p className="text-sm text-slate-500 font-bold mt-2 mb-6 px-2"> "{MONEY_MAP[lastMoney.resultKey]?.concept}" </p>
+                  
+                  {/* ปุ่มประเมินใหม่ ที่เพิ่มเข้ามา */}
+                  <div className="mt-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-[11px] font-black uppercase tracking-wider group-hover:bg-amber-50 group-hover:text-amber-700 transition-all border border-transparent group-hover:border-amber-100 shadow-sm">
+                    <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                    <span>ประเมินใหม่</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-black text-xl text-slate-800 mt-auto">Money Avatar</h3>
+                  <p className="text-slate-400 text-sm mt-2 mb-6 max-w-xs">ถอดรหัสสไตล์การเงินของคุณ</p>
+                  <span className="text-xs font-bold text-amber-600 flex items-center gap-1.5 group-hover:gap-2.5 transition-all mt-auto">เช็กอาการ <ChevronRight size={16} /></span>
+                </>
+              )}
+            </motion.div>
+          </Link>
+
+          <Link href={currentLevel >= 5 ? "/library" : "#"} className="group block h-full cursor-pointer">
+            <motion.div whileHover={currentLevel >= 5 ? { y: -6 } : {}} className={`h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center justify-center transition-all relative overflow-hidden ${currentLevel >= 5 ? 'hover:border-emerald-200 hover:shadow-xl' : 'opacity-90 grayscale-[0.2]'}`}>
+              <div className={`absolute top-0 left-0 w-full h-1.5 transition-all duration-300 ${currentLevel >= 5 ? 'bg-emerald-500 group-hover:h-3' : 'bg-slate-300'}`} />
+              
+              {currentLevel >= 5 ? (
+                <div className="absolute top-5 right-5 bg-emerald-50 text-emerald-600 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-100 flex items-center gap-1 shadow-sm">
+                  <Unlock size={12} /> PREMIUM UNLOCKED
+                </div>
+              ) : (
+                <div className="absolute top-5 right-5 bg-slate-100 text-slate-500 text-[10px] font-black px-2.5 py-1 rounded-full border border-slate-200 flex items-center gap-1 shadow-sm">
+                  <Lock size={12} /> UNLOCK AT LV.5
+                </div>
+              )}
+
+              <div className={`p-3 rounded-full mb-5 flex items-center justify-center aspect-square w-fit transition-colors border shadow-sm duration-300 ${currentLevel >= 5 ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white group-hover:scale-110' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+                <BookOpen size={24} />
+              </div>
+              <h3 className="font-black text-xl text-slate-800">คลังสมองอัปสกิล</h3>
+              <p className="text-slate-400 text-sm mt-2 mb-6 max-w-xs">สรุปหนังสือและบทความดีๆ ที่คัดมาแล้ว</p>
+              
+              {currentLevel >= 5 ? (
+                <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 group-hover:gap-2.5 transition-all mt-auto">เปิดอ่านเลย <ChevronRight size={16} /></span>
+              ) : (
+                <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100 mt-auto">ต้องการ LV.5 เพื่อปลดล็อก</span>
+              )}
+            </motion.div>
+          </Link>
           
-          {/* 💡 ผลลัพธ์: ขนาดเท่าการ์ด Library, ตัวตรง, และเน้นตัวหนา */}
-          <p className="text-sm text-slate-500 font-bold mt-2 mb-6 px-2"> 
-            "{details.concept}" 
-          </p>
-        </>
-      );
-    })()}
-
-    <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-[11px] font-black uppercase tracking-wider group-hover:bg-amber-50 group-hover:text-amber-700 transition-all border border-transparent group-hover:border-amber-100 shadow-sm">
-      <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-      <span>ประเมินใหม่</span>
-    </div>
-  </>
-) : (
-// ... (ส่วนที่เหลือเหมือนเดิมครับ)
-      <>
-        <h3 className="font-black text-xl text-slate-800">Money Avatar</h3>
-        <p className="text-slate-400 text-sm mt-2 mb-6 max-w-xs">ถอดรหัสสไตล์การเงินของคุณ</p>
-        <span className="text-xs font-bold text-amber-600 flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
-          เช็กอาการ <ChevronRight size={16} />
-        </span>
-      </>
-    )}
-  </motion.div>
-</Link>
-{/* Library Card */}
-<Link href="/library" className="group block h-full">
-  <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center justify-center transition-all hover:border-emerald-200 hover:shadow-xl relative overflow-hidden">
-    
-    <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-500 group-hover:h-3 transition-all duration-300" />
-
-    {/* แก้ตรง div วงกลมของ Library */}
-<div className="p-3 bg-emerald-50 text-emerald-600 rounded-full mb-5 flex items-center justify-center aspect-square w-fit group-hover:bg-emerald-500 group-hover:text-white transition-colors border border-emerald-100 shadow-sm group-hover:scale-110 duration-300">
-  <BookOpen size={24} />
-</div>
-    <h3 className="font-black text-xl text-slate-800">คลังสมองอัปสกิล</h3>
-    <p className="text-slate-400 text-sm mt-2 mb-6 max-w-xs">สรุปหนังสือและบทความดีๆ ที่คัดมาแล้ว</p>
-    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
-      เปิดอ่านเลย <ChevronRight size={16} />
-    </span>
-  </motion.div>
-</Link>
-          
         </div>
 
-        {/* --- 🚀 4. Mobile Logout & Footer --- */}
         <div className="mt-16 text-center py-6 border-t border-slate-100">
           <p className="text-xs text-slate-400 font-bold mb-5 tracking-wide">© 2026 อัพสกิลกับฟุ้ย</p>
           <div className="md:hidden flex justify-center">
