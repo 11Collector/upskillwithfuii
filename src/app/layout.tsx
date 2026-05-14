@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import "@/app/globals.css";
 import Link from "next/link";
-import { Home, PieChart, Users, Wallet, Quote } from "lucide-react";
+import { Home, PieChart, Users, Wallet, Quote, BookOpen } from "lucide-react";
 
 // ตั้งค่าฟอนต์ Kanit
 const kanit = Kanit({
@@ -46,6 +46,9 @@ export default function RootLayout({
               <Link href="/tools/money-avatar" className="text-sm font-bold text-slate-500 hover:text-amber-600 flex items-center gap-1.5 transition-colors">
                 <Wallet size={18} /> สไตล์การเงิน
               </Link>
+              <Link href="/tools/library-of-souls" className="text-sm font-bold text-slate-500 hover:text-emerald-600 flex items-center gap-1.5 transition-colors">
+                <BookOpen size={18} /> ตัวตน
+              </Link>
               <Link href="/tools/khomsatsat" className="text-sm font-bold text-slate-500 hover:text-purple-600 flex items-center gap-1.5 transition-colors">
                 <Quote size={18} /> คมสัดสัด
               </Link>
@@ -76,6 +79,10 @@ export default function RootLayout({
           <Link href="/tools/money-avatar" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-amber-600 active:scale-95 transition-all">
             <Wallet size={22} />
             <span className="text-[10px] mt-1 font-bold">การเงิน</span>
+          </Link>
+          <Link href="/tools/library-of-souls" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-emerald-600 active:scale-95 transition-all">
+            <BookOpen size={22} />
+            <span className="text-[10px] mt-1 font-bold">ตัวตน</span>
           </Link>
           <Link href="/tools/khomsatsat" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-600 active:scale-95 transition-all">
             <Quote size={22} />
