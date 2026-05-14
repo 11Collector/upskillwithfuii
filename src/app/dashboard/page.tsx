@@ -1790,7 +1790,7 @@ export default function DashboardPage() {
         if (planItems.length > 0) {
           const isWheelDoneToday = completedQuests.includes(1);
 
-          if (wheelPlanDay <= 7) {
+          if (wheelPlanDay > 0 && wheelPlanDay <= 7) {
             const dayIdx = Math.min(6, wheelPlanDay - 1);
             let currentDayPlan = planItems[dayIdx] || planItems[0];
             qList[0].title = `DAY ${wheelPlanDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
@@ -2519,12 +2519,12 @@ export default function DashboardPage() {
     try {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
-        wheelPlanDay: 0,
+        wheelPlanDay: 1,
         wheelPlanSkips: 0,
         lastSkipDate: "",
         completedQuestIds: []
       });
-      setWheelPlanDay(0);
+      setWheelPlanDay(1);
       setWheelPlanSkips(0);
       setLastSkipDate("");
       setCompletedQuests([]);
@@ -3641,7 +3641,7 @@ export default function DashboardPage() {
                                     </button>
 
                                     <button
-                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleUpdatePlanDay(0); }}
+                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRestartCycle(); }}
                                       className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-amber-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all group/loop active:scale-95 shadow-sm"
                                     >
                                       <RotateCcw size={18} className="text-blue-500 mb-1 group-hover/loop:-rotate-45" />
