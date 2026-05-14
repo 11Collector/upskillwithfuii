@@ -424,7 +424,7 @@ const analyzeWithAI = async () => {
     const targetText = categoriesData.map((item, i) => `${item.label}: ${targetScores[i]}/10`).join(", ");
     const focusText = selectedFocusAreas.length > 0 ? selectedFocusAreas.map(i => categoriesData[i].label).join(", ") : "ไม่ได้ระบุเป็นพิเศษ";
 
-  const promptText = `คุณคือเพื่อนสนิทผู้ชาย ที่ฉลาดและมีความรู้เชิงลึกทั้ง 8 ด้านเป็นสไตล์ที่ปรึกษาอารมณ์และนักพัฒนาตัวเอง สไตล์การพูดคือเป็นกันเอง อบอุ่น จริงใจ ให้กำลังใจ 
+    const promptText = `คุณคือเพื่อนสนิทผู้ชาย ที่ฉลาดและมีความรู้เชิงลึกทั้ง 8 ด้านเป็นสไตล์ที่ปรึกษาอารมณ์และนักพัฒนาตัวเอง สไตล์การพูดคือเป็นกันเอง อบอุ่น จริงใจ ให้กำลังใจ 
 (กฎข้อห้ามสำคัญ: ห้ามมีคำลงท้ายหางเสียง เช่น จ๊ะ, จ้ะ, คะ, ค่ะ, ครับ เด็ดขาด และให้เรียกแทนอีกฝ่ายว่า "คุณ" เสมอ)
 
 วิเคราะห์คะแนน Wheel of Life ของเพื่อนคุณ: ปัจจุบัน ${currentText}, เป้าหมาย 1 ปี ${targetText}
@@ -437,7 +437,7 @@ const analyzeWithAI = async () => {
 
 📌 ภาพรวมของคุณ : ทักทายเพื่อน สรุปความสมดุลปัจจุบัน และบอกว่าด้านที่เขาเลือกโฟกัสจะช่วยพาเขาไปถึงเป้าหมายได้ยังไง
 💡 คำแนะนำ (Tips) : ให้คำแนะนำหรือ Mindset เจ๋งๆ 1-2 ข้อ เพื่อปลดล็อกเรื่องที่เขาโฟกัส
-📅 แผนลุย 7 วัน (Action Plan) : จัดตาราง 7 วัน (รูปแบบบรรทัดใหม่ขึ้นด้วย - Day X : ภารกิจสั้นๆ ที่ต้องทำให้จบได้ภายในวันนั้น ไม่เป็นภาระที่ใหญ่เกินไป) เอาแบบเริ่มทำได้เลยตั้งแต่วันนี้
+📅 แผนปฏิบัติการ (Action Plan) : แนะนำขั้นตอนการลงมือทำ (Step-by-step) ที่เห็นภาพชัดเจนและเริ่มทำได้ทันที
 🔥 ข้อคิดส่งท้าย : ประโยคให้กำลังใจสั้นๆ ทรงพลัง
 
 3. **Format:** อนุญาตให้ใช้ตัวหนา (ใส่เครื่องหมาย **ครอบคำ**) เพื่อเน้นคำสำคัญได้ แต่อย่าใช้ Markdown แบบอื่นๆ เช่น Heading หรือ Italic
@@ -745,11 +745,11 @@ const analyzeWithAI = async () => {
               
               <div style={{ maxWidth: '450px', margin: '0 auto', width: '100%' }}>
                 {!isAnalyzing ? (
-                  <button className="primary-btn" onClick={analyzeWithAI} style={{ width: '100%' }}>✨ AI วิเคราะห์ผล & จัดตาราง 7 วัน</button>
+                  <button className="primary-btn" onClick={analyzeWithAI} style={{ width: '100%' }}>✨ AI วิเคราะห์ผล & จัดแผนปฏิบัติการ</button>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fff5f5', borderRadius: '15px', border: '2px dashed #f08080' }}>
                      <div className="lds-dual-ring-small"></div>
-                     <p className="blinking-text" style={{ fontSize: '12px', color: '#800000', marginTop: '10px' }}>AI กำลังจัดตาราง 7 วันให้คุณ...</p>
+                     <p className="blinking-text" style={{ fontSize: '12px', color: '#800000', marginTop: '10px' }}>AI กำลังจัดแผนปฏิบัติการให้คุณ...</p>
                   </div>
                 )}
               </div>

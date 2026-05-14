@@ -663,7 +663,7 @@ export default function Home() {
     {!user && (
       <div className="fixed top-24 right-4 sm:top-28 sm:right-6 z-[999]">
       <motion.button
-        whileHover={{ scale: 1.05, y: -2 }}
+        whileHover={{ scale: 1.05, y: -1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, scale: 0.5, x: 20 }}
         animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -671,18 +671,15 @@ export default function Home() {
           setGuideStep(1);
           setShowGuide(true);
         }}
-        className="relative group flex items-center gap-3 bg-red-900/90 hover:bg-red-800 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-red-700/50 shadow-[0_10px_25px_-5px_rgba(153,27,27,0.4)] transition-all duration-300"
+        className="relative group flex items-center gap-2.5 bg-slate-900/95 hover:bg-slate-800 backdrop-blur-md px-3 py-1.5 rounded-full border border-red-500/20 shadow-2xl transition-all duration-300"
       >
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] font-black text-red-200 uppercase tracking-widest leading-none mb-1">APP GUIDE</span>
-          <span className="text-[12px] font-black text-white leading-none">วิธีเล่นแอป</span>
+        <div className="flex flex-col items-start pl-1">
+          <span className="text-[9px] font-black text-red-400 uppercase tracking-[0.2em] leading-none mb-0.5">GUIDE</span>
+          <span className="text-[11px] font-bold text-white leading-none">เริ่มต้น</span>
         </div>
-        <div className="w-10 h-10 bg-red-950 rounded-xl flex items-center justify-center border border-red-700/30 group-hover:rotate-12 transition-transform">
-          <HelpCircle size={20} className="text-red-400" />
+        <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform">
+          <HelpCircle size={14} className="text-white" />
         </div>
-        
-        {/* Glow */}
-        <div className="absolute inset-0 rounded-2xl bg-red-500/10 blur-xl group-hover:bg-red-500/20 transition-all -z-10" />
       </motion.button>
     </div>
     )}
@@ -729,9 +726,8 @@ export default function Home() {
               {/* Floating Icon Container */}
               <div className="relative">
                 <motion.div
-                  key={guideStep}
-                  initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
-                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                   className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 backdrop-blur-md transition-all duration-700 ${
                     guideStep === 1 ? 'bg-red-600 text-white' : 
                     guideStep === 2 ? 'bg-blue-600 text-white' : 
@@ -759,7 +755,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="px-10 pb-12 pt-2 text-center flex flex-col items-center">
+            <div className="px-6 sm:px-10 pb-12 pt-2 text-center flex flex-col items-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={guideStep}
@@ -784,7 +780,7 @@ export default function Home() {
                     {guideStep === 3 && "ถอดรหัสพฤติกรรมการใช้เงินของคุณผ่าน Avatar สัตว์ เพื่อวางแผนการเงินที่ฉลาดและเข้ากับไลฟ์สไตล์"}
                     {guideStep === 4 && "สไตล์การอ่านหนังสือสะท้อนตัวตน 16 รูปแบบ ค้นพบ Reading Soul ของคุณว่าตรงกับนักอ่านสายไหน"}
                     {guideStep === 5 && "สร้างคำคมฮีลใจหรือแคปชันสุด Vibe เฉพาะตัวคุณด้วย AI ที่เข้าใจอารมณ์ของคุณที่สุดในตอนนี้"}
-                    {guideStep === 6 && "เก็บสถิติ XP, เลเวล, สะสมเหรียญความสำเร็จ และรับ AI Insight ส่วนตัวใน Dashboard สุดพรีเมียม!"}
+                    {guideStep === 6 && "เก็บสถิติ XP, เลเวล, ความสำเร็จรายวัน และรับ AI Insight ส่วนตัวใน Dashboard สุดพรีเมียม!"}
                   </p>
                 </motion.div>
               </AnimatePresence>
@@ -812,7 +808,7 @@ export default function Home() {
                     if (!user) handleLogin();
                   }
                 }}
-                className={`w-full py-5 rounded-[2rem] font-black text-sm tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-3 active:scale-95 shadow-2xl ${
+                className={`w-full py-5 rounded-[2rem] font-black text-[12px] sm:text-sm tracking-[0.1em] sm:tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-2 sm:gap-3 active:scale-95 shadow-2xl ${
                   guideStep === totalGuideSteps 
                     ? 'bg-white text-slate-900 hover:bg-slate-50' 
                     : 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-500 hover:to-blue-500 shadow-blue-900/20'

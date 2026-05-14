@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -624,7 +624,7 @@ const formatAnalysisText = (text: string) => {
 };
 
 // --- Component: AvatarDisplay (เวอร์ชันขยายขนาด ใหญ่สะใจคุณฟุ้ย! 🔥) ---
-const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: number; gender: "male" | "female"; streak?: number }) => {
+const AvatarDisplay = ({ currentLevel, gender, streak = 0, isCompact = false }: { currentLevel: number; gender: "male" | "female"; streak?: number; isCompact?: boolean }) => {
   const avatarData = React.useMemo(() => {
     // 💡 Logic เลือกรูปเดิม
     const suffix = gender === 'female' ? '-w' : '';
@@ -640,7 +640,7 @@ const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: num
   }, [currentLevel, gender]);
 
   return (
-    <div className="relative flex items-center justify-center group/avatar p-6">
+    <div className="relative flex items-center justify-center group/avatar p-6 isolate">
       {/* 🌈 Aura Effect (Milestone Reward) */}
       {streak >= 7 && (
         <motion.div
@@ -655,7 +655,7 @@ const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: num
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className={`absolute w-[140%] h-[140%] rounded-full blur-[60px] z-0 pointer-events-none
+          className={`absolute ${isCompact ? 'w-[115%] h-[115%] blur-[30px]' : 'w-[140%] h-[140%] blur-[60px]'} rounded-full z-[-1] pointer-events-none
              ${streak >= 30 ? 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600' :
               streak >= 14 ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-indigo-600' :
                 'bg-gradient-to-tr from-blue-400 via-cyan-400 to-teal-400'}`}
@@ -792,11 +792,15 @@ export default function DashboardPage() {
       // อัปเดตใน Database
       await updateDoc(userRef, {
         wheelPlanDay: newDay,
+        wheelPlanSkips: 0,
+        lastSkipDate: "",
         completedQuestIds: [] // 🧹 ล้างเควสที่เคยทำแล้วออกเพื่อให้เริ่มวันใหม่ได้
       });
 
       // อัปเดตใน State ทันทีเพื่อให้ UI เปลี่ยน
       setWheelPlanDay(newDay);
+      setWheelPlanSkips(0);
+      setLastSkipDate("");
       setCompletedQuests([]);
 
       alert("เริ่มต้นเส้นทางเดิม วันที่ 1 อีกครั้ง ลุยเลยครับ!");
@@ -805,25 +809,65 @@ export default function DashboardPage() {
       alert("เกิดข้อผิดพลาดในการรีเซ็ตวัน");
     }
   };
-  
+
   const handleSkipWheelQuest = async () => {
     if (!user) return;
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-    
+
     if (lastSkipDate === today) return;
-    
+
     try {
       const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        wheelPlanSkips: increment(1),
-        wheelPlanDay: increment(1),
-        lastSkipDate: today
-        // ไม่ใส่ arrayUnion(1) เพื่อไม่ให้นับ Progress เควสประจำวัน
-      });
-      setWheelPlanSkips(prev => prev + 1);
-      setWheelPlanDay(prev => prev + 1);
-      setLastSkipDate(today);
-      alert("ดีแล้วที่รู้ลิมิตตัวเอง วันนี้พักก่อนน้า พรุ่งนี้ค่อยมาลุย Day ถัดไปกัน! 🌱");
+      const newSkips = wheelPlanSkips + 1;
+      const newDay = wheelPlanDay + 1;
+
+      // 🏆 [NEW] จ่ายโบนัสถ้าข้ามวันสุดท้าย (จบแผน)
+      if (newDay === 7) {
+        let bonusXP = 0;
+        let milestoneName = "";
+        let modalType: "GREAT" | "GOOD" = "GOOD";
+
+        if (newSkips >= 1 && newSkips <= 2) {
+          bonusXP = 50;
+          milestoneName = "GREAT RUN!";
+          modalType = "GREAT";
+        } else {
+          bonusXP = 20;
+          milestoneName = "GOOD RUN!";
+          modalType = "GOOD";
+        }
+
+        setRewardModalData({
+          title: milestoneName,
+          bonusXP: bonusXP,
+          message: `จบแผน 7 วันแล้ว! วันนี้คุณเลือกที่จะพักผ่อน รวมทำสำเร็จทั้งหมด ${7 - newSkips} วันครับ`,
+          type: modalType
+        });
+
+        await updateDoc(userRef, {
+          wheelPlanSkips: newSkips,
+          wheelPlanDay: newDay,
+          lastSkipDate: today,
+          totalXP: increment(bonusXP)
+        });
+
+        setWheelPlanSkips(newSkips);
+        setWheelPlanDay(newDay);
+        setLastSkipDate(today);
+        setTotalXP(prev => prev + bonusXP);
+        setShowPerfectWeekModal(true);
+      } else {
+        // กรณีข้ามวันปกติ (1-6)
+        await updateDoc(userRef, {
+          wheelPlanSkips: newSkips,
+          wheelPlanDay: newDay,
+          lastSkipDate: today
+        });
+        setWheelPlanSkips(newSkips);
+        setWheelPlanDay(newDay);
+        setLastSkipDate(today);
+        alert("ดีแล้วที่รู้ลิมิตตัวเอง วันนี้พักก่อนน้า พรุ่งนี้ค่อยมาลุย Day ถัดไปกัน! 🌱");
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -917,6 +961,13 @@ export default function DashboardPage() {
   const [lastRerollDate, setLastRerollDate] = useState(""); // 👈 วันที่สุ่มล่าสุด
   const [slotSeeds, setSlotSeeds] = useState<number[]>([0, 0, 0, 0, 0, 0]); // 👈 Seeds รายข้อ
   const [showRerollConfirm, setShowRerollConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันสุ่มเควส
+  const [showPerfectWeekModal, setShowPerfectWeekModal] = useState(false);
+  const [rewardModalData, setRewardModalData] = useState({
+    title: "PERFECT WEEK!",
+    bonusXP: 100,
+    message: "ยินดีด้วย! คุณทำแผนครบ 7 วันต่อเนื่องโดยไม่กดข้ามเลย",
+    type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
+  });
 
   // --- ภายใน DashboardPage Component ---
   const [gender, setGender] = useState<"male" | "female">("male");
@@ -1001,6 +1052,16 @@ export default function DashboardPage() {
       return () => clearTimeout(timer);
     }
   }, [showLevelUp, pendingDailySuccess]);
+
+  // 🛡️ ซ่อน Bottom Nav เมื่อเปิด Modal ฉลอง
+  useEffect(() => {
+    if (showPerfectWeekModal) {
+      document.body.classList.add('hide-bottom-nav');
+    } else {
+      document.body.classList.remove('hide-bottom-nav');
+    }
+    return () => document.body.classList.remove('hide-bottom-nav');
+  }, [showPerfectWeekModal]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -1103,12 +1164,12 @@ export default function DashboardPage() {
           if (thisWeekSnap.exists()) {
             const data = thisWeekSnap.data();
             setWeeklyData({
-              wheel: Math.min(7, data.wheel || 0), 
-              disc: Math.min(7, data.disc || 0), 
-              money: Math.min(7, data.money || 0), 
+              wheel: Math.min(7, data.wheel || 0),
+              disc: Math.min(7, data.disc || 0),
+              money: Math.min(7, data.money || 0),
               library: Math.min(7, data.library || 0),
-              wildcard: Math.min(7, data.wildcard || 0), 
-              challenge: Math.min(7, data.challenge || 0), 
+              wildcard: Math.min(7, data.wildcard || 0),
+              challenge: Math.min(7, data.challenge || 0),
               momentum_count: data.momentum_count || 0
             });
             thisWeekTotal = Math.min(42, (data.wheel || 0) + (data.disc || 0) + (data.money || 0) + (data.library || 0) + (data.wildcard || 0) + (data.challenge || 0));
@@ -1159,11 +1220,11 @@ export default function DashboardPage() {
               }
             }
 
-            setStreakCount(currentStreak); // ใช้ค่าที่เช็กความถูกต้องแล้ว
+            setStreakCount(currentStreak);
             setWheelPlanDay(userData.wheelPlanDay || 0);
             setWheelPlanSkips(userData.wheelPlanSkips || 0);
-            setPerfectWeeks(userData.perfectWeeks || 0);
             setLastSkipDate(userData.lastSkipDate || "");
+            setPerfectWeeks(userData.perfectWeeks || 0);
             setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
             setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
             setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
@@ -1739,7 +1800,7 @@ export default function DashboardPage() {
 
     // 🎯 [NEW LOGIC] จัดการแผน AI: ให้เวลา 1 วันสำหรับ Audit
     let wheelQuestSet = false;
-    
+
     if (lastSkipDate === todayDateStr) {
       qList[0].title = `🌱 พักกายพักใจก่อนนะ พรุ่งนี้ค่อยลุย DAY ${Math.min(7, wheelPlanDay + 1)}/7 ต่อ!`;
       qList[0].xp = 0;
@@ -1843,7 +1904,7 @@ export default function DashboardPage() {
       if (id === 'special-01') return sum + 20;
 
       if (id === 1 && lastSkipDate === todayDateStr) return sum + 0;
-      
+
       // 2. เควสปกติหาจาก dailyQuests
       const quest = dailyQuests.find(q => q.id === id);
 
@@ -1949,6 +2010,8 @@ export default function DashboardPage() {
     const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
     const questType = quest?.type || (id === 'special-01' ? "SPECIAL" : "OTHER");
 
+    let xpChange = isDone ? -xp : xp;
+
     // 🌟 [NEW LOGIC] จัดการ Wheel Plan Day แยกต่างหาก
     let newWheelDay = wheelPlanDay;
     if (id === 1) { // ข้อ Wheel เสมอ
@@ -1961,19 +2024,68 @@ export default function DashboardPage() {
       } else {
         newWheelDay = isDone ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay + 1;
         setWheelPlanDay(newWheelDay);
-        
-        // แจก Perfect Badge
-        if (!isDone && newWheelDay === 7 && wheelPlanSkips === 0 && user) {
-          updateDoc(doc(db, "users", user.uid), { perfectWeeks: increment(1) });
-          setPerfectWeeks(prev => prev + 1);
-          setTimeout(() => alert("🎉 ยินดีด้วย! คุณได้รับตรา Perfect Week"), 1000);
+
+        // 🏆 [REVISED] Final Plan Rewards (จ่ายโบนัสก้อนเดียวตอนจบวันที่ 7)
+        if (!isDone && newWheelDay === 7 && user) {
+          let bonusXP = 0;
+          let milestoneName = "";
+          let isPerfect = false;
+
+          // คำนวณตามจำนวนวันที่ "ไม่ข้าม" (Skips)
+          if (wheelPlanSkips === 0) {
+            bonusXP = 100;
+            milestoneName = "PERFECT WEEK!";
+            isPerfect = true;
+          } else if (wheelPlanSkips >= 1 && wheelPlanSkips <= 2) {
+            bonusXP = 50;
+            milestoneName = "GREAT RUN!";
+          } else if (wheelPlanSkips >= 3 && wheelPlanSkips <= 6) {
+            bonusXP = 20;
+            milestoneName = "GOOD RUN!";
+          }
+
+          if (bonusXP > 0) {
+            let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
+            if (isPerfect) modalType = "PERFECT";
+            else if (wheelPlanSkips <= 2) modalType = "GREAT";
+
+            setRewardModalData({
+              title: milestoneName,
+              bonusXP: bonusXP,
+              message: isPerfect
+                ? "คุณพิชิตแผน Wheel of Life ครบ 7 วันต่อเนื่องโดยไม่มีการกดข้ามแม้แต่วันเดียว!"
+                : `จบแผน 7 วันแล้ว! คุณทำสำเร็จทั้งหมด ${7 - wheelPlanSkips} วัน พยายามต่อไปนะครับ!`,
+              type: modalType
+            });
+
+            if (isPerfect) {
+              setPerfectWeeks(prev => prev + 1);
+            }
+
+            // 🌟 [FIX]: รวมโบนัสเข้ากับ xpChange เพื่อให้บันทึกทีเดียวท้ายฟังก์ชัน
+            xpChange += bonusXP;
+            setTotalXP(prev => prev + bonusXP);
+            setShowPerfectWeekModal(true);
+          }
+        }
+        // 🛡️ [ANTI-EXPLOIT]: ถ้ากดยกเลิก Day 7 ให้ดึงโบนัสคืนด้วย
+        else if (isDone && wheelPlanDay === 7) {
+          let bonusToSubtract = 0;
+          if (wheelPlanSkips === 0) bonusToSubtract = 100;
+          else if (wheelPlanSkips <= 2) bonusToSubtract = 50;
+          else if (wheelPlanSkips <= 6) bonusToSubtract = 20;
+
+          if (bonusToSubtract > 0) {
+            xpChange -= bonusToSubtract;
+            setTotalXP(prev => prev - bonusToSubtract);
+            if (wheelPlanSkips === 0) setPerfectWeeks(prev => Math.max(0, prev - 1));
+          }
         }
       }
     }
 
     // 2. คำนวณค่าต่างๆ ล่วงหน้า
     let actualXP = xp;
-    let xpChange = isDone ? -actualXP : actualXP;
 
     // 3. เตรียมข้อมูล Array ใหม่
     let newCompleted = isDone
@@ -2002,7 +2114,7 @@ export default function DashboardPage() {
       const oldCount = completedQuests.length;
 
       // 🔥 [Logic Streak ใหม่: ต้องครบ 3 ถึงนับเป็น 1 วัน] 🔥
-      if (!isDone && newCount === 3) {
+      if (!isDone && oldCount < 3 && newCount >= 3) {
         const userSnap = await getDoc(userRef);
         const lastDate = userSnap.data()?.lastQuestDate;
 
@@ -2101,14 +2213,25 @@ export default function DashboardPage() {
       }
 
       // 4. บันทึกลง Firebase (User Profile หลัก)
-      await setDoc(userRef, {
+      const finalUpdates: any = {
         totalXP: finalNewXP,
         completedQuestIds: newCompleted,
         lastQuestDate: newLastQuestDate,
         lastActiveDate: todayStr,
         streakCount: newStreak,
         wheelPlanDay: newWheelDay
-      }, { merge: true });
+      };
+
+      // เพิ่ม/ลด Perfect Week ตามความเหมาะสม
+      if (id === 1 && wheelPlanSkips === 0) {
+        if (!isDone && newWheelDay === 7) {
+          finalUpdates.perfectWeeks = increment(1);
+        } else if (isDone && wheelPlanDay === 7) {
+          finalUpdates.perfectWeeks = increment(-1);
+        }
+      }
+
+      await setDoc(userRef, finalUpdates, { merge: true });
 
     } catch (error) {
       console.error("Error toggling quest:", error);
@@ -2466,18 +2589,18 @@ export default function DashboardPage() {
             exit={{ scale: 0.5, opacity: 0, rotate: 45 }}
             className="fixed top-20 right-4 md:right-8 z-[90] pointer-events-auto"
           >
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowFloatingXP(!showFloatingXP);
               }}
               className="relative flex flex-col items-center justify-center w-[56px] h-[56px] md:w-[64px] md:h-[64px] rounded-full cursor-pointer group hover:scale-105 active:scale-95 transition-transform duration-300 focus:outline-none"
             >
-              
+
               {/* Premium Glass Background */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/80" />
               <div className="absolute inset-1 bg-gradient-to-tl from-slate-100/50 to-transparent rounded-full pointer-events-none" />
-              
+
               {/* SVG Circular Progress */}
               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 36 36">
                 <defs>
@@ -2487,38 +2610,38 @@ export default function DashboardPage() {
                     <stop offset="100%" stopColor="#ef4444" />
                   </linearGradient>
                   <filter id="glow">
-                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
                     <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
                 </defs>
-                
+
                 {/* Track */}
                 <path className="text-slate-200/60" strokeWidth="2.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                
+
                 {/* Progress Bar */}
-                <path 
-                  className="transition-all duration-1000 ease-out" 
-                  strokeDasharray={`${currentLevelXP}, 100`} 
-                  strokeLinecap="round" 
-                  strokeWidth="2.5" 
-                  stroke="url(#xp-gradient)" 
-                  fill="none" 
+                <path
+                  className="transition-all duration-1000 ease-out"
+                  strokeDasharray={`${currentLevelXP}, 100`}
+                  strokeLinecap="round"
+                  strokeWidth="2.5"
+                  stroke="url(#xp-gradient)"
+                  fill="none"
                   filter="url(#glow)"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
-              
+
               {/* Center Content */}
               <div className="relative z-10 flex flex-col items-center justify-center pt-0.5 drop-shadow-sm pointer-events-none">
                 <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-[2px]">LV</span>
                 <span className="text-[18px] md:text-[22px] font-black bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 bg-clip-text text-transparent leading-none">{currentLevel}</span>
               </div>
-              
+
               {/* Tooltip on Tap/Hover (Premium Style) */}
-              <div 
+              <div
                 className={`absolute top-[calc(100%+12px)] right-[-8px] bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[11px] font-bold transition-all duration-300 whitespace-nowrap shadow-[0_10px_25px_rgba(0,0,0,0.2)] pointer-events-none border border-white/10 origin-top-right z-50
                 ${showFloatingXP ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
               >
@@ -2557,8 +2680,8 @@ export default function DashboardPage() {
               {/* 💡 ฉากหลังและเอฟเฟกต์แสง */}
               <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none z-0">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 group-hover:h-3 transition-all duration-300" />
-                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-emerald-500/10 to-cyan-500/10 blur-[80px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-emerald-500/5 to-cyan-500/5 blur-[80px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-10 -right-20 opacity-10 rotate-12 hidden md:block transition-transform duration-700 group-hover:rotate-45 group-hover:scale-110">
                   <BrainCircuit size={300} strokeWidth={1} />
                 </div>
@@ -2836,52 +2959,52 @@ export default function DashboardPage() {
                       {/* 📚 หนังสือ (Library of Souls) - ถูกนำออกไปแสดงใน Player Card แทน */}
                     </div>
                     {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
-                    <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap sm:flex-nowrap px-2">
+                    <div className="flex flex-col items-center gap-2.5 w-full px-2">
+                      {/* Row 1: Streak & Perfect Week */}
+                      <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full">
+                        {/* Streak Badge */}
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                          <Flame size={12} className="text-orange-500 fill-current shrink-0" />
+                          <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
+                            {streakCount} Days
+                          </span>
+                        </div>
 
-                      {/* Streak Badge */}
-                      <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                        <Flame size={12} className="text-orange-500 fill-current shrink-0" />
-                        <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
-                          {streakCount} Days
-                        </span>
+
                       </div>
 
-                      {/* DISC Badge */}
-                      {lastDisc && (
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                          <Zap size={12} className="text-blue-400 shrink-0" />
-                          <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
-                            {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Perfect Week Badge */}
-                      {perfectWeeks > 0 && (
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-yellow-500/30 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-yellow-500/20" title="ทำแผน Wheel of Life 7 วันสำเร็จแบบ 100%">
-                          <span className="text-[9px] sm:text-[10px] font-black text-yellow-400 tracking-wide whitespace-nowrap">
-                            🎖️ Perfect x{perfectWeeks}
-                          </span>
-                        </div>
-                      )}
+                      {/* Row 2: DISC, Money, Library of Souls */}
+                      {(lastDisc || lastMoney || lastLibrarySoul) && (
+                        <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap">
+                          {/* DISC Badge */}
+                          {lastDisc && (
+                            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                              <Zap size={12} className="text-blue-400 shrink-0" />
+                              <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
+                                {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
+                              </span>
+                            </div>
+                          )}
 
-                      {/* Money Badge */}
-                      {lastMoney && (
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                          <Star size={12} className="text-amber-400 fill-current shrink-0" />
-                          <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
-                            {MONEY_DATA[lastMoney.resultKey]?.title}
-                          </span>
-                        </div>
-                      )}
+                          {/* Money Badge */}
+                          {lastMoney && (
+                            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                              <Star size={12} className="text-amber-400 fill-current shrink-0" />
+                              <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
+                                {MONEY_DATA[lastMoney.resultKey]?.title}
+                              </span>
+                            </div>
+                          )}
 
-                      {/* Library of Souls Badge */}
-                      {lastLibrarySoul && (
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-emerald-500/20">
-                          <BookOpen size={12} className="text-emerald-400 shrink-0" />
-                          <span className="text-[9px] sm:text-[10px] font-black text-emerald-300 tracking-wide whitespace-nowrap">
-                            {lastLibrarySoul.type}
-                          </span>
+                          {/* Library of Souls Badge */}
+                          {lastLibrarySoul && (
+                            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-emerald-500/20">
+                              <BookOpen size={12} className="text-emerald-400 shrink-0" />
+                              <span className="text-[9px] sm:text-[10px] font-black text-emerald-300 tracking-wide whitespace-nowrap">
+                                {lastLibrarySoul.type}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2932,8 +3055,8 @@ export default function DashboardPage() {
             </header>
             <div className="lg:col-span-1 bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl border border-slate-800 relative overflow-hidden group transition-all duration-500 hover:border-slate-700">
               {/* ✨ แสงฟุ้งพื้นหลัง (Premium Glow) */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-orange-500/10 to-yellow-500/5 blur-[80px] rounded-full pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-500/5 to-purple-500/5 blur-[60px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-orange-500/5 to-yellow-500/5 blur-[80px] rounded-full pointer-events-none z-0" />
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-500/5 to-purple-500/5 blur-[60px] rounded-full pointer-events-none z-0" />
 
               {/* เส้นขอบสีด้านบน */}
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-yellow-400 to-red-500 opacity-80" />
@@ -3088,8 +3211,8 @@ export default function DashboardPage() {
           <div className="mb-8 bg-white border border-slate-100 hover:border-orange-100 rounded-[2.5rem] p-6 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(249,115,22,0.08)] relative overflow-hidden group transition-all duration-500">
 
             {/* ✨ แสงฟุ้งตกแต่งพื้นหลัง */}
-            <div className="absolute -top-24 -left-24 w-80 h-80 bg-gradient-to-br from-orange-400/10 to-yellow-400/10 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-gradient-to-tl from-red-400/5 to-orange-400/5 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+            <div className="absolute -top-24 -left-24 w-80 h-80 bg-gradient-to-br from-orange-400/5 to-yellow-400/5 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
+            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-gradient-to-tl from-red-400/5 to-orange-400/5 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
 
             {/* เส้นขอบสีด้านบน */}
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-400 to-red-500 opacity-90 group-hover:h-3 transition-all duration-300" />
@@ -3294,7 +3417,7 @@ export default function DashboardPage() {
                         {quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title}
                       </p>
                       {quest.id === 1 && !quest.title.includes('สรุปผล') && (
-                        <div 
+                        <div
                           className="flex items-center gap-1.5 mt-2 cursor-pointer opacity-90 hover:opacity-100 transition-opacity w-fit bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100/50"
                           onClick={(e) => { e.stopPropagation(); setShowWheelRulesModal(true); }}
                         >
@@ -3314,7 +3437,7 @@ export default function DashboardPage() {
                           <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border shadow-sm transition-all ${isDone ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'}`}>
                             +{quest.xp} XP
                           </span>
-                          
+
                           {quest.id === 1 && !isDone && quest.title.includes('DAY') && lastSkipDate !== todayDateStr && (
                             <button
                               onClick={(e) => { e.stopPropagation(); handleSkipWheelQuest(); }}
@@ -3497,8 +3620,8 @@ export default function DashboardPage() {
                     )}
 
                     {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-red-400/10 to-orange-400/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-400/10 to-rose-400/10 blur-2xl rounded-full -ml-10 -mb-10 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-red-400/5 to-orange-400/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-400/5 to-rose-400/5 blur-2xl rounded-full -ml-10 -mb-10 pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-orange-500 opacity-90 group-hover:h-3 transition-all duration-300" />
 
                     <div className="flex flex-col md:flex-row gap-8 items-center relative z-10 pt-2 h-full">
@@ -3645,8 +3768,8 @@ export default function DashboardPage() {
                     className="h-full bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 relative overflow-hidden flex flex-col group hover:shadow-xl hover:border-indigo-200 transition-all duration-500"
                   >
                     {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-400/20 to-cyan-400/20 blur-2xl rounded-full -ml-10 -mb-10 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-400/10 to-cyan-400/10 blur-2xl rounded-full -ml-10 -mb-10 pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
 
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-90 group-hover:h-3 transition-all duration-300" />
 
@@ -3713,11 +3836,11 @@ export default function DashboardPage() {
                     )}
 
                     {/* Ambient Glow */}
-                    <div className={`absolute top-0 right-0 w-80 h-80 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none opacity-10 transition-colors duration-700 ${discMainChar === 'D' ? 'bg-red-400' :
+                    <div className={`absolute top-0 right-0 w-80 h-80 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none opacity-10 transition-colors duration-700 z-0 ${discMainChar === 'D' ? 'bg-red-400' :
                       discMainChar === 'I' ? 'bg-orange-400' :
                         discMainChar === 'S' ? 'bg-emerald-400' : 'bg-blue-400'
                       }`} />
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-300 via-blue-600 to-blue-300 opacity-80" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-300 via-blue-600 to-blue-300 opacity-80 z-0" />
 
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastDisc ? (
@@ -3828,8 +3951,8 @@ export default function DashboardPage() {
                     )}
 
                     {/* ✨ Ambient Light & Gold Top Bar */}
-                    <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-400/5 to-orange-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-amber-400/10 transition-colors duration-700" />
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-200 via-orange-400 to-amber-200 opacity-80" />
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-400/5 to-orange-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-amber-400/10 transition-colors duration-700 z-0" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-200 via-orange-400 to-amber-200 opacity-80 z-0" />
 
                     {/* --- ส่วนของ Money Avatar --- */}
                     {/* --- ส่วนของ Money Avatar --- */}
@@ -3955,8 +4078,8 @@ export default function DashboardPage() {
                         <Zap size={10} className="fill-white" /> +50 XP
                       </motion.div>
                     )}
-                    <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-emerald-400/5 to-teal-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-emerald-400/10 transition-colors duration-700" />
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-300 via-teal-500 to-emerald-300 opacity-80 transition-all duration-500 group-hover:h-2" />
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-emerald-400/5 to-teal-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-emerald-400/10 transition-colors duration-700 z-0" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-300 via-teal-500 to-emerald-300 opacity-80 transition-all duration-500 group-hover:h-2 z-0" />
 
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastLibrarySoul ? (
@@ -4540,14 +4663,14 @@ export default function DashboardPage() {
 
                 {/* 🏗️ 2. Avatar Section: ดึงตัวละครขึ้นมาเพื่อชดเชยขนาดรูปหนังสือด้านบน */}
                 {/* 🎯 mt-4: ลดจาก mt-12 เพื่อให้ตัวละครและ Stats อยู่ในระดับที่เหมาะสม */}
-                <div className="relative z-10 mb-2 mt-4 h-48 flex justify-center items-end">
+                <div className="relative z-0 mb-2 mt-4 h-48 flex justify-center items-end">
 
                   {/* ✨ แสง Glow พื้นหลัง (จัดให้อยู่กึ่งกลางเป๊ะตามตัวคน) */}
                   <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
 
                   {/* 👤 รูป Avatar หลัก - แก้ไขขนาด: ลบสเกล-110 sm:scale-125 ออกไป */}
                   <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-90 origin-bottom">
-                    <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
+                    <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
                   </div>
 
                   {/* 🐾 สัตว์เลี้ยง */}
@@ -4891,13 +5014,13 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="relative z-10 w-full flex flex-col items-center h-full">
-                  <div className="mt-2 mb-4 text-center">
+                  <div className="mt-2 mb-4 text-center relative z-10">
                     <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.4em] mb-1 block">Daily Goal Achieved</span>
                     <h3 className="text-xl font-black text-white tracking-tight">ยินดีด้วย ! คุณทำสำเร็จแล้ว</h3>
                   </div>
 
                   {/* 🏆 Rank & Streak Section (New Layout) */}
-                  <div className="flex flex-col items-center gap-2 mb-4">
+                  <div className="flex flex-col items-center gap-2 mb-4 relative z-10">
                     <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black flex items-center gap-2 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} shadow-lg shadow-black/20`}>
                       <span>{rankInfo.emoji}</span>
                       <span className="uppercase tracking-widest">{rankInfo.name} RANK</span>
@@ -4921,13 +5044,13 @@ export default function DashboardPage() {
 
                   {/* 👤 Large Avatar */}
                   <div className="relative mb-0 flex flex-col items-center flex-1 justify-start pt-0">
-                    <div className="relative z-10 scale-[1.15] origin-bottom -translate-y-5">
-                      <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
+                    <div className="relative z-0 scale-[1.15] origin-bottom -translate-y-5">
+                      <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
                     </div>
                   </div>
 
                   {/* 🧬 Identity Row (Level + Personality) */}
-                  <div className="mb-4 flex flex-wrap justify-center gap-2 px-6">
+                  <div className="mb-4 flex flex-wrap justify-center gap-2 px-6 relative z-10">
                     {/* 🥇 Solid Level Badge */}
                     <div className="px-4 py-2 bg-yellow-400 border border-yellow-500 rounded-2xl flex items-center gap-2 shadow-lg shadow-yellow-500/20">
                       <Trophy size={12} className="text-slate-900 fill-current" />
@@ -4949,7 +5072,7 @@ export default function DashboardPage() {
                     )}
                   </div>
                   {/* 🎯 Next Milestone Indicator */}
-                  <div className="mb-6 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
+                  <div className="mb-6 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 relative z-10">
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
                       {streakCount < 7 ? `${7 - streakCount} DAYS TO BLUE AURA` :
@@ -5240,7 +5363,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-            {/* 🎓 Premium Onboarding Tutorial Modal */}
+      {/* 🎓 Premium Onboarding Tutorial Modal */}
       <AnimatePresence>
         {showTutorial && (
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
@@ -5261,7 +5384,7 @@ export default function DashboardPage() {
               <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
               {/* Skip Button */}
-              <button 
+              <button
                 onClick={finishTutorial}
                 className="absolute top-4 right-4 text-[10px] font-bold text-slate-400 hover:text-slate-600 bg-white/80 backdrop-blur border border-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded-full transition-all z-20"
               >
@@ -5274,9 +5397,9 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 rounded-[2rem] border-2 border-red-200/50" />
                     <img src="/logo-invert.png" alt="Upskill Lightbulb" className="w-16 h-16 object-contain drop-shadow-md" />
                   </div>
-                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ยินดีต้อนรับสู่<br/><span className="bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">Upskill Everyday</span></h3>
+                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ยินดีต้อนรับสู่<br /><span className="bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">Upskill Everyday</span></h3>
                   <p className="text-sm text-slate-500 leading-relaxed mb-2 font-medium">
-                    พื้นที่ส่วนตัวสำหรับพัฒนาตัวเอง<br/>ให้เก่งขึ้นและเป็นเวอร์ชันที่ดีกว่าในทุกๆ วัน
+                    พื้นที่ส่วนตัวสำหรับพัฒนาตัวเอง<br />ให้เก่งขึ้นและเป็นเวอร์ชันที่ดีกว่าในทุกๆ วัน
                   </p>
                 </motion.div>
               )}
@@ -5290,7 +5413,7 @@ export default function DashboardPage() {
                   <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">สร้าง <span className="text-emerald-600">"ตัวตน"</span> ของคุณ</h3>
                   <div className="bg-emerald-50/80 border border-emerald-100 p-4 rounded-2xl w-full">
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
-                      เริ่มแรกให้กดไปที่แท็บ <span className="font-bold text-emerald-700">"ตัวตน"</span> ด้านล่าง เพื่อทำแบบประเมินและ <strong>รับ XP ก้อนแรก!</strong><br/>
+                      เริ่มแรกให้กดไปที่แท็บ <span className="font-bold text-emerald-700">"ตัวตน"</span> ด้านล่าง เพื่อทำแบบประเมินและ <strong>รับ XP ก้อนแรก!</strong><br />
                       <span className="text-[11px] text-emerald-800 mt-2 block font-bold bg-emerald-100/50 p-2 rounded-lg">
                         ✨ คุณจะได้รับ Avatar ประจำตัวสุดเท่ และข้อมูลภารกิจที่ AI ออกแบบมาเพื่อคุณโดยเฉพาะ!
                       </span>
@@ -5307,8 +5430,8 @@ export default function DashboardPage() {
                   <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ทำภารกิจ <span className="text-orange-500">& อัปเลเวล</span></h3>
                   <div className="bg-orange-50/80 border border-orange-100 p-4 rounded-2xl w-full">
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
-                      เข้ามาเช็กอินที่แท็บ <span className="font-bold text-orange-600">"ภารกิจ"</span> ทุกวัน<br/>
-                      เพื่อสะสม XP อัปเลเวล ปลดล็อกความสำเร็จ<br/>
+                      เข้ามาเช็กอินที่แท็บ <span className="font-bold text-orange-600">"ภารกิจ"</span> ทุกวัน<br />
+                      เพื่อสะสม XP อัปเลเวล ปลดล็อกความสำเร็จ<br />
                       <span className="text-[11px] text-slate-500 mt-1 block">และรักษาสถิติต่อเนื่อง (Streak) ของคุณ!</span>
                     </p>
                   </div>
@@ -5324,8 +5447,8 @@ export default function DashboardPage() {
                   <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ศูนย์รวม <span className="text-purple-600">"อัพสกิล"</span></h3>
                   <div className="bg-purple-50/80 border border-purple-100 p-4 rounded-2xl w-full">
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
-                      แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span> ด้านล่าง<br/>
-                      เพื่อใช้งานโหมด <strong>ทำสมาธิ (Deep Work)</strong> เพิ่มโฟกัส<br/>
+                      แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span> ด้านล่าง<br />
+                      เพื่อใช้งานโหมด <strong>ทำสมาธิ (Deep Work)</strong> เพิ่มโฟกัส<br />
                       <span className="text-[11px] text-slate-500 mt-1 block">และพูดคุยกับ <strong>AI Mentor ส่วนตัว</strong> ที่เข้าใจคุณที่สุด!</span>
                     </p>
                   </div>
@@ -5340,16 +5463,15 @@ export default function DashboardPage() {
               </div>
 
               {/* Premium Action Button */}
-              <button 
+              <button
                 onClick={() => {
                   if (tutorialStep < 4) setTutorialStep(prev => prev + 1);
                   else finishTutorial();
                 }}
-                className={`w-full py-4 rounded-2xl font-black text-[15px] transition-all duration-300 z-10 shadow-[0_8px_20px_rgba(0,0,0,0.1)] active:scale-95 ${
-                  tutorialStep === 4 
-                    ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400' 
-                    : 'bg-slate-900 text-white hover:bg-slate-800'
-                }`}
+                className={`w-full py-4 rounded-2xl font-black text-[15px] transition-all duration-300 z-10 shadow-[0_8px_20px_rgba(0,0,0,0.1)] active:scale-95 ${tutorialStep === 4
+                  ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
               >
                 {tutorialStep < 4 ? 'ถัดไป' : 'เข้าใจแล้ว ลุยเลย! 🚀'}
               </button>
@@ -5376,12 +5498,12 @@ export default function DashboardPage() {
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-bl-full -z-10" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-500/10 rounded-tr-full -z-10" />
-              
+
               <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-orange-200">
                 <PieChart size={24} />
               </div>
 
-              <h3 className="text-xl font-black text-slate-800 mb-2">กติกาแผน 7 วัน <br/><span className="text-orange-500">Wheel of Life</span></h3>
+              <h3 className="text-xl font-black text-slate-800 mb-2">กติกาแผน 7 วัน <br /><span className="text-orange-500">Wheel of Life</span></h3>
               <p className="text-sm text-slate-600 mb-5 leading-relaxed">
                 ทำภารกิจรายวันที่ AI วิเคราะห์ให้ต่อเนื่อง 7 วัน เพื่อรับโบนัสสุดคุ้มตอนจบแผน!
               </p>
@@ -5394,7 +5516,7 @@ export default function DashboardPage() {
                     <div className="text-sm font-black text-amber-600">รับ 100 XP + ตรา Perfect Week</div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <div className="text-2xl drop-shadow-sm">🌟</div>
                   <div>
@@ -5418,12 +5540,70 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowWheelRulesModal(false)}
                 className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200"
               >
                 เข้าใจแล้ว ลุยเลย!
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- 🎖️ Modal: Plan Rewards Celebration (Dynamic) --- */}
+      <AnimatePresence>
+        {showPerfectWeekModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPerfectWeekModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[3rem] p-1 shadow-[0_0_80px_-20px_rgba(0,0,0,0.3)] overflow-hidden"
+            >
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-${rewardModalData.type === 'PERFECT' ? 'amber-400' : rewardModalData.type === 'GREAT' ? 'blue-400' : 'emerald-400'} to-transparent`} />
+              <div className={`absolute -top-24 -right-24 w-48 h-48 ${rewardModalData.type === 'PERFECT' ? 'bg-amber-500/10' : rewardModalData.type === 'GREAT' ? 'bg-blue-500/10' : 'bg-emerald-500/10'} blur-[60px] rounded-full`} />
+
+              <div className="relative p-10 text-center flex flex-col items-center">
+                <div className="relative w-24 h-24 mb-8">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    className={`absolute inset-0 ${rewardModalData.type === 'PERFECT' ? 'bg-amber-500/20' : rewardModalData.type === 'GREAT' ? 'bg-blue-500/20' : 'bg-emerald-500/20'} blur-2xl rounded-full`}
+                  />
+                  <div className={`relative w-full h-full bg-gradient-to-br ${rewardModalData.type === 'PERFECT' ? 'from-amber-400 to-yellow-600' :
+                      rewardModalData.type === 'GREAT' ? 'from-blue-400 to-indigo-600' :
+                        'from-emerald-400 to-teal-600'
+                    } rounded-3xl flex items-center justify-center shadow-2xl border border-white/20`}>
+                    {rewardModalData.type === 'PERFECT' ? <Trophy size={48} className="text-white drop-shadow-lg" /> :
+                      rewardModalData.type === 'GREAT' ? <Star size={48} className="text-white drop-shadow-lg" /> :
+                        <CheckCircle2 size={48} className="text-white drop-shadow-lg" />}
+                  </div>
+                </div>
+
+                <h2 className="text-3xl font-black text-white mb-3 tracking-tight italic">{rewardModalData.title}</h2>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  {rewardModalData.message}
+                  <br />
+                  รับโบนัส <span className={`${rewardModalData.type === 'PERFECT' ? 'text-amber-400' :
+                      rewardModalData.type === 'GREAT' ? 'text-blue-400' :
+                        'text-emerald-400'
+                    } font-bold`}>+{rewardModalData.bonusXP} XP</span> เรียบร้อยครับ!
+                </p>
+                <button
+                  onClick={() => setShowPerfectWeekModal(false)}
+                  className="w-full bg-white text-slate-900 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 transition-all duration-300 shadow-xl"
+                >
+                  รับรางวัลและปิด 🚀
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
