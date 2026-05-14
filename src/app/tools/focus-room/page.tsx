@@ -944,7 +944,7 @@ export default function FocusRoomPage() {
                   {(() => {
                     const isMyRankInTop10 = leaderboardData.some(u => u.id === user.uid);
                     
-                    if (isMyRankInTop10) return (
+                    if (isMyRankInTop10 && false) return ( // 🛠 TEST MODE: บังคับให้โชว์แถบข้างล่างเพื่อทดสอบ
                       <p className="text-[9px] text-blue-400/40 font-black uppercase tracking-[0.3em] text-center italic">
                         — ยอดเยี่ยม! คุณอยู่ใน 10 อันดับแรกแล้ว —
                       </p>
