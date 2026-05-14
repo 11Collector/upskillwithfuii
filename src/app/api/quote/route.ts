@@ -1,41 +1,40 @@
+// app/api/quote/route.ts
 import { NextResponse } from 'next/server';
-
-export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { prompt } = body; 
+    const { prompt } = await req.json();
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "ลืมใส่ GEMINI_API_KEY ในไฟล์ .env.local" }, { status: 500 });
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat", // ใช้ V3 ซึ่งเร็วและประหยัด
+        messages: [
+          { role: "system", content: "คุณคือนักเขียนคำคมมือฉมัง สไตล์ปรัชญาชีวิต" },
+          { role: "user", content: prompt }
+        ],
+        stream: false,
+        temperature: 0.7, // เพิ่มความสร้างสรรค์ให้คำคม
+        max_tokens: 200
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return NextResponse.json({ error: errorData.error?.message || "DeepSeek API Error" }, { status: response.status });
     }
-
-    // 💡 เปลี่ยนชื่อโมเดลกลับเป็น gemini-flash-latest ที่เคยทำงานได้เป๊ะๆ
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      }
-    );
 
     const data = await response.json();
+    const generatedQuote = data.choices[0].message.content.trim();
 
-    if (data.error) {
-      // ดึงข้อความ error จาก Google ออกมาตรงๆ
-      throw new Error(data.error.message);
-    }
+    return NextResponse.json({ quote: generatedQuote });
 
-    // ส่งคำตอบโครงสร้างดิบๆ กลับไปให้หน้าบ้าน
-    return NextResponse.json(data);
-    
   } catch (error: any) {
-    console.error("🚨 AI Route Error:", error);
-    return NextResponse.json({ error: error?.message || "Unknown Error" }, { status: 500 });
+    console.error("DeepSeek Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
