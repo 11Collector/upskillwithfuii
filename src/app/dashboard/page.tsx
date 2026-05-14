@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare } from "lucide-react";
@@ -697,6 +697,7 @@ const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: num
           (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
         }}
       />
+
     </div>
   );
 };
@@ -804,6 +805,28 @@ export default function DashboardPage() {
       alert("เกิดข้อผิดพลาดในการรีเซ็ตวัน");
     }
   };
+  
+  const handleSkipWheelQuest = async () => {
+    if (!user) return;
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    
+    if (lastSkipDate === today) return;
+    
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        wheelPlanSkips: increment(1),
+        wheelPlanDay: increment(1),
+        lastSkipDate: today
+        // ไม่ใส่ arrayUnion(1) เพื่อไม่ให้นับ Progress เควสประจำวัน
+      });
+      setWheelPlanSkips(prev => prev + 1);
+      setWheelPlanDay(prev => prev + 1);
+      setLastSkipDate(today);
+      alert("ดีแล้วที่รู้ลิมิตตัวเอง วันนี้พักก่อนน้า พรุ่งนี้ค่อยมาลุย Day ถัดไปกัน! 🌱");
+    } catch (e) { console.error(e); }
+  };
+
   const handleShuffleQuests = async () => {
     if (!user || !QUEST_POOL?.WHEEL) return;
 
@@ -897,7 +920,36 @@ export default function DashboardPage() {
   // --- ภายใน DashboardPage Component ---
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
-  const [wheelPlanDay, setWheelPlanDay] = useState<number>(0); // 🌟 เพิ่มตัวนี้ครับ
+  const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
+  const [wheelPlanSkips, setWheelPlanSkips] = useState<number>(0);
+  const [perfectWeeks, setPerfectWeeks] = useState<number>(0);
+  const [lastSkipDate, setLastSkipDate] = useState<string>("");
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showWheelRulesModal, setShowWheelRulesModal] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(1);
+
+  useEffect(() => {
+    if (!loading && user) {
+      const hasSeen = localStorage.getItem('hasSeenDashboardTutorial');
+      if (!hasSeen && totalXP === 0) {
+        setShowTutorial(true);
+      }
+    }
+  }, [loading, user, totalXP]);
+
+  const finishTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem('hasSeenDashboardTutorial', 'true');
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 200);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const [isRandomMode, setIsRandomMode] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showLineModal, setShowLineModal] = useState(false);
@@ -1107,7 +1159,10 @@ export default function DashboardPage() {
             }
 
             setStreakCount(currentStreak); // ใช้ค่าที่เช็กความถูกต้องแล้ว
-            setWheelPlanDay(userData.wheelPlanDay || 0); // 🌟 เพิ่มบรรทัดนี้ครับ
+            setWheelPlanDay(userData.wheelPlanDay || 0);
+            setWheelPlanSkips(userData.wheelPlanSkips || 0);
+            setPerfectWeeks(userData.perfectWeeks || 0);
+            setLastSkipDate(userData.lastSkipDate || "");
             setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
             setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
             setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
@@ -1258,6 +1313,7 @@ export default function DashboardPage() {
         totalXP: 0,
         streakCount: 0,
         wheelPlanDay: 0,
+        wheelPlanSkips: 0,
         completedQuestIds: [],
         totalFocusMinutes: 0,     // 🆕 ล้างนาทีสะสม Deep Work
         focusReflections: [],
@@ -1285,6 +1341,7 @@ export default function DashboardPage() {
       setTotalXP(0);
       setStreakCount(0);
       setWheelPlanDay(0);
+      setWheelPlanSkips(0);
       setCompletedQuests([]);
       setLastWheel(null);
       setLastDisc(null);
@@ -1295,6 +1352,9 @@ export default function DashboardPage() {
       setIsFirstWeek(true);
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
       setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
+      localStorage.removeItem('hasSeenDashboardTutorial');
+      setShowTutorial(true);
+      setTutorialStep(1);
 
       // 🚀 6. เลื่อนขึ้นไปด้านบนสุดเพื่อให้เห็นการเปลี่ยนแปลง
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1678,13 +1738,19 @@ export default function DashboardPage() {
 
     // 🎯 [NEW LOGIC] จัดการแผน AI: ให้เวลา 1 วันสำหรับ Audit
     let wheelQuestSet = false;
+    
+    if (lastSkipDate === todayDateStr) {
+      qList[0].title = `🌱 พักกายพักใจก่อนนะ พรุ่งนี้ค่อยลุย DAY ${Math.min(7, wheelPlanDay + 1)}/7 ต่อ!`;
+      qList[0].xp = 0;
+      wheelQuestSet = true;
+    }
 
-    if (isRandomMode && customQuestTitle) {
+    if (!wheelQuestSet && isRandomMode && customQuestTitle) {
       qList[0].title = customQuestTitle;
       wheelQuestSet = true;
     }
 
-    // ลำดับ 2: ถ้าไม่ได้สุ่ม ค่อยไปเช็คแผน AI 7 วัน (Logic เดิมของคุณฟุ้ย)
+    // ลำดับ 2: ถ้าไม่ได้สุ่ม ค่อยไปเช็คแผน AI 7 วัน
     if (!wheelQuestSet && lastWheel?.analysis) {
       const planSection = lastWheel.analysis.split('📅')[1];
       if (planSection) {
@@ -1702,8 +1768,13 @@ export default function DashboardPage() {
             qList[0].title = `DAY ${dayIdx + 1}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
             wheelQuestSet = true;
           } else {
-            qList[0].title = `🌟 ครบแผน 7 วันแล้ว ! ไป Audit เพื่อรับ Daily Quest รอบใหม่กันนะครับ`;
-            qList[0].xp = 0;
+            const completedDays = Math.max(0, 7 - (wheelPlanSkips || 0));
+            let bonusXp = 20;
+            if (completedDays === 7) { bonusXp = 100; }
+            else if (completedDays >= 5) { bonusXp = 50; }
+            qList[0].id = 1;
+            qList[0].xp = bonusXp;
+            qList[0].title = `🌟 สรุปผล: สำเร็จ ${completedDays}/7 วัน! (โบนัส +${bonusXp} XP)`;
             wheelQuestSet = true;
           }
         }
@@ -1718,50 +1789,7 @@ export default function DashboardPage() {
       qList[0].title = wheelPool[wheelIdx];
     }
 
-    if (lastWheel?.analysis) {
-      const planSection = lastWheel.analysis.split('📅')[1];
-      if (planSection) {
-        const planItems = planSection.split('\n')
-          .filter((l: string) => l.match(/^[1-7]\.|^-|\bDay\s?[1-7]\b/i))
-          .map((l: string) => l.replace(/^[1-7]\.\s*|^-\s*|\*\*/g, '').trim());
 
-        // ใน useMemo ของ dailyQuests
-        // ใน useMemo ของ dailyQuests
-        if (planItems.length > 0) {
-
-          // 🌟 1. เช็กว่า "วันนี้" เรากดติ๊กเควส Wheel ไปแล้วหรือยัง?
-          // (สมมติว่าไอดีเควส Wheel คือ 1 และเราเช็กจาก completedQuests นะครับ)
-          const isWheelDoneToday = completedQuests.includes(1);
-
-          // 🌟 2. คำนวณ Day ที่จะโชว์:
-          // ถ้าวันนี้เพิ่งกดติ๊กเสร็จ (isWheelDoneToday = true) -> ให้โชว์ Day ของเมื่อกี้ (ลบ 1) ไปก่อนจนกว่าจะข้ามวัน
-          // ถ้าวันนี้ยังไม่ได้กด (isWheelDoneToday = false) -> โชว์ dayIdx ปัจจุบัน
-          const currentDisplayDay = isWheelDoneToday ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay;
-
-          // 🌟 3. ใช้ currentDisplayDay แทน wheelPlanDay ในการโชว์ผล
-          if (currentDisplayDay < 7) {
-            const dayIdx = currentDisplayDay;
-            let currentDayPlan = planItems[dayIdx] || planItems[0];
-            const cleanedPlan = currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim();
-
-            qList[0].title = `DAY ${dayIdx + 1}/7 | ${cleanedPlan}`;
-            wheelQuestSet = true;
-          } else if (currentDisplayDay >= 7) { // ดัก >= 7 ไว้เผื่อบั๊ก
-            qList[0].title = `🌟 ครบแผน 7 วันแล้ว ! ไป Audit เพื่อรับ Daily Quest รอบใหม่กันนะครับ`;
-            qList[0].xp = 0;
-            wheelQuestSet = true;
-          }
-        }
-      }
-    }
-
-    // ลำดับ 3: ถ้าไม่มีอะไรเลย สุ่มจาก Pool ตามด้านที่ Gap เยอะ (ใช้ wheelSeed เพื่อให้คงที่)
-    if (!wheelQuestSet) {
-      const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
-      const x = Math.sin(wheelSeed * 1.5 * 12.9898 + 1.5 * 78.233) * 43758.5453123;
-      const wheelIdx = Math.floor((x - Math.floor(x)) * wheelPool.length);
-      qList[0].title = wheelPool[wheelIdx];
-    }
 
     // ✅ 2. ดึงจาก DISC
     const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
@@ -1813,6 +1841,8 @@ export default function DashboardPage() {
       // 1. เควสพิเศษได้ 20 เสมอ
       if (id === 'special-01') return sum + 20;
 
+      if (id === 1 && lastSkipDate === todayDateStr) return sum + 0;
+      
       // 2. เควสปกติหาจาก dailyQuests
       const quest = dailyQuests.find(q => q.id === id);
 
@@ -1921,8 +1951,23 @@ export default function DashboardPage() {
     // 🌟 [NEW LOGIC] จัดการ Wheel Plan Day แยกต่างหาก
     let newWheelDay = wheelPlanDay;
     if (id === 1) { // ข้อ Wheel เสมอ
-      newWheelDay = isDone ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay + 1;
-      setWheelPlanDay(newWheelDay);
+      // 🌟 รับโบนัสจบแผน
+      if (wheelPlanDay >= 7 && !isDone) {
+        setTotalXP(prev => prev + xp);
+        // ไม่ต้องอัปเดต wheelPlanDay แล้ว (รอเขากดเริ่มประเมินใหม่)
+        // หรือตั้งค่าเป็น 8 เพื่อไม่ให้ขึ้นซ้ำ
+        setWheelPlanDay(8);
+      } else {
+        newWheelDay = isDone ? Math.max(0, wheelPlanDay - 1) : wheelPlanDay + 1;
+        setWheelPlanDay(newWheelDay);
+        
+        // แจก Perfect Badge
+        if (!isDone && newWheelDay === 7 && wheelPlanSkips === 0 && user) {
+          updateDoc(doc(db, "users", user.uid), { perfectWeeks: increment(1) });
+          setPerfectWeeks(prev => prev + 1);
+          setTimeout(() => alert("🎉 ยินดีด้วย! คุณได้รับตรา Perfect Week"), 1000);
+        }
+      }
     }
 
     // 2. คำนวณค่าต่างๆ ล่วงหน้า
@@ -2391,8 +2436,94 @@ export default function DashboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleDevReset = async () => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        wheelPlanDay: 0,
+        wheelPlanSkips: 0,
+        lastSkipDate: "",
+        completedQuestIds: []
+      });
+      setWheelPlanDay(0);
+      setWheelPlanSkips(0);
+      setLastSkipDate("");
+      setCompletedQuests([]);
+      alert("DEV: รีเซ็ตเป็น Day 1/7 เรียบร้อยแล้ว! พร้อมทดสอบ");
+    } catch (e) { console.error(e); }
+  };
+
   return (
     <div className="min-h-screen bg-transparent px-6 md:px-8 py-4 pb-28 md:pb-4">
+      {/* 🚀 Floating Premium Circular XP */}
+      <AnimatePresence>
+        {isScrolled && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0, rotate: -45 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0.5, opacity: 0, rotate: 45 }}
+            className="fixed top-20 right-4 md:right-8 z-[90] pointer-events-auto"
+          >
+            <div className="relative flex flex-col items-center justify-center w-[56px] h-[56px] md:w-[64px] md:h-[64px] rounded-full cursor-pointer group hover:scale-105 active:scale-95 transition-transform duration-300">
+              
+              {/* Premium Glass Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/80" />
+              <div className="absolute inset-1 bg-gradient-to-tl from-slate-100/50 to-transparent rounded-full pointer-events-none" />
+              
+              {/* SVG Circular Progress */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 36 36">
+                <defs>
+                  <linearGradient id="xp-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="50%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#ef4444" />
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                
+                {/* Track */}
+                <path className="text-slate-200/60" strokeWidth="2.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                
+                {/* Progress Bar */}
+                <path 
+                  className="transition-all duration-1000 ease-out" 
+                  strokeDasharray={`${currentLevelXP}, 100`} 
+                  strokeLinecap="round" 
+                  strokeWidth="2.5" 
+                  stroke="url(#xp-gradient)" 
+                  fill="none" 
+                  filter="url(#glow)"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                />
+              </svg>
+              
+              {/* Center Content */}
+              <div className="relative z-10 flex flex-col items-center justify-center pt-0.5 drop-shadow-sm">
+                <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-[2px]">LV</span>
+                <span className="text-[18px] md:text-[22px] font-black bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 bg-clip-text text-transparent leading-none">{currentLevel}</span>
+              </div>
+              
+              {/* Tooltip on Tap/Hover (Premium Style) */}
+              <div className="absolute top-[calc(100%+12px)] right-[-8px] bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-[0_10px_25px_rgba(0,0,0,0.2)] pointer-events-none border border-white/10 transform translate-y-2 group-hover:translate-y-0 origin-top-right">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  <span>อีก <span className="text-orange-400 font-black">{100 - currentLevelXP}</span> XP อัปเลเวล!</span>
+                </div>
+                {/* สามเหลี่ยมชี้ขึ้น */}
+                <div className="absolute -top-[5px] right-[30px] md:right-[34px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[6px] border-b-slate-900/90" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-6xl mx-auto">
 
         {/* --- 🧭 Desktop Tabs Navigation (Head) --- */}
@@ -2710,6 +2841,15 @@ export default function DashboardPage() {
                           <Zap size={12} className="text-blue-400 shrink-0" />
                           <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
                             {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Perfect Week Badge */}
+                      {perfectWeeks > 0 && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-yellow-500/30 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-yellow-500/20" title="ทำแผน Wheel of Life 7 วันสำเร็จแบบ 100%">
+                          <span className="text-[9px] sm:text-[10px] font-black text-yellow-400 tracking-wide whitespace-nowrap">
+                            🎖️ Perfect x{perfectWeeks}
                           </span>
                         </div>
                       )}
@@ -3139,25 +3279,41 @@ export default function DashboardPage() {
                       </div>
 
                       <p className={`text-[14px] md:text-[15px] font-bold leading-snug 
-          ${isDone ? 'line-through text-slate-400' : isNotice ? 'text-amber-900' : 'text-slate-700'}`}>
+          ${isDone ? 'line-through text-slate-400' : isNotice || quest.title.includes('สรุปผล') ? 'text-amber-900' : 'text-slate-700'}`}>
                         {quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title}
                       </p>
+                      {quest.id === 1 && !quest.title.includes('สรุปผล') && (
+                        <div 
+                          className="flex items-center gap-1.5 mt-2 cursor-pointer opacity-90 hover:opacity-100 transition-opacity w-fit bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100/50"
+                          onClick={(e) => { e.stopPropagation(); setShowWheelRulesModal(true); }}
+                        >
+                          <div className="w-3.5 h-3.5 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center font-bold text-[9px]">i</div>
+                          <span className="text-[10px] text-amber-800 font-bold underline decoration-amber-300 decoration-dashed underline-offset-2">กติกาแผน 7 วัน & โบนัส XP</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="shrink-0 text-right">
-                      {isNotice ? (
-                        // 🚩 ถ้าเป็นประกาศ โชว์ป้ายคำสั่งแทนเลข XP
-                        <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-amber-600 text-white shadow-md shadow-amber-200 uppercase tracking-widest">
-                          Audit
+                    <div className="shrink-0 text-right flex flex-col items-end gap-2">
+                      {isNotice || quest.title.includes('สรุปผล') ? (
+                        <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 uppercase tracking-widest cursor-pointer">
+                          {quest.title.includes('สรุปผล') ? 'Claim Bonus' : quest.title.includes('พักกายพักใจ') ? 'พักผ่อน 💤' : 'INFO'}
                         </span>
                       ) : (
-                        <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all
-            ${isDone
-                            ? 'bg-slate-100 border-slate-200 text-slate-400'
-                            : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'
-                          }`}>
-                          +{quest.xp} XP
-                        </span>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all ${isDone ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'}`}>
+                            +{quest.xp} XP
+                          </span>
+                          
+                          {quest.id === 1 && !isDone && quest.title.includes('DAY') && lastSkipDate !== todayDateStr && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSkipWheelQuest(); }}
+                              className="text-[10px] text-slate-400 hover:text-red-500 font-bold bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm transition-all flex items-center gap-1 z-10"
+                              title="ข้ามไปทำแผนของวันพรุ่งนี้ (จำกัดวันละ 1 ครั้ง)"
+                            >
+                              ⏭️ ข้าม (Skip)
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -5073,6 +5229,194 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
+            {/* 🎓 Premium Onboarding Tutorial Modal */}
+      <AnimatePresence>
+        {showTutorial && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-white/95 backdrop-blur-xl rounded-[2rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white/50 overflow-hidden z-10 flex flex-col items-center text-center"
+            >
+              {/* Premium Background Orbs */}
+              <div className="absolute -top-20 -left-20 w-40 h-40 bg-red-400/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Skip Button */}
+              <button 
+                onClick={finishTutorial}
+                className="absolute top-4 right-4 text-[10px] font-bold text-slate-400 hover:text-slate-600 bg-white/80 backdrop-blur border border-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded-full transition-all z-20"
+              >
+                ข้ามการแนะนำ
+              </button>
+
+              {tutorialStep === 1 && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center mt-4 z-10">
+                  <div className="w-24 h-24 bg-gradient-to-br from-red-50 to-red-100 rounded-[2rem] flex items-center justify-center shadow-inner mb-6 relative">
+                    <div className="absolute inset-0 rounded-[2rem] border-2 border-red-200/50" />
+                    <img src="/logo-invert.png" alt="Upskill Lightbulb" className="w-16 h-16 object-contain drop-shadow-md" />
+                  </div>
+                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ยินดีต้อนรับสู่<br/><span className="bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">Upskill Everyday</span></h3>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-2 font-medium">
+                    พื้นที่ส่วนตัวสำหรับพัฒนาตัวเอง<br/>ให้เก่งขึ้นและเป็นเวอร์ชันที่ดีกว่าในทุกๆ วัน
+                  </p>
+                </motion.div>
+              )}
+
+              {tutorialStep === 2 && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center mt-4 z-10 w-full">
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-teal-500/30 mb-6 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-white/20 w-1/2 h-full -skew-x-12 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                    🧬
+                  </div>
+                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">สร้าง <span className="text-emerald-600">"ตัวตน"</span> ของคุณ</h3>
+                  <div className="bg-emerald-50/80 border border-emerald-100 p-4 rounded-2xl w-full">
+                    <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
+                      เริ่มแรกให้กดไปที่แท็บ <span className="font-bold text-emerald-700">"ตัวตน"</span> ด้านล่าง เพื่อทำแบบประเมินและ <strong>รับ XP ก้อนแรก!</strong><br/>
+                      <span className="text-[11px] text-emerald-800 mt-2 block font-bold bg-emerald-100/50 p-2 rounded-lg">
+                        ✨ คุณจะได้รับ Avatar ประจำตัวสุดเท่ และข้อมูลภารกิจที่ AI ออกแบบมาเพื่อคุณโดยเฉพาะ!
+                      </span>
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {tutorialStep === 3 && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center mt-4 z-10 w-full">
+                  <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-orange-500/30 mb-6">
+                    🎯
+                  </div>
+                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ทำภารกิจ <span className="text-orange-500">& อัปเลเวล</span></h3>
+                  <div className="bg-orange-50/80 border border-orange-100 p-4 rounded-2xl w-full">
+                    <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
+                      เข้ามาเช็กอินที่แท็บ <span className="font-bold text-orange-600">"ภารกิจ"</span> ทุกวัน<br/>
+                      เพื่อสะสม XP อัปเลเวล ปลดล็อกความสำเร็จ<br/>
+                      <span className="text-[11px] text-slate-500 mt-1 block">และรักษาสถิติต่อเนื่อง (Streak) ของคุณ!</span>
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {tutorialStep === 4 && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center mt-4 z-10 w-full">
+                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-purple-500/30 mb-6 relative">
+                    <div className="absolute top-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full animate-pulse" />
+                    🧠
+                  </div>
+                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ศูนย์รวม <span className="text-purple-600">"อัพสกิล"</span></h3>
+                  <div className="bg-purple-50/80 border border-purple-100 p-4 rounded-2xl w-full">
+                    <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
+                      แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span> ด้านล่าง<br/>
+                      เพื่อใช้งานโหมด <strong>ทำสมาธิ (Deep Work)</strong> เพิ่มโฟกัส<br/>
+                      <span className="text-[11px] text-slate-500 mt-1 block">และพูดคุยกับ <strong>AI Mentor ส่วนตัว</strong> ที่เข้าใจคุณที่สุด!</span>
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Premium Progress Dots */}
+              <div className="flex gap-2 my-6 z-10">
+                {[1, 2, 3, 4].map((step) => (
+                  <div key={step} className={`h-1.5 rounded-full transition-all duration-500 ${step === tutorialStep ? 'w-8 bg-gradient-to-r from-red-500 to-orange-500 shadow-sm' : 'w-2 bg-slate-200'}`} />
+                ))}
+              </div>
+
+              {/* Premium Action Button */}
+              <button 
+                onClick={() => {
+                  if (tutorialStep < 4) setTutorialStep(prev => prev + 1);
+                  else finishTutorial();
+                }}
+                className={`w-full py-4 rounded-2xl font-black text-[15px] transition-all duration-300 z-10 shadow-[0_8px_20px_rgba(0,0,0,0.1)] active:scale-95 ${
+                  tutorialStep === 4 
+                    ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-500 hover:to-orange-400' 
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
+              >
+                {tutorialStep < 4 ? 'ถัดไป' : 'เข้าใจแล้ว ลุยเลย! 🚀'}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* 🎯 Modal กติกา Wheel Plan */}
+      <AnimatePresence>
+        {showWheelRulesModal && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setShowWheelRulesModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl overflow-hidden z-10"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-bl-full -z-10" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-500/10 rounded-tr-full -z-10" />
+              
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-orange-200">
+                <PieChart size={24} />
+              </div>
+
+              <h3 className="text-xl font-black text-slate-800 mb-2">กติกาแผน 7 วัน <br/><span className="text-orange-500">Wheel of Life</span></h3>
+              <p className="text-sm text-slate-600 mb-5 leading-relaxed">
+                ทำภารกิจรายวันที่ AI วิเคราะห์ให้ต่อเนื่อง 7 วัน เพื่อรับโบนัสสุดคุ้มตอนจบแผน!
+              </p>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                  <div className="text-2xl drop-shadow-sm">🏆</div>
+                  <div>
+                    <div className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Perfect Run (7/7 วัน)</div>
+                    <div className="text-sm font-black text-amber-600">รับ 100 XP + ตรา Perfect Week</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="text-2xl drop-shadow-sm">🌟</div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Great Run (5-6 วัน)</div>
+                    <div className="text-sm font-black text-slate-700">รับโบนัส 50 XP</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="text-2xl drop-shadow-sm">👍</div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Good Run (1-4 วัน)</div>
+                    <div className="text-sm font-black text-slate-700">รับโบนัส 20 XP</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 mb-6">
+                <p className="text-xs text-orange-800 font-medium leading-relaxed">
+                  <span className="font-bold">💡 รู้หรือไม่?</span> หากวันไหนรู้สึกว่าภารกิจยากเกินไป คุณสามารถกด <span className="font-black">"⏭️ ข้าม"</span> ได้วันละ 1 ครั้ง โดยจะไม่เสียสถิติ Active ของวันนั้น (แต่จะพลาด Perfect Run นะ)
+                </p>
+              </div>
+
+              <button 
+                onClick={() => setShowWheelRulesModal(false)}
+                className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200"
+              >
+                เข้าใจแล้ว ลุยเลย!
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

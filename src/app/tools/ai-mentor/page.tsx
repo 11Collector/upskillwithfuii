@@ -119,9 +119,9 @@ export default function SoulGuidePage() {
             setMessages(history);
           } else {
             const name = userName;
-            setMessages([{ 
-              role: "assistant", 
-              content: `ยินดีที่ได้พบกันครับคุณ **${name}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ` 
+            setMessages([{
+              role: "assistant",
+              content: `ยินดีที่ได้พบกันครับคุณ **${name}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
             }]);
           }
         });
@@ -185,16 +185,16 @@ export default function SoulGuidePage() {
 
   const handleResetChat = async () => {
     if (!user) return;
-    
+
     setShowResetConfirm(false);
     setIsLoading(true);
     try {
       const chatHistoryRef = collection(db, "users", user.uid, "chat_history");
       const historySnap = await getDocs(chatHistoryRef);
-      
+
       const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
-      
+
       setTimeout(() => {
         mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -364,8 +364,8 @@ export default function SoulGuidePage() {
             >
               <div
                 className={`max-w-[85%] px-6 py-4 rounded-[2rem] border relative transition-all duration-300 ${msg.role === "user"
-                    ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
-                    : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
+                  ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
+                  : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
                   }`}
               >
                 <div className="prose prose-invert prose-sm max-w-none">
@@ -448,23 +448,23 @@ export default function SoulGuidePage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-xl"
           >
-              <motion.div
-                initial={{ scale: 0.5, y: 100, opacity: 0 }}
-                animate={{ 
-                  scale: 1, 
-                  y: 0, 
-                  opacity: 1,
-                  transition: { type: "spring", damping: 20, stiffness: 300 } 
-                }}
-                exit={{ scale: 0.5, y: 100, opacity: 0 }}
-                className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
-              >
+            <motion.div
+              initial={{ scale: 0.5, y: 100, opacity: 0 }}
+              animate={{
+                scale: 1,
+                y: 0,
+                opacity: 1,
+                transition: { type: "spring", damping: 20, stiffness: 300 }
+              }}
+              exit={{ scale: 0.5, y: 100, opacity: 0 }}
+              className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
+            >
               <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <History className="text-blue-400" size={28} />
               </div>
               <h3 className="text-lg font-black text-white mb-2 uppercase tracking-wider">ล้างประวัติการสนทนา?</h3>
               <p className="text-sm text-zinc-400 mb-8 leading-relaxed">บทสนทนาทั้งหมดจะถูกลบออกถาวร และคุณจะเริ่มการเดินทางครั้งใหม่กับ Mentor ครับ</p>
-              
+
               <div className="flex flex-col gap-3">
                 <button
                   onClick={handleResetChat}
