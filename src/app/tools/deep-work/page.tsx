@@ -63,6 +63,7 @@ export default function DeepWorkPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const noiseSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const radius = 100;
   const circumference = 2 * Math.PI * radius;
@@ -212,9 +213,21 @@ export default function DeepWorkPage() {
     return () => clearInterval(heartbeat);
   }, [user]);
 
-  // เมื่อออกจากหน้า Deep Work ไม่ว่าจะกรณีใดก็ตาม ให้รีเซ็ตสถานะเป็น idle ใน Lobby
+  // เมื่อออกจากหน้า Deep Work ไม่ว่าจะกรณีใดก็ตาม ให้รีเซ็ตสถานะเป็น idle ใน Lobby และปิดเสียง
   useEffect(() => {
     return () => {
+      stopNatureSound();
+      
+      // Stop alarm if playing
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current = null;
+      }
+
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+      
       if (user?.uid) {
         const sessionRef = doc(db, "active_sessions", user.uid);
         updateDoc(sessionRef, { status: "idle", endTime: null }).catch(() => { });
@@ -466,6 +479,7 @@ export default function DeepWorkPage() {
     stopNatureSound();
     if (!isSoundEnabledRef.current) return;
     const audio = new Audio("/sounds/alarm.mp3");
+    alarmAudioRef.current = audio;
     audio.play().catch(err => console.error("Audio playback failed:", err));
   };
 

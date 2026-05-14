@@ -138,7 +138,7 @@ export default function SoulGuidePage() {
       unsubs.forEach(unsub => unsub());
     };
   }, [router]);
-  
+
   const wheelArea = useMemo(() => {
     if (userData?.lastWheel?.scores && userData?.lastWheel?.targetScores) {
       const gaps = userData.lastWheel.scores.map((current: number, i: number) => ({
@@ -170,25 +170,30 @@ export default function SoulGuidePage() {
 
   useEffect(() => {
     // เลื่อนลงล่างสุดทุกครั้งที่มีการตอบโต้
-    if (messages.length > 1) {
-      const scrollBehavior = isFirstScroll.current ? "auto" : "smooth";
+    if (messages.length > 0) {
+      const isFirst = isFirstScroll.current;
+      const scrollBehavior = "auto"; // เปลี่ยนเป็น auto เสมอเพื่อให้วาร์ปไปเลย ไม่ต้องเลื่อน (ลดอาการปวดหัว)
 
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: scrollBehavior as any });
-        if (isFirstScroll.current) {
+      // ใช้ setTimeout เพื่อให้แน่ใจว่า DOM Render เสร็จแล้ว (โดยเฉพาะ Markdown และรูปภาพ)
+      const timer = setTimeout(() => {
+        if (chatEndRef.current) {
+          chatEndRef.current.scrollIntoView({
+            behavior: scrollBehavior as any,
+            block: "end"
+          });
+        }
+
+        // ถ้าเป็นครั้งแรก ให้เลื่อนซ้ำอีกรอบหลังจากแอนิเมชั่นเผื่อกรณีเนื้อหาโหลดช้า
+        if (isFirst) {
           isFirstScroll.current = false;
+          // เลื่อนซ้ำแบบ auto อีกครั้งสั้นๆ เพื่อความเป๊ะ
+          setTimeout(() => {
+            chatEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+          }, 100);
         }
-      }, isFirstScroll.current ? 0 : 100);
-    } else if (messages.length === 1) {
-      // สำหรับแชทแรก (คำทักทาย) ให้เด้งขึ้นบนสุดเสมอ
-      setTimeout(() => {
-        mainRef.current?.scrollTo({ top: 0, behavior: isFirstScroll.current ? 'auto' : 'smooth' });
-        window.scrollTo({ top: 0, behavior: isFirstScroll.current ? 'auto' : 'smooth' });
-        if (isFirstScroll.current && messages[0].role === "assistant") {
-          // ถ้ามีแค่ข้อความทักทาย และเป็นครั้งแรก ไม่ต้องปิด flag เพราะอาจจะมีประวัติโหลดมาทีหลัง
-          // แต่ปกติประวัติจะโหลดมาทีเดียวใน onSnapshot
-        }
-      }, 100);
+      }, isFirst ? 50 : 150);
+
+      return () => clearTimeout(timer);
     }
   }, [messages]);
 
@@ -208,9 +213,7 @@ export default function SoulGuidePage() {
     setDynamicButtons(buttons.slice(0, 3));
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // ลบ window.scrollTo(0, 0) ที่ขัดขวางการเลื่อนลงล่างสุด
 
   const handleResetChat = async () => {
     if (!user) return;
