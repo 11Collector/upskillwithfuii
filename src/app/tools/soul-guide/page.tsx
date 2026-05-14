@@ -5,12 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Sparkles, ArrowLeft, Bot, User as UserIcon,
   MessageSquare, History, Zap, BrainCircuit, Lightbulb, Target, TrendingUp,
-  AlertCircle, Lock, Battery
+  AlertCircle, Lock, Battery, Plus
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp, onSnapshot, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -36,89 +36,123 @@ export default function SoulGuidePage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubs: (() => void)[] = [];
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+        const userName = currentUser.displayName || 'นักเดินทาง';
 
-        try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          let baseData = userDoc.exists() ? userDoc.data() : {};
+        // 1. Listen to User Base Data
+        const userRef = doc(db, "users", currentUser.uid);
+        const unsubUser = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const baseData = docSnap.data();
+            const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+            let usedToday = baseData.chatUsageDate === today ? (baseData.dailyChatCount || 0) : 0;
+            let totalQuota = (currentUser.email === 'emotion.tuii@gmail.com' || level > 10) ? Infinity : level;
+            
+            setChatQuota({ used: usedToday, total: totalQuota });
+            setUserData((prev: any) => ({ ...prev, ...baseData, level }));
+          }
+        });
+        unsubs.push(unsubUser);
 
-          const [discSnap, moneySnap, librarySoulSnap, wheelSnap, quoteSnap] = await Promise.all([
-            getDocs(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
-            getDocs(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
-            getDocs(query(collection(db, "users", currentUser.uid, "library_souls"), orderBy("createdAt", "desc"), limit(1))),
-            getDocs(query(collection(db, "users", currentUser.uid, "assessments"), orderBy("createdAt", "desc"), limit(1))),
-            getDocs(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)))
-          ]);
+        // 2. Listen to DISC
+        const unsubDisc = onSnapshot(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+          if (!snap.empty) setUserData((prev: any) => ({ ...prev, lastDisc: snap.docs[0].data() }));
+        });
+        unsubs.push(unsubDisc);
 
-          let wheelDetails = null;
-          if (!wheelSnap.empty) {
-            const wheelData = wheelSnap.docs[0].data();
-            wheelDetails = {
+        // 3. Listen to Money Avatar
+        const unsubMoney = onSnapshot(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+          if (!snap.empty) setUserData((prev: any) => ({ ...prev, lastMoney: snap.docs[0].data() }));
+        });
+        unsubs.push(unsubMoney);
+
+        // 4. Listen to Library Souls
+        const unsubSoul = onSnapshot(query(collection(db, "users", currentUser.uid, "library_souls"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+          if (!snap.empty) setUserData((prev: any) => ({ ...prev, lastLibrarySoul: snap.docs[0].data() }));
+        });
+        unsubs.push(unsubSoul);
+
+        // 5. Listen to Wheel of Life
+        const unsubWheel = onSnapshot(query(collection(db, "users", currentUser.uid, "assessments"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+          if (!snap.empty) {
+            const wheelData = snap.docs[0].data();
+            const wheelDetails = {
               scores: wheelData.currentScores || wheelData.scores,
               targetScores: wheelData.targetScores,
               goal: wheelData.goal || wheelData.futureGoal,
               analysis: wheelData.analysis,
               focusAreas: wheelData.selectedFocusAreas
             };
+            setUserData((prev: any) => ({ ...prev, lastWheel: wheelDetails }));
           }
+        });
+        unsubs.push(unsubWheel);
 
-          const lastMood = !quoteSnap.empty ? quoteSnap.docs[0].data().mood : null;
-          const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
-
-          // 🔥 Logic: Quota Management (Level 11+ is Unlimited)
-          const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-          let usedToday = baseData.chatUsageDate === today ? (baseData.dailyChatCount || 0) : 0;
-          let totalQuota = (currentUser.email === 'emotion.tuii@gmail.com' || level > 10) ? Infinity : level;
-
-          setChatQuota({ used: usedToday, total: totalQuota });
-
-          const fullUserData: any = {
-            ...baseData,
-            level,
-            lastDisc: !discSnap.empty ? discSnap.docs[0].data() : baseData.lastDisc,
-            lastMoney: !moneySnap.empty ? moneySnap.docs[0].data() : baseData.lastMoney,
-            lastLibrarySoul: !librarySoulSnap.empty ? librarySoulSnap.docs[0].data() : baseData.lastLibrarySoul,
-            lastWheel: wheelDetails,
-            lastMood: lastMood
-          };
-
-          // 🔥 Load Chat History (Long-term Memory)
-          const historySnap = await getDocs(query(
-            collection(db, "users", currentUser.uid, "chat_history"),
-            orderBy("createdAt", "asc"),
-            limit(20)
-          ));
-
-          if (!historySnap.empty) {
-            const historyMessages = historySnap.docs.map(doc => ({
-              role: doc.data().role as "user" | "assistant",
-              content: doc.data().content
+        // 6. Listen to Khomsatsat (Mood)
+        const unsubQuote = onSnapshot(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+          if (!snap.empty) {
+            const q = snap.docs[0].data();
+            setUserData((prev: any) => ({
+              ...prev,
+              lastMood: q.mood,
+              lastQuote: q.quote,
+              lastQuoteWords: q.words,
+              lastQuoteTime: q.createdAt?.toMillis() || Date.now()
             }));
-            setMessages(historyMessages);
-          } else {
-            // Default greeting if no history
-            setMessages([
-              {
-                role: "assistant",
-                content: `สวัสดีครับคุณ **${fullUserData.displayName || 'นักเดินทาง'}** ผมคือ **AI Personal Mentor** ของคุณ วันนี้มีเรื่องอะไรที่อยากปรึกษา หรืออยากให้ผมช่วยวิเคราะห์แนวทางการพัฒนาตัวเองดีครับ?`
-              }
-            ]);
           }
+        });
+        unsubs.push(unsubQuote);
 
-          setUserData(fullUserData);
-          generateDynamicButtons(fullUserData);
+        // 7. Listen to Chat History
+        const unsubChat = onSnapshot(query(collection(db, "users", currentUser.uid, "chat_history"), orderBy("createdAt", "desc"), limit(50)), (snapshot) => {
+          const history = snapshot.docs.map(doc => ({
+            role: doc.data().role as "user" | "assistant",
+            content: doc.data().content,
+            createdAt: doc.data().createdAt
+          })).filter(msg => msg.content).reverse();
 
-        } catch (error) {
-          console.error("Error loading full user data:", error);
-        }
+          if (history.length > 0) {
+            setMessages(history);
+          } else {
+            const name = userName;
+            setMessages([{ 
+              role: "assistant", 
+              content: `ยินดีที่ได้พบกันครับคุณ **${name}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ` 
+            }]);
+          }
+        });
+        unsubs.push(unsubChat);
+
       } else {
         router.push("/");
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      unsubs.forEach(unsub => unsub());
+    };
   }, [router]);
+
+  useEffect(() => {
+    // เลื่อนลงล่างสุดทุกครั้งที่ข้อความเปลี่ยน
+    if (messages.length > 0) {
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (userData) {
+      generateDynamicButtons(userData);
+    }
+  }, [userData]);
 
   const generateDynamicButtons = (data: any) => {
     const buttons = [];
@@ -126,7 +160,7 @@ export default function SoulGuidePage() {
     if (data.lastWheel?.goal) buttons.push(`สรุปเป้าหมาย`);
     const discType = data.lastDisc?.finalResult || data.lastDisc?.result || "";
     if (discType.includes("D")) buttons.push("สรุปสั้นๆ ตรงประเด็น");
-    if (buttons.length < 3) buttons.push("วางแผนพัฒนาตัวเองให้ผมที");
+    if (buttons.length < 3) buttons.push("วางแผนพัฒนาตัวเองให้ที");
     setDynamicButtons(buttons.slice(0, 3));
   };
 
@@ -134,11 +168,28 @@ export default function SoulGuidePage() {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
-    if (messages.length > 1) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const handleResetChat = async () => {
+    if (!user) return;
+    if (!confirm("คุณต้องการล้างประวัติการสนทนาทั้งหมดใช่หรือไม่?")) return;
+
+    setIsLoading(true);
+    try {
+      const chatHistoryRef = collection(db, "users", user.uid, "chat_history");
+      const historySnap = await getDocs(chatHistoryRef);
+      
+      // ลบทีละ Document (Firestore ไม่รองรับการลบทั้ง Collection ในคำสั่งเดียวบน Client)
+      const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      alert("ล้างประวัติการสนทนาเรียบร้อยแล้วครับ ✨");
+    } catch (error) {
+      console.error("Error resetting chat:", error);
+      alert("ไม่สามารถล้างประวัติแชทได้ในขณะนี้");
+    } finally {
+      setIsLoading(false);
     }
-  }, [messages]);
+  };
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || input;
@@ -179,6 +230,8 @@ export default function SoulGuidePage() {
             lastLibrarySoul: userData?.lastLibrarySoul,
             lastWheel: userData?.lastWheel,
             lastMood: userData?.lastMood,
+            lastQuote: userData?.lastQuote,
+            lastQuoteWords: userData?.lastQuoteWords,
             totalFocusMinutes: userData?.totalFocusMinutes,
             characterTier: getCharacterTier(userData?.totalXP || 0),
             level: userData?.level,
@@ -371,14 +424,21 @@ export default function SoulGuidePage() {
             </motion.div>
           ) : (
             <div className="w-full relative">
-              <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-6 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
+                <button
+                  onClick={handleResetChat}
+                  className="w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
+                  title="เริ่มบทสนทนาใหม่"
+                >
+                  <Plus size={18} />
+                </button>
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="คุยกับ Mentor..."
-                  className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600"
+                  className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600 ml-2"
                 />
                 <button
                   onClick={() => handleSendMessage()}
