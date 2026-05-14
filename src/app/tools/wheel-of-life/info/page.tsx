@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function WheelOfLifeInfoPage() {
-  
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-20">
-      
+
       {/* --- Navbar (แบบย่อ) --- */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
@@ -24,21 +24,21 @@ export default function WheelOfLifeInfoPage() {
 
       {/* --- Main Content --- */}
       <main className="max-w-3xl mx-auto px-4 mt-8">
-        
+
         {/* Hero Section */}
         <header className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-red-50 text-red-600 rounded-[2rem] mb-6 rotate-3">
             <PieChart size={40} />
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
-            วงล้อชีวิต (Wheel of Life) <br/>
+            วงล้อชีวิต (Wheel of Life) <br />
             <span className="text-red-800">เช็กสมดุลชีวิต 8 ด้าน</span>
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto leading-relaxed">
-            ทำงานหนักจนลืมดูแลสุขภาพ? กังวลเรื่องเงินจนความสัมพันธ์พัง? <br className="hidden md:block"/>
+            ทำงานหนักจนลืมดูแลสุขภาพ? กังวลเรื่องเงินจนความสัมพันธ์พัง? <br className="hidden md:block" />
             ใช้เวลาเพียง 5-10 นาที ประเมินชีวิตของคุณผ่านวงล้อชีวิต เพื่อค้นหาว่าจุดไหนที่คุณควร &quot;โฟกัส&quot; ในปีนี้
           </p>
-          
+
           <Link href="/tools/wheel-of-life">
             <button className="bg-red-800 text-white px-8 py-4 rounded-full font-black text-lg hover:bg-red-700 hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-2 mx-auto">
               <Sparkles size={20} /> เริ่มทำแบบประเมินฟรี
@@ -57,33 +57,33 @@ export default function WheelOfLifeInfoPage() {
           </p>
 
           <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">ชีวิต 8 ด้านที่คุณต้องประเมิน ได้แก่</h3>
-       {/* 💡 เปลี่ยนตรง grid-cols-1 เป็น grid-cols-2 และปรับ gap ให้เล็กลงในมือถือ */}
-<div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-4">
-  {[
-    "สุขภาพ (Health)",
-    "การเงิน (Finance)",
-    "การงานหรือธุรกิจ (Career & Business)",
-    "ครอบครัว (Family)",
-    "ความสัมพันธ์เพื่อนฝูง (Social)",
-    "พัฒนาตนเอง (Self-Development)",
-    "พัฒนาจิตใจ (Spiritual)",
-    "ช่วยเหลือสังคม (Contribution)"
-  ].map((item, index) => (
-    <div 
-      key={index} 
-      // 💡 ปรับ p-2.5 ในมือถือเพื่อให้มีพื้นที่ด้านข้างมากขึ้น และ p-4 ในจอใหญ่เหมือนเดิม
-      className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-red-200 transition-colors"
-    >
-      {/* 💡 ลดขนาดไอคอนลงเล็กน้อยบนมือถือเป็น size-4 (16px) และ size-5 (20px) ในจอใหญ่ */}
-      <CheckCircle2 className="text-red-600 shrink-0 mt-0.5 size-4 sm:size-5" />
-      
-      {/* 💡 ลดขนาดฟอนต์บนมือถือลงอีกเป็น 11px และใช้ break-words เพื่อกันข้อความทะลุในภาษาไทย */}
-      <span className="text-slate-700 text-[11px] sm:text-[15px] font-bold leading-tight break-words">
-        {item}
-      </span>
-    </div>
-  ))}
-</div>
+          {/* 💡 เปลี่ยนตรง grid-cols-1 เป็น grid-cols-2 และปรับ gap ให้เล็กลงในมือถือ */}
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-4">
+            {[
+              "สุขภาพ (Health)",
+              "การเงิน (Finance)",
+              "การงานหรือธุรกิจ (Career & Business)",
+              "ครอบครัว (Family)",
+              "ความสัมพันธ์เพื่อนฝูง (Social)",
+              "พัฒนาตนเอง (Self-Development)",
+              "พัฒนาจิตใจ (Spiritual)",
+              "ช่วยเหลือสังคม (Contribution)"
+            ].map((item, index) => (
+              <div
+                key={index}
+                // 💡 ปรับ p-2.5 ในมือถือเพื่อให้มีพื้นที่ด้านข้างมากขึ้น และ p-4 ในจอใหญ่เหมือนเดิม
+                className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-red-200 transition-colors"
+              >
+                {/* 💡 ลดขนาดไอคอนลงเล็กน้อยบนมือถือเป็น size-4 (16px) และ size-5 (20px) ในจอใหญ่ */}
+                <CheckCircle2 className="text-red-600 shrink-0 mt-0.5 size-4 sm:size-5" />
+
+                {/* 💡 ลดขนาดฟอนต์บนมือถือลงอีกเป็น 11px และใช้ break-words เพื่อกันข้อความทะลุในภาษาไทย */}
+                <span className="text-slate-700 text-[11px] sm:text-[15px] font-bold leading-tight break-words">
+                  {item}
+                </span>
+              </div>
+            ))}
+          </div>
         </article>
 
         {/* Content Section 2 */}
@@ -92,14 +92,14 @@ export default function WheelOfLifeInfoPage() {
             <h2 className="text-2xl font-black mb-6 text-amber-400">ทำไมต้องประเมินที่ Upskill Everyday?</h2>
             <div className="space-y-6">
               <div className="flex gap-4">
-                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><LineChart className="text-blue-400" size={24}/></div>
+                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><LineChart className="text-blue-400" size={24} /></div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Visualized Dashboard</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">เห็นภาพรวมชีวิตผ่านกราฟ Radar Chart ที่เข้าใจง่าย พร้อมระบบบันทึกประวัติเพื่อดูความก้าวหน้า</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><BrainCircuit className="text-emerald-400" size={24}/></div>
+                <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><BrainCircuit className="text-emerald-400" size={24} /></div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">AI Personalized Roadmap</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">วิเคราะห์ผลคะแนนของคุณและแนะนำแนวทางพัฒนาตัวเอง 7 วัน สำหรับด้านที่ควรปรับปรุงมากที่สุด</p>
@@ -107,7 +107,7 @@ export default function WheelOfLifeInfoPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="absolute -right-10 -bottom-10 opacity-10">
             <PieChart size={200} />
           </div>
@@ -123,7 +123,7 @@ export default function WheelOfLifeInfoPage() {
             </button>
           </Link>
           <p className="text-slate-400 text-sm mt-4">เพราะความสำเร็จในชีวิต มันมีหลายมิติมากกว่าที่คิด</p>
-          
+
           <Link href="/" className="inline-block mt-8 text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors underline underline-offset-4">
             กลับสู่หน้าหลัก
           </Link>

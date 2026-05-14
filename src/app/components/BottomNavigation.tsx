@@ -14,9 +14,9 @@ export default function BottomNavigation() {
   // ✅ ปรับ Logic การแสดงผล Footer
   // - แสดง Dashboard Footer: เมื่ออยู่ในหน้า Dashboard, Library, Soul Guide หรือ Report
   // - แสดง Standard Footer: เมื่ออยู่หน้า Landing หรือ Tools อื่นๆ
-  const isDashboardFlow = 
-    pathname.startsWith('/dashboard') || 
-    pathname.startsWith('/library') || 
+  const isDashboardFlow =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/library') ||
     pathname === '/tools/soul-guide' ||
     pathname === '/tools/deep-work' ||
     pathname === '/report-review';
@@ -24,7 +24,7 @@ export default function BottomNavigation() {
   if (isDashboardFlow) {
     // 🏠 Dashboard/App Context Navigation (Using the exact Emojis and Logic from the original Dashboard)
     const navItems = [
-      { id: 'home', label: 'หน้าหลัก', icon: <LayoutDashboard size={24} />, path: '/dashboard' },
+      { id: 'home', label: 'หน้าหลัก', icon: <LayoutDashboard size={24} />, path: '/dashboard?tab=home' },
       { id: 'overview', label: 'อวาตาร์', icon: "👤", path: '/dashboard?tab=overview' },
       { id: 'quests', label: 'ภารกิจ', icon: "🎯", path: '/dashboard?tab=quests' },
       { id: 'identity', label: 'ตัวตน', icon: "🧬", path: '/dashboard?tab=identity' },
@@ -36,14 +36,15 @@ export default function BottomNavigation() {
         {navItems.map((item) => {
           // Identify active state. In the Chat context (/tools/soul-guide), NO buttons should be active as requested.
           const isChatPage = pathname === '/tools/soul-guide';
-          const isActive = !isChatPage && (
-                           (item.id === 'home' && (pathname === '/dashboard' || pathname === '/dashboard/') && (!searchParams.get('tab') || searchParams.get('tab') === 'home')) || 
-                           (item.id === 'overview' && pathname === '/dashboard' && searchParams.get('tab') === 'overview') ||
-                           (item.id === 'quests' && pathname === '/dashboard' && currentTab === 'quests') ||
-                           (item.id === 'identity' && currentTab === 'identity') ||
-                           (item.id === 'resources' && currentTab === 'resources')
-          );
+          const tabParam = searchParams.get('tab');
           
+          // Logic for Home: Active if no tab or tab is 'home'
+          const isHomeActive = item.id === 'home' && (!tabParam || tabParam === 'home');
+          // Logic for others: Active if tab matches item ID
+          const isOtherActive = item.id !== 'home' && tabParam === item.id;
+          
+          const isActive = !isChatPage && pathname.startsWith('/dashboard') && (isHomeActive || isOtherActive);
+
           return (
             <Link key={item.id} href={item.path} className={`relative flex flex-col items-center justify-center flex-1 py-2.5 px-2 rounded-2xl transition-all duration-300 active:scale-95 ${isActive ? 'bg-slate-900 text-white shadow-lg -translate-y-1' : 'text-slate-400'}`}>
               <div className="text-2xl mb-1 flex items-center justify-center">
