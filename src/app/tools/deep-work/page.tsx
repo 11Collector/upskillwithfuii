@@ -168,6 +168,26 @@ export default function DeepWorkPage() {
     return () => unsubscribe();
   }, [router]);
 
+  // Heartbeat System: Update lastActive every 60 seconds
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    const heartbeat = setInterval(async () => {
+      try {
+        const sessionRef = doc(db, "active_sessions", user.uid);
+        // เช็คว่ามี session อยู่จริงก่อนอัปเดต
+        const docSnap = await getDoc(sessionRef);
+        if (docSnap.exists()) {
+          await updateDoc(sessionRef, { lastActive: serverTimestamp() });
+        }
+      } catch (e) {
+        // Silent error to not disturb focus
+      }
+    }, 60000);
+
+    return () => clearInterval(heartbeat);
+  }, [user]);
+
   // เมื่อออกจากหน้า Deep Work ไม่ว่าจะกรณีใดก็ตาม ให้รีเซ็ตสถานะเป็น idle ใน Lobby
   useEffect(() => {
     return () => {
