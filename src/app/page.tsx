@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
@@ -46,8 +47,8 @@ const t = {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const PRICE_IDS = {
-  monthly: "price_1TLp5jPpEmfCgSDJz9g1hugr", // ใส่รหัสจาก Stripe Dashboard
-  yearly: "price_1TLpCUPpEmfCgSDJCYozJS15"    // ใส่รหัสจาก Stripe Dashboard
+  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
+  yearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
 };
 
 export default function Home() {
@@ -66,9 +67,10 @@ export default function Home() {
     if (!user) return alert("Please login first");
 
     try {
+      const idToken = await user.getIdToken();
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
@@ -243,9 +245,11 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="inline-flex w-24 h-24 sm:w-28 sm:h-28 p-5 bg-red-50 rounded-[2rem] shadow-inner border border-red-100 items-center justify-center relative mb-8"
               >
-                <img
+                <Image
                   src="/logo-full.png"
                   alt="Idea Logo"
+                  width={112}
+                  height={112}
                   className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
                 />
               </motion.div>
@@ -341,9 +345,11 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6 z-10 w-full md:w-auto">
             <div className="relative shrink-0">
               <div className="absolute inset-0 bg-red-600/20 blur-xl rounded-full scale-75 group-hover:scale-110 transition-transform duration-500" />
-              <img
+              <Image
                 src={user.photoURL || "/default-avatar.png"}
                 alt="Profile"
+                width={96}
+                height={96}
                 className="relative w-24 h-24 rounded-full border-[6px] border-white shadow-xl object-cover"
               />
             </div>

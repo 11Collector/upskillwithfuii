@@ -1,10 +1,29 @@
-// app/api/quote/route.ts
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const QuoteSchema = z.object({
+  prompt: z.string().min(1).max(5000),
+});
 
 export async function POST(req: Request) {
-  try {
-    const { prompt } = await req.json();
+  const authResult = await verifyAuthToken(req);
+  if (isAuthError(authResult)) return authResult;
 
+  const rl = checkRateLimit(`quote:${authResult.uid}`, 10, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
+  }
+
+  const body = await req.json().catch(() => null);
+  const parsed = QuoteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const { prompt } = parsed.data;
+
+  try {
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {

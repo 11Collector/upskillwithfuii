@@ -1,9 +1,32 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const ReportSchema = z.object({
+  displayName: z.string().min(1).max(100),
+  lastDisc: z.unknown(),
+  lastMoney: z.unknown(),
+  lastWheel: z.unknown(),
+});
 
 export async function POST(req: Request) {
-  try {
-    const { displayName, lastDisc, lastMoney, lastWheel } = await req.json();
+  const authResult = await verifyAuthToken(req);
+  if (isAuthError(authResult)) return authResult;
 
+  const rl = checkRateLimit(`report:${authResult.uid}`, 5, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
+  }
+
+  const body = await req.json().catch(() => null);
+  const parsed = ReportSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const { displayName, lastDisc, lastMoney, lastWheel } = parsed.data;
+
+  try {
     // 💡 ร่างโครงสร้าง Prompt ให้ DeepSeek วิเคราะห์จุดตัดของข้อมูล 3 ชุด
     const systemPrompt = `คุณคือ 'Upskill Architect' ที่รวมร่างระหว่าง Expert Life Coach, Behavioral Psychologist (นักจิตวิทยาพฤติกรรม), และ High-Level Financial Advisor คุณมี 'Engineer Mindset' ที่มองชีวิตเป็นระบบที่สามารถ Optimize ได้ คุณไม่ได้แค่ให้กำลังใจ แต่คุณให้ 'Systematic Solution' ที่ใช้งานได้จริง
 

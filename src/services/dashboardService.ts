@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, DocumentData, QuerySnapshot, DocumentSnapshot } from "firebase/firestore";
 import { calculateRelativeWeek } from "@/utils/dashboardHelpers";
 
 export const fetchDashboardData = async (uid: string, email: string | null) => {
@@ -16,7 +16,8 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
     const level = Math.floor((userData.totalXP || 0) / 100) + 1;
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     let usedToday = userData.chatUsageDate === today ? (userData.dailyChatCount || 0) : 0;
-    let totalQuota = (email === 'emotion.tuii@gmail.com' || level > 10) ? Infinity : level;
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",")[0];
+    let totalQuota = (adminEmail && email === adminEmail || level > 10) ? Infinity : level;
     chatQuota = { used: usedToday, total: totalQuota };
 
     if (userData.createdAt) {
@@ -37,13 +38,16 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
   // 💡 2. ดึงข้อมูล Assessments และ Weekly Stats อย่างปลอดภัย
   const authWheelRef = collection(db, "users", uid, "assessments");
 
-  let authWheelSnap = { empty: true, docs: [] } as any;
-  let discSnap = { empty: true, docs: [] } as any;
-  let moneySnap = { empty: true, docs: [] } as any;
-  let librarySoulSnap = { empty: true, docs: [] } as any;
-  let quoteSnap = { empty: true, docs: [] } as any;
-  let thisWeekSnap = { exists: () => false, data: () => null } as any;
-  let prevWeekSnap = { exists: () => false, data: () => null } as any;
+  const emptyQuery = { empty: true, docs: [] } as QuerySnapshot<DocumentData>;
+  const emptyDoc = { exists: () => false, data: () => undefined } as unknown as DocumentSnapshot<DocumentData>;
+
+  let authWheelSnap: QuerySnapshot<DocumentData> = emptyQuery;
+  let discSnap: QuerySnapshot<DocumentData> = emptyQuery;
+  let moneySnap: QuerySnapshot<DocumentData> = emptyQuery;
+  let librarySoulSnap: QuerySnapshot<DocumentData> = emptyQuery;
+  let quoteSnap: QuerySnapshot<DocumentData> = emptyQuery;
+  let thisWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
+  let prevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
 
   try {
     const results = await Promise.all([
@@ -70,7 +74,7 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
   // --- จัดการข้อมูลแบบประเมิน ---
   let wheelData = null;
   if (!authWheelSnap.empty) {
-    const latestWithAnalysis = authWheelSnap.docs.find((doc: any) => doc.data().analysis !== "");
+    const latestWithAnalysis = authWheelSnap.docs.find((doc) => doc.data().analysis !== "");
     wheelData = latestWithAnalysis ? latestWithAnalysis.data() : authWheelSnap.docs[0].data();
   }
 

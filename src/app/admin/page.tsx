@@ -8,8 +8,7 @@ import { useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
 
-// Allowed admin emails
-const ADMIN_EMAILS = ["emotion.tuii@gmail.com", "admin@upskillwithfuii.com"];
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean);
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);

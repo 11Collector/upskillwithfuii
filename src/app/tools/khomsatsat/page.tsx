@@ -328,9 +328,13 @@ export default function SwipeQuoteApp() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+      const idToken = currentUser ? await currentUser.getIdToken() : null;
       const response = await fetch('/api/quote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({ prompt: promptText }),
         signal: controller.signal
       });

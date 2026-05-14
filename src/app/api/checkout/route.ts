@@ -1,15 +1,33 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { z } from "zod";
+import { verifyAuthToken, isAuthError } from "@/lib/auth-middleware";
 
-const stripe = process.env.STRIPE_SECRET_KEY 
+const CheckoutSchema = z.object({
+  uid: z.string().min(1),
+  email: z.string().email().optional(),
+  isSubscription: z.boolean().optional(),
+  priceId: z.string().optional(),
+});
+
+const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2024-04-10" as any, 
     })
   : null;
 
 export async function POST(req: Request) {
+  const authResult = await verifyAuthToken(req);
+  if (isAuthError(authResult)) return authResult;
+
+  const body = await req.json().catch(() => null);
+  const parsed = CheckoutSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const { uid, email, isSubscription } = parsed.data;
+
   try {
-    const { uid, email, isSubscription } = await req.json();
     const origin = new URL(req.url).origin;
 
     if (!stripe) {
@@ -17,16 +35,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Stripe configuration error" }, { status: 500 });
     }
 
-    // 1. ตรวจสอบข้อมูลเบื้องต้น (อีเมลไม่มีไม่เป็นไร ให้กรอกใน Stripe ได้)
-    if (!uid) {
-      return NextResponse.json({ error: "Missing User ID" }, { status: 400 });
+    const REPORT_PRICE_ID = process.env.STRIPE_REPORT_PRICE_ID;
+    const SUBSCRIPTION_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID;
+
+    if (!REPORT_PRICE_ID || (isSubscription && !SUBSCRIPTION_PRICE_ID)) {
+      return NextResponse.json({ error: "Stripe price configuration missing" }, { status: 500 });
     }
 
-    // 2. กำหนด Price ID สำหรับ Report (ที่คุณฟุ้ยให้มา)
-    const REPORT_PRICE_ID = "price_1TLz1BPpEmfCgSDJptz3hFJ7"; 
-    
-    // 💡 ปล. ถ้าในอนาคตคุณฟุ้ยมี priceId ของรายเดือนค่อยส่งผ่าน body มา หรือเซ็ตตัวแปรไว้ตรงนี้ครับ
-    const priceIdToUse = isSubscription ? "ใส่_ID_รายเดือนตรงนี้" : REPORT_PRICE_ID;
+    const priceIdToUse = isSubscription ? SUBSCRIPTION_PRICE_ID! : REPORT_PRICE_ID;
 
     // 3. ตั้งค่า Session Config
     const sessionConfig: any = {
