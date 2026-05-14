@@ -1860,6 +1860,7 @@ const handleDownloadCard = async () => {
     
 
     </div>
+    
   </div>
 </header>
 <div className="lg:col-span-1 bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl border border-slate-800 relative overflow-hidden group transition-all duration-500 hover:border-slate-700">
@@ -1985,6 +1986,77 @@ const handleDownloadCard = async () => {
       </div>
     </div>
 
+{/* 🚀 --- DISC Workshop Banner (Adjusted to match Momentum size) --- 🚀 */}
+<motion.div 
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="w-full mt-4 relative z-[60]"
+>
+  <div 
+    className={`relative overflow-hidden rounded-[2rem] p-5 transition-all duration-500 border group/event
+      ${currentLevel >= 5 
+        ? 'bg-gradient-to-br from-indigo-500/15 to-indigo-500/5 border-indigo-500/30 hover:border-indigo-400 cursor-pointer shadow-[0_15px_30px_-10px_rgba(79,70,229,0.2)]' 
+        : 'bg-white/5 border-white/5 opacity-80 cursor-default'
+      }`}
+    onClick={() => { 
+      if (currentLevel >= 5) setShowLineModal(true);
+    }}
+  >
+    {/* ✨ Background Glow - ปรับให้จางลงแบบ Momentum */}
+    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/event:opacity-20 transition-opacity">
+       <Ticket size={40} className="text-indigo-400 -rotate-12" />
+    </div>
+
+    <div className="relative z-10">
+      {/* Upper Part: Status & Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="bg-amber-400 text-amber-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">
+              Limited 5 Seats
+            </span>
+            {currentLevel >= 5 && (
+              <span className="text-indigo-400 text-[9px] font-black uppercase tracking-widest animate-pulse">
+                ● สิทธิ์ว่าง
+              </span>
+            )}
+          </div>
+          <h4 className={`text-base font-black leading-tight ${currentLevel >= 5 ? 'text-white' : 'text-slate-500'}`}>
+            DISC Workshop <br />
+            <span className={currentLevel >= 5 ? 'text-indigo-400' : ''}>ค้นหาตัวตนของคุณ</span>
+          </h4>
+        </div>
+
+        {/* Icon Square */}
+        <div className={`w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500
+          ${currentLevel >= 5 
+            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 group-hover/event:scale-110 group-hover/event:rotate-3' 
+            : 'bg-slate-800 text-slate-600'
+          }`}>
+          <Ticket size={22} className="text-white transform -rotate-12" />
+        </div>
+      </div>
+
+      {/* Lower Part: Description & Button */}
+      <div className="space-y-4">
+        <p className="text-slate-400 text-[10.5px] font-medium leading-relaxed">
+          พิสูจน์วินัยถึง LV.5 : รับ Reward Ticket <br/>
+          สิทธิ์ Exclusive Workshop สำหรับ 5 คนแรก
+        </p>
+
+        {currentLevel >= 5 ? (
+          <div className="w-full py-3 bg-white text-indigo-950 font-black text-[12px] rounded-xl shadow-xl group-hover/event:bg-indigo-50 transition-all flex items-center justify-center gap-2 active:scale-95">
+            <Sparkles size={14} className="text-amber-500" /> จองสิทธิ์ฟรี
+          </div>
+        ) : (
+          <div className="w-full py-3 bg-slate-800/50 border border-white/5 text-slate-500 font-bold text-[11px] rounded-xl flex items-center justify-center gap-2">
+            <Lock size={12} /> ปลดล็อกที่ LV.5
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</motion.div>
    {/* 4. Motivational Footer (เวอร์ชันรองรับ First Week) */}
 <div className="mt-8 pt-4 border-t border-slate-800/80">
   <p className="text-[13px] text-slate-400 leading-relaxed font-medium text-center italic">
