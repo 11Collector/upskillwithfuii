@@ -866,6 +866,7 @@ export default function DashboardPage() {
   }, [showDailySuccess]);
 
   const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false);
+  const [showWelcomeQuotePopup, setShowWelcomeQuotePopup] = useState(false);
   const [isGoalExpanded, setIsGoalExpanded] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
@@ -1121,6 +1122,8 @@ export default function DashboardPage() {
               setHasClaimedQuoteToday(true);
             } else {
               setHasClaimedQuoteToday(false);
+              // ✨ [NEW] เด้ง Popup ชวนเจนคำคมถ้ายังไม่ได้ทำ
+              setShowWelcomeQuotePopup(true);
             }
           }
 
@@ -4623,6 +4626,88 @@ export default function DashboardPage() {
                 >
                   Continue Journey
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🔮 Modal: Welcome Quote Invitation (Premium Purple Redesign) */}
+      <AnimatePresence>
+        {showWelcomeQuotePopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100001] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl"
+            onClick={() => setShowWelcomeQuotePopup(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 40, opacity: 0 }}
+              animate={{ 
+                scale: 1, y: 0, opacity: 1,
+                transition: { type: "spring", damping: 20, stiffness: 200 }
+              }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="relative max-w-sm w-full bg-slate-900 rounded-[3rem] p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] border border-white/10 text-center overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* ✨ Premium Purple Decorative Elements */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500" />
+              <div className="absolute -top-32 -left-32 w-80 h-80 bg-indigo-600/30 blur-[100px] rounded-full pointer-events-none" />
+              <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-purple-600/20 blur-[100px] rounded-full pointer-events-none" />
+              
+              <div className="relative z-10">
+                {/* 🎨 Icon Section (Floating Purple Glass) */}
+                <motion.div 
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-28 h-28 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl border border-white/20 relative group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Quote size={52} className="text-indigo-600 fill-indigo-500/10 -rotate-6" />
+                  
+                  {/* Floating +10 XP Badge (Purple) */}
+                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[11px] font-black px-3 py-1.5 rounded-xl shadow-lg border-2 border-white rotate-12">
+                    +10 XP
+                  </div>
+                </motion.div>
+
+                <h3 className="text-[28px] font-black text-white mb-4 leading-[1.2] tracking-tight">
+                  เริ่มวันดีๆ <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-400 to-rose-400">
+                    ด้วยคำคมกันเถอะ
+                  </span> ✨
+                </h3>
+                
+                <p className="text-slate-400 text-[14px] font-medium mb-10 leading-relaxed px-4 opacity-80">
+                  สุ่มคำคมที่ทัชใจวันนี้ <br />
+                  เพื่อปลดล็อกพลังงานบวกของคุณ
+                </p>
+
+                <div className="space-y-4">
+                  <Link
+                    href="/tools/khomsatsat"
+                    className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-black rounded-[1.5rem] shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3 active:scale-95 group text-sm tracking-widest uppercase"
+                  >
+                    ไปที่แอปคมสัดสัด
+                    <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  
+                  <button
+                    onClick={() => setShowWelcomeQuotePopup(false)}
+                    className="w-full py-4 text-slate-500 text-[11px] font-black uppercase tracking-[0.3em] hover:text-indigo-400 transition-colors"
+                  >
+                    ไว้ก่อนนะ
+                  </button>
+                </div>
+
+                {/* ✨ Bottom Decor */}
+                <div className="mt-10 flex justify-center gap-1.5">
+                  <div className="h-1 w-8 bg-indigo-500/30 rounded-full" />
+                  <div className="h-1 w-1 bg-indigo-500/30 rounded-full" />
+                  <div className="h-1 w-1 bg-indigo-500/30 rounded-full" />
+                </div>
               </div>
             </motion.div>
           </motion.div>

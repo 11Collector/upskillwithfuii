@@ -90,9 +90,9 @@ export default function LibrarySoulsQuizPage() {
             <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-emerald-100 rounded-full blur-[100px] opacity-60 -z-10" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-teal-100 rounded-full blur-[100px] opacity-60 -z-10" />
 
-            <div className="flex flex-col items-center justify-start shrink-0 w-full pt-2 h-full">
-              <div className="text-center mb-4 w-full flex flex-col items-center">
-                <h3 className="font-bold text-emerald-600 text-[10px] uppercase tracking-[0.3em] mb-4">
+            <div className="flex flex-col items-center justify-start shrink-0 w-full pt-0 h-full">
+              <div className="text-center mb-2 w-full flex flex-col items-center">
+                <h3 className="font-bold text-emerald-600 text-[9px] uppercase tracking-[0.3em] mb-2">
                   Personality Assessment
                 </h3>
 
@@ -105,17 +105,37 @@ export default function LibrarySoulsQuizPage() {
                 </div>
 
                 {/* 🎨 Super Giant Title Image Logo - Stick to book */}
-                <div className="mb-2 h-32 sm:h-44 w-full flex items-center justify-center px-4">
+                <div className="mb-0 h-32 sm:h-44 w-full flex items-center justify-center px-4">
                   <img src="/librarysoul.png" alt="Library of Souls" className="h-full w-auto object-contain drop-shadow-2xl" />
                 </div>
 
-                {/* 📝 Description - Stick to title */}
-                <p className="text-slate-500 font-medium px-6 text-[15px] leading-tight max-w-[280px]">
-                  สไตล์การอ่านสะท้อนตัวตน<br />ค้นหา "Reading Soul" 16 รูปแบบของคุณ
-                </p>
+                {/* 📝 Description Container */}
+                <div className="flex flex-col items-center gap-3 px-6 -mt-2">
+                  {/* ✨ Stats Badge (Premium Glass Style) */}
+                  <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-1.5 border-r border-emerald-200 pr-3">
+                      <Sparkles size={12} className="text-emerald-600" />
+                      <span className="text-[11px] font-black text-emerald-800 tracking-wider">12 QUESTIONS</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <BookOpen size={12} className="text-emerald-600" />
+                      <span className="text-[11px] font-black text-emerald-800 tracking-wider">16 SOULS</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-slate-800 font-black text-[18px] leading-tight mb-2">
+                      สไตล์การอ่านสะท้อนตัวตน
+                    </p>
+                    <p className="text-slate-400 font-bold text-[13px] leading-relaxed max-w-[240px]">
+                      ค้นหา <span className="text-emerald-600">"Reading Soul"</span> <br /> 
+                      16 รูปแบบของคุณผ่านจิตวิทยาการอ่าน
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="w-full flex flex-col items-center gap-4 mt-auto mb-10">
+              <div className="w-full flex flex-col items-center gap-4 mt-auto pb-12 sm:pb-16">
                 <button
                   onClick={() => setGameState("playing")}
                   className="w-[85%] bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black text-[16px] py-4 px-10 rounded-full shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"

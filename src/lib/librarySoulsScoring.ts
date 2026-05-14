@@ -25,7 +25,7 @@ export const calculateMBTI = (answers: Record<number, 'A' | 'B' | 'C'>): string 
   });
 
   const dim1 = scores.E >= scores.I ? 'E' : 'I';
-  const dim2 = scores.N >= scores.S ? 'N' : 'S';
+  const dim2 = scores.S >= scores.N ? 'S' : 'N';
   const dim3 = scores.T >= scores.F ? 'T' : 'F';
   const dim4 = scores.J >= scores.P ? 'J' : 'P';
 
