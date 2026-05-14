@@ -964,102 +964,129 @@ export default function Home() {
         )}
       </div>
 
-      {/* --- POPUPS --- */}
-      {/* === POPUP 9 DNA === */}
-      <AnimatePresence>
-        {showInfo && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }} 
-            className="fixed inset-0 z-[100] bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4" 
-            onClick={() => setShowInfo(false)}
+    {/* === POPUP 9 DNA === */}
+<AnimatePresence>
+  {showInfo && (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      // เพิ่ม p-6 และ items-center เพื่อให้มันลอยอยู่กลางจอ ไม่ชนขอบ
+      className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6" 
+      onClick={() => setShowInfo(false)}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }} 
+        animate={{ scale: 1, y: 0 }} 
+        exit={{ scale: 0.9, y: 20 }} 
+        // ปรับ max-h ให้สั้นลงเล็กน้อย (75vh) เพื่อไม่ให้กินขอบบนล่าง
+        className="bg-[#FCFBF8] w-full max-w-[360px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200" 
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ส่วนหัว: ปรับสีเป็นทอง Gradient */}
+        <div className="bg-stone-900 p-5 flex justify-between items-center shrink-0 border-b border-amber-500/20">
+          <h3 className="font-bold text-[16px] flex items-center gap-2">
+            <Info size={18} className="text-amber-500" />
+            <span className="bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200 bg-clip-text text-transparent">
+              9 AVATAR ทางการเงิน
+            </span>
+          </h3>
+          <button 
+            onClick={() => setShowInfo(false)} 
+            className="bg-stone-800 p-2 rounded-full hover:bg-stone-700 transition-all active:scale-90 text-stone-400"
           >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }} 
-              animate={{ scale: 1, y: 0 }} 
-              exit={{ scale: 0.9, y: 20 }} 
-              className="bg-[#FCFBF8] w-full max-w-[360px] max-h-[80vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200" 
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="bg-stone-900 text-amber-400 p-5 flex justify-between items-center shrink-0">
-                <h3 className="font-bold text-[15px] flex items-center gap-2"><Info size={18}/> 9 AVATAR ทางการเงิน</h3>
-                <button onClick={() => setShowInfo(false)} className="bg-stone-800 p-2 rounded-full hover:bg-stone-700 transition-all active:scale-90 text-stone-400"><X size={20}/></button>
-              </div>
-              <div className="overflow-y-auto p-5 space-y-4 custom-scrollbar">
-                {Object.values(resultData).map((type, idx) => (
-                  <div key={idx} className="bg-white p-4 rounded-2xl border border-stone-100 flex items-start gap-4 shadow-sm hover:border-amber-200 transition-colors">
-                    <div className="text-4xl mt-1 shrink-0">{type.emoji}</div>
-                    <div>
-                      <p className={`font-bold text-[14px] ${type.titleColor}`}>{type.title}</p>
-                      <p className="text-[11px] text-stone-400 font-medium mb-2 uppercase tracking-tight">{type.subtitle}</p>
-                      <p className="text-[12px] text-stone-600 leading-relaxed font-light">
-                        {highlightText(type.desc, "font-bold text-stone-800 bg-amber-100/60 px-1 rounded-sm")}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <X size={20}/>
+          </button>
+        </div>
 
-      {/* === POPUP คลังศัพท์การเงิน === */}
-      <AnimatePresence>
-        {showJargon && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }} 
-            className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-4" 
-            onClick={() => setShowJargon(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }} 
-              animate={{ scale: 1, y: 0 }} 
-              exit={{ scale: 0.9, y: 20 }} 
-              className="bg-white w-full max-w-[340px] max-h-[75vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border-2 border-sky-100" 
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="bg-sky-50 text-sky-800 p-5 flex justify-between items-center shrink-0 border-b border-sky-100">
-                <h3 className="font-bold text-[15px] text-slate-900 flex items-center gap-2"><BookOpen size={18} className="text-sky-600"/> คลังศัพท์น่ารู้</h3>
-                <button onClick={() => setShowJargon(false)} className="bg-white p-2 rounded-full hover:bg-sky-100 text-sky-400 transition-all active:scale-90"><X size={20}/></button>
+        {/* เนื้อหาด้านใน */}
+        <div className="overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[#FCFBF8]">
+          {Object.values(resultData).map((type, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-2xl border border-stone-100 flex items-start gap-4 shadow-sm hover:border-amber-200 transition-colors">
+              <div className="text-4xl mt-1 shrink-0">{type.emoji}</div>
+              <div>
+                <p className={`font-bold text-[14px] ${type.titleColor}`}>{type.title}</p>
+                <p className="text-[11px] text-stone-400 font-medium mb-2 uppercase tracking-tight">{type.subtitle}</p>
+                <p className="text-[12px] text-stone-600 leading-relaxed font-light">
+                  {highlightText(type.desc, "font-bold text-stone-800 bg-amber-50 px-1 rounded-sm border-b border-amber-200")}
+                </p>
               </div>
-              <div className="overflow-y-auto p-6 space-y-5 custom-scrollbar">
-                {activeJargons.length > 0 ? (
-                  <div className="space-y-4">
-                    <p className="text-[11px] font-bold text-sky-500 uppercase tracking-widest mb-1">ศัพท์ที่เกี่ยวข้อง</p>
-                    {activeJargons.map((jargon, idx) => (
-                      <div key={idx} className="bg-sky-50/30 p-4 rounded-2xl border border-sky-100">
-                        <p className="font-bold text-[14px] text-stone-800 mb-1.5">{jargon.word}</p>
-                        <p className="text-[13px] text-stone-600 leading-relaxed font-light">{jargon.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10">
-                    <div className="text-5xl mb-4">📖</div>
-                    <p className="font-bold text-stone-700 text-[15px]">ไม่มีคลังศัพท์น่ารู้ในข้อนี้</p>
-                    <p className="text-[12px] text-stone-500 font-light mt-2 px-4">อ่านแล้วลุยตอบตามสัญชาตญาณได้เลย!</p>
-                  </div>
-                )}
-                
-                <div className="pt-6 border-t border-stone-100">
-                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">ศัพท์การเงินอื่นๆ ที่น่าสนใจ</p>
-                  {jargonDict.filter(j => !activeJargons.includes(j)).slice(0, 2).map((jargon, idx) => (
-                    <div key={idx} className="mb-4 last:mb-0">
-                      <p className="font-bold text-[13px] text-stone-700 mb-1">{jargon.word}</p>
-                      <p className="text-[12px] text-stone-500 font-light leading-snug">{jargon.desc}</p>
-                    </div>
-                  ))}
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+     {/* === POPUP คลังศัพท์การเงิน === */}
+<AnimatePresence>
+  {showJargon && (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      // เพิ่ม p-6 เพื่อให้ตัว Popup ลอยเด่น ไม่ติดขอบจอ
+      className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6" 
+      onClick={() => setShowJargon(false)}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }} 
+        animate={{ scale: 1, y: 0 }} 
+        exit={{ scale: 0.9, y: 20 }} 
+        // ปรับ rounded-[2.5rem] ให้โค้งมนสวยเท่ากัน และคุม max-h ไว้ที่ 75vh
+        className="bg-white w-full max-w-[340px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-2 border-sky-100" 
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ส่วนหัว: ใช้โทนสีฟ้า/น้ำเงินเพื่อสื่อถึงข้อมูล/ความรู้ */}
+        <div className="bg-slate-900 p-5 flex justify-between items-center shrink-0 border-b border-sky-500/20">
+          <h3 className="font-bold text-[16px] text-white flex items-center gap-2">
+            <BookOpen size={18} className="text-sky-400"/> 
+            <span className="bg-gradient-to-r from-sky-200 to-sky-400 bg-clip-text text-transparent">
+              คลังศัพท์น่ารู้
+            </span>
+          </h3>
+          <button 
+            onClick={() => setShowJargon(false)} 
+            className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-all active:scale-90 text-slate-400"
+          >
+            <X size={20}/>
+          </button>
+        </div>
+
+        {/* เนื้อหาด้านใน: ปรับปรุงระยะห่าง (Spacing) */}
+        <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar bg-white">
+          {activeJargons.length > 0 ? (
+            <div className="space-y-4">
+              <p className="text-[11px] font-bold text-sky-600/60 uppercase tracking-[0.1em] mb-1">ศัพท์ที่เกี่ยวข้องในหน้านี้</p>
+              {activeJargons.map((jargon, idx) => (
+                <div key={idx} className="bg-sky-50/50 p-4 rounded-2xl border border-sky-100 shadow-sm">
+                  <p className="font-bold text-[15px] text-slate-900 mb-1.5">{jargon.word}</p>
+                  <p className="text-[13px] text-slate-600 leading-relaxed font-light">{jargon.desc}</p>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-5xl mb-4 grayscale opacity-50">📖</div>
+              <p className="font-bold text-slate-800 text-[15px]">ไม่มีคลังศัพท์ในข้อนี้</p>
+              <p className="text-[12px] text-slate-500 font-light mt-2 px-6">ลุยตอบตามสัญชาตญาณได้เลยครับ!</p>
+            </div>
+          )}
+          
+          <div className="pt-6 border-t border-slate-100">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">เกร็ดการเงินอื่นๆ</p>
+            {jargonDict.filter(j => !activeJargons.includes(j)).slice(0, 2).map((jargon, idx) => (
+              <div key={idx} className="mb-4 last:mb-0 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                <p className="font-bold text-[13px] text-slate-700 mb-1">{jargon.word}</p>
+                <p className="text-[12px] text-slate-500 font-light leading-snug">{jargon.desc}</p>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
     </div>
   );
 }
