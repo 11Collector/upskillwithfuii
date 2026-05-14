@@ -1500,7 +1500,7 @@ const getQuoteFontSize = (text: string) => {
                 </h2>
                 
                 <p className="text-[15px] font-medium text-slate-500 mb-12 px-6 leading-relaxed opacity-80 max-w-[280px]">
-                  สรุปหนังสือและบทความดีๆ <br/> ที่คัดมาแล้วเพื่อวิศวกรยุคใหม่
+                  สรุปหนังสือและบทความดีๆ <br/> ที่คัดมาแล้วเพื่อคุณโดยเฉพาะ
                 </p>
                 
                 <div className="mt-auto w-full group/btn">
