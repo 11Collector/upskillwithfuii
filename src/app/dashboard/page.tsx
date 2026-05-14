@@ -1634,7 +1634,7 @@ const getQuoteFontSize = (text: string) => {
             </div>
           </div>
 
-          <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> ตัวตนทางการเงิน </h3>
+          <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>
           <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors"> 
             {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"} 
           </h2>
@@ -1711,56 +1711,68 @@ const getQuoteFontSize = (text: string) => {
   <motion.div 
     whileHover={currentLevel >= 5 ? { y: -6 } : {}} 
     className={`h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 relative overflow-hidden 
-      ${currentLevel >= 5 ? 'hover:shadow-2xl hover:border-emerald-200' : 'opacity-80 grayscale-[0.2]'}`}
+      ${currentLevel >= 5 ? 'hover:shadow-2xl hover:border-emerald-100' : 'opacity-90'}`}
   >
-    {/* ✨ Soft Ambient Light (Emerald Version) */}
-    <div className={`absolute top-0 right-0 w-72 h-72 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none transition-colors duration-700 ${currentLevel >= 5 ? 'bg-gradient-to-br from-emerald-400/5 to-teal-400/5 group-hover:from-emerald-400/10' : 'bg-slate-200/10'}`} />
-    <div className={`absolute top-0 left-0 w-full h-1.5 opacity-80 transition-all duration-300 ${currentLevel >= 5 ? 'bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-400' : 'bg-slate-300'}`} />
+    
+    {/* 🏷️ Status Badge (ตำแหน่ง Top 8 Right 8 เป๊ะ) */}
+    <div className="absolute top-8 right-8 z-30">
+      {currentLevel >= 5 ? (
+        <motion.div 
+          initial={{ scale: 0 }} animate={{ scale: 1 }}
+          className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-emerald-100 flex items-center gap-1.5 uppercase tracking-wider"
+        >
+          <Unlock size={10} className="fill-white" /> Unlocked
+        </motion.div>
+      ) : (
+        <div className="bg-slate-100 text-slate-400 text-[10px] font-black px-3 py-1 rounded-full border border-slate-200 flex items-center gap-1.5 uppercase tracking-wider">
+          <Lock size={10} /> LV.5 Required
+        </div>
+      )}
+    </div>
+
+    {/* ✨ Ambient Light & Emerald Top Bar */}
+    <div className={`absolute top-0 right-0 w-72 h-72 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none transition-colors duration-700 
+      ${currentLevel >= 5 ? 'bg-gradient-to-br from-emerald-400/5 to-teal-400/5 group-hover:from-emerald-400/10' : 'bg-slate-200/5'}`} 
+    />
+    <div className={`absolute top-0 left-0 w-full h-1.5 opacity-80 transition-all duration-500 
+      ${currentLevel >= 5 ? 'bg-gradient-to-r from-emerald-300 via-teal-500 to-emerald-300' : 'bg-slate-200'}`} 
+    />
     
     <div className="relative z-10 flex flex-col items-center h-full w-full">
-      {/* Status Badge: บอกสถานะการปลดล็อก */}
-      <div className="absolute -top-2 -right-2">
-        {currentLevel >= 5 ? (
-          <div className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1 shadow-sm uppercase tracking-widest">
-            <Unlock size={12} /> Unlocked
-          </div>
-        ) : (
-          <div className="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1 shadow-sm uppercase tracking-widest">
-            <Lock size={12} /> LV.5 Required
-          </div>
-        )}
-      </div>
-
-      {/* 📖 Logo Container - ปรับเป็นวงกลม w-24 h-24 ให้เท่ากับ Tool อื่นๆ */}
-      <div className="relative mb-8 mt-4">
+      
+      {/* 📖 Logo Container (w-24 h-24 เท่ากับ Money Avatar) */}
+      <div className="relative mb-6 mt-2">
         <div className={`absolute inset-0 blur-3xl opacity-20 ${currentLevel >= 5 ? 'bg-emerald-100' : 'bg-slate-200'}`} />
-        <div className={`relative w-24 h-24 rounded-full flex items-center justify-center text-5xl transition-all duration-500 shadow-[0_12px_40px_rgb(0,0,0,0.04)] border border-slate-50
-          ${currentLevel >= 5 ? 'bg-white text-emerald-600 group-hover:scale-110' : 'bg-slate-50 text-slate-300'}`}>
-          {currentLevel >= 5 ? "📚" : <BookOpen size={40} />}
+        <div className={`relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl transition-transform duration-500 
+          ${currentLevel >= 5 ? 'group-hover:scale-110' : 'grayscale'}`}>
+          {currentLevel >= 5 ? "📚" : "🔒"}
         </div>
       </div>
 
-      <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> Upskill Library </h3>
-      <h2 className={`text-3xl font-black mb-3 leading-tight tracking-tight transition-colors ${currentLevel >= 5 ? 'text-slate-900 group-hover:text-emerald-600' : 'text-slate-400'}`}>
+      <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> UPSKILL LIBRARY </h3>
+      <h2 className={`text-3xl font-black mb-3 leading-tight tracking-tight transition-colors 
+        ${currentLevel >= 5 ? 'text-slate-900 group-hover:text-emerald-600' : 'text-slate-400'}`}>
         คลังสมองอัพสกิล
       </h2>
       
-      <p className="text-[15px] font-medium text-slate-500 mb-12 px-6 leading-relaxed opacity-80 max-w-[280px]">
-        สรุปหนังสือและบทความดีๆ <br/> ที่คัดมาแล้วเพื่อคุณโดยเฉพาะ
+      <p className="text-[14px] font-medium text-slate-500 mb-8 px-6 leading-relaxed opacity-80 max-w-[280px]">
+        สรุปหนังสือและบทความเด็ดๆ <br/> ที่คัดมาเพื่อคุณโดยเฉพาะ
       </p>
       
-      <div className="mt-auto w-full group/btn">
-        {currentLevel >= 5 ? (
-          <div className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-emerald-600 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] group-hover/btn:bg-emerald-700 group-hover/btn:-translate-y-1 justify-center active:scale-95">
-            <span>เปิดอ่านคลังสมอง</span>
-            <ChevronRight size={18} />
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-slate-100 text-slate-400 text-[13px] font-black uppercase tracking-widest border border-slate-200 justify-center">
-            <Lock size={14} />
-            <span>ปลดล็อกที่ LV.5</span>
-          </div>
-        )}
+      <div className="w-full px-4 mt-auto">
+        <div className="group/btn-library relative">
+          {currentLevel >= 5 ? (
+            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-library:scale-[1.02] group-hover/btn-library:shadow-emerald-300 active:scale-95">
+              <BookOpen size={16} className="text-white/80" />
+              <span>เปิดอ่านคลังสมอง</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-slate-100 text-slate-400 text-[13px] font-black uppercase tracking-widest border border-slate-200 cursor-not-allowed">
+              <Lock size={16} />
+              <span>ปลดล็อกที่ LV.5</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   </motion.div>

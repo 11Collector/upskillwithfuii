@@ -7,6 +7,9 @@ const config: Config = {
   theme: {
     extend: {},
   },
-  plugins: [],
+plugins: [
+  require('@tailwindcss/typography'),
+  // plugin อื่นๆ ของคุณ
+],
 };
 export default config;
