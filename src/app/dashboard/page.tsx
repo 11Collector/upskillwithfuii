@@ -1403,10 +1403,21 @@ const getQuoteFontSize = (text: string) => {
                      </div>
                   )}
 
-                  <div className={`inline-flex items-center gap-1.5 px-6 py-3 rounded-full border text-[12px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm w-fit ${lastWheel ? 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200' : 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(239,68,68,0.5)] hover:scale-[1.03]'}`}>
-                    <RefreshCw size={14} className={lastWheel ? "group-hover:rotate-180 transition-transform duration-500" : "animate-pulse"} />
-                    <span>{lastWheel ? "ประเมินใหม่" : "เริ่มประเมินครั้งแรก (+50 XP)"}</span>
-                  </div>
+               <div className={`inline-flex items-center gap-1.5 px-6 py-3 rounded-full border text-[13px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm w-fit 
+  ${lastWheel 
+    ? 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200' 
+    : 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(239,68,68,0.5)] hover:scale-[1.03]'
+  }`}>
+  
+  {/* สลับไอคอนแบบนิ่งๆ ไม่มีการ animate */}
+  {lastWheel ? (
+    <RefreshCw size={14} />
+  ) : (
+    <Sparkles size={14} />
+  )}
+  
+  <span>{lastWheel ? "ประเมินใหม่" : "เริ่มประเมินครั้งแรก (+50 XP)"}</span>
+</div>
                 </div>
                 <div className="w-full md:w-1/2 flex justify-center items-center rounded-[3rem] p-2 aspect-square md:aspect-auto">
                   {lastWheel?.currentScores ? renderRadarChart(lastWheel.currentScores) : (
@@ -1455,7 +1466,7 @@ const getQuoteFontSize = (text: string) => {
                 </div>
                 
                 <div className="mt-auto flex justify-center">
-                  <div className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 border shadow-sm w-full
+                  <div className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-[13px] font-black uppercase tracking-widest transition-all duration-300 border shadow-sm w-full
                     ${hasClaimedQuoteToday 
                       ? 'bg-slate-50 text-slate-500 border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200' 
                       : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(79,70,229,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(79,70,229,0.5)] hover:scale-[1.03]'
@@ -1467,18 +1478,23 @@ const getQuoteFontSize = (text: string) => {
               </div>
             </motion.div>
           </Link>
+
+
+{/* 🌟 3. DISC - Version "The Carry" (เพิ่มคำอธิบายใต้รูป) */}
 <Link href="/tools/disc" className="group block h-full relative">
+  {/* ปุ่ม Info (โชว์เมื่อมีข้อมูลแล้ว) */}
   {lastDisc && (
      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openDiscInfo(e); }} 
              className="absolute top-8 right-8 z-20 p-2.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-all bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100">
        <Info size={18} />
      </button>
   )}
+  
   <motion.div 
     whileHover={{ y: -6 }} 
     className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-blue-200 relative overflow-hidden group"
   >
-    {/* 🏷️ Floating XP Badge (ตำแหน่ง Top 8 Right 8) */}
+    {/* 🏷️ Floating XP Badge (Top 8 Right 8) */}
     {!lastDisc && (
       <motion.div 
         initial={{ scale: 0, rotate: 10 }}
@@ -1490,29 +1506,75 @@ const getQuoteFontSize = (text: string) => {
     )}
 
     {/* ✨ Soft Glow & Blue Top Bar */}
-    <div className={`absolute top-0 right-0 w-80 h-80 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none opacity-10 transition-colors duration-700 ${discMainChar === 'D' ? 'bg-red-400' : discMainChar === 'I' ? 'bg-orange-400' : discMainChar === 'S' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+    <div className={`absolute top-0 right-0 w-80 h-80 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none opacity-10 transition-colors duration-700 ${
+      discMainChar === 'D' ? 'bg-red-400' : 
+      discMainChar === 'I' ? 'bg-orange-400' : 
+      discMainChar === 'S' ? 'bg-emerald-400' : 'bg-blue-400'
+    }`} />
     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-300 via-blue-600 to-blue-300 opacity-80" />
     
     <div className="relative z-10 flex flex-col items-center h-full w-full">
       {lastDisc ? (
         <>
           <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-6"> DISC STYLE </h3>
+          
+          {/* 🛡️ Logo Container */}
           <div className="relative mb-6">
             <div className={`absolute inset-0 blur-3xl opacity-30 ${discColors.light}`} />
             <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500">
               {DISC_DATA[discMainChar]?.emoji || "🎭"}
             </div>
           </div>
+
+          {/* 📝 ส่วนคำอธิบายใต้รูป: ปรับให้พรีเมียมและอ่านง่าย */}
+          <p className="text-[14px] font-medium text-slate-500 mb-6 px-4 leading-relaxed opacity-90 max-w-[280px]">
+            {DISC_DATA[discMainChar]?.desc || "คุณคือส่วนผสมที่ลงตัวของการทำงานและการสื่อสาร"}
+          </p>
+
           <div className="flex-1"></div>
-          {/* ... ส่วน Progress Bar และ RPG Title เหมือนเดิม ... */}
-          <div className="w-full">
-            <div className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-slate-900 text-white text-[12px] font-black uppercase tracking-widest transition-all duration-300 shadow-lg group-hover:bg-black justify-center active:scale-95">
-              <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-700" />
-              <span>วัดความตึงใหม่</span>
+
+          {/* 📊 Progress Bar & Legend */}
+          <div className="w-full space-y-3 mb-6">
+             <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex shadow-inner border border-slate-50">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${lastDisc.percentages?.D || 0}%` }} className="h-full bg-red-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${lastDisc.percentages?.I || 0}%` }} className="h-full bg-orange-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${lastDisc.percentages?.S || 0}%` }} className="h-full bg-emerald-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${lastDisc.percentages?.C || 0}%` }} className="h-full bg-blue-500" />
+             </div>
+             <div className="flex justify-center items-center gap-x-3 text-[11px] font-black">
+                {['D','I','S','C'].map((label, idx) => (
+                  <div key={label} className="flex items-center gap-1">
+                    <span className={idx===0?'text-red-500':idx===1?'text-orange-500':idx===2?'text-emerald-500':'text-blue-500'}>{label}</span>
+                    <span className="text-slate-400">{lastDisc.percentages?.[label] || 0}%</span>
+                  </div>
+                ))}
+             </div>
+          </div>
+
+          {/* 🏆 RPG Title & Label */}
+          <div className="mb-8">
+             <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-2 inline-block border ${discColors.light} ${discColors.border} ${discColors.text}`}>
+                {discMainChar === 'D' ? 'Dominance' : 
+                 discMainChar === 'I' ? 'Influence' : 
+                 discMainChar === 'S' ? 'Steadiness' : 'Conscientiousness'}
+             </span>
+             <h2 className={`text-3xl font-black leading-tight tracking-tight ${DISC_DATA[discMainChar]?.titleColor || 'text-slate-900'}`}> 
+               {DISC_DATA[discMainChar]?.rpgTitle || "จอมวางแผน"} 
+             </h2>
+          </div>
+          
+          {/* ปุ่มประเมินใหม่ */}
+          <div className="w-full px-4">
+            <div className="group/btn-start relative">
+              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-sky-400 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(56,189,248,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-blue-300 active:scale-95">
+                <RefreshCw size={16} className="text-white/80" />
+                <span>ประเมินใหม่</span>
+              </div>
             </div>
           </div>
         </>
       ) : (
+        /* 🎁 Empty State เหมือนเดิม */
         <div className="flex flex-col items-center justify-center h-full py-10 relative w-full">
           <div className="relative mb-6 mt-4">
             <div className="absolute inset-0 bg-blue-100 blur-3xl opacity-20" />
@@ -1523,8 +1585,11 @@ const getQuoteFontSize = (text: string) => {
           <h3 className="text-2xl font-black text-slate-800 mb-2">วัดความตึง DISC</h3>
           <p className="text-slate-400 text-sm mb-8 font-medium">ค้นหาตัวตนและการสื่อสาร</p>
           <div className="w-full px-4">
-            <div className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
-              เริ่มประเมินครั้งแรก <span className="text-emerald-400">(+50 XP)</span>
+            <div className="group/btn-start relative">
+              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-sky-400 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(56,189,248,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-blue-300 active:scale-95">
+                <Sparkles size={16} className="text-white/80" />
+                <span>เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span></span>
+              </div>
             </div>
           </div>
         </div>
@@ -1578,7 +1643,7 @@ const getQuoteFontSize = (text: string) => {
             Match {lastMoney.primaryMatch || 100}%
           </div>
 
-          <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 italic leading-relaxed opacity-80 max-w-[280px]"> 
+          <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]"> 
             "{MONEY_DATA[lastMoney.resultKey]?.motto}" 
           </p>
 
@@ -1600,12 +1665,16 @@ const getQuoteFontSize = (text: string) => {
               </div>
           )}
           
-          <div className="mt-auto w-full group/btn">
-            <div className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-slate-900 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(15,23,42,0.3)] group-hover/btn:bg-black group-hover/btn:-translate-y-1 justify-center active:scale-95">
-              <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-700" />
-              <span>ประเมินใหม่</span>
-            </div>
-          </div>
+        <div className="w-full px-4">
+  <div className="group/btn-start relative">
+    <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+      <RefreshCw size={16} className="text-white/80" />
+      <span>
+       ประเมินใหม่
+      </span>
+    </div>
+  </div>
+</div>
         </>
       ) : (
      <div className="flex flex-col items-center justify-center h-full py-10 relative w-full">
@@ -1617,11 +1686,16 @@ const getQuoteFontSize = (text: string) => {
            </div>
            <h3 className="text-2xl font-black text-slate-800 mb-2">Money Avatar</h3>
            <p className="text-slate-400 text-sm font-medium mb-8">ถอดรหัสสไตล์การเงินของคุณ</p>
-           <div className="w-full px-4">
-             <div className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-xl shadow-slate-200 group-hover:bg-black group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
-               เริ่มประเมินครั้งแรก <span className="text-emerald-400">(+50 XP)</span>
-             </div>
-           </div>
+       <div className="w-full px-4">
+  <div className="group/btn-start relative">
+    <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+      <Sparkles size={16} className="text-white/80" />
+      <span>
+        เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span>
+      </span>
+    </div>
+  </div>
+</div>
         </div>
       )}
     </div>
@@ -1682,7 +1756,7 @@ const getQuoteFontSize = (text: string) => {
             <ChevronRight size={18} />
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest border border-slate-200 justify-center">
+          <div className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-slate-100 text-slate-400 text-[13px] font-black uppercase tracking-widest border border-slate-200 justify-center">
             <Lock size={14} />
             <span>ปลดล็อกที่ LV.5</span>
           </div>
