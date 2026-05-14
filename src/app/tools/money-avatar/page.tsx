@@ -786,22 +786,20 @@ export default function Home() {
                   </button>
                   <Trophy size={28} className="text-white/80 mb-2 mt-2 drop-shadow-md" />
                   <p className="text-white/90 text-[10px] font-semibold tracking-widest uppercase mb-3 opacity-80">Money Avatar</p>
-                  <p className="relative z-20 whitespace-nowrap text-white/95 text-[11px] bg-black/50 px-6 py-1.5 rounded-full font-medium tracking-wide border border-white/10">{currentResult.subtitle}</p>
+                  <p className="relative z-20 whitespace-nowrap text-white/95 text-[11px] bg-black/50 px-4 py-1.5 rounded-full font-medium tracking-wide border border-white/10">{currentResult.subtitle}</p>
                 </div>
 
              <div className="p-5 pt-10 flex flex-col relative">
-  {/* 🟢 ปรับขนาดจาก w-24 h-24 เป็น w-32 h-32 และเลื่อนขึ้นไป -top-16 (ครึ่งหนึ่งของ 32) */}
-  <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-[6px] border-[#FCFBF8] z-10 overflow-hidden">
+<div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-[6px] border-[#FCFBF8] z-10 overflow-hidden">
     {avatarImages[matchStats.primary.id] ? (
-      <Image 
+      <img 
         src={avatarImages[matchStats.primary.id]} 
         alt={currentResult.title} 
-        width={128} // ปรับให้สัมพันธ์กับ w-32
-        height={128} 
-        className="object-contain w-[85%] h-[85%]" // ใช้ object-contain และลดขนาดลงนิดนึงเพื่อให้เห็นตัวการ์ตูนครบ ไม่โดนขอบวงกลมตัด
+        className="object-contain w-[85%] h-[85%]" 
+        crossOrigin="anonymous" /* แนะนำให้ใส่เพิ่มเพื่อป้องกันปัญหา CORS ตอนใช้ html-to-image */
       />
     ) : (
-      <span className="text-6xl">{currentResult.emoji}</span> // ขยาย Emoji ตามขนาดวงกลม
+      <span className="text-6xl">{currentResult.emoji}</span> 
     )}
   </div>
 
@@ -858,7 +856,7 @@ export default function Home() {
                           <div className={getMatrixClass('HIGH_RISK_MID_DISC')}>ล่าเทรนด์(ดอย)</div>
                           <div className={getMatrixClass('HIGH_RISK_HIGH_DISC')}>เซียนระบบ</div>
                           <div className={getMatrixClass('MID_RISK_LOW_DISC')}>ตัวตึงสายเปย์</div>
-                          <div className={getMatrixClass('MID_RISK_MID_DISC')}>มนุษย์สมดุล</div>
+                          <div className={getMatrixClass('MID_RISK_MID_DISC')}>สุดสมดุล</div>
                           <div className={getMatrixClass('MID_RISK_HIGH_DISC')}>นักปั้นพอร์ต</div>
                           <div className={getMatrixClass('LOW_RISK_LOW_DISC')}>ผู้ประสบภัย</div>
                           <div className={getMatrixClass('LOW_RISK_MID_DISC')}>สายเซฟโซน</div>

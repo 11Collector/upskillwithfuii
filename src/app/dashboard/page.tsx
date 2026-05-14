@@ -14,63 +14,63 @@ import React from 'react'
 // --- 💡 Dictionaries ---
 export const MONEY_DATA: Record<string, any> = {
   HIGH_RISK_HIGH_DISC: {
-    title: "เซียนระบบสุดตึง", subtitle: "The System Alpha", color: "bg-purple-600", barColor: "bg-purple-500", emoji: "🧠", titleColor: "text-purple-600",
+    title: "เซียนระบบสุดตึง", subtitle: "The Wolf", color: "bg-purple-600", barColor: "bg-purple-500", emoji: "🧠", titleColor: "text-purple-600",
     desc: "คุณมองเงินเป็น Code ที่ต้องดีบักและรันให้เป๊ะตามแผน จุดแข็งคือความนิ่งที่แยกอารมณ์ออกจากตัวเลขได้อย่างเด็ดขาด ทำให้คุณคุมเกมได้แม้ในสภาวะตลาดที่บ้าคลั่งที่สุด",
     motto: "เงินคือเครื่องจักร และตัวเราคือคนเขียนโค้ดคุมมันอีกที",
     bestPartner: { name: "🤖 บอทเทรด & หุ้นสาย Tech/Growth", desc: "เหมาะกับสินทรัพย์ที่สวิงแรงแต่มีปัจจัยพื้นฐานรองรับ ใช้เครื่องมือ Automation เพื่อตัดการตัดสินใจด้วยอารมณ์ออกไป" },
     kryptonite: { name: "กับดักความสมบูรณ์แบบ (Over-Optimization) ⚡", desc: "การพยายามหาสูตรสำเร็จที่ไม่มีอยู่จริง การยึดติดกับ Logic เดิมๆ โดยไม่เผื่อใจให้เหตุการณ์ที่ไม่คาดฝันอาจทำให้ระบบล่มสลายได้" }
   },
   MID_RISK_HIGH_DISC: {
-    title: "นักปั้นพอร์ตมือฉมัง", subtitle: "The Compounder", color: "bg-blue-600", barColor: "bg-blue-500", emoji: "📈", titleColor: "text-blue-600",
+    title: "นักปั้นพอร์ตมือฉมัง", subtitle: "The Ant", color: "bg-blue-600", barColor: "bg-blue-500", emoji: "📈", titleColor: "text-blue-600",
     desc: "คุณมองเงินเป็นเมล็ดพันธุ์ที่ต้องใช้เวลาบ่มเพาะ จุดแข็งคือความอึดและพลังดอกเบี้ยทบต้นที่คุณยึดถือเป็นคัมภีร์ ชัยชนะที่ยั่งยืนไม่ได้สร้างเสร็จในวันเดียว",
     motto: "เงินไม่ได้งอกเงยด้วยความเร็ว แต่งอกเงยด้วยความสม่ำเสมอ",
     bestPartner: { name: "📊 กองทุนดัชนี & กลุ่มสินทรัพย์คงทน (Hard Assets)", desc: "เหมาะกับการ DCA สะสมสินทรัพย์ที่โตไปกับเทรนด์โลก ปล่อยให้เวลาและวินัยของคุณทำงาน แล้วมันจะสร้างผลตอบแทนมหาศาล" },
     kryptonite: { name: "อาการริษยาในความรวยเร็ว (Relative Wealth Envy) ⚡", desc: "เมื่อเห็นคนอื่นซิ่งจนรวยข้ามคืน วินัยอาจสั่นคลอน อย่าทิ้งคัมภีร์ที่ฝึกมาเพื่อกระโดดไปไล่ราคาในสิ่งที่ไม่ได้ศึกษา" }
   },
   LOW_RISK_HIGH_DISC: {
-    title: "ผู้พิทักษ์เงินต้น", subtitle: "The Vault Guardian", color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️", titleColor: "text-emerald-600",
+    title: "ผู้พิทักษ์เงินต้น", subtitle: "The Snail", color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️", titleColor: "text-emerald-600",
     desc: "คุณมองเงินเป็นปราสาทที่ต้องรักษาฐานที่มั่นให้แข็งแกร่งที่สุด จุดแข็งคือความรอบคอบ คุณคือนอนหลับฝันดีได้เสมอ เพราะรู้ว่าเงินต้นไม่มีวันพัง",
     motto: "ความมั่งคั่งที่แท้จริง คือการนอนหลับฝันดีโดยไม่ต้องกังวลเรื่องเงิน",
     bestPartner: { name: "🏦 หุ้นกู้เรตติ้งสูง & สลากออมทรัพย์", desc: "เหมาะกับแหล่งผลิตเงินสดความเสี่ยงต่ำ เน้นปกป้องเงินต้นแต่ให้ผลตอบแทนชนะเงินเฟ้อ" },
     kryptonite: { name: "ภัยเงียบจากอำนาจการซื้อที่ลดลง (Inflation) ⚡", desc: "การกอดเงินสดไว้แน่นเกินไปคือการเปิดประตูให้เงินเฟ้อมากัดกินมูลค่าเงิน ความกลัวการขาดทุนระยะสั้นอาจทำให้คุณขาดทุนมหาศาลในระยะยาว" }
   },
   HIGH_RISK_MID_DISC: {
-    title: "ล่าเทรนด์(ติดดอย)", subtitle: "The Trend Surfer", color: "bg-rose-500", barColor: "bg-rose-400", emoji: "🏄‍♂️", titleColor: "text-rose-500",
+    title: "ล่าเทรนด์(ติดดอย)", subtitle: "The Monkey", color: "bg-rose-500", barColor: "bg-rose-400", emoji: "🏄‍♂️", titleColor: "text-rose-500",
     desc: "คุณมองเงินเป็นคลื่นที่ต้องกระโดดขึ้นไปขี่ให้ทันเวลา จุดแข็งคือความไวและความกล้าที่พร้อมรุกในจังหวะที่คนอื่นลังเล แม้จะติดดอยบ้าง แต่ก็พร้อมลุยรอบใหม่เสมอ",
     motto: "ที่ไหนมีกระแส ที่นั่นมีโอกาส (และดอยที่รอให้เราไปพิชิต)",
     bestPartner: { name: "🎢 หุ้นซิ่งตามกระแส & คริปโตฯ เล่นรอบ", desc: "เหมาะกับการเข้าออกไวเพื่อทำกำไรส่วนต่าง แต่ต้องบังคับตัวเองให้มีกฎตัดขาดทุน (Stop-Loss) ที่เฉียบขาดเสมอ" },
     kryptonite: { name: "การเทรดเพื่อแก้มือ (Revenge Trading) ⚡", desc: "เมื่อพลาดแล้วคุณมักจะอยากเอาคืนทันที ความวู่วามนี้จะทำลายแผนที่วางไว้ การพยายามเอาชนะตลาดด้วยอารมณ์จะพาพอร์ตเสียหายหนักกว่าที่ควร" }
   },
   MID_RISK_MID_DISC: {
-    title: "มนุษย์สุดสมดุล", subtitle: "The Balanced One", color: "bg-amber-500", barColor: "bg-amber-400", emoji: "⚖️", titleColor: "text-amber-500",
+    title: "สุดสมดุล", subtitle: "The Capybara", color: "bg-amber-500", barColor: "bg-amber-400", emoji: "⚖️", titleColor: "text-amber-500",
     desc: "คุณมองเงินเป็นจิ๊กซอว์ส่วนหนึ่งของชีวิตที่ต้องวางให้ถูกที่ จุดแข็งคือความยืดหยุ่นที่ทำให้คุณสนุกกับปัจจุบันได้โดยไม่ทิ้งอนาคต บริหารความสุขและพอร์ตได้ดีที่สุด",
     motto: "เงินมีไว้ใช้สร้างชีวิต ไม่ใช่ให้ชีวิตมีไว้เพื่อหาเงินอย่างเดียว",
     bestPartner: { name: "🍱 กองทุนผสม (Mixed Fund) & หุ้นปันผล", desc: "เหมาะกับพอร์ตสำเร็จรูปที่จัดสรรความเสี่ยงมาให้แล้ว ให้คุณได้กระแสเงินสดมาเติมความสุข โดยไม่ต้องปวดหัวบริหารเอง" },
     kryptonite: { name: "กับดักพื้นที่ปลอดภัย (Comfort Zone Trap) ⚡", desc: "ความพอดีอาจกลายเป็นศัตรูของความก้าวหน้า การชิลเกินไปอาจทำให้พอร์ตโตไม่ทันเป้าหมายใหญ่ ลองท้าทายตัวเองด้วยเป้าหมายที่สูงขึ้น" }
   },
   LOW_RISK_MID_DISC: {
-    title: "สายโคตรเซฟโซน", subtitle: "The Safety Net", color: "bg-teal-500", barColor: "bg-teal-400", emoji: "🛟", titleColor: "text-teal-500",
+    title: "สายโคตรเซฟโซน", subtitle: "The Turtle", color: "bg-teal-500", barColor: "bg-teal-400", emoji: "🛟", titleColor: "text-teal-500",
     desc: "คุณมองเงินเป็นชูชีพที่ต้องหยิบใช้ได้ทันทียามฉุกเฉิน จุดแข็งคือความอุ่นใจในการบริหารกระแสเงินสด พร้อมรับมือกับทุกพายุด้วยความใจเย็น",
     motto: "ความเสี่ยงต่ำคือเซฟโซน ความสบายใจคือกำไรที่ประเมินค่าไม่ได้",
     bestPartner: { name: "📱 บัญชีเงินฝากดิจิทัล & กองทุนตลาดเงิน", desc: "เหมาะกับการพักเงินที่ให้ดอกเบี้ยสูงกว่าออมทรัพย์ปกติ แต่ยังคงความถอนง่ายใช้คล่อง ตอบโจทย์ความต้องการสภาพคล่องระดับสุดยอด" },
     kryptonite: { name: "อาการเสียดายเงินที่หายไปเพียงเล็กน้อย (Loss Aversion) ⚡", desc: "ความกังวลเมื่อตัวเลขติดลบแม้เพียงนิดเดียวอาจปิดกั้นโอกาสทองในการลงทุนระยะยาว การยึดติดกับความปลอดภัย 100% คือการยอมเสียโอกาส" }
   },
   HIGH_RISK_LOW_DISC: {
-    title: "ดมกาวสุดกราฟ", subtitle: "The Degen Gambler", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀", titleColor: "text-red-600",
+    title: "ดมกาวสุดกราฟ", subtitle: "The Phoenix", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀", titleColor: "text-red-600",
     desc: "คุณมองเงินเป็นตั๋วเปลี่ยนชีวิตที่ต้องเดิมพันให้สุดในจังหวะที่ใช่ จุดแข็งคือความกล้าที่ไม่มีใครเทียบได้ และวิสัยทัศน์ที่มองเห็นโอกาสในขณะที่คนอื่นกลัว",
     motto: "เงินน่ะหาใหม่ได้ แต่โอกาสเปลี่ยนชีวิตมันไม่ได้มีมาบ่อยๆ",
     bestPartner: { name: "👽 เหรียญมีมสุดกาว & สินทรัพย์ทางเลือก", desc: "เหมาะกับการเก็งกำไรความเสี่ยงสูงปรี๊ด แนะนำให้ใช้กลยุทธ์แบ่งเงินก้อนเล็กไปซิ่งเพื่อลุ้นเปลี่ยนชีวิตโดยไม่กระทบเงินกินข้าว" },
     kryptonite: { name: "ความเชื่อมั่นในข่าวลือและการแห่ตามกระแส (FOMO) ⚡", desc: "การใช้สัญชาตญาณโดยปราศจากข้อมูลคือการพนัน การ All-in ตามกลุ่มไลน์โดยไม่ศึกษาเองคือจุดตายที่มักจะพาไปจบที่การสูญเสียเงินก้อนใหญ่" }
   },
   MID_RISK_LOW_DISC: {
-    title: "ตัวตึงสายเปย์", subtitle: "The Lifestyle Spender", color: "bg-pink-500", barColor: "bg-pink-400", emoji: "🛍️", titleColor: "text-pink-500",
+    title: "ตัวตึงสายเปย์", subtitle: "The Peacock", color: "bg-pink-500", barColor: "bg-pink-400", emoji: "🛍️", titleColor: "text-pink-500",
     desc: "คุณมองเงินเป็นรางวัลของการใช้ชีวิตที่ต้องได้สัมผัส จุดแข็งคือความสามารถในการสร้างความสุข รวยในบัญชีสู้รวยประสบการณ์วันนี้ไม่ได้",
     motto: "ความมั่งคั่งคือภาพลวงตา แต่ของที่กดลงตะกร้าคือของจริง",
     bestPartner: { name: "💳 กองทุนลดหย่อนภาษี (ตัดบัตรอัตโนมัติ) & ซื้อทองคำ", desc: "เหมาะกับสินทรัพย์ที่จับต้องได้ หรือใช้วิธีบังคับหักเงินไปลงทุนทันทีที่เงินเดือนออก เพื่อเปลี่ยนความชอบเปย์ให้กลายเป็นสินทรัพย์" },
     kryptonite: { name: "กับดักความสุขชั่วคราว (Lifestyle Creep) ⚡", desc: "เมื่อรายได้เพิ่ม รายจ่ายมักวิ่งตามทันเสมอ การใช้เงินผ่านบัตรเครดิตหรือผ่อนชำระคือหลุมพรางที่จะดึงกระแสเงินสดในอนาคตไปใช้จนไม่เหลือสร้างความมั่งคั่ง" }
   },
   LOW_RISK_LOW_DISC: {
-    title: "ผู้ประสบภัยวัยกลางคน", subtitle: "The Survivor", color: "bg-slate-500", barColor: "bg-slate-400", emoji: "🛶", titleColor: "text-slate-600",
+    title: "ผู้ประสบภัยวัยกลางคน", subtitle: "The Deer", color: "bg-slate-500", barColor: "bg-slate-400", emoji: "🛶", titleColor: "text-slate-600",
     desc: "คุณมองเงินเป็นเกราะประคองชีวิตที่ต้องบริหารให้ผ่านไปได้ จุดแข็งคือทักษะการเอาตัวรอดที่เป็นเลิศ แม้วันนี้จะเหนื่อย แต่หัวใจนักสู้จะพาไปเจอวันที่ดีกว่า",
     motto: "นักสู้วันต่อวัน แค่หมุนเงินรอดไปได้อีกเดือนก็คือชัยชนะแล้ว",
     bestPartner: { name: "🛠️ คอร์สอัพสกิลรายได้ & เงินสำรองฉุกเฉิน", desc: "การลงทุนที่ดีที่สุดตอนนี้ไม่ใช่หุ้น แต่คือการเพิ่มทักษะ (Skill Up) เพื่อหารายได้ทางที่สอง พร้อมกับโปะหนี้ดอกเบี้ยสูงให้ไวที่สุด" },
@@ -518,7 +518,7 @@ const AvatarDisplay = ({ currentLevel, gender }: { currentLevel: number, gender:
         // 🎯 แก้ขนาดตรงนี้ครับ: 
         // Mobile: w-48/h-48 -> w-64/h-64 (~256px)
         // Desktop (md): w-60/h-60 -> w-80/h-80 (~320px)
-        className="w-64 h-64 md:w-80 md:h-80 object-contain flex-shrink-0 relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover/avatar:scale-105"
+        className="w-64 h-64 md:w-80 md:h-80 object-contain flex-shrink-0 relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
         onError={(e) => {
           (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
         }}
@@ -564,6 +564,19 @@ const avatarImages: Record<string, string> = {
   "LOW_RISK_LOW_DISC": "/avatars/deer.png",        // ผู้ประสบภัย
   "LOW_RISK_MID_DISC": "/avatars/turtle.png",      // สายเซฟโซน
   "LOW_RISK_HIGH_DISC": "/avatars/snail.png",      // พิทักษ์เงินต้น
+};
+
+const PET_DATA: Record<string, { img: string; name: string }> = {
+  "HIGH_RISK_LOW_DISC": { img: "/avatars/phoenix-pixel.png", name: "ฟีนิกซ์กาวสุดกราฟ" },
+  "HIGH_RISK_MID_DISC": { img: "/avatars/monkey-pixel.png", name: "ลิงล่าเทรนด์" },
+  "HIGH_RISK_HIGH_DISC": { img: "/avatars/wolf-pixel.png", name: "หมาป่าเซียนระบบ" },
+  "MID_RISK_LOW_DISC": { img: "/avatars/peacock-pixel.png", name: "นกยูงสายเปย์" },
+  "MID_RISK_MID_DISC": { img: "/avatars/capybara-pixel.png", name: "คาปิบาร่าสมดุล" },
+  "MID_RISK_HIGH_DISC": { img: "/avatars/ant-pixel.png", name: "มดนักปั้นพอร์ต" },
+  "LOW_RISK_LOW_DISC": { img: "/avatars/deer-pixel.png", name: "กวางผู้ประสบภัย" },
+  "LOW_RISK_MID_DISC": { img: "/avatars/turtle-pixel.png", name: "เต่าเซฟโซน" },
+  "LOW_RISK_HIGH_DISC": { img: "/avatars/snail-pixel.png", name: "หอยทากพิทักษ์เงินต้น" },
+  "DEFAULT": { img: "/avatars/ant-pixel.png", name: "เพื่อนตัวจิ๋ว" }
 };
 
 export default function DashboardPage() {
@@ -1092,7 +1105,7 @@ const openDiscInfo = (e: React.MouseEvent) => {
       D: { bg: "from-red-50 to-orange-50", border: "border-red-100", text: "text-red-600", badge: "bg-red-100 text-red-700" },
       I: { bg: "from-amber-50 to-yellow-50", border: "border-amber-100", text: "text-amber-600", badge: "bg-amber-100 text-amber-700" },
       S: { bg: "from-green-50 to-emerald-50", border: "border-green-100", text: "text-green-600", badge: "bg-green-100 text-green-700" },
-      C: { bg: "from-blue-50 to-indigo-50", border: "border-blue-100", text: "text-blue-600", badge: "bg-blue-100 text-blue-700" }
+C: { bg: "from-sky-50 to-blue-50", border: "border-sky-100", text: "text-blue-600", badge: "bg-sky-100 text-blue-700" }
     }[typeKey];
 
     const content = (
@@ -1392,7 +1405,7 @@ const dailyXPGained = useMemo(() => {
 }, [completedQuests, dailyQuests]);
 
  const currentLevel = Math.floor(totalXP / 100) + 1;
-//const currentLevel =5;
+//const currentLevel =10;
  const currentLevelXP = totalXP % 100;
   
   const getLevelTitle = (level: number) => {
@@ -1717,32 +1730,77 @@ const getQuoteFontSize = (text: string) => {
 };
 
 const handleDownloadCard = async () => {
-    // 🚀 โหลดแบบ Dynamic เพื่อความเบาของแอป
-    const { domToPng } = await import("modern-screenshot");
-    const element = document.getElementById("player-card");
-    
-    if (!element) return;
+  const { domToPng } = await import("modern-screenshot");
+  const element = document.getElementById("player-card");
+  
+  if (!element) return;
 
-    try {
-      // 🎨 เจนเป็น PNG: ปรับสเกลเป็น 3 เท่าเพื่อความชัดระดับ 4K
-      const dataUrl = await domToPng(element, {
-        scale: 3,        // ขยายความชัด (ถ้าเครื่องช้าปรับเป็น 2 ได้ครับ)
-        quality: 1,      // คุณภาพสูงสุด
-        backgroundColor: '#0F172A', // บังคับพื้นหลังให้เข้มตาม Theme
-      });
+  try {
+    const currentBgColor = theme?.hexBg || '#0F172A';
 
-      // 📥 สั่งดาวน์โหลด
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `upskill-card-${user?.displayName?.split(' ')[0] || 'member'}.png`;
-      link.click();
-    } catch (error) {
-      console.error("Download Card Error:", error);
-      alert("💡 ทริควิศวกร: หากดาวน์โหลดไม่ได้ชั่วคราว กดแคปหน้าจอ (Screenshot) จะได้ภาพที่สวยที่สุดครับ!");
-    }
-  };
+    const dataUrl = await domToPng(element, {
+      scale: 2,             // 💡 ความชัดกำลังดีและเสถียร
+      quality: 1,           // คุณภาพสูงสุด
+      backgroundColor: currentBgColor, 
+      // 🚀 ลบ fontEmbedCSS และ copyStyles ออกเพื่อความคลีน
+      features: {
+        removeControlCharacter: true,
+      },
+    });
+
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = `upskill-card-${user?.displayName?.split(' ')[0] || 'member'}.png`;
+    link.click();
+  } catch (error) {
+    console.error("Download Card Error:", error);
+    alert("ขออภัย! ไม่สามารถสร้างรูปภาพได้ในขณะนี้");
+  }
+};
 
   const hasDoneWheelToday = completedQuests.includes(1);
+
+  // 1. ดึงตัวอักษรตัวแรก (D, I, S, หรือ C)
+const discType = (lastDisc?.finalResult || lastDisc?.result || "C").charAt(0).toUpperCase();
+
+const discThemes = {
+  D: {
+    baseBg: "bg-rose-950",
+    hexBg: "#4c0519", // rose-950
+    glow: "from-rose-500/20",
+    hexGlow: "rgba(244, 63, 94, 0.2)",
+    border: "border-rose-500/30",
+    accent: "text-rose-400"
+  },
+  I: {
+    baseBg: "bg-amber-900",
+    hexBg: "#78350f", // amber-900
+    glow: "from-amber-500/20",
+    hexGlow: "rgba(245, 158, 11, 0.2)",
+    border: "border-amber-500/30",
+    accent: "text-amber-400"
+  },
+  S: {
+    baseBg: "bg-emerald-950",
+    hexBg: "#064e3b", // emerald-950
+    glow: "from-emerald-500/20",
+    hexGlow: "rgba(16, 185, 129, 0.2)",
+    border: "border-emerald-500/30",
+    accent: "text-emerald-400"
+  },
+ C: {
+    baseBg: "bg-blue-950",
+    hexBg: "#172554", // สีเบอร์ blue-950 (น้ำเงินเข้มจัดๆ ดูลึกและแพง)
+    glow: "from-blue-500/20",
+    hexGlow: "rgba(59, 130, 246, 0.2)", // ค่า RGB ของ blue-500
+    border: "border-blue-500/30",
+    accent: "text-blue-400"
+  }
+};
+
+// เลือก theme ปัจจุบัน ถ้าไม่ตรงให้ใช้ค่า Default (C)
+// แก้บรรทัดที่ดึง theme เป็นแบบนี้ครับ
+const theme = discThemes[discType as keyof typeof discThemes] || discThemes.C;
 
   return (
 <div className="min-h-screen bg-transparent p-4"> 
@@ -1908,34 +1966,64 @@ const handleDownloadCard = async () => {
         </div>
       </div>
 
-      {/* ➡️ ฝั่งขวา: Avatar + Badge (รวมร่างกันแล้ว!) */}
-      <div className="flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center mt-4 lg:mt-0 lg:ml-8">
-        
-        {/* รูป Avatar */}
-        <div className="scale-90 sm:scale-100 origin-center mb-4">
-          <AvatarDisplay currentLevel={currentLevel} gender={gender} />
-        </div>
+     {/* ➡️ ฝั่งขวา: Avatar + Pet + Badge (รวมร่างกันสมบูรณ์!) */}
+<div className="flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center mt-4 lg:mt-0 lg:ml-8">
+{/* 🏗️ Container หลัก: เพิ่ม -translate-x-8 (หรือตามใจชอบ) เพื่อดึงทั้งกลุ่มไปทางซ้าย */}
+<div className="relative mb-6 flex justify-center items-end scale-95 sm:scale-100 origin-bottom -translate-x-2 sm:-translate-x-10">
+  
+  {/* 1. รูป Avatar หลัก */}
+  <div className="relative z-10 translate-y-[2px]">
+    <AvatarDisplay currentLevel={currentLevel} gender={gender} />
+  </div>
 
-        {/* ✨ ย้าย Badge มาตรงนี้ครับ: แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
-        <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap sm:flex-nowrap px-2">
-          <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-            <Flame size={12} className="text-orange-500 fill-current shrink-0" />
-            <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">{streakCount} Days</span>
-          </div>
-          {lastDisc && (
-            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-              <Zap size={12} className="text-blue-400 shrink-0" />
-              <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">{DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}</span>
-            </div>
-          )}
-          {lastMoney && (
-            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-              <Star size={12} className="text-amber-400 fill-current shrink-0" />
-              <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">{MONEY_DATA[lastMoney.resultKey]?.title}</span>
-            </div>
-          )}
-        </div>
+  {/* 🐾 สัตว์เลี้ยง (วางตำแหน่งแบบซ้อนทับประชิด) */}
+  {lastMoney?.resultKey && (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+
+      className="absolute bottom-0 left-1/2 translate-x-[-15%] sm:translate-x-[0%] z-20 w-36 h-36 sm:w-44 sm:h-44"
+    >
+      <img 
+        src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img} 
+        alt={PET_DATA[lastMoney.resultKey]?.name}
+        className="w-full h-full object-contain object-bottom animate-bounce-slow drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" 
+      />
+    </motion.div>
+  )}
+</div>
+  {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
+  <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap sm:flex-nowrap px-2">
+    
+    {/* Streak Badge */}
+    <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+      <Flame size={12} className="text-orange-500 fill-current shrink-0" />
+      <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
+        {streakCount} Days
+      </span>
+    </div>
+
+    {/* DISC Badge */}
+    {lastDisc && (
+      <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+        <Zap size={12} className="text-blue-400 shrink-0" />
+        <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
+          {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
+        </span>
       </div>
+    )}
+
+    {/* Money Badge */}
+    {lastMoney && (
+      <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+        <Star size={12} className="text-amber-400 fill-current shrink-0" />
+        <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
+          {MONEY_DATA[lastMoney.resultKey]?.title}
+        </span>
+      </div>
+    )}
+  </div>
+</div>
     </div>
 
     {/* 🌟 3. Bottom Bar (เหลือแค่เส้น Progress Track เดี่ยวๆ แล้ว) */}
@@ -3302,71 +3390,96 @@ const hasDoneWheelToday = completedQuests.includes(1);
       onClick={(e) => e.stopPropagation()}
     >
       {/* 💳 ตัวการ์ด (The Card Canvas) */}
-      <div id="player-card" className="relative bg-[#0F172A] rounded-[3rem] overflow-hidden border-[1px] border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center p-8">
-        
-        {/* ✨ Premium Lighting Effects */}
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-500/10 to-transparent" />
-        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-orange-500/10 blur-[80px] rounded-full" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
+<div 
+  id="player-card" 
+  className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center p-8`}
+  style={{ 
+    backgroundColor: theme.hexBg, // บังคับสีพื้นหลังด้วย Inline Style
+    backgroundImage: `linear-gradient(to bottom, ${theme.hexGlow}, transparent)` // ใส่ Glow เป็น Gradient สำรอง
+  }}
+>
+{/* ✨ Premium Lighting Effects */}
+<div 
+  className={`absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b ${theme.glow} to-transparent`} 
+  style={{ pointerEvents: 'none' }} 
+/>
+<div className={`absolute -bottom-20 -left-20 w-64 h-64 ${theme.glow.replace('from-', 'bg-')} blur-[80px] rounded-full`} />
 
-        {/* Header: Logo & Title */}
-        <div className="relative z-10 w-full flex justify-between items-center mb-8">
-          <div className="flex flex-col">
-             <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Pro Member</span>
-             <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
-          </div>
-         <div className="w-10 h-10 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden p-1.5">
-  <img 
-    src="/logo-invert.png" 
-    alt="Upskill Logo" 
-    className="w-full h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity" 
-    onError={(e) => {
-      (e.target as HTMLImageElement).style.display = 'none';
-    }}
-  />
+{/* 1. Header: Logo & Title (ลด mb-8 เหลือ mb-4 เพื่อประหยัดพื้นที่แนวตั้ง) */}
+<div className="relative z-10 w-full flex justify-between items-center mb-4">
+  <div className="flex flex-col">
+     <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Pro Member</span>
+     <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
+  </div>
+  <div className="w-10 h-10 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden p-1.5">
+    <img 
+      src="/logo-invert.png" 
+      alt="Upskill Logo" 
+      className="w-full h-full object-contain opacity-90 transition-opacity" 
+      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+    />
+  </div>
 </div>
-        </div>
 
-        {/* Avatar Section: ปรับขนาดให้เด่น */}
-        <div className="relative z-10 mb-6 group/card-avatar h-48 flex items-center justify-center">
-          <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full scale-75" />
-        
-            <AvatarDisplay currentLevel={currentLevel} gender={gender} />
-         
-        </div>
+{/* 🏗️ 2. Avatar Section: แก้ปัญหาพื้นที่แนวตั้ง และสเกลตัวละคร */}
+{/* 🎯 mt-12: ลด top margin อย่างมาก เพื่อประหยัดพื้นที่แนวตั้ง กัน Stats ทะลุขอบล่าง */}
+<div className="relative z-10 mb-2 mt-12 h-48 flex justify-center items-end">
+  
+  {/* ✨ แสง Glow พื้นหลัง (จัดให้อยู่กึ่งกลางเป๊ะตามตัวคน) */}
+  <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
 
-       {/* User Info & Level Badge */}
-        <div className="relative z-10 text-center w-full mb-8">
-          <h2 className="text-4xl font-black text-white tracking-tight mb-3 drop-shadow-lg">
-            {user?.displayName?.split(' ')[0]}
-          </h2>
-          <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl text-[12px] font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]">
-            {/* 🎯 แก้ตรง getLevelTitle ให้ตัดด้วย ' (' แทนครับ */}
-            <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
-          </div>
-        </div>
+  {/* 👤 รูป Avatar หลัก - แก้ไขขนาด: ลบสเกล-110 sm:scale-125 ออกไป */}
+<div className="relative z-10 translate-y-[4px] max-w-[500px] scale-90 origin-bottom">
+    <AvatarDisplay currentLevel={currentLevel} gender={gender} />
+  </div>
 
-        {/* Stats Grid: ปรับให้รองรับภาษาไทยและเห็นชัดขึ้น */}
-        <div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-4">
-          {/* Box 1: DISC */}
-          <div className="bg-white/[0.03] backdrop-blur-md p-3.5 rounded-[1.5rem] border border-blue-500/20 flex flex-col items-center">
-            <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Identity</span>
-            <Zap size={14} className="text-blue-400 mb-1.5" />
-            <p className="text-[11px] font-bold text-white text-center leading-snug">
-               {lastDisc ? DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle : "Life Explorer"}
-            </p>
-          </div>
-          {/* Box 2: Money */}
-          <div className="bg-white/[0.03] backdrop-blur-md p-3.5 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center">
-            <span className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1.5">Portfolio</span>
-            <Star size={14} className="text-amber-400 fill-current mb-1.5" />
-            <p className="text-[11px] font-bold text-white text-center leading-snug">
-               {lastMoney ? MONEY_DATA[lastMoney.resultKey]?.title : "Asset Builder"}
-            </p>
-          </div>
-        </div>
+  {/* 🐾 สัตว์เลี้ยง - แก้ไขตำแหน่ง: เท้าแตะพื้นระนาบเดียวกับคนเป๊ะ */}
+{lastMoney?.resultKey && ( 
+  <div className="absolute bottom-0 left-1/2 translate-x-[-25%] translate-y-[14px] z-20 w-40 h-40">
+    <img 
+      src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img} 
+      alt="Pet"
+      crossOrigin="anonymous" 
+      className="w-full h-full object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)]" 
+    />
+  </div>
+)}
+</div>
 
-      </div>
+{/* 👤 3. User Info (ปรับให้ชิดรูปมากขึ้นด้วย -mt) */}
+{/* 🎯 เติม -mt-6 เพื่อดึงก้อนชื่อให้ลอยขึ้นไปชิดกับเท้ารูปด้านบน */}
+<div className="relative z-10 text-center w-full mb-5 -mt-6">
+  <h2 className="text-4xl font-black text-white tracking-tight mb-2 drop-shadow-lg">
+    {user?.displayName?.split(' ')[0]}
+  </h2>
+  <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl text-[12px] font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]">
+    <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
+  </div>
+</div>
+
+{/* 📊 4. Stats Grid: บีบกล่องให้กระชับขึ้น เพื่อไม่ให้ทะลุขอบการ์ด */}
+{/* เปลี่ยน mb-6 เป็น mb-0 เพื่อให้ชิดขอบล่างพอดี px และ sm:px คงเดิมเพื่อความสวยงาม */}
+<div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-0 px-2 sm:px-4">
+  {/* Box 1: Identity */}
+  {/* ลด p-4 เหลือ p-3 และ min-h-[100px] เหลือ 85px เพื่อให้พอดีกรอบ aspect ratio การ์ด */}
+  <div className={`bg-white/[0.05] backdrop-blur-xl p-3 rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center min-h-[85px] shadow-xl`}>
+    <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] mb-1.5`}>DISC STYLE</span>
+    <Zap size={14} className={`${theme.accent} mb-1.5`} />
+    <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
+       {lastDisc ? DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle : "Life Explorer"}
+    </p>
+  </div>
+
+  {/* Box 2: Portfolio */}
+  <div className="bg-white/[0.05] backdrop-blur-xl p-3 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center min-h-[85px] shadow-xl">
+    <span className="text-[8px] font-black text-amber-400 uppercase tracking-[0.2em] mb-1.5">MONEY AVATAR</span>
+    <Star size={14} className="text-amber-400 fill-current mb-1.5" />
+    <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
+       {lastMoney ? MONEY_DATA[lastMoney.resultKey]?.title : "Asset Builder"}
+    </p>
+  </div>
+</div>
+</div>
 
       {/* Action Buttons */}
       <div className="mt-8 flex gap-4">
