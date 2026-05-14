@@ -831,7 +831,7 @@ export default function FocusRoomPage() {
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 30 }}
-              className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-md bg-blue-950 sm:rounded-[3rem] border-none sm:border sm:border-blue-500/20 flex flex-col relative overflow-hidden shadow-[0_0_80px_rgba(30,58,138,0.5)]"
+              className="w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-md bg-blue-950 sm:rounded-[3rem] border-none sm:border sm:border-blue-500/20 flex flex-col relative overflow-hidden shadow-[0_0_80px_rgba(30,58,138,0.5)]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* ✨ Animated Background Decor */}
@@ -878,7 +878,7 @@ export default function FocusRoomPage() {
               </div>
 
               {/* Scrollable Leaderboard Area */}
-              <div className="flex-1 overflow-y-auto px-6 sm:px-8 space-y-3 custom-scrollbar py-2 relative z-10 min-h-[300px]">
+              <div className="flex-1 overflow-y-auto px-6 sm:px-8 space-y-3 custom-scrollbar py-2 relative z-10">
                 {loadingLeaderboard ? (
                   <div className="flex flex-col items-center justify-center py-20">
                     <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-400 rounded-full animate-spin mb-4" />
@@ -940,7 +940,7 @@ export default function FocusRoomPage() {
 
               {/* 🏆 Bottom Section: Your Rank (Matching Style) */}
               {user && (
-                <div className="p-6 sm:p-8 bg-blue-900/20 border-t border-blue-500/10 relative z-10">
+                <div className="p-6 sm:p-8 bg-blue-900/20 border-t border-blue-500/10 relative z-10 pb-16 sm:pb-8">
                   {(() => {
                     const isMyRankInTop10 = leaderboardData.some(u => u.id === user.uid);
                     
