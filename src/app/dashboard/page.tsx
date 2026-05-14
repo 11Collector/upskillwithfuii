@@ -819,7 +819,7 @@ const toggleQuest = async (id: number, xp: number) => {
               <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-4">
                 ยินดีต้อนรับกลับมา <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-extrabold">{user?.displayName?.split(' ')[0]} 🚀</span>
               </h1>
-              <p className="text-slate-300 font-medium max-w-lg">เช็กภาพรวมและอัปเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
+              <p className="text-slate-300 font-medium max-w-lg">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 relative z-20 w-full max-w-2xl">
@@ -860,7 +860,7 @@ const toggleQuest = async (id: number, xp: number) => {
                   {showLevelInfo && (
                     <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute top-full left-0 md:left-auto md:right-0 mt-4 w-72 bg-slate-800 border border-slate-600 p-5 rounded-2xl shadow-2xl z-[100] text-left">
                       <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Sparkles size={14} className="text-yellow-400"/> ระบบ Level การเรียนรู้</h4>
-                      <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัป Level การเรียนรู้ของคุณ!</p>
+                      <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัพ Level การเรียนรู้ของคุณ!</p>
                       <ul className="text-[11px] font-medium space-y-2.5 text-slate-300">
                         <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9 : Rookie Upskiller</li>
                         <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19 : Habit Master</li>
