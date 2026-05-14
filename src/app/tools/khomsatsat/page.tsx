@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react"; 
 import { motion, AnimatePresence, useMotionValue, useTransform} from "framer-motion";
-import { ChevronLeft, ChevronRight, X, Check, RefreshCcw, Quote, Download, Loader2, Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Check, RefreshCcw, Quote, Download, Loader2, Heart,ArrowLeft,LayoutDashboard,ArrowRight } from "lucide-react";
 import { Kanit } from "next/font/google";
 import { toPng } from 'html-to-image'; 
 import { db } from '@/lib/firebase';
@@ -275,7 +275,7 @@ export default function SwipeQuoteApp() {
     setGameState("swiping");
   };
 
-  const processAIGeneration = async (wordsToUse: string[]) => {
+ const processAIGeneration = async (wordsToUse: string[]) => {
     setGameState("generating");
     
     // 1. ประกอบ Prompt โหดๆ ไว้ที่หน้าบ้านนี้เลย
@@ -305,21 +305,26 @@ export default function SwipeQuoteApp() {
 
       const data = await response.json();
       
-      // 💡 แทรกบรรทัดนี้ เพื่อดูว่าหลังบ้านส่งอะไรมา! (กด F12 ดูใน Console)
       console.log("📦 ของที่ได้จาก API:", data);
 
-      // 💡 ป้องกันแอปพัง: เช็กก่อนว่ามีคำว่า error ไหม
+    // 💡 แก้ตรงบรรทัด 310 เป็นต้นไป
       if (data.error) {
+        // เช็กว่าถ้าเป็น Error เรื่องคนใช้เยอะ (High Demand)
+        if (data.error.includes("high demand") || data.error.includes("quota")) {
+          setFinalQuote("ขออภัยครับ ตอนนี้ AI กำลังพักดื่มน้ำ (คนใช้เยอะมาก) ☕\nลองกดสุ่มใหม่อีกครั้งในอีก 10 วินาทีนี้นะ!");
+          setGameState("result");
+          return; // ออกจากฟังก์ชันเลย ไม่ต้อง throw error
+        }
+        
+        // ถ้าเป็น Error อื่นๆ
         throw new Error(data.error);
       }
 
       let generatedQuote = "";
 
-      // 💡 เช็กว่ามี candidates ให้แกะไหม (กรณีท่อกลางทำงานปกติ)
       if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
         generatedQuote = data.candidates[0].content.parts[0].text.trim();
       } 
-      // 💡 เผื่อว่าโค้ดหลังบ้านยังเป็นเวอร์ชันเก่า ที่ส่งมาแค่ { quote: "..." }
       else if (data.quote) {
         generatedQuote = data.quote;
       } 
@@ -331,11 +336,12 @@ export default function SwipeQuoteApp() {
       setFinalQuote(generatedQuote);
       setGameState("result");
 
-      // เซฟลง Firebase จากหน้านี้
+      // 💡 2. เซฟลง Firebase และ จัดการเรื่องแจก XP
       try {
         const { db } = await import('@/lib/firebase');
-        const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+        const { collection, addDoc, doc, getDoc, setDoc, increment, serverTimestamp } = await import('firebase/firestore');
         
+        // ก. เซฟคำคมลงคลัง
         await addDoc(collection(db, "quotes"), {
           userId: currentUser?.uid || "guest",
           mood: playerMood?.title,
@@ -344,13 +350,41 @@ export default function SwipeQuoteApp() {
           createdAt: serverTimestamp()
         });
         console.log("✅ บันทึกคำคมลง DB สำเร็จ!");
+
+        // ข. เช็กและแจก XP (ถ้า Login อยู่)
+        if (currentUser) {
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+          
+          let shouldGiveXP = true;
+          
+          if (userSnap.exists()) {
+             const userData = userSnap.data();
+             // ถ้าวันที่ทำล่าสุดตรงกับวันนี้ แปลว่าเคยได้ XP ไปแล้ว
+             if (userData.lastQuoteDate === todayStr) {
+                shouldGiveXP = false;
+             }
+          }
+
+          // ถ้าสมควรได้ XP ก็อัปเดตลง DB ซะ!
+          if (shouldGiveXP) {
+            await setDoc(userRef, {
+              totalXP: increment(10), // 💡 แจก 10 XP
+              lastQuoteDate: todayStr // 💡 จำไว้ว่าวันนี้กดรับไปแล้ว
+            }, { merge: true });
+            console.log("🎉 แจก +10 XP สำหรับคำคมวันนี้สำเร็จ!");
+          } else {
+            console.log("ℹ️ วันนี้ได้รับ XP จากคำคมไปแล้ว ไม่บวกเพิ่มครับ");
+          }
+        }
+
       } catch (dbError) {
         console.error("❌ บันทึก DB พลาด:", dbError);
       }
       
     } catch (error: any) {
       console.error("🚨 API Error Caught:", error);
-      // ถ้าพังจริงๆ ก็ให้แสดงคำคมปลอบใจไปก่อน แอปจะได้ไม่หน้าขาว
       setFinalQuote(`ท่ามกลางความรู้สึก "${wordsToUse[0]}"...\nจงใช้ "${wordsToUse[1]}" เป็นคำตอบของวันนี้`);
       setGameState("result");
     }
@@ -793,9 +827,9 @@ export default function SwipeQuoteApp() {
 
     </div>
     
-    {/* === โซนปุ่มควบคุม (UI) โทนเข้ม === */}
-    <div className="p-6 pb-8 bg-slate-950 border-t border-slate-800 flex flex-col gap-3 shrink-0 relative z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+<div className="p-6 pb-8 bg-slate-950 border-t border-slate-800 flex flex-col gap-3 shrink-0 relative z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
       
+      {/* 1. ปุ่มเซฟรูป (Full Width) */}
       <button 
         onClick={handleSaveImage}
         disabled={isSaving}
@@ -805,6 +839,7 @@ export default function SwipeQuoteApp() {
         {isSaving ? "กำลังจัดเก็บความทรงจำ..." : "เซฟคำคมลงเครื่อง"}
       </button>
 
+      {/* 2. แถวปุ่มคู่ (สร้างใหม่ / ติดตาม) */}
       <div className="grid grid-cols-2 gap-3">
         <button 
           onClick={resetApp} 
@@ -820,9 +855,42 @@ export default function SwipeQuoteApp() {
           className="py-3.5 bg-black text-white font-bold rounded-xl text-[13px] flex items-center justify-center gap-2 active:scale-95 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg shadow-black/50 border border-zinc-800 transition-all"
         >
           <Heart size={15} className="fill-current text-pink-500"/> 
-          ติดตามอัพสกิลกับฟุ้ย
+          ติดตามฟุ้ย
         </a>
       </div>
+
+      {/* ✨ 3. ปุ่ม Dashboard / กลับหน้าแรก (สลับตามเงื่อนไข Login) ✨ */}
+      <a 
+        href={currentUser ? "/dashboard" : "/"} 
+        className="flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-md hover:bg-black transition-all active:scale-[0.98] group overflow-hidden border border-slate-800 mt-1"
+      >
+        <div className="flex items-center gap-3 pl-4 py-3">
+          {currentUser ? (
+            /* ✅ กรณี Login แล้ว: ไป Dashboard */
+            <>
+              <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+                <LayoutDashboard size={18} className="text-blue-400" />
+              </div>
+              <div className="flex flex-col items-start text-left">
+                <span className="text-[13px] font-black text-white tracking-wide">ไปที่ Dashboard</span>
+                <span className="text-[9px] text-slate-500 font-medium">ดูคลังความรู้ของคุณ</span>
+              </div>
+            </>
+          ) : (
+            /* 👤 กรณีเป็น Guest: กลับหน้าแรก */
+            <>
+              <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
+                <ArrowLeft size={18} className="text-slate-300" />
+              </div>
+              <div className="flex flex-col items-start text-left">
+                <span className="text-[13px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
+                <span className="text-[9px] text-slate-500 font-medium">ไปทำความรู้จักกันก่อน</span>
+              </div>
+            </>
+          )}
+        </div>
+      </a>
+
     </div>
   </div>
 )}

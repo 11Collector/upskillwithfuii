@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PieChart, Users, Wallet, Quote, BookOpen, ChevronRight, LogIn, LogOut, Loader2, LayoutDashboard, Star, Lock } from "lucide-react";
@@ -8,6 +9,11 @@ import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
 
 export default function Home() {
+  
+  useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
+  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,8 +50,8 @@ export default function Home() {
   const handleLogout = () => signOut(auth);
 
   const tools = [
+        { name: "Wheel of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", icon: <PieChart size={28} className="text-red-600" />, path: "/tools/wheel-of-life", color: "bg-red-50 border-red-200" },
     { name: "วิเคราะห์ DISC", desc: "ค้นหาตัวตนและการสื่อสารในที่ทำงาน", icon: <Users size={28} className="text-blue-600" />, path: "/tools/disc", color: "bg-blue-50 border-blue-200" },
-    { name: "Wheel of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", icon: <PieChart size={28} className="text-red-600" />, path: "/tools/wheel-of-life", color: "bg-red-50 border-red-200" },
     { name: "Money Avatar", desc: "ถอดรหัสสไตล์การเงินของคุณ", icon: <Wallet size={28} className="text-amber-600" />, path: "/tools/money-avatar", color: "bg-amber-50 border-amber-200" },
     { name: "คมสัดสัด", desc: "สร้างคำคมฮีลใจเฉพาะคุณ", icon: <Quote size={28} className="text-purple-600" />, path: "/tools/khomsatsat", color: "bg-purple-50 border-purple-200" }
   ];
@@ -64,12 +70,16 @@ export default function Home() {
       {/* --- 1. Hero Section (ปรับตามสถานะ Login) --- */}
       {!user ? (
         <section className="text-center py-16 mb-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm px-6">
-          <div className="inline-block p-4 bg-red-50 rounded-3xl mb-6 shadow-inner">
-            <PieChart size={48} className="text-red-800" />
+    <div className="inline-flex w-24 h-24 sm:w-32 sm:h-32 p-4 sm:p-5 bg-red-50 rounded-3xl mb-8 shadow-inner items-center justify-center">
+            <img 
+              src="/logo-full.png" 
+              alt="Idea Logo" 
+              className="w-full h-full object-contain drop-shadow-sm opacity-90 transition-transform duration-300 hover:scale-105" 
+            />
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 text-slate-900 leading-tight tracking-tight">
             อัพเกรดชีวิตและทักษะ <br />
-            ด้วย <span className="text-red-800">อัพสกิลกับฟุ้ย</span>
+            ด้วย <span className="text-red-800"> UPSKILL EVERYDAY</span>
           </h1>
           <p className="text-slate-500 mb-8 max-w-lg mx-auto text-base sm:text-lg font-medium">
             เครื่องมือวิเคราะห์ตนเอง เพื่อให้คุณเป็นคนสำเร็จในเวอร์ชันที่ดีกว่าเดิม

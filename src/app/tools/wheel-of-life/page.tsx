@@ -1,11 +1,13 @@
 "use client";
 
 import { db, auth } from '@/lib/firebase'; 
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, doc, updateDoc } from 'firebase/firestore'; 
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, doc, updateDoc,getDoc,increment,setDoc } from 'firebase/firestore'; 
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { ArrowLeft, LayoutDashboard } from "lucide-react";
+
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -339,7 +341,7 @@ const handleGenerateResult = async () => {
       let docRef;
       
       if (currentUser) {
-        // ✅ แบบที่ 1: ล็อกอินแล้ว -> เซฟลงแฟ้มส่วนตัว
+        // ✅ 1. เซฟข้อมูลประเมินลงแฟ้มส่วนตัว
         docRef = await addDoc(collection(db, "users", currentUser.uid, "assessments"), { 
           type: 'wheel_of_life',
           currentScores, 
@@ -351,8 +353,24 @@ const handleGenerateResult = async () => {
           platform: 'upskillhub_member' 
         });
         console.log("✅ เซฟโหมด Member สำเร็จ! ID:", docRef.id);
+
+        // ✅ 2. Logic แจก 50 XP (เฉพาะครั้งแรกที่ประเมินสำเร็จ)
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          // ถ้ายังไม่เคยมี Flag hasWheelXP แปลว่านี่คือครั้งแรก!
+          if (!userData.hasWheelXP) {
+            await setDoc(userRef, {
+              totalXP: increment(50), // 💡 บวก 50 แต้ม
+              hasWheelXP: true        // 💡 ปักหมุดไว้ว่าแจกไปแล้วนะ
+            }, { merge: true });
+            console.log("🎉 ยินดีด้วย! คุณได้รับ 50 XP สำหรับการประเมินครั้งแรก");
+          }
+        }
       } else {
-        // ✅ แบบที่ 2: ยังไม่ได้ล็อกอิน -> เซฟลง user_reports แบบออริจินัล
+        // ✅ 3. โหมด Guest (ไม่มีการแจก XP)
         docRef = await addDoc(collection(db, "user_reports"), { 
           type: 'wheel_of_life',
           currentScores, 
@@ -368,13 +386,14 @@ const handleGenerateResult = async () => {
       
       // เก็บ ID ไว้ให้ AI ใช้ต่อ
       setReportDocId(docRef.id);
-      
-    } catch (dbError) {
-      console.error("❌ เซฟพลาด:", dbError);
+
+    } catch (error) {
+      console.error("❌ เกิดข้อผิดพลาดในการเซฟข้อมูล:", error);
+      alert("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้งครับ");
     }
   };
 
- const analyzeWithAI = async () => {
+const analyzeWithAI = async () => {
     if (!futureGoal.trim()) { 
       alert("รบกวนพิมพ์เป้าหมายหลักใน 1 ปีของคุณก่อนนะครับ AI จะได้ช่วยวิเคราะห์ได้แม่นยำขึ้นครับ"); 
       return; 
@@ -385,8 +404,6 @@ const handleGenerateResult = async () => {
     }
 
     setIsAnalyzing(true);
-    
-    // 💡 ลบการเรียก API Key แบบเก่าออกได้เลย เพราะเราให้หลังบ้าน (route.ts) จัดการแทนแล้ว
     
     const currentText = categoriesData.map((item, i) => `${item.label}: ${currentScores[i]}/10`).join(", ");
     const targetText = categoriesData.map((item, i) => `${item.label}: ${targetScores[i]}/10`).join(", ");
@@ -407,30 +424,46 @@ const handleGenerateResult = async () => {
 *อนุญาตให้ใช้ตัวหนา (ใส่เครื่องหมาย **ครอบคำ**) เพื่อเน้นคำสำคัญได้ แต่อย่าใช้ Markdown แบบอื่นๆ*`;
 
     try {
-      // 💡 เปลี่ยนมายิงไปที่ท่อกลางของเรา (URL ต้องตรงกับโฟลเดอร์ route.ts)
       const response = await fetch('/api/quote', { 
         method: "POST", 
         headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ prompt: promptText }) // ส่งแค่ตัวแปร prompt ไป
+        body: JSON.stringify({ prompt: promptText }) 
       });
 
       const data = await response.json();
       
-      // 💡 แกะกล่องข้อมูลแบบเดียวกับที่ใช้ในคมสัดสัด
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        const generatedAnalysis = data.candidates[0].content.parts[0].text;
+      // 💡 1. ดักจับ Error จาก API (เช่น คิวเต็ม หรือโควตาหมด)
+      if (data.error) {
+        const errMsg = typeof data.error === 'string' ? data.error : (data.error.message || "");
+        if (errMsg.toLowerCase().includes("high demand") || errMsg.toLowerCase().includes("quota")) {
+          setAiAnalysis("📌 **ขออภัยครับ ตอนนี้ AI คิวแน่นมาก**\n\nระบบไม่สามารถวิเคราะห์ได้ชั่วคราว (High Demand) \n\n🔥 **ข้อแนะนำ:**\nลองกดปุ่มวิเคราะห์อีกครั้งในอีก 10-15 วินาทีนะ สู้ๆ ครับ!");
+          setIsAnalyzing(false);
+          return;
+        }
+        throw new Error(errMsg || "AI ผิดพลาด");
+      }
+
+      // 💡 2. แกะข้อมูลแบบปลอดภัย (Safe Extraction)
+      let generatedAnalysis = "";
+      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        generatedAnalysis = data.candidates[0].content.parts[0].text;
+      } else if (data.quote) {
+        generatedAnalysis = data.quote;
+      }
+
+      if (generatedAnalysis) {
         setAiAnalysis(generatedAnalysis);
 
-        // อัปเดตตาราง 7 วัน ลงใน Database
-      // อัปเดตตาราง 7 วัน ลงใน Database
+        // 💡 3. อัปเดตลง Database เฉพาะกรณีที่เจนสำเร็จ
         if (reportDocId) {
           try {
+            const { db } = await import('@/lib/firebase');
+            const { doc, updateDoc } = await import('firebase/firestore');
+            
             let reportRef;
             if (currentUser) {
-               // ถ้าล็อกอิน ก็ไปหาไฟล์ในแฟ้มส่วนตัว
                reportRef = doc(db, "users", currentUser.uid, "assessments", reportDocId);
             } else {
-               // ถ้าไม่ได้ล็อกอิน ก็ไปหาไฟล์ใน user_reports
                reportRef = doc(db, "user_reports", reportDocId);
             }
             
@@ -442,12 +475,13 @@ const handleGenerateResult = async () => {
           }
         }
       } else {
-        throw new Error("AI ตอบกลับมาผิดรูปแบบ");
+        // กรณีไม่มีข้อมูลส่งมาเลย
+        setAiAnalysis("📌 **อุ๊ย! เกิดข้อผิดพลาดเล็กน้อย**\n\nAI ส่งข้อมูลกลับมาไม่สมบูรณ์ หรืออาจเกิดการขัดข้องที่ระบบกลาง \n\n🔥 **ลองกดปุ่มวิเคราะห์อีกครั้งนะครับ**");
       }
 
-    } catch (error) { 
+    } catch (error: any) { 
       console.error("Error AI:", error);
-      alert("AI ผิดพลาด ลองใหม่อีกครั้งนะครับ"); 
+      alert("AI ขัดข้องชั่วคราว ลองใหม่อีกครั้งนะครับ"); 
     } finally { 
       setIsAnalyzing(false); 
     }
@@ -764,7 +798,23 @@ const handleGenerateResult = async () => {
                   </Link>
                 </div>
 
-                <button className="secondary-btn" onClick={() => setStep('home')} style={{ width: '100%', padding: '10px', marginTop: '8px' }}>กลับหน้าแรก</button>
+               {/* 💡 แยกทางเดิน: ล็อกอินไป Dashboard / ไม่ล็อกอินไปหน้าแรกของเว็บ */}
+<Link 
+  href={currentUser ? "/dashboard" : "/"} 
+  // ปรับ bg-[#5D0000] เป็นสีแดงเข้ม, text-white, และเพิ่ม shadow ให้ดูมีมิติ
+  className="inline-flex items-center justify-center gap-2 px-6 py-4 text-lg font-bold text-white bg-[#5D0000] border-none rounded-2xl shadow-xl hover:bg-[#7D0000] hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 group w-full max-w-md mx-auto"
+  title={currentUser ? "กลับไปหน้า Dashboard" : "กลับไปหน้าแรก"}
+>
+  <div className="flex items-center justify-center w-6 h-6">
+    {currentUser ? (
+      <LayoutDashboard size={20} className="group-hover:rotate-3 transition-transform" />
+    ) : (
+      <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+    )}
+  </div>
+  
+  <span>{currentUser ? "Dashboard" : "หน้าแรก"}</span>
+</Link>
               </div>
             </div>
    

@@ -4,16 +4,16 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Users, Wallet 
+  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Users, Wallet ,LayoutDashboard
 } from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
 import { scenarios, ChatScenario } from "@/data/discScenarios"; 
 
 import { db ,auth} from "@/lib/firebase"; 
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp,getDoc,setDoc,increment,doc} from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
-
+import Link from "next/link";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
@@ -80,15 +80,22 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // 💡 2. สั่งให้เริ่มจับสัญญาณว่าใคร Login
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        console.log("จับสัญญาณ User ได้แล้ว:", user.uid);
+ // 💡 แก้ไข useEffect ตัวเดิมให้เป็นแบบนี้ครับ
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setCurrentUser(user);
+      console.log("จับสัญญาณ User ได้แล้ว:", user.uid);
+
+      // ✅ เพิ่มบรรทัดนี้: ถ้ามีชื่อใน Google ให้เอามาใส่ใน Nickname ทันที
+      // ถ้าอยากได้ชื่อเล่นจริงๆ อาจจะใช้ .split(" ")[0] เพื่อเอาแค่ชื่อหน้าครับ
+      if (user.displayName && !nickname) {
+        setNickname(user.displayName.split(" ")[0]); 
       }
-    });
-    return () => unsubscribe();
-  }, []);
+    }
+  });
+  return () => unsubscribe();
+}, []); // รันครั้งเดียวตอนโหลดหน้าเว็บ
 
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -191,39 +198,63 @@ export default function Home() {
   
 
 const saveResultToFirebase = async () => {
-    if (hasSavedData) return;
-    try {
-      setHasSavedData(true);
-      const finalResult = getFinalResult();
-      const percentages = getPercentages();
-      
-    // ✅ แบบใหม่: ยอมรับสถานะ Guest แบบหล่อๆ
-const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
-const finalUserName = currentUser ? currentUser.displayName : "Guest User";
+  if (hasSavedData) return;
+  try {
+    setHasSavedData(true);
+    const finalResult = getFinalResult();
+    const percentages = getPercentages();
+    
+    // 1. เตรียมข้อมูลพื้นฐาน
+    const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
+    const finalUserName = currentUser ? currentUser.displayName : "Guest User";
 
-      await addDoc(collection(db, "discResults"), {
-        // 🚨 บรรทัดเจ้าปัญหา! ต้องมีบรรทัดนี้ ข้อมูลถึงจะไปโชว์ที่ Dashboard ครับ
-userId: finalUserId,
-  userName: finalUserName,
-        
-        // 🚨 เพิ่มฟิลด์ result เพื่อให้โค้ด Dashboard ดึงไปใช้ง่ายๆ
-        result: finalResult, 
+    const resultPayload = {
+      userId: finalUserId,
+      userName: finalUserName,
+      result: finalResult, 
+      nickname: nickname,
+      gender: gender,
+      finalResult: finalResult,
+      percentages: percentages,
+      title: getDynamicTitle(),
+      answers: answers,
+      updatedAt: serverTimestamp(), // เปลี่ยนเป็น updatedAt ให้สื่อความหมาย
+      createdAt: serverTimestamp()  
+    };
 
-        nickname: nickname,
-        gender: gender,
-        finalResult: finalResult,
-        percentages: percentages,
-        title: getDynamicTitle(),
-        answers: answers,
-        createdAt: serverTimestamp()
-      });
-      console.log("✅ บันทึกข้อมูลลง Firebase พร้อม userId เรียบร้อย!");
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
-      setHasSavedData(false);
+    // 🔥 ส่วนที่ต้องเปลี่ยน: Logic การบันทึก 🔥
+    if (currentUser) {
+      // ✅ ถ้า Login แล้ว: ใช้ setDoc ระบุ ID เป็น UID ของ User เลย (ทับของเก่า)
+      await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
+      console.log("✅ อัปเดตผลลัพธ์ DISC ล่าสุดให้เรียบร้อย!");
+    } else {
+      // ✅ ถ้าเป็น Guest: ใช้ addDoc สร้างรายการใหม่เหมือนเดิม
+      await addDoc(collection(db, "discResults"), resultPayload);
+      console.log("✅ บันทึกข้อมูล Guest เรียบร้อย!");
     }
-  };
 
+    // 💡 2. ส่วนแจก XP (ยังคงเดิมไว้ เพราะคุณมี Flag เช็กอยู่แล้ว)
+    if (currentUser) {
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (!userData.hasDiscXP) {
+          await setDoc(userRef, {
+            totalXP: increment(50),
+            hasDiscXP: true 
+          }, { merge: true });
+          console.log("🎉 ได้รับ 50 XP ครั้งแรกเรียบร้อย!");
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาด: ", error);
+    setHasSavedData(false);
+  }
+};
   useEffect(() => {
     if (gameState === "result") {
       saveResultToFirebase();
@@ -296,13 +327,15 @@ userId: finalUserId,
             <div className="w-full shrink-0 flex flex-col items-center pb-2">
               <div className="w-full mb-4">
                 <label className="block text-sm font-bold text-slate-800 mb-2 text-center">ชื่อเล่นของคุณ?</label>
-                <input
-                  type="text"
-                  placeholder="เช่น มายด์, ฝน, บอย"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  className="w-full px-4 py-2.5 text-center rounded-xl border-2 border-blue-300 focus:border-blue-600 focus:outline-none font-bold text-slate-800 text-[13px] transition-colors mb-4"
-                />
+
+<input
+  type="text"
+  // ✨ ปรับ Placeholder ให้ดูเป็นกันเองขึ้นเมื่อ Login แล้ว
+  placeholder={currentUser ? "ชื่อเล่นของคุณ..." : "เช่น มายด์, ฝน, บอย"}
+  value={nickname}
+  onChange={(e) => setNickname(e.target.value)}
+  className="w-full px-4 py-2.5 text-center rounded-xl border-2 border-blue-300 focus:border-blue-600 focus:outline-none font-bold text-slate-800 text-[13px] transition-colors mb-4"
+/>
               </div>
 
               <div className="w-full mb-6">
@@ -552,41 +585,89 @@ userId: finalUserId,
                     <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
                     <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
-                <div className="mb-6 mt-2">
-                    {/* เส้นคั่นและข้อความ */}
-                    <div className="flex items-center justify-center gap-3 mb-3">
-                      <div className="h-[1px] bg-slate-200 w-12"></div>
-                      <p className="text-[11px] font-bold text-slate-400 tracking-wider">เครื่องมืออัปสกิลอื่นๆ</p>
-                      <div className="h-[1px] bg-slate-200 w-12"></div>
-                    </div>
+           <div className="mb-6 mt-4">
+  {/* เส้นคั่นและข้อความ */}
+  <div className="flex items-center justify-center gap-3 mb-4">
+    <div className="h-[1px] bg-slate-100 flex-1"></div>
+    <p className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">เครื่องมืออัปสกิลอื่นๆ</p>
+    <div className="h-[1px] bg-slate-100 flex-1"></div>
+  </div>
 
-                    {/* ✨ กล่อง Flex จัดให้อยู่บรรทัดเดียวกัน ✨ */}
-                    <div className="flex gap-3 w-full">
-                      
-                      {/* ปุ่มเช็กสมดุลชีวิต */}
-                      <a 
-                        href="https://wheel-of-life-upskill.vercel.app" 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex flex-1 items-center justify-center gap-1.5 bg-white border border-slate-200 py-3 rounded-2xl shadow-sm hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95"
-                      >
-                        <PieChart size={16} className="text-orange-500" />
-                        <span className="text-[12px] sm:text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
-                      </a>
+  <div className="flex flex-col gap-3">
+    {/* แถวบน: 2 ปุ่มคู่กัน (คงเดิม) */}
+    <div className="grid grid-cols-2 gap-3">
+      <a 
+        href="/tools/wheel-of-life" 
+        target="_blank" 
+        rel="noreferrer"
+        className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group"
+      >
+        <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+          <PieChart size={18} className="text-orange-500" />
+        </div>
+        <span className="text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
+      </a>
 
-                      {/* ปุ่มถอดสไตล์การเงิน (โทนสี Amber อิงจากเหรียญทอง/ส้ม) */}
-                      <a 
-                        href="https://money-avatar.vercel.app/" 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex flex-1 items-center justify-center gap-1.5 bg-white border border-slate-200 py-3 rounded-2xl shadow-sm hover:border-amber-400 hover:bg-amber-50 transition-all active:scale-95"
-                      >
-                        <Wallet size={16} className="text-amber-500" />
-                        <span className="text-[12px] sm:text-[13px] font-bold text-slate-700">ถอดสไตล์การเงิน</span>
-                      </a>
+      <a 
+        href="/tools/money-avatar" 
+        target="_blank" 
+        rel="noreferrer"
+        className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-amber-200 hover:bg-amber-50/50 transition-all active:scale-95 group"
+      >
+        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+          <Wallet size={18} className="text-amber-500" />
+        </div>
+        <span className="text-[13px] font-bold text-slate-700">สไตล์การเงิน</span>
+      </a>
+    </div>
 
-                    </div>
-                  </div>
+    {/* ✨ แถวล่าง: ปุ่มที่สลับตามสถานะ Login (แก้ไขแล้ว) ✨ */}
+    <a 
+      href={currentUser ? "/dashboard" : "/"} 
+      className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
+    >
+      <div className="flex items-center gap-3 pl-4 py-3">
+        {currentUser ? (
+          /* ✅ กรณี Login แล้ว: แสดง Dashboard */
+          <>
+            <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+              <LayoutDashboard size={20} className="text-blue-400" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[14px] font-black text-white tracking-wide">ไปที่ Dashboard หลัก</span>
+              <span className="text-[10px] text-slate-400 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
+            </div>
+          </>
+        ) : (
+          /* 👤 กรณีเป็น Guest: แสดงกลับหน้าแรก */
+          <>
+            <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
+              <ArrowLeft size={20} className="text-slate-300" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[14px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
+              <span className="text-[10px] text-slate-400 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ลูกศรข้างขวา (ปรับสี/ทิศทางตามสถานะ) */}
+      <div className="pr-4">
+        {currentUser ? (
+          <ArrowRight size={18} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+        ) : (
+          <RefreshCcw size={16} className="text-slate-500 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />
+        )}
+      </div>
+
+      {/* แสงวิบวับ (แสดงเฉพาะตอน Login) */}
+      {currentUser && (
+        <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl rounded-full"></div>
+      )}
+    </a>
+  </div>
+</div>
                   {/* ✨ จบ: เครื่องมืออัปสกิลอื่นๆ ✨ */}
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">

@@ -30,18 +30,17 @@ export default function RootLayout({
           <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
             
             {/* โลโก้แบรนด์ */}
-            <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform">
-              🚀 อัพสกิลกับฟุ้ย
-            </Link>
-            
+          <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform">
+   <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" />
+</Link>
 
             {/* เมนูสำหรับหน้าจอคอมพิวเตอร์ (Desktop Menu) */}
             <div className="hidden md:flex gap-6">
-              <Link href="/tools/disc" className="text-sm font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1.5 transition-colors">
-                <Users size={18} /> DISC
-              </Link>
               <Link href="/tools/wheel-of-life" className="text-sm font-bold text-slate-500 hover:text-red-600 flex items-center gap-1.5 transition-colors">
                 <PieChart size={18} /> สมดุลชีวิต
+              </Link>
+              <Link href="/tools/disc" className="text-sm font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1.5 transition-colors">
+                <Users size={18} /> DISC
               </Link>
               <Link href="/tools/money-avatar" className="text-sm font-bold text-slate-500 hover:text-amber-600 flex items-center gap-1.5 transition-colors">
                 <Wallet size={18} /> สไตล์การเงิน
@@ -66,13 +65,13 @@ export default function RootLayout({
             <Home size={22} />
             <span className="text-[10px] mt-1 font-bold">หน้าหลัก</span>
           </Link>
-          <Link href="/tools/disc" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-blue-600 active:scale-95 transition-all">
-            <Users size={22} />
-            <span className="text-[10px] mt-1 font-bold">ทำงาน</span>
-          </Link>
           <Link href="/tools/wheel-of-life" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-red-600 active:scale-95 transition-all">
             <PieChart size={22} />
             <span className="text-[10px] mt-1 font-bold">ชีวิต</span>
+          </Link>
+            <Link href="/tools/disc" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-blue-600 active:scale-95 transition-all">
+            <Users size={22} />
+            <span className="text-[10px] mt-1 font-bold">ทำงาน</span>
           </Link>
           <Link href="/tools/money-avatar" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-amber-600 active:scale-95 transition-all">
             <Wallet size={22} />
