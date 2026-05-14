@@ -27,7 +27,7 @@ export const calculateRelativeWeek = (joinDate: Date, targetDate = new Date()) =
 export const getWheelArea = (lastWheel: any, todayDateStr: string) => {
   const scores = lastWheel?.currentScores || lastWheel?.scores;
   const targetScores = lastWheel?.targetScores;
-  
+
   if (scores && targetScores) {
     const gaps = scores.map((current: number, i: number) => ({
       index: i,

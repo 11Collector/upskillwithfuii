@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Swords, Play, ArrowLeft, Zap, User as UserIcon, Globe, Sparkles, HelpCircle, Info, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
@@ -135,11 +135,14 @@ export default function FocusRoomPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // ซิงค์ viewMode เมื่อสถานะ Joined เปลี่ยนแปลง (เช่น กรณี Session หมดอายุ/โดน Cleanup)
+  // ใช้ Ref เพื่อจำว่าเคย Joined หรือยัง เพื่อป้องกันการเด้งกลับตอนกำลังจะกดเข้าห้องครั้งแรก
+  const wasJoinedRef = useRef(false);
   useEffect(() => {
-    if (!isJoined && viewMode === "lounge") {
+    // ถ้าสถานะเปลี่ยนจาก Joined เป็นหลุด (และไม่ใช่การโหลดครั้งแรก) ให้เด้งกลับ
+    if (wasJoinedRef.current && !isJoined && viewMode === "lounge") {
       setViewMode("selection");
     }
+    wasJoinedRef.current = isJoined;
   }, [isJoined, viewMode]);
   
   // 3. Fetch Leaderboard Data

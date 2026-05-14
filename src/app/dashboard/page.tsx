@@ -231,7 +231,6 @@ export default function DashboardPage() {
     // เซ็ตวันที่ครั้งแรก
     setTodayDateStr(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }));
 
-    // ใน useEffect บรรทัดที่ 319 โดยประมาณ
     const interval = setInterval(() => {
       const nowStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       setTodayDateStr((prev) => {
@@ -239,7 +238,17 @@ export default function DashboardPage() {
           // ขึ้นวันใหม่แล้ว! รีเซ็ต Progress สดๆ เลย
           setCompletedQuests([]);
           setHasClaimedQuoteToday(false);
-          setCustomQuestTitle(""); // 👈 [FIX] เคลียร์ชื่อเควสทำเองด้วย
+          setCustomQuestTitle("");
+          
+          // 🧹 ล้างค่าใน Firestore ทันที (กรณีเปิดแอปทิ้งไว้ข้ามคืน)
+          if (user) {
+            const userRef = doc(db, "users", user.uid);
+            updateDoc(userRef, { 
+              customQuestTitle: "",
+              completedQuestIds: [],
+              lastActiveDate: nowStr 
+            }).catch(e => console.error("Midnight reset error:", e));
+          }
           return nowStr;
         }
         return prev || nowStr;
@@ -408,6 +417,12 @@ export default function DashboardPage() {
               // 🆕 [AUTOMATED PROGRESSION] วันเปลี่ยนไปแล้ว! ขยับแผนอัตโนมัติ
               setCompletedQuests([]);
               setCustomQuestTitle("");
+              
+              // 🧹 [CRITICAL FIX] ล้างค่าใน Database ด้วย เพื่อไม่ให้ดึงค่าวันเก่ามาแสดง
+              if (currentUser) {
+                const userRef = doc(db, "users", currentUser.uid);
+                updateDoc(userRef, { customQuestTitle: "" }).catch(e => console.error(e));
+              }
 
               let currentPlanDay = userData.wheelPlanDay || 0;
               let nextPlanDay = currentPlanDay;
@@ -416,7 +431,7 @@ export default function DashboardPage() {
               if (currentPlanDay >= 7) {
                 // ให้วนลูปกลับไปเป็น Day 1 อัตโนมัติ
                 nextPlanDay = 1;
-                
+
                 // 1. ถ้าค้างอยู่ที่ Day 7 แสดงว่าเมื่อวานไม่ได้กด Check box วันสุดท้าย ให้ทำการสรุปผลและแจก XP ย้อนหลังให้
                 if (currentPlanDay === 7) {
                   const completions = userData.wheelCompletions || 0;
@@ -447,21 +462,22 @@ export default function DashboardPage() {
 
                   let xpToAdd = bonusXP;
                   let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
-                  
+
                   const userRef = doc(db, "users", currentUser.uid);
                   await updateDoc(userRef, {
                     wheelPlanDay: nextPlanDay,
                     lastActiveDate: todayStr,
                     completedQuestIds: [],
+                    customQuestTitle: "",
                     wheelCompletions: 0,
                     totalXP: increment(xpToAdd),
                     perfectWeeks: increment(perfectWeekInc)
                   });
-                  
+
                   setTotalXP((userData.totalXP || 0) + xpToAdd);
                   setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
                   setShowPerfectWeekModal(true);
-                  
+
                 } else {
                   // 2. ถ้าเป็น Day 8 อยู่แล้ว แสดงว่าเมื่อวานกด Check box และรับรางวัลไปแล้ว วันนี้ก็แค่รีเซ็ตเป็น Day 1 เงียบๆ
                   const userRef = doc(db, "users", currentUser.uid);
@@ -469,10 +485,11 @@ export default function DashboardPage() {
                     wheelPlanDay: nextPlanDay,
                     lastActiveDate: todayStr,
                     completedQuestIds: [],
+                    customQuestTitle: "",
                     wheelCompletions: 0
                   });
                 }
-                
+
                 setWheelCompletions(0);
 
               } else {
@@ -482,7 +499,8 @@ export default function DashboardPage() {
                 await updateDoc(userRef, {
                   wheelPlanDay: nextPlanDay,
                   lastActiveDate: todayStr,
-                  completedQuestIds: []
+                  completedQuestIds: [],
+                  customQuestTitle: ""
                 });
               }
 
@@ -915,13 +933,13 @@ export default function DashboardPage() {
     { label: "Library", count: weeklyData.library || 0, max: 7, color: "bg-teal-500", icon: <BookOpen size={14} /> },
     { label: "Wild", count: weeklyData.wildcard || 0, max: 7, color: "bg-emerald-500", icon: <Zap size={14} /> },
     { label: "Challenge", count: weeklyData.challenge || 0, max: 7, color: "bg-purple-500", icon: <Target size={14} /> },
-    { 
-      label: "Focus", 
-      count: Math.floor((weeklyData as any).focusMinutes / 60) || 0, 
-      max: 10, 
+    {
+      label: "Focus",
+      count: Math.floor((weeklyData as any).focusMinutes / 60) || 0,
+      max: 10,
       suffix: "h",
-      color: "bg-zinc-800", 
-      icon: <BrainCircuit size={14} /> 
+      color: "bg-zinc-800",
+      icon: <BrainCircuit size={14} />
     },
   ], [weeklyData]);
 
@@ -1041,7 +1059,7 @@ export default function DashboardPage() {
 
         if (planItems.length > 0) {
           const isWheelDoneToday = completedQuests.includes(1);
-          
+
           // ถ้าวันนี้ทำไปแล้ว แสดงว่า wheelPlanDay เพิ่งถูกเลื่อนขึ้นไปเป็น 8 ให้ถอยกลับมาแสดงของอันเดิมก่อน
           const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
 
@@ -2653,7 +2671,9 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>Personalized Mission</span>
                       </div>
-                      <p className={`text-[13px] sm:text-[15px] font-bold leading-snug ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>{customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}</p>
+                      <p className={`text-[13px] sm:text-[15px] font-bold leading-snug ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>
+                        {customQuestTitle || "ออกแบบภารกิจเฉพาะคุณ"}
+                      </p>
                     </div>
                     <div className="shrink-0 text-right relative z-10">
                       <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all ${completedQuests.includes('special-01') ? 'bg-stone-100 border-stone-200 text-stone-400' : 'bg-white border-amber-200 text-amber-700 group-hover/card:bg-gradient-to-r group-hover/card:from-amber-400 group-hover/card:to-yellow-600 group-hover/card:text-white group-hover/card:border-transparent'}`}>+20 XP</span>
@@ -3638,7 +3658,7 @@ export default function DashboardPage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
                   <BrainCircuit size={32} />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 leading-tight mb-2">ออกแบบภารกิจวันนี้</h3>
+                <h3 className="text-xl font-black text-slate-800 leading-tight mb-2">ออกแบบภารกิจเฉพาะคุณ</h3>
 
                 {/* ✨ ส่วนของ Guided Prompt ที่เปลี่ยนทุกวัน */}
                 <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 mt-4">
