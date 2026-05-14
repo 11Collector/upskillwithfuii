@@ -131,6 +131,7 @@ export default function DashboardPage() {
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
   const [lastLibrarySoul, setLastLibrarySoul] = useState<any>(null);
+  const [hasSoulGuide, setHasSoulGuide] = useState(false);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
 
   const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
@@ -302,6 +303,7 @@ export default function DashboardPage() {
           if (data.moneyData) setLastMoney(data.moneyData);
           if (data.librarySoulData) setLastLibrarySoul(data.librarySoulData);
           if (data.quoteData) setLastQuote(data.quoteData);
+          setHasSoulGuide(data.hasSoulGuide);
 
           let thisWeekTotal = 0;
           let prevWeekTotal = 0;
@@ -1210,7 +1212,7 @@ export default function DashboardPage() {
       await setDoc(userRef, {
         slotSeeds: newSlotSeeds,
         lastRerollDate: today,
-        totalXP: totalXP - 5
+        totalXP: increment(-5)
       }, { merge: true });
 
       setSlotSeeds(newSlotSeeds);
@@ -1851,6 +1853,74 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* --- 🌱 Assessment Journey Banner --- */}
+        {activeTab === "home" && (() => {
+          const steps = [
+            { done: !!lastWheel,       path: "/tools/wheel-of-life",    label: "Wheel of Life",    desc: "เช็กสมดุลชีวิต 8 ด้านของคุณ",         xp: 50,
+              icon: <PieChart size={22} />,
+              gradient: "from-red-600 to-orange-500", iconBg: "bg-red-500/20", iconColor: "text-red-400" },
+            { done: !!lastDisc,        path: "/tools/disc",             label: "DISC",             desc: "ค้นหาสไตล์การทำงานของคุณ",           xp: 50,
+              icon: <Users size={22} />,
+              gradient: "from-blue-600 to-indigo-500", iconBg: "bg-blue-500/20", iconColor: "text-blue-400" },
+            { done: !!lastMoney,       path: "/tools/money-avatar",     label: "Money Avatar",     desc: "ถอดรหัสนิสัยการเงินของคุณ",           xp: 50,
+              icon: <Wallet size={22} />,
+              gradient: "from-amber-500 to-yellow-400", iconBg: "bg-amber-500/20", iconColor: "text-amber-400" },
+            { done: !!lastLibrarySoul, path: "/tools/library-of-souls", label: "Library of Souls", desc: "ค้นพบสไตล์การเรียนรู้ของคุณ",        xp: 50,
+              icon: <BookOpen size={22} />,
+              gradient: "from-emerald-600 to-teal-500", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400" },
+            { done: !!lastQuote,       path: "/tools/khomsatsat",       label: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจด้วย AI",              xp: 10,
+              icon: <Quote size={22} />,
+              gradient: "from-purple-600 to-fuchsia-500", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
+            { done: hasSoulGuide,      path: "/tools/soul-guide",       label: "AI Mentor",        desc: "ลองแชทคุยกับ AI ที่รู้จักคุณแล้ว",   xp: 0,
+              icon: <MessageSquare size={22} />,
+              gradient: "from-violet-600 to-indigo-500", iconBg: "bg-violet-500/20", iconColor: "text-violet-400" },
+          ];
+          const next = steps.find(s => !s.done);
+          const doneCount = steps.filter(s => s.done).length;
+          if (!next) return null;
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-[2rem] p-[1px] relative"
+              style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa, #34d399, #fbbf24, #f472b6, #a78bfa)" }}
+            >
+              <div className="relative rounded-[2rem] bg-slate-950 px-5 py-4 flex items-center gap-3 overflow-hidden">
+                <div className={`shrink-0 w-10 h-10 rounded-xl ${next.iconBg} flex items-center justify-center ${next.iconColor} relative z-10`}>
+                  {next.icon}
+                </div>
+                <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex items-center gap-2 flex-nowrap">
+                    <p className="text-white text-[13px] font-bold whitespace-nowrap truncate">
+                      {doneCount === 0 ? "ยินดีต้อนรับสู่ Upskill Everyday" : `ต่อไป: ${next.label}`}
+                    </p>
+                    {next.xp > 0 && (
+                      <span className="shrink-0 text-[10px] font-black text-amber-400 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full">+{next.xp} XP</span>
+                    )}
+                  </div>
+                  <p className="text-slate-400 text-[11px] mt-0.5 truncate">{next.desc}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 relative z-10">
+                  <span className="text-[11px] font-black text-slate-500 hidden sm:block">{doneCount}/5</span>
+                  <Link
+                    href={next.path}
+                    onClick={() => {
+                      if (doneCount === 5 && user && !hasSoulGuide) {
+                        setHasSoulGuide(true);
+                        setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-white text-[12px] font-bold px-4 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap"
+                    style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}
+                  >
+                    {doneCount === 0 ? "เริ่มเลย" : doneCount === 5 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* --- 🧭 1. Top Section --- */}
         {(activeTab === "home" || activeTab === "overview") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -2032,7 +2102,7 @@ export default function DashboardPage() {
                   {/* ⬅️ ฝั่งซ้าย: ข้อความและปุ่มจัดการ */}
                   <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
                     <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-tight mb-3 mt-4 sm:mt-0">
-                      ยินดีต้อนรับกลับมา <br className="hidden sm:block lg:hidden" />
+                      ยินดีต้อนรับ <br className="hidden sm:block lg:hidden" />
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-extrabold">{user?.displayName?.split(' ')[0]} 🚀</span>
                     </h1>
                     <p className="text-slate-300 text-sm xl:text-base font-medium max-w-md mx-auto lg:mx-0 mb-5">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
@@ -3575,6 +3645,7 @@ export default function DashboardPage() {
         {/* Info Popup (ฉบับแก้กรอบเป๊ะ ไม่เลยบนล่าง) */}
         {infoModal?.isOpen && (
           <motion.div
+            key="info-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -3621,6 +3692,7 @@ export default function DashboardPage() {
         {/* Level Up Popup */}
         {showLevelUp?.isOpen && (
           <motion.div
+            key="level-up-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -3674,6 +3746,7 @@ export default function DashboardPage() {
         {/* ✍️ Modal: กำหนดเควสเอง (Level 10+) - Guided Version */}
         {showCustomInputModal && (
           <motion.div
+            key="custom-input-modal"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
             onClick={() => setShowCustomInputModal(false)}
@@ -3756,6 +3829,7 @@ export default function DashboardPage() {
         {/* 🎖️ Modal: Upskill Player Card */}
         {showShareModal && (
           <motion.div
+            key="share-modal"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-xl overflow-y-auto"
             onClick={() => setShowShareModal(false)}

@@ -122,6 +122,7 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
     moneyData,
     librarySoulData,
     quoteData,
+    hasSoulGuide: !!(userData?.hasSoulGuide),
     thisWeekData,
     prevWeekData
   };
