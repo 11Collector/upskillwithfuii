@@ -859,13 +859,13 @@ export default function Home() {
             <div className="px-7 pb-7 pt-6 text-center flex flex-col items-center relative z-20 flex-1">
 
               {/* Middle: title + description — flex-1 vertically centered */}
-              <div className="flex-1 flex flex-col items-center justify-center w-full">
+              <div className="flex-1 flex flex-col items-center justify-center w-full overflow-hidden">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={guideStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                   className="w-full"
                 >
@@ -972,7 +972,7 @@ export default function Home() {
                 </span>
                 
                 <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${guideStep === totalGuideSteps ? 'bg-black text-white' : 'bg-white text-black'}`}>
-                  <ArrowRight size={14} strokeWidth={4} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={14} strokeWidth={4} />
                 </div>
               </motion.button>
 
