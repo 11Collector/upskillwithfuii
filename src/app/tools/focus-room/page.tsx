@@ -142,14 +142,12 @@ export default function FocusRoomPage() {
             q = query(
               usersRef,
               where("lastFocusWeek", "==", currentWeekId),
-              where("weeklyFocusMinutes", ">", 0),
               orderBy("weeklyFocusMinutes", "desc"),
               limit(10)
             );
           } else {
             q = query(
               usersRef, 
-              where("totalFocusMinutes", ">", 0), 
               orderBy("totalFocusMinutes", "desc"), 
               limit(10)
             );
@@ -924,13 +922,44 @@ export default function FocusRoomPage() {
                       </div>
                     );
                   })
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-50">
-                    <Trophy size={48} className="text-blue-900 mb-4" />
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">ยังไม่มีข้อมูลอันดับในขณะนี้</p>
-                  </div>
                 )}
               </div>
+
+              {/* 🏆 Section: Your Current Rank (Fixed if not in Top 10) */}
+              {user && !leaderboardData.find(u => u.id === user.uid) && (
+                <div className="mt-4 pt-4 border-t border-blue-900/30">
+                  <div className="bg-blue-600/10 rounded-2xl p-4 border border-blue-500/20 flex items-center gap-4 group">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px] text-blue-400 border border-blue-500/20 italic">
+                      YOU
+                    </div>
+                    
+                    <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-2xl overflow-hidden shrink-0">
+                      🧘‍♂️
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-black text-white truncate">{user.displayName || "Upskiller (You)"}</h4>
+                      <p className="text-[10px] text-blue-300/50 uppercase tracking-widest font-bold">สถิติของคุณ</p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-black text-blue-50">
+                        {(() => {
+                          const currentWeekId = getCalendarWeekId();
+                          const isCurrentWeek = userData?.lastFocusWeek === currentWeekId;
+                          const mins = leaderboardMode === 'weekly' 
+                            ? (isCurrentWeek ? (userData?.weeklyFocusMinutes || 0) : 0)
+                            : (userData?.totalFocusMinutes || 0);
+                          return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+                        })()}
+                      </div>
+                      <div className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">
+                        Ready to climb!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => setShowLeaderboard(false)}
