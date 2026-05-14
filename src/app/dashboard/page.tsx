@@ -25,7 +25,6 @@ const MONEY_MAP: Record<string, { title: string, concept: string }> = {
 
 const categoryNames = ["สุขภาพ", "การเงิน", "การงาน", "ครอบครัว", "เพื่อนฝูง", "พัฒนาตนเอง", "จิตใจ", "ช่วยเหลือสังคม"];
 
-// 🎯 คลัง Quest ชุดใหญ่ (สลับเปลี่ยนทุกวัน)
 const QUEST_POOL = {
   WHEEL: {
     "สุขภาพ": ["ดื่มน้ำเปล่าให้ครบ 2 ลิตร", "เดินหรือขยับร่างกายอย่างน้อย 15 นาที", "เข้านอนก่อนเที่ยงคืนคืนนี้", "งดน้ำหวานหรือขนมกรุบกรอบ 1 วัน", "ยืดเหยียดร่างกายแก้ Office Syndrome"],
@@ -60,20 +59,38 @@ export default function DashboardPage() {
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
 
-  // 🎮 State สำหรับ Gamification
   const [completedQuests, setCompletedQuests] = useState<number[]>([]);
   const [totalXP, setTotalXP] = useState<number>(0);
   const [showLevelInfo, setShowLevelInfo] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        try {
-          const wheelRef = collection(db, "users", currentUser.uid, "assessments");
-          const wheelSnap = await getDocs(query(wheelRef, orderBy("createdAt", "desc"), limit(1)));
-          if (!wheelSnap.empty) setLastWheel(wheelSnap.docs[0].data());
 
+        try {
+          // 💡 1. ดึงข้อมูล Wheel of Life (หาจากกล่อง users ก่อน ถ้าไม่เจอไปหาที่ user_reports)
+          let wheelData = null;
+
+          const authWheelRef = collection(db, "users", currentUser.uid, "assessments");
+          const authWheelSnap = await getDocs(query(authWheelRef, orderBy("createdAt", "desc"), limit(1)));
+          
+          if (!authWheelSnap.empty) {
+            wheelData = authWheelSnap.docs[0].data();
+          } else {
+            // ถ้าไม่เจอ! แปลว่าอาจจะเป็น Guest ลองไปหากล่อง user_reports แทน
+            const guestWheelRef = collection(db, "user_reports");
+            const guestWheelQ = query(guestWheelRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1));
+            const guestWheelSnap = await getDocs(guestWheelQ);
+            
+            if (!guestWheelSnap.empty) {
+              wheelData = guestWheelSnap.docs[0].data();
+            }
+          }
+          
+          setLastWheel(wheelData);
+
+          // 💡 2. ดึงข้อมูลส่วนอื่นๆ (เหมือนเดิม)
           const quoteRef = collection(db, "quotes");
           const quoteSnap = await getDocs(query(quoteRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
           if (!quoteSnap.empty) setLastQuote(quoteSnap.docs[0].data());
@@ -86,6 +103,7 @@ export default function DashboardPage() {
           const moneySnap = await getDocs(query(moneyRef, where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
           if (!moneySnap.empty) setLastMoney(moneySnap.docs[0].data());
 
+          // 💡 3. ดึงข้อมูล XP และ Quest
           const userDocRef = doc(db, "users", currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);
           
@@ -227,12 +245,10 @@ export default function DashboardPage() {
     }
   };
 
-  // 💡 ขยายกราฟ Wheel of Life ให้เต็มตามากขึ้น
   const renderRadarChart = (scores: number[]) => {
-    // ขยายขนาดกรอบให้ใหญ่ขึ้นเพื่อรองรับพื้นที่ในมือถือได้เต็มที่
     const size = 280; 
     const center = size / 2;
-    const radius = size / 2 - 40; // เผื่อระยะ Padding ให้ Label ไม่ตกขอบ
+    const radius = size / 2 - 40; 
     const getCoordinates = (val: number, index: number) => {
       const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
       const r = radius * (val / 10);
@@ -246,13 +262,13 @@ export default function DashboardPage() {
           {[2, 4, 6, 8, 10].map(l => <circle key={l} cx={center} cy={center} r={radius * (l / 10)} fill="none" stroke="#f1f5f9" strokeWidth="1" />)}
           {scores.map((_, i) => <line key={i} x1={center} y1={center} x2={getCoordinates(10, i).x} y2={getCoordinates(10, i).y} stroke="#f1f5f9" strokeWidth="1" />)}
           {scores.map((_, i) => {
-             const { x, y } = getCoordinates(13.5, i); // ดันข้อความออกไปให้พ้นกราฟ
+             const { x, y } = getCoordinates(13.5, i); 
              return <text key={`label-${i}`} x={x} y={y} fontSize="11" fill="#94a3b8" textAnchor="middle" dominantBaseline="middle" className="font-bold">{categoryNames[i]}</text>
           })}
           <polygon points={points} fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="2" className="transition-all duration-500" />
           {scores.map((s, i) => {
              const pos = getCoordinates(s, i);
-             const labelPos = getCoordinates(s + 2.5, i); // ดันตัวเลขให้ออกห่างจุดแดง
+             const labelPos = getCoordinates(s + 2.5, i); 
              return (
                <g key={`point-${i}`}>
                  <circle cx={pos.x} cy={pos.y} r="5" fill="#ef4444" className="hover:r-7 transition-all" />
@@ -309,31 +325,39 @@ export default function DashboardPage() {
               <p className="text-slate-300 font-medium max-w-lg">เช็กภาพรวมและอัปเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
             </div>
 
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8 relative z-20">
-              <div className="flex items-center gap-4 bg-white/5 p-3 pr-5 rounded-full border border-white/10 backdrop-blur-sm shadow-xl">
-                <img src={user?.photoURL || "/default-avatar.png"} alt="Profile" className="w-12 h-12 rounded-full border-2 border-slate-50 shadow-md" />
-                <div>
-                  <p className="text-sm font-black text-white">{user?.displayName}</p>
-                  <p className="text-xs text-slate-400 font-medium">{user?.email}</p>
+            {/* 💡 อัปเดตโครงสร้าง 2 กล่องให้กว้างเท่ากันเป๊ะด้วย Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 relative z-20 w-full max-w-2xl">
+              
+              {/* Profile Card */}
+              <div className="flex items-center justify-between bg-white/5 p-3 px-4 rounded-full border border-white/10 backdrop-blur-sm shadow-xl w-full">
+                <div className="flex items-center gap-4 min-w-0">
+                  <img src={user?.photoURL || "/default-avatar.png"} alt="Profile" referrerPolicy="no-referrer" className="w-12 h-12 rounded-full border-2 border-slate-50 shadow-md shrink-0" />
+                  <div className="truncate">
+                    <p className="text-sm font-black text-white truncate">{user?.displayName}</p>
+                    <p className="text-xs text-slate-400 font-medium truncate">{user?.email}</p>
+                  </div>
                 </div>
-                <button onClick={handleLogout} className="ml-3 p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-950/50 rounded-full transition-all group">
+                <button onClick={handleLogout} className="ml-2 p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-950/50 rounded-full transition-all group shrink-0">
                   <LogOut size={18} className="group-hover:-translate-x-0.5 transition-transform" />
                 </button>
               </div>
 
-              <div className="flex items-center gap-4 bg-slate-800/80 p-3 px-5 rounded-full border border-slate-700 backdrop-blur-sm shadow-xl relative">
-                <div className="p-2.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.2)]">
+              {/* Level Card */}
+              <div className="flex items-center gap-4 bg-slate-800/80 p-3 px-5 rounded-full border border-slate-700 backdrop-blur-sm shadow-xl relative w-full">
+                <div className="p-2.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.2)] shrink-0">
                   <Trophy size={20} className="fill-current" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-black text-white">LV.{currentLevel}</span>
-                    <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors">
+                    <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors shrink-0">
                       <Info size={14} />
                     </button>
                   </div>
-                  <p className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-1">{getLevelTitle(currentLevel)}</p>
-                  <div className="w-32 h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden flex items-center relative group">
+                  <p className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-1 truncate">{getLevelTitle(currentLevel)}</p>
+                  
+                  {/* หลอด XP ยืดให้เต็มความกว้างที่เหลือ */}
+                  <div className="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden flex items-center relative group">
                     <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000" style={{ width: `${currentLevelXP}%` }} />
                     <span className="absolute right-0 top-3 text-[9px] text-slate-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                       {currentLevelXP}/100 XP
@@ -350,13 +374,13 @@ export default function DashboardPage() {
                       className="absolute top-full left-0 md:left-auto md:right-0 mt-4 w-72 bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-2xl z-[100] text-left"
                     >
                       <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                        <Sparkles size={14} className="text-yellow-400"/> ระบบ Level & ฉายา
+                        <Sparkles size={14} className="text-yellow-400"/> ระบบ Level การเรียนรู้
                       </h4>
-                      <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัป Level และเปลี่ยนฉายาของคุณ!</p>
+                      <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัป Level การเรียนรู้ของคุณ!</p>
                       <ul className="text-[11px] font-medium space-y-2.5 text-slate-300">
-                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9: Rookie Upskiller</li>
-                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19: Habit Master</li>
-                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"/> LV 20+: Life Architect</li>
+                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9 : Rookie Upskiller</li>
+                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19 : Habit Master</li>
+                        <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"/> LV 20+ : Life Architect</li>
                       </ul>
                       <div className="mt-4 pt-3 border-t border-slate-700 flex justify-between items-center">
                         <span className="text-xs font-bold text-slate-400">Total XP สะสม</span>
@@ -492,7 +516,6 @@ export default function DashboardPage() {
             </motion.div>
           </Link>
 
-          {/* 💡 คมสัดสัด เพิ่มปุ่มประเมินใหม่กลับเข้ามา */}
           <Link href="/tools/khomsatsat" className="group block h-full">
             <motion.div whileHover={{ y: -6 }} className="h-full bg-gradient-to-br from-indigo-50 via-blue-50 to-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-indigo-100 relative overflow-hidden flex flex-col justify-between group">
               <Quote className="absolute -top-6 -right-6 text-indigo-100/50 rotate-12" size={140} />
@@ -509,7 +532,6 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 
-                {/* ปุ่มสุ่มใหม่ ที่เพิ่มเข้ามา */}
                 <div className="mt-auto flex items-center gap-1.5 px-4 py-2 w-fit rounded-full bg-white/50 text-indigo-600 text-[11px] font-black uppercase tracking-wider group-hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm">
                   <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
                   <span>สุ่มใหม่</span>
@@ -519,7 +541,6 @@ export default function DashboardPage() {
             </motion.div>
           </Link>
 
-          {/* 💡 DISC เพิ่มปุ่มประเมินใหม่กลับเข้ามา */}
           <Link href="/tools/disc" className="group block h-full">
             <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all hover:shadow-xl relative overflow-hidden group-hover:border-blue-200">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500 group-hover:h-3 transition-all duration-300" />
@@ -536,7 +557,6 @@ export default function DashboardPage() {
                     <span className={`text-sm font-bold italic ${discColors.text}`}>Style</span>
                   </div>
                   
-                  {/* ปุ่มประเมินใหม่ ที่เพิ่มเข้ามา */}
                   <div className="mt-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-[11px] font-black uppercase tracking-wider group-hover:bg-blue-50 group-hover:text-blue-600 transition-all border border-transparent group-hover:border-blue-100 shadow-sm">
                     <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
                     <span>ประเมินใหม่</span>
@@ -552,7 +572,6 @@ export default function DashboardPage() {
             </motion.div>
           </Link>
 
-          {/* 💡 Money Avatar เพิ่มปุ่มประเมินใหม่กลับเข้ามา */}
           <Link href="/tools/money-avatar" className="group block h-full">
             <motion.div whileHover={{ y: -6 }} className="h-full bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all hover:border-amber-200 hover:shadow-xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-amber-400 group-hover:h-3 transition-all duration-300" />
@@ -566,7 +585,6 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-black text-slate-800 mb-1 leading-tight"> {MONEY_MAP[lastMoney.resultKey]?.title || "นักวางแผน"} </h2>
                   <p className="text-sm text-slate-500 font-bold mt-2 mb-6 px-2"> "{MONEY_MAP[lastMoney.resultKey]?.concept}" </p>
                   
-                  {/* ปุ่มประเมินใหม่ ที่เพิ่มเข้ามา */}
                   <div className="mt-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-[11px] font-black uppercase tracking-wider group-hover:bg-amber-50 group-hover:text-amber-700 transition-all border border-transparent group-hover:border-amber-100 shadow-sm">
                     <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
                     <span>ประเมินใหม่</span>
