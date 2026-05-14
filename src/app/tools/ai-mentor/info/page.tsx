@@ -107,7 +107,7 @@ export default function AiMentorInfoPage() {
               disabled={isLoggingIn}
               className="group relative bg-white text-slate-900 px-10 py-5 rounded-[2rem] font-black text-xl hover:bg-slate-50 transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden border border-slate-200"
             >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
+              <img loading="lazy" decoding="async" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
               {isLoggingIn ? "กำลังเข้าสู่ระบบ..." : "เข้าใช้งานด้วย Google"}
             </button>
           )}

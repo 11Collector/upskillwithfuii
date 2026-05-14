@@ -137,6 +137,23 @@ export default function SoulGuidePage() {
       unsubs.forEach(unsub => unsub());
     };
   }, [router]);
+  
+  const wheelArea = useMemo(() => {
+    if (userData?.lastWheel?.scores && userData?.lastWheel?.targetScores) {
+      const gaps = userData.lastWheel.scores.map((current: number, i: number) => ({
+        index: i,
+        gap: (userData.lastWheel.targetScores[i] || 0) - current,
+        label: ["สุขภาพ", "การเงิน", "การงาน", "ครอบครัว", "เพื่อนฝูง", "พัฒนาตนเอง", "จิตใจ", "ช่วยเหลือสังคม"][i]
+      }));
+      const top3Gaps = [...gaps].sort((a, b) => b.gap - a.gap).slice(0, 3);
+      if (todayDateStr && top3Gaps.length > 0) {
+        const seed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+        return top3Gaps[seed % top3Gaps.length].label;
+      }
+      return top3Gaps[0]?.label || "การงาน";
+    }
+    return "การงาน";
+  }, [userData?.lastWheel, todayDateStr]);
 
   // 🛡️ [UI Control]: ซ่อน Bottom Navigation เมื่อมี Modal ยืนยัน
   useEffect(() => {
@@ -154,7 +171,7 @@ export default function SoulGuidePage() {
     // เลื่อนลงล่างสุดทุกครั้งที่มีการตอบโต้
     if (messages.length > 1) {
       const scrollBehavior = isFirstScroll.current ? "auto" : "smooth";
-      
+
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: scrollBehavior as any });
         if (isFirstScroll.current) {
@@ -354,7 +371,7 @@ export default function SoulGuidePage() {
             className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
           >
             {userData ? (
-              <img src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
+              <img loading="lazy" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
             ) : (
               <UserIcon size={20} className="text-zinc-600" />
             )}
@@ -496,4 +513,5 @@ export default function SoulGuidePage() {
       </AnimatePresence>
     </div>
   );
+}
 }

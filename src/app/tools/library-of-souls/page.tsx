@@ -100,13 +100,13 @@ export default function LibrarySoulsQuizPage() {
                 <div className="relative -mb-12 w-60 h-60 sm:w-72 sm:h-72">
                   <div className="absolute inset-0 bg-emerald-200 blur-[100px] opacity-30 animate-pulse" />
                   <div className="relative w-full h-full rounded-3xl bg-transparent flex items-center justify-center drop-shadow-[0_20px_40px_rgba(16,185,129,0.2)]">
-                    <img src="/library-souls-pixel.png" alt="Library Souls Logo" className="w-full h-full object-contain" />
+                    <img loading="lazy" decoding="async" src="/library-souls-pixel.png" alt="Library Souls Logo" className="w-full h-full object-contain" />
                   </div>
                 </div>
 
                 {/* 🎨 Super Giant Title Image Logo - Stick to book */}
                 <div className="mb-0 h-32 sm:h-44 w-full flex items-center justify-center px-4">
-                  <img src="/librarysoul.png" alt="Library of Souls" className="h-full w-auto object-contain drop-shadow-2xl" />
+                  <img loading="lazy" decoding="async" src="/librarysoul.png" alt="Library of Souls" className="h-full w-auto object-contain drop-shadow-2xl" />
                 </div>
 
                 {/* 📝 Description Container */}

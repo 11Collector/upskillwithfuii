@@ -15,7 +15,7 @@ export default function Header() {
     <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 z-[100] h-16">
       <div className={`max-w-4xl mx-auto px-4 md:px-8 h-full flex items-center justify-center md:justify-start ${gapClass}`}>
         <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform shrink-0">
-          <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" />
+          <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" fetchPriority="high" decoding="async" />
         </Link>
 
         {/* เมนู Desktop */}

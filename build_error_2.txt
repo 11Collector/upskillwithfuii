@@ -1,0 +1,58 @@
+
+> upskillwithfuii-web@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/thanawatlovitayaolan/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/thanawatlovitayaolan/upskillwithfuii-web/package-lock.json
+
+▲ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 20.2s
+  Running TypeScript ...
+  Finished TypeScript in 9.1s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/27) ...
+  Generating static pages using 7 workers (6/27) 
+  Generating static pages using 7 workers (13/27) 
+  Generating static pages using 7 workers (20/27) 
+✓ Generating static pages using 7 workers (27/27) in 1228ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/chat
+├ ƒ /api/checkout
+├ ƒ /api/generate-report
+├ ƒ /api/quote
+├ ○ /dashboard
+├ ○ /gallery
+├ ○ /library
+├ ƒ /library/[slug]
+├ ○ /library/admin
+├ ○ /report-review
+├ ○ /tools/ai-mentor
+├ ○ /tools/ai-mentor/info
+├ ○ /tools/deep-work
+├ ○ /tools/disc
+├ ○ /tools/disc/info
+├ ○ /tools/khomsatsat
+├ ○ /tools/khomsatsat/info
+├ ○ /tools/library-of-souls
+├ ○ /tools/library-of-souls/info
+├ ○ /tools/money-avatar
+├ ○ /tools/money-avatar/info
+├ ○ /tools/soul-guide
+├ ○ /tools/wheel-of-life
+└ ○ /tools/wheel-of-life/info
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

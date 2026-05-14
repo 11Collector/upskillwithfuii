@@ -343,7 +343,7 @@ export default function SoulGuidePage() {
             className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
           >
             {userData ? (
-              <img src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
+              <img loading="lazy" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
             ) : (
               <UserIcon size={20} className="text-zinc-600" />
             )}

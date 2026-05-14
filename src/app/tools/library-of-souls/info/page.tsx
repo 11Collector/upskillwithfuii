@@ -94,7 +94,7 @@ function ResultView({ resultType }: { resultType: string }) {
 
             {/* Enlarged Book Image */}
             <div className="w-56 h-72 md:w-64 md:h-80 mb-10 transition-transform duration-500 hover:scale-105">
-              <img src={data.bookImage} alt={data.title} className="w-full h-full object-contain drop-shadow-[0_20px_60px_rgba(16,185,129,0.35)]" />
+              <img loading="lazy" decoding="async" src={data.bookImage} alt={data.title} className="w-full h-full object-contain drop-shadow-[0_20px_60px_rgba(16,185,129,0.35)]" />
             </div>
 
             <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-xl mb-10 italic">
@@ -233,7 +233,7 @@ function InfoContent() {
               className="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all duration-300 hover:bg-emerald-50 hover:border-emerald-200 group text-center flex flex-col items-center"
             >
               <div className="w-12 h-14 mb-3 transition-transform duration-500 group-hover:scale-110">
-                <img src={item.bookImage} alt={item.title} className="w-full h-full object-contain drop-shadow-sm" />
+                <img loading="lazy" decoding="async" src={item.bookImage} alt={item.title} className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <p className="font-black text-emerald-800 text-[11px] mb-0.5 leading-tight">
                 {item.title}
