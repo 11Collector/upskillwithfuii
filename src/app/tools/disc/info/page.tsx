@@ -4,8 +4,8 @@ import { ArrowLeft, Mic, MessageSquare, Users, Sparkles, ArrowRight, Zap } from 
 
 // 💡 1. Metadata เจาะกลุ่มคนทำงาน ทีมเวิร์ก และปรับให้เข้ากับแบรนดิ้ง (SEO)
 export const metadata: Metadata = {
-  title: "คุณเป็นคนแบบไหนในออฟฟิศ? (Who Are You) | แบบประเมินบุคลิกภาพ DISC - Upskill with Fuii",
-  description: "ทำแบบทดสอบบุคลิกภาพ DISC ค้นหาว่าคุณเป็นคนแบบไหนในที่ทำงาน เพื่อเข้าใจจุดแข็ง อัปสกิลการสื่อสาร และทำงานร่วมกับทีมได้อย่างโปรเฟสชันนัล",
+  title: "แบบทดสอบ DISC คนทำงาน: คุณเป็นคนแบบไหนในออฟฟิศ? | Upskill with Fuii",
+  description: "ทำแบบทดสอบบุคลิกภาพ DISC ค้นหาว่าคุณเป็นคนแบบไหนในที่ทำงาน เพื่อเข้าใจจุดแข็ง อัพสกิลการสื่อสาร และทำงานร่วมกับทีมได้อย่างโปรเฟสชันนัล",
 };
 
 export default function DiscInfoPage() {
@@ -51,7 +51,7 @@ export default function DiscInfoPage() {
 
         {/* Content Section 1 */}
         <article className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
-          <h2 className="text-2xl font-black text-slate-800 mb-4 border-l-4 border-blue-600 pl-4">ทำไมต้องรู้ DISC?</h2>
+          <h2 className="text-2xl font-black text-slate-800 mb-4 border-l-4 border-blue-600 pl-4">ทำไมต้องรู้ DISC ?</h2>
           <p className="text-slate-600 leading-relaxed mb-6">
             <strong>DISC</strong> คือทฤษฎีบุคลิกภาพที่แบ่งคนออกเป็น 4 สไตล์หลัก การเข้าใจ DISC จะช่วยให้คุณสามารถปรับจูนการสื่อสาร (Adaptive Communication) ให้เข้ากับคนแต่ละประเภทได้ ซึ่งเป็นทักษะสำคัญของผู้นำและคนที่ประสบความสำเร็จ
           </p>
@@ -98,10 +98,47 @@ export default function DiscInfoPage() {
           </div>
         </article>
 
+     {/* --- Content Section 3 (SEO - DISC สำหรับคนทำงาน) --- */}
+        <article className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100 mb-12">
+          <h2 className="text-xl md:text-2xl font-black text-slate-800 mb-6 md:mb-8 md:text-center leading-tight">
+            ทำไม <span className="text-blue-600">"คนทำงาน"</span> ยุคนี้ต้องเข้าใจ DISC ?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
+            
+            {/* ข้อ 1 */}
+            <div className="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all group flex md:block items-start gap-4">
+              <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 bg-white shadow-sm border border-slate-100 text-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center md:mb-5 font-black text-lg md:text-xl group-hover:scale-110 transition-transform">1</div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-[14px] md:text-base mb-1 md:mb-2">ลดความขัดแย้งในทีม</h3>
+                <p className="text-[12px] md:text-sm text-slate-500 leading-relaxed">เข้าใจเหตุผลเบื้องหลังการทำงานของเพื่อนร่วมงาน ช่วยลดแรงปะทะและคุยงานกันได้ลื่นไหลขึ้น</p>
+              </div>
+            </div>
+
+            {/* ข้อ 2 */}
+            <div className="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 hover:border-emerald-200 hover:shadow-md transition-all group flex md:block items-start gap-4">
+              <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 bg-white shadow-sm border border-slate-100 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center md:mb-5 font-black text-lg md:text-xl group-hover:scale-110 transition-transform">2</div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-[14px] md:text-base mb-1 md:mb-2">อัปเกรดทักษะผู้นำ</h3>
+                <p className="text-[12px] md:text-sm text-slate-500 leading-relaxed">เลือกวิธีมอบหมายงานและกระตุ้นลูกน้องให้ตรงกับสไตล์ของแต่ละคน เพื่อดึงศักยภาพสูงสุดออกมา</p>
+              </div>
+            </div>
+
+            {/* ข้อ 3 */}
+            <div className="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 hover:border-amber-200 hover:shadow-md transition-all group flex md:block items-start gap-4">
+               <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 bg-white shadow-sm border border-slate-100 text-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center md:mb-5 font-black text-lg md:text-xl group-hover:scale-110 transition-transform">3</div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-[14px] md:text-base mb-1 md:mb-2">เพิ่มประสิทธิภาพ</h3>
+                <p className="text-[12px] md:text-sm text-slate-500 leading-relaxed">จัดวางคนให้ถูกกับงาน (Right man on the right job) ตามจุดแข็งและธรรมชาติของแต่ละสี</p>
+              </div>
+            </div>
+
+          </div>
+        </article>
+
         {/* Content Section 2 (Social Proof/Value) */}
-        <article className="bg-slate-900 text-white p-8 md:p-10 rounded-[2.5rem] shadow-lg mb-12 relative overflow-hidden">
+        <article className="bg-slate-900 text-white p-8 md:p-10 rounded-[2.5rem] shadow-lg mb-8 relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-2xl font-black mb-6 text-amber-400">อัปสกิลการสื่อสารที่นี่ดีกว่ายังไง?</h2>
+            <h2 className="text-2xl font-black mb-6 text-amber-400">อัพสกิลการสื่อสารที่นี่ดีกว่ายังไง?</h2>
             <div className="space-y-6">
               <div className="flex gap-4">
                 <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><MessageSquare className="text-blue-400" size={24}/></div>
