@@ -11,6 +11,7 @@ import { BookOpen, ArrowLeft, Sparkles, Quote, Wind, Coffee, Loader2 } from "luc
 import { results } from "@/data/librarySoulsResults";
 
 export default function LibrarySoulsQuizPage() {
+  const [gameState, setGameState] = useState<"start" | "playing">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, 'A' | 'B' | 'C'>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,12 +69,72 @@ export default function LibrarySoulsQuizPage() {
   };
 
   const handleBack = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+    if (gameState === "playing") {
+      if (currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      } else {
+        setGameState("start");
+      }
     } else {
-      router.push("/tools/library-of-souls/info");
+      router.push("/dashboard");
     }
   };
+
+  if (gameState === "start") {
+    return (
+      <main className="min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4">
+        <div className="w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 bg-[#FDFCF8]">
+          <div className="flex-1 w-full flex flex-col p-5 sm:p-8 relative overflow-y-auto z-10">
+            {/* Organic Background Elements for Start Screen */}
+            <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-emerald-100 rounded-full blur-[100px] opacity-60 -z-10" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-teal-100 rounded-full blur-[100px] opacity-60 -z-10" />
+
+            <div className="flex flex-col items-center justify-start shrink-0 w-full pt-2 h-full">
+              <div className="text-center mb-4 w-full flex flex-col items-center">
+                <h3 className="font-bold text-emerald-600 text-[10px] uppercase tracking-[0.3em] mb-4">
+                  Personality Assessment
+                </h3>
+
+                {/* 📚 Super Giant Book Logo */}
+                <div className="relative -mb-12 w-60 h-60 sm:w-72 sm:h-72">
+                  <div className="absolute inset-0 bg-emerald-200 blur-[100px] opacity-30 animate-pulse" />
+                  <div className="relative w-full h-full rounded-3xl bg-transparent flex items-center justify-center drop-shadow-[0_20px_40px_rgba(16,185,129,0.2)]">
+                    <img src="/library-souls-pixel.png" alt="Library Souls Logo" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+
+                {/* 🎨 Super Giant Title Image Logo - Stick to book */}
+                <div className="mb-2 h-32 sm:h-44 w-full flex items-center justify-center px-4">
+                  <img src="/librarysoul.png" alt="Library of Souls" className="h-full w-auto object-contain drop-shadow-2xl" />
+                </div>
+
+                {/* 📝 Description - Stick to title */}
+                <p className="text-slate-500 font-medium px-6 text-[15px] leading-tight max-w-[280px]">
+                  สไตล์การอ่านสะท้อนตัวตน<br />ค้นหา "Reading Soul" 16 รูปแบบของคุณ
+                </p>
+              </div>
+
+              <div className="w-full flex flex-col items-center gap-4 mt-auto mb-10">
+                <button
+                  onClick={() => setGameState("playing")}
+                  className="w-[85%] bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black text-[16px] py-4 px-10 rounded-full shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  <Sparkles size={20} />
+                  เริ่มการประเมิน
+                </button>
+                <button
+                  onClick={() => router.push("/")}
+                  className="text-slate-400 font-bold text-[14px] hover:text-slate-600 transition-colors underline underline-offset-4"
+                >
+                  กลับหน้าหลัก
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#FDFCF8] flex flex-col p-4 md:p-8 relative overflow-hidden text-slate-800">

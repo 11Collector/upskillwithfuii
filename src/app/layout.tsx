@@ -24,9 +24,9 @@ export default function RootLayout({
   return (
     <html lang="th">
       {/* 💡 1. ปลดล็อก Body: ลบ h-[100dvh] และ overflow-hidden ออก ปล่อยให้มัน Scroll ตามธรรมชาติ */}
-    {/* ในไฟล์ RootLayout */}
-<body className={`${kanit.className} bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] text-slate-800 antialiased`}>
-        
+      {/* ในไฟล์ RootLayout */}
+      <body className={`${kanit.className} bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] text-slate-800 antialiased`}>
+
         {/* === แถบ Navbar ด้านบน === */}
         {/* 💡 2. ใช้ fixed top-0 แปะติดขอบบนสุดเสมอ และตั้ง z-[100] ไม่ให้ใครทับ */}
         <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 z-[100] h-16">
@@ -57,9 +57,9 @@ export default function RootLayout({
         </nav>
 
 
-<main id="main-scroll-container" className="w-full relative min-h-screen flex flex-col pt-16 pb-[4.5rem] md:pb-0">
-  {children}
-</main>
+        <main id="main-scroll-container" className="w-full relative min-h-screen flex flex-col pt-16 pb-[4.5rem] md:pb-0">
+          {children}
+        </main>
 
         {/* === แถบ Bottom Navigation ด้านล่าง === */}
         {/* 💡 4. ใช้ fixed bottom-0 แปะติดขอบล่างสุดเสมอ */}
@@ -84,10 +84,7 @@ export default function RootLayout({
             <BookOpen size={22} />
             <span className="text-[10px] mt-1 font-bold">ตัวตน</span>
           </Link>
-          <Link href="/tools/khomsatsat" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-purple-600 active:scale-95 transition-all">
-            <Quote size={22} />
-            <span className="text-[10px] mt-1 font-bold">ฮีลใจ</span>
-          </Link>
+
         </div>
 
       </body>

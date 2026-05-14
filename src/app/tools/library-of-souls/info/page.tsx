@@ -7,21 +7,21 @@ import { results as resultsData } from "@/data/librarySoulsResults";
 import { toPng } from "html-to-image";
 
 // Correcting the import path for icons
-import {  
-  ArrowLeft as ArrowLeftIcon, 
-  BookOpen as BookOpenIcon, 
-  Sparkles as SparklesIcon, 
-  ArrowRight as ArrowRightIcon, 
-  Brain as BrainIcon, 
-  Zap as ZapIcon, 
-  Heart as HeartIcon, 
-  Search as SearchIcon, 
-  MessageSquare as MessageSquareIcon, 
-  Users as UsersIcon, 
-  RefreshCw as RefreshCwIcon, 
-  Share2 as Share2Icon, 
-  Camera as CameraIcon, 
-  Loader2 as Loader2Icon 
+import {
+  ArrowLeft as ArrowLeftIcon,
+  BookOpen as BookOpenIcon,
+  Sparkles as SparklesIcon,
+  ArrowRight as ArrowRightIcon,
+  Brain as BrainIcon,
+  Zap as ZapIcon,
+  Heart as HeartIcon,
+  Search as SearchIcon,
+  MessageSquare as MessageSquareIcon,
+  Users as UsersIcon,
+  RefreshCw as RefreshCwIcon,
+  Share2 as Share2Icon,
+  Camera as CameraIcon,
+  Loader2 as Loader2Icon
 } from "lucide-react";
 
 function ResultView({ resultType }: { resultType: string }) {
@@ -62,7 +62,7 @@ function ResultView({ resultType }: { resultType: string }) {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Printable Wrapper - Matches width for all sections */}
       <div ref={printRef} className="space-y-12 bg-slate-50 p-2 md:p-6 rounded-[3.5rem]">
-        
+
         {/* 1. Result Hero Card */}
         <section className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl border border-emerald-100 relative overflow-hidden">
           {/* Subtle Decorative Logo */}
@@ -79,7 +79,7 @@ function ResultView({ resultType }: { resultType: string }) {
                 LIBRARY OF SOULS
               </span>
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-8 leading-tight">
               {data.title}
             </h1>
@@ -119,7 +119,7 @@ function ResultView({ resultType }: { resultType: string }) {
               </div>
               <h2 className="text-2xl font-black">เส้นทางอัพสกิลของคุณ</h2>
             </div>
-            
+
             <div className="space-y-6">
               <div className="bg-white/10 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
                 <h3 className="text-emerald-400 font-black text-xl mb-2">{data.upskillTitle}</h3>
@@ -143,7 +143,7 @@ function ResultView({ resultType }: { resultType: string }) {
             <RefreshCwIcon size={18} /> ประเมินใหม่อีกครั้ง
           </button>
         </Link>
-        <button 
+        <button
           onClick={handleSaveImage}
           disabled={isCapturing}
           className="flex-1 bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-50 transition-all active:scale-95 shadow-sm disabled:opacity-50"
@@ -152,7 +152,7 @@ function ResultView({ resultType }: { resultType: string }) {
           {isCapturing ? "กำลังสร้างภาพ..." : "เซฟภาพสรุปผล"}
         </button>
       </div>
-      
+
       <div className="text-center pb-10">
         <Link href="/dashboard" className="text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors underline underline-offset-8 decoration-slate-200">
           กลับสู่หน้าหลัก Dashboard
@@ -190,14 +190,14 @@ function InfoContent() {
           <BookOpenIcon size={40} />
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
-          Library of Souls <br/>
+          Library of Souls <br />
           <span className="text-emerald-600 text-3xl md:text-4xl">สไตล์การอ่านที่บอกความเป็นคุณ</span>
         </h1>
         <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto leading-relaxed">
-          เพราะ "หนังสือ" ที่เราเลือกอ่าน ไม่ได้ให้แค่ความรู้ แต่ยังบอกเล่าตัวตนที่ซ่อนอยู่ภายใน... <br className="hidden md:block"/>
+          เพราะ "หนังสือ" ที่เราเลือกอ่าน ไม่ได้ให้แค่ความรู้ แต่ยังบอกเล่าตัวตนที่ซ่อนอยู่ภายใน... <br className="hidden md:block" />
           ค้นหา 16 Personalities ผ่านมุมมองของบรรณารักษ์แห่งจิตวิญญาณ
         </p>
-        
+
         <p className="text-slate-400 text-[10px] mb-4 font-black uppercase tracking-[0.3em] text-center w-full opacity-60">
           ใช้เวลาประมาณ 2-3 นาที
         </p>
@@ -220,12 +220,12 @@ function InfoContent() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {results.map((item, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all duration-300 hover:bg-emerald-50 hover:border-emerald-200 group text-center flex flex-col items-center"
             >
               <div className="w-12 h-14 mb-3 transition-transform duration-500 group-hover:scale-110">
-                 <img src={item.bookImage} alt={item.title} className="w-full h-full object-contain drop-shadow-sm" />
+                <img src={item.bookImage} alt={item.title} className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <p className="font-black text-emerald-800 text-[11px] mb-0.5 leading-tight">
                 {item.title}
@@ -244,7 +244,7 @@ function InfoContent() {
           ทำไม <span className="text-emerald-600">"นักพัฒนาตัวเอง"</span> ต้องเข้าใจเรื่องนี้?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
+
           <div className="bg-emerald-50/30 p-6 rounded-3xl border border-emerald-100/50 hover:shadow-md transition-all group">
             <div className="w-10 h-10 bg-white shadow-sm border border-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-5 font-black group-hover:scale-110 transition-transform">1</div>
             <h3 className="font-bold text-slate-800 text-base mb-2">เลือกสิ่งที่ "ใช่" ไวขึ้น</h3>
@@ -272,14 +272,14 @@ function InfoContent() {
           <h2 className="text-2xl font-black mb-6 text-emerald-400">อัพสกิลการอ่านที่นี่ดีกว่ายังไง?</h2>
           <div className="space-y-6">
             <div className="flex gap-4">
-              <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><SearchIcon className="text-emerald-400" size={24}/></div>
+              <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><SearchIcon className="text-emerald-400" size={24} /></div>
               <div>
                 <h3 className="font-bold text-lg mb-1">Soul Analysis</h3>
                 <p className="text-emerald-100/60 text-sm leading-relaxed">วิเคราะห์ตัวตนผ่าน 4 มิติหลัก (Energy, Information, Decision, Lifestyle) อย่างละเอียด</p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><ZapIcon className="text-amber-400" size={24}/></div>
+              <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><ZapIcon className="text-amber-400" size={24} /></div>
               <div>
                 <h3 className="font-bold text-lg mb-1">Personalized Upskill</h3>
                 <p className="text-emerald-100/60 text-sm leading-relaxed">ไม่ได้บอกแค่ว่าเป็นใคร แต่บอกด้วยว่าคุณควร "ทำอะไรต่อ" เพื่อขยับเลเวลของตัวเอง</p>
@@ -300,7 +300,7 @@ function InfoContent() {
             <ArrowRightIcon size={22} />
           </button>
         </Link>
-        
+
         {/* Quote Section */}
         <p className="text-slate-400 text-[13px] mt-8 font-medium italic">
           "เพราะหนังสือที่คุณเลือกอ่าน คือหน้าต่างที่สะท้อนความเป็นคุณได้ชัดเจนที่สุด"
