@@ -93,7 +93,7 @@ const handleLogin = async () => {
             />
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 text-slate-900 leading-tight tracking-tight">
-            อัพเกรดชีวิตและทักษะ <br />
+            การพัฒนาตัวเองที่สนุกกว่าที่คิด <br />
             ด้วย <span className="text-red-800"> UPSKILL EVERYDAY</span>
           </h1>
           <p className="text-slate-500 mb-8 max-w-lg mx-auto text-base sm:text-lg font-medium">
