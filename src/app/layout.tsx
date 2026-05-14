@@ -4,13 +4,12 @@ import "@/app/globals.css";
 import Link from "next/link";
 import { Home, PieChart, Users, Wallet, Quote } from "lucide-react";
 
-// ตั้งค่าฟอนต์ Kanit เป็นหลักทั้งเว็บ
+// ตั้งค่าฟอนต์ Kanit
 const kanit = Kanit({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-// ข้อมูล SEO เวลาคนแชร์ลิงก์เว็บ
 export const metadata: Metadata = {
   manifest: '/manifest.json',
   title: "อัพสกิลทุกวัน | เป็นคุณในเวอร์ชันที่ดีกว่าเดิม",
@@ -24,20 +23,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      {/* 💡 1. แก้ไข body: ล็อกความสูงให้พอดีจอ (100dvh) และปิดการ Scroll ของหน้าจอหลัก */}
-      <body className={`${kanit.className} bg-slate-50 h-[100dvh] flex flex-col text-slate-800 overflow-hidden`}>
+      {/* 💡 1. ปลดล็อก Body: ลบ h-[100dvh] และ overflow-hidden ออก ปล่อยให้มัน Scroll ตามธรรมชาติ */}
+    {/* ในไฟล์ RootLayout */}
+<body className={`${kanit.className} bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] text-slate-800 antialiased`}>
         
         {/* === แถบ Navbar ด้านบน === */}
-        {/* 💡 2. เอา sticky ออก แล้วใช้ shrink-0 เพื่อไม่ให้เมนูโดนบีบ */}
-        <nav className="shrink-0 bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 z-50">
-          <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-            
-            {/* โลโก้แบรนด์ */}
+        {/* 💡 2. ใช้ fixed top-0 แปะติดขอบบนสุดเสมอ และตั้ง z-[100] ไม่ให้ใครทับ */}
+        <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 z-[100] h-16">
+          <div className="max-w-5xl mx-auto px-4 h-full flex items-center justify-between">
             <Link href="/" className="font-black text-red-800 text-lg flex items-center gap-2 hover:scale-105 transition-transform">
               <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-12 md:h-16 object-contain" />
             </Link>
 
-            {/* เมนูสำหรับหน้าจอคอมพิวเตอร์ (Desktop Menu) */}
+            {/* เมนู Desktop */}
             <div className="hidden md:flex gap-6">
               <Link href="/tools/wheel-of-life" className="text-sm font-bold text-slate-500 hover:text-red-600 flex items-center gap-1.5 transition-colors">
                 <PieChart size={18} /> สมดุลชีวิต
@@ -55,15 +53,16 @@ export default function RootLayout({
           </div>
         </nav>
 
-        {/* === พื้นที่แสดงผลแอปแต่ละตัว (Main Content) === */}
-        {/* 💡 3. เปลี่ยนให้เฉพาะ main เท่านั้นที่ Scroll ได้ (overflow-y-auto) และลบ pb-20 ทิ้งไปเลย */}
-        <main id="main-scroll-container" className="flex-1 overflow-y-auto w-full relative">
+        {/* === พื้นที่แสดงผลแอป (Main Content) === */}
+        {/* 💡 3. ใส่ Padding บน (pt-16 = ความสูง Header) และล่าง (pb-[4.5rem] = ความสูง Footer) 
+            เพื่อดันเนื้อหาไม่ให้มุดไปซ่อนอยู่ใต้แถบ Navigation */}
+        <main id="main-scroll-container" className="w-full relative min-h-screen pt-16 pb-[4.5rem] md:pb-0">
           {children}
         </main>
 
         {/* === แถบ Bottom Navigation ด้านล่าง === */}
-        {/* 💡 4. เอา fixed ออก ใช้แค่ shrink-0 Flexbox จะดันมันไปอยู่ขอบล่างให้เองเป๊ะๆ */}
-        <div className="shrink-0 md:hidden bg-white border-t border-slate-200 flex justify-around items-center h-[4.5rem] pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-50">
+        {/* 💡 4. ใช้ fixed bottom-0 แปะติดขอบล่างสุดเสมอ */}
+        <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 flex justify-around items-center h-[4.5rem] pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-[100]">
           <Link href="/" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-red-800 active:scale-95 transition-all">
             <Home size={22} />
             <span className="text-[10px] mt-1 font-bold">หน้าหลัก</span>
@@ -72,7 +71,7 @@ export default function RootLayout({
             <PieChart size={22} />
             <span className="text-[10px] mt-1 font-bold">ชีวิต</span>
           </Link>
-            <Link href="/tools/disc" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-blue-600 active:scale-95 transition-all">
+          <Link href="/tools/disc" className="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-blue-600 active:scale-95 transition-all">
             <Users size={22} />
             <span className="text-[10px] mt-1 font-bold">ทำงาน</span>
           </Link>

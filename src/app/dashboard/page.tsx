@@ -249,6 +249,7 @@ const QUEST_POOL = {
   ]
 };
 
+
 // 💡 ฟังก์ชันแปลงข้อความ AI ให้สวยงาม (ไฮไลต์คำ, ใส่กรอบ, จัดบรรทัด)
 const formatAnalysisText = (text: string) => {
   if (!text) return null;
@@ -332,6 +333,7 @@ export default function DashboardPage() {
   const [showLevelUp, setShowLevelUp] = useState<{isOpen: boolean, newLevel: number} | null>(null);
 
   const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false); // 💡 เพิ่มบรรทัดนี้
+    const [isGoalExpanded, setIsGoalExpanded] = useState(false);
 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -1063,6 +1065,8 @@ const toggleQuest = async (id: number, xp: number) => {
 
         </div>
       {/* --- 📦 3. Bento Grid --- */}
+        
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* 🌟 1. Wheel of Life */}
@@ -1125,25 +1129,34 @@ const toggleQuest = async (id: number, xp: number) => {
                       <h2 className="text-2xl font-black text-slate-800">Wheel of Life</h2>
                     </div>
                   </div>
-                  
+
                   {lastWheel ? (
                      <>
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-slate-500 mb-2">เป้าหมาย 1 ปีของคุณ</p>
-                          <p className="text-[15px] font-bold text-red-900 line-clamp-2 bg-gradient-to-r from-red-50 to-orange-50 px-4 py-2.5 rounded-xl border border-red-100 shadow-sm leading-relaxed relative overflow-hidden">
-                            <span className="relative z-10">🎯 {lastWheel.goal || "ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายแรกกันเถอะ!"}</span>
-                          </p>
-                        </div>
-                        
-                        {lastWheel.analysis && (
-                          <div className="mt-3 mb-6 bg-white/80 backdrop-blur-sm p-3.5 rounded-2xl border border-red-100 flex items-start gap-2.5 shadow-sm relative overflow-hidden group-hover:border-red-200 transition-colors">
-                             <div className="absolute inset-0 bg-gradient-to-r from-red-50/50 to-transparent pointer-events-none" />
-                             <Sparkles size={16} className="text-red-500 shrink-0 mt-0.5 relative z-10"/>
-                             <p className="text-xs font-medium text-slate-600 leading-relaxed relative z-10">
-                               มีผลวิเคราะห์และแผนลุย 7 วันจาก AI รอคุณอยู่! กดปุ่ม <span className="w-5 h-5 rounded-full border border-red-200 bg-white inline-flex items-center justify-center font-bold text-red-500 mx-0.5 text-[10px] shadow-inner">i</span> มุมขวาบนเพื่ออ่านได้เลย 🤖
-                             </p>
-                          </div>
-                        )}
+          <div className="mb-4">
+  <p className="text-sm font-medium text-slate-500 mb-2">เป้าหมาย 1 ปีของคุณ</p>
+  <div 
+  onClick={(e) => {
+    e.preventDefault();    // ✅ ป้องกัน Link ทำงาน (ถ้ามันอยู่ในแท็ก <a> หรือ <Link>)
+    e.stopPropagation();   // ✅ ป้องกัน Event ไหลไปหา Parent
+    setIsGoalExpanded(!isGoalExpanded);
+  }}
+    className="bg-gradient-to-r from-red-50 to-orange-50 px-4 py-3 rounded-xl border border-red-100 shadow-sm relative overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300"
+  >
+    {/* โค้ดส่วนข้อความ ถ้า isGoalExpanded เป็น true จะเอา line-clamp-2 ออก */}
+    <p className={`text-[15px] font-bold text-red-900 leading-normal break-words relative z-10 transition-all duration-300 ${isGoalExpanded ? "" : "line-clamp-2"}`}>
+      🎯 {lastWheel?.goal || "ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายแรกกันเถอะ!"}
+    </p>
+
+    {/* ปุ่ม อ่านเพิ่มเติม / ย่อลง (จะโชว์ก็ต่อเมื่อข้อความยาวเกิน 70 ตัวอักษร) */}
+    {lastWheel?.goal?.length > 70 && (
+      <div className="mt-2 text-right">
+        <span className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
+          {isGoalExpanded ? "ย่อข้อความ" : "อ่านเพิ่มเติม..."}
+        </span>
+      </div>
+    )}
+  </div>
+</div>
                      </>
                   ) : (
                      <div className="mb-6">
