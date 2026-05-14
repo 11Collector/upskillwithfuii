@@ -54,24 +54,35 @@ export default function MoneyAvatarInfoPage() {
           </p>
 
           <h3 className="text-xl font-bold text-stone-800 mt-8 mb-4">9 ทรงการเงิน คุณเป็นแบบไหนในตารางนี้?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-            {[
-              { name: "กาวสุดกราฟ", desc: "เสี่ยงสุด ใช้ฟีลลิ่งล้วน" },
-              { name: "ล่าเทรนด์(ดอย)", desc: "ชอบตามกระแสหลัก" },
-              { name: "เซียนระบบ", desc: "เสี่ยงสูงแต่มีแผนเป๊ะ" },
-              { name: "ตัวตึงสายเปย์", desc: "หาเก่ง ใช้เก่ง" },
-              { name: "มนุษย์สมดุล", desc: "ทางสายกลาง" },
-              { name: "นักปั้นพอร์ต", desc: "ค่อยๆ โตอย่างมั่นคง" },
-              { name: "ผู้ประสบภัย", desc: "เสี่ยงต่ำแต่ไร้ระบบ" },
-              { name: "สายเซฟโซน", desc: "เน้นชัวร์ไว้ก่อน" },
-              { name: "พิทักษ์เงินต้น", desc: "ความเสี่ยงต้องเป็นศูนย์" }
-            ].map((item, index) => (
-              <div key={index} className="flex flex-col p-4 bg-stone-50 rounded-2xl border border-stone-100 group hover:border-amber-200 hover:bg-amber-50/30 transition-colors text-center">
-                <span className="text-stone-800 text-[15px] font-bold mb-1">{item.name}</span>
-                <span className="text-stone-500 text-[11px]">{item.desc}</span>
-              </div>
-            ))}
-          </div>
+       {/* 💡 เปลี่ยนเป็น grid-cols-3 ทั้งหมด และลด gap เหลือ 1.5 ในมือถือ */}
+<div className="grid grid-cols-3 md:grid-cols-3 gap-1.5 sm:gap-3 mt-4">
+  {[
+    { name: "กาวสุดกราฟ", desc: "เสี่ยงสุด ใช้ฟีลลิ่งล้วน" },
+    { name: "ล่าเทรนด์(ดอย)", desc: "ชอบตามกระแสหลัก" },
+    { name: "เซียนระบบ", desc: "เสี่ยงสูงแต่มีแผนเป๊ะ" },
+    { name: "ตัวตึงสายเปย์", desc: "หาเก่ง ใช้เก่ง" },
+    { name: "มนุษย์สมดุล", desc: "ทางสายกลาง" },
+    { name: "นักปั้นพอร์ต", desc: "ค่อยๆ โตอย่างมั่นคง" },
+    { name: "ผู้ประสบภัย", desc: "เสี่ยงต่ำแต่ไร้ระบบ" },
+    { name: "สายเซฟโซน", desc: "เน้นชัวร์ไว้ก่อน" },
+    { name: "พิทักษ์เงินต้น", desc: "ความเสี่ยงต้องเป็นศูนย์" }
+  ].map((item, index) => (
+    <div 
+      key={index} 
+      // 💡 ลด p-2 ในมือถือเพื่อให้มีที่ว่างตรงกลาง และใช้ min-h เพื่อให้กล่องสูงเท่ากัน
+      className="flex flex-col p-2 sm:p-4 bg-stone-50 rounded-xl sm:rounded-2xl border border-stone-100 group hover:border-amber-200 hover:bg-amber-50/30 transition-colors text-center justify-center min-h-[70px] sm:min-h-[100px]"
+    >
+      {/* 💡 ชื่อ Avatar: ใช้ text-[10px] ในมือถือ และเบรกคำด้วย leading-tight */}
+      <span className="text-stone-800 text-[10px] sm:text-[15px] font-black mb-0.5 sm:mb-1 leading-tight">
+        {item.name}
+      </span>
+      {/* 💡 คำอธิบาย: ใช้ text-[8px] เล็กจิ๋วแต่ยังพออ่านออก เพื่อไม่ให้ล้นกล่อง */}
+      <span className="text-stone-500 text-[8px] sm:text-[11px] leading-tight font-medium">
+        {item.desc}
+      </span>
+    </div>
+  ))}
+</div>
         </article>
 
         {/* Content Section 2 (Selling Points) */}
