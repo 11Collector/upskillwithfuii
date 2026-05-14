@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion"; 
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star } from "lucide-react"; 
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star,Camera,Download } from "lucide-react"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -481,40 +481,42 @@ const formatAnalysisText = (text: string) => {
   });
 };
 
-// --- Component: AvatarDisplay (วางไว้ก่อนฟังก์ชัน Dashboard) ---
-const AvatarDisplay = ({ currentLevel }: { currentLevel: number }) => {
+// --- Component: AvatarDisplay (เวอร์ชันขยายขนาด ใหญ่สะใจคุณฟุ้ย! 🔥) ---
+const AvatarDisplay = ({ currentLevel, gender }: { currentLevel: number, gender: "male" | "female" }) => {
   const avatarData = React.useMemo(() => {
+    // 💡 Logic เลือกรูปเดิม
+    const suffix = gender === 'female' ? '-w' : '';
     if (currentLevel < 10) {
-      return { image: '/avatars/rookie-static.png', glow: 'from-slate-400/20' };
+      return { image: `/avatars/rookie-static${suffix}.png`, glow: 'from-slate-400/20' };
     } else if (currentLevel < 20) {
-      return { image: '/avatars/master-static.png', glow: 'from-orange-500/20' };
+      return { image: `/avatars/master-static${suffix}.png`, glow: 'from-orange-500/20' };
     } else if (currentLevel < 30) {
-      return { image: '/avatars/architect-static.png', glow: 'from-blue-500/20' };
-    } 
-    else {
-      return { image: '/avatars/legacy-static.png', glow: 'from-gold-500/30' };
+      return { image: `/avatars/architect-static${suffix}.png`, glow: 'from-blue-500/20' };
+    } else {
+      return { image: `/avatars/legacy-static${suffix}.png`, glow: 'from-gold-500/30' };
     }
-  }, [currentLevel]);
+  }, [currentLevel, gender]);
 
   return (
-    <div className="relative flex items-center justify-center p-4 group/avatar">
-      {/* แสงฟุ้งข้างหลัง */}
-      <div className={`absolute inset-0 bg-gradient-to-t ${avatarData.glow} to-transparent blur-3xl rounded-full opacity-60`} />
+    <div className="relative flex items-center justify-center group/avatar p-6">
+      {/* ✨ แสงฟุ้งข้างหลัง (ปรับขนาดตามรูป) */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${avatarData.glow} to-transparent blur-[120px] rounded-full opacity-60 scale-110`} />
       
-      {/* รูปอวตาร */}
-    <img 
-  src={avatarData.image} 
-  alt="User Avatar"
-  className="w-48 h-48 md:w-60 md:h-60 object-contain flex-shrink-0 relative z-10 drop-shadow-2xl transition-transform duration-300 group-hover/avatar:scale-110"
-  onError={(e) => {
-    (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
-  }}
-/>
-
+      {/* 👾 รูปอวตาร (ขยายขนาดใหม่ ใหญ่ขึ้นเยอะ!) */}
+      <img 
+        src={avatarData.image} 
+        alt={`User Avatar Level ${currentLevel}`}
+        // 🎯 แก้ขนาดตรงนี้ครับ: 
+        // Mobile: w-48/h-48 -> w-64/h-64 (~256px)
+        // Desktop (md): w-60/h-60 -> w-80/h-80 (~320px)
+        className="w-64 h-64 md:w-80 md:h-80 object-contain flex-shrink-0 relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover/avatar:scale-105"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
+        }}
+      />
     </div>
   );
 };
-
 
 export default function DashboardPage() {
  useEffect(() => {
@@ -548,7 +550,9 @@ const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
 const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เปิด/ปิด Modal
 
 // --- ภายใน DashboardPage Component ---
-const [gender, setGender] = useState<"male" | "female">("male"); // เพิ่มบรรทัดนี้
+const [gender, setGender] = useState<"male" | "female">("male"); 
+const [streakCount, setStreakCount] = useState<number>(0);
+const [showShareModal, setShowShareModal] = useState(false);
 
 // เพิ่มฟังก์ชันสำหรับเปลี่ยนเพศและ Save ลง Firebase
 const handleGenderChange = async (newGender: "male" | "female") => {
@@ -589,56 +593,68 @@ useEffect(() => {
     if (currentUser) {
       setUser(currentUser);
 
-      // --- 1. ดึงข้อมูลประเมินทั้งหมด ---
-      let wheelData = null;
-      let discData = null;
-      let moneyData = null;
-
       try {
         const authWheelRef = collection(db, "users", currentUser.uid, "assessments");
-        const authWheelSnap = await getDocs(query(authWheelRef, orderBy("createdAt", "desc"), limit(1)));
-        if (!authWheelSnap.empty) wheelData = authWheelSnap.docs[0].data();
-        setLastWheel(wheelData);
 
-        const discSnap = await getDocs(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
+        // 🚀 THE FIX: ใช้ Promise.all สั่งดึงข้อมูล 5 อย่างพร้อมกันในเสี้ยววินาที!
+        const [
+          authWheelSnap,
+          discSnap,
+          moneySnap,
+          quoteSnap,
+          userDocSnap
+        ] = await Promise.all([
+          getDocs(query(authWheelRef, orderBy("createdAt", "desc"), limit(1))),
+          getDocs(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
+          getDocs(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
+          getDocs(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
+          getDoc(doc(db, "users", currentUser.uid))
+        ]);
+
+        // --- 1. จัดการข้อมูลแบบประเมิน ---
+        let wheelData = null;
+        let discData = null;
+        let moneyData = null;
+
+        if (!authWheelSnap.empty) {
+          wheelData = authWheelSnap.docs[0].data();
+          setLastWheel(wheelData);
+        }
+        
         if (!discSnap.empty) {
           discData = discSnap.docs[0].data();
           setLastDisc(discData);
         }
 
-        const moneySnap = await getDocs(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
         if (!moneySnap.empty) {
           moneyData = moneySnap.docs[0].data();
           setLastMoney(moneyData);
         }
 
-        const quoteSnap = await getDocs(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)));
-        if (!quoteSnap.empty) setLastQuote(quoteSnap.docs[0].data());
-      } catch (error) { console.error("Error fetching assessment data:", error); }
+        if (!quoteSnap.empty) {
+          setLastQuote(quoteSnap.docs[0].data());
+        }
 
-      // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
-      try {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        
+        // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+          
           setGender(userData.gender || "male");
+          setStreakCount(userData.streakCount || 0);
+
           let xpToClaim = 0;
           let xpUpdates: any = {};
 
-          // เช็ก Wheel of Life XP (50 XP)
+          // เช็ก XP ที่ยังไม่เคยกดรับ
           if (wheelData && !userData.hasWheelXP) {
             xpToClaim += 50;
             xpUpdates.hasWheelXP = true;
           }
-          // เช็ก DISC XP (50 XP)
           if (discData && !userData.hasDiscXP) {
             xpToClaim += 50;
             xpUpdates.hasDiscXP = true;
           }
-          // เช็ก Money Avatar XP (50 XP)
           if (moneyData && !userData.hasMoneyXP) {
             xpToClaim += 50;
             xpUpdates.hasMoneyXP = true;
@@ -646,44 +662,47 @@ useEffect(() => {
 
           // ถ้ามี XP ที่ยังไม่ได้กดรับ ให้บวกเข้า DB ทันที
           if (xpToClaim > 0) {
+            const userDocRef = doc(db, "users", currentUser.uid);
             await setDoc(userDocRef, {
               ...xpUpdates,
               totalXP: increment(xpToClaim)
             }, { merge: true });
+            
             setTotalXP((userData.totalXP || 0) + xpToClaim);
             console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
           } else {
             setTotalXP(userData.totalXP || 0);
           }
 
-          if (userData.lastQuestDate === todayStr) {
-    setCompletedQuests(userData.completedQuestIds || []);
-    setCustomQuestTitle(userData.customQuestTitle || ""); // ดึงชื่อเควสที่เคยพิมพ์ไว้กลับมา
-  } else {
-    setCompletedQuests([]);
-    setCustomQuestTitle(""); // ถ้าเป็นวันใหม่ ให้ล้างชื่อเควสทิ้งเพื่อรอใส่ใหม่
-  }
-
-          // จัดการ Daily Quest สถานะ (อิงกับฐานข้อมูล)
+          // --- 3. จัดการ Daily Quest และชื่อเควส (เช็กวันใหม่) ---
           if (userData.lastQuestDate === todayStr) {
             setCompletedQuests(userData.completedQuestIds || []);
+            setCustomQuestTitle(userData.customQuestTitle || ""); // ดึงชื่อเควสที่เคยพิมพ์ไว้กลับมา
           } else {
             setCompletedQuests([]);
+            setCustomQuestTitle(""); // วันใหม่ให้ล้างทิ้งรอใส่ใหม่
           }
 
+          // --- 4. จัดการสถานะคำคม ---
           if (userData.lastQuoteDate === todayStr) {
             setHasClaimedQuoteToday(true);
           } else {
             setHasClaimedQuoteToday(false);
           }
         }
-      } catch (error) { console.error("Error updating XP profile:", error); }
+
+      } catch (error) { 
+        console.error("Error fetching Dashboard data:", error); 
+      }
 
     } else { 
       router.push("/"); 
     }
+    
+    // โหลดทุกอย่างเสร็จแล้ว ปิด Spinner ปล่อยของโชว์ได้เลย
     setLoading(false);
   });
+
   return () => unsubscribe();
 }, [router]);
 
@@ -1061,47 +1080,92 @@ const currentLevel = Math.floor(totalXP / 100) + 1;
 
 const toggleQuest = async (id: number | string, xp: number) => {
   if (!user) return;
-  const isDone = completedQuests.includes(id);
-  
-  // ✅ นับเฉพาะเควสปกติ (ที่เป็นตัวเลข) ว่าทำครบ 3 ข้อหรือยัง
-  const normalQuestsDone = completedQuests.filter(qId => typeof qId === 'number').length;
-  
-  // ✅ ล็อกโควตา 3 ข้อ (ยกเว้นเควสพิเศษ 'special-01' ให้ผ่านได้)
-  if (!isDone && id !== 'special-01' && normalQuestsDone >= 3) {
-    setShowLimitModal(true); 
-    alert("ทำภารกิจปกติครบ 3 ข้อแล้วในวันนี้! ยอดเยี่ยมมากครับ 🚀");
-    return;
-  }
 
   const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
   const userRef = doc(db, "users", user.uid);
-  const oldLevel = Math.floor(totalXP / 100) + 1;
+  const isDone = completedQuests.includes(id);
+  const normalQuestsDone = completedQuests.filter(qId => typeof qId === 'number').length;
   
-  // Logic การอัปเดต Array
+  // 1. Check Limit (ทำได้สูงสุด 3 เควสปกติ)
+  if (!isDone && id !== 'special-01' && normalQuestsDone >= 3) {
+    setShowLimitModal(true); 
+    return;
+  }
+
+  // 2. เตรียมข้อมูลใหม่
   let newCompleted = isDone 
     ? completedQuests.filter(qId => qId !== id) 
     : [...completedQuests, id];
-    
+
   let xpChange = isDone ? -xp : xp;
+  let newStreak = streakCount;
+  let newLastQuestDate = todayStr;
 
-  setCompletedQuests(newCompleted);
-  setTotalXP(prev => prev + xpChange);
+  // 🔥 [Logic แก้บั๊ก Streak] 🔥
+  
+  // กรณีที่ 1: "กดยืนยันทำ" (Check-in) และเป็นเควสแรกของวันนี้
+  if (!isDone && completedQuests.length === 0) {
+    // เช็กว่าเมื่อวานทำไหม เพื่อรัน Streak ต่อ หรือเริ่มนับ 1 ใหม่
+    const userSnap = await getDoc(userRef);
+    const lastDate = userSnap.data()?.lastQuestDate;
 
-  // เช็ค Level Up
-  const newLevel = Math.floor((totalXP + xpChange) / 100) + 1;
-  if (newLevel > oldLevel && xpChange > 0) {
-    setShowLevelUp({ isOpen: true, newLevel });
-    setTimeout(() => setShowLevelUp(null), 4000); 
+    if (lastDate) {
+      const last = new Date(lastDate);
+      const today = new Date(todayStr);
+      const diffTime = today.getTime() - last.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        newStreak += 1; // ต่อเนื่อง
+      } else if (diffDays > 1) {
+        newStreak = 1; // ขาดช่วง เริ่มใหม่
+      }
+    } else {
+      newStreak = 1; // ครั้งแรกสุดในระบบ
+    }
+
+    // โบนัสวินัย 7 วัน
+    if (newStreak % 7 === 0 && newStreak !== 0) {
+      xpChange += 50;
+      setTimeout(() => alert(`🎊 พลังแห่งวินัย! ครบ ${newStreak} วัน รับโบนัสเพิ่ม +50 XP`), 800);
+    }
   }
 
+  // กรณีที่ 2: "กดยกเลิก" (Untoggle) และไม่เหลือเควสอื่นที่ทำค้างไว้เลยในวันนี้
+  else if (isDone && newCompleted.length === 0) {
+    newStreak = Math.max(0, newStreak - 1); // หัก Streak คืน
+    newLastQuestDate = ""; // ล้างวันที่ เพื่อให้ระบบยอมให้บวก Streak ใหม่ถ้ากลับมาติ๊กอีกครั้ง
+    
+    // ถ้าเคสนี้เคยได้โบนัส 7 วันไป (เช่น เพิ่งครบวันที่ 7 แล้วกดยกเลิก) 
+    // ตัว XP ก็จะถูกหักคืนอัตโนมัติจาก xpChange เดิมอยู่แล้ว แต่ถ้าอยากให้เป๊ะอาจจะเช็กเพิ่มครับ
+  }
+
+  // 3. คำนวณ Level ใหม่
+  const finalNewXP = totalXP + xpChange;
+  const newLevel = Math.floor(finalNewXP / 100) + 1;
+  const oldLevel = Math.floor(totalXP / 100) + 1;
+
+  // 4. อัปเดต State หน้าจอ
+  setCompletedQuests(newCompleted);
+  setTotalXP(finalNewXP);
+  setStreakCount(newStreak);
+
+  // 5. แจ้งเตือน Level Up
+  if (newLevel > oldLevel && xpChange > 0) {
+    setShowLevelUp({ isOpen: true, newLevel });
+    setTimeout(() => setShowLevelUp(null), 4000);
+  }
+
+  // 6. บันทึกลง Firebase
   try {
     await setDoc(userRef, {
-      totalXP: increment(xpChange),
+      totalXP: finalNewXP,
       completedQuestIds: newCompleted,
-      lastQuestDate: todayStr
+      lastQuestDate: newLastQuestDate, // บันทึกวันที่ (หรือล้างออก)
+      streakCount: newStreak
     }, { merge: true });
   } catch (error) {
-    console.error("Error toggling quest:", error);
+    console.error("Error updating progress:", error);
   }
 };
 
@@ -1235,6 +1299,31 @@ const getQuoteFontSize = (text: string) => {
   return "text-xl md:text-2xl leading-relaxed"; // สั้นๆ (เน้นให้ใหญ่กระแทกตา)
 };
 
+const handleDownloadCard = async () => {
+    // 🚀 โหลดแบบ Dynamic เพื่อความเบาของแอป
+    const { domToPng } = await import("modern-screenshot");
+    const element = document.getElementById("player-card");
+    
+    if (!element) return;
+
+    try {
+      // 🎨 เจนเป็น PNG: ปรับสเกลเป็น 3 เท่าเพื่อความชัดระดับ 4K
+      const dataUrl = await domToPng(element, {
+        scale: 3,        // ขยายความชัด (ถ้าเครื่องช้าปรับเป็น 2 ได้ครับ)
+        quality: 1,      // คุณภาพสูงสุด
+        backgroundColor: '#0F172A', // บังคับพื้นหลังให้เข้มตาม Theme
+      });
+
+      // 📥 สั่งดาวน์โหลด
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `upskill-card-${user?.displayName?.split(' ')[0] || 'member'}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Download Card Error:", error);
+      alert("💡 ทริควิศวกร: หากดาวน์โหลดไม่ได้ชั่วคราว กดแคปหน้าจอ (Screenshot) จะได้ภาพที่สวยที่สุดครับ!");
+    }
+  };
 
   return (
 <div className="min-h-screen bg-transparent p-4"> 
@@ -1243,9 +1332,9 @@ const getQuoteFontSize = (text: string) => {
 {/* --- 🧭 1. Top Section --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           
-        <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative flex flex-col items-center justify-center group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700 min-h-[450px]">
+      <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative flex flex-col group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700">
             
-  {/* 💡 ฉากหลังและเอฟเฟกต์แสง (อยู่เหมือนเดิม) */}
+  {/* 💡 ฉากหลังและเอฟเฟกต์แสง */}
   <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none z-0">
     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 group-hover:h-3 transition-all duration-300" />
     <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
@@ -1255,81 +1344,211 @@ const getQuoteFontSize = (text: string) => {
     </div>
   </div>
 
-  {/* 🎯 1. ส่วนข้อความ (จัดให้อยู่ตรงกลาง) */}
-  <div className="relative z-10 flex flex-col items-center text-center mt-2">
-    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-4">
-      ยินดีต้อนรับกลับมา <br className="sm:hidden" /> {/* เผื่อมือถือจอแคบจะได้ปัดตกบรรทัดสวยๆ */}
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-extrabold">{user?.displayName?.split(' ')[0]} 🚀</span>
-    </h1>
-    <p className="text-slate-300 font-medium max-w-lg mx-auto">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
-  </div>
-  
-  {/* 👾 2. ส่วน Avatar (เด่นตระหง่านอยู่ตรงกลาง) */}
-<div className="flex-shrink-0 relative z-20 my-6">
-  <AvatarDisplay currentLevel={currentLevel} />
-</div>
-  {/* 📊 3. ส่วนกล่อง Profile & Level (เพิ่ม mx-auto เพื่อให้อยู่ตรงกลาง) */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 relative z-20 w-full max-w-2xl mx-auto">
+  <div className="relative z-10 flex flex-col h-full w-full">
     
-    {/* กล่อง Profile */}
-    <div className="flex items-center justify-between bg-white/5 p-3 px-4 rounded-full border border-white/10 backdrop-blur-sm shadow-xl w-full hover:bg-white/10 transition-colors">
-      <div className="flex items-center gap-4 min-w-0 text-left">
-        <img src={user?.photoURL || "/default-avatar.png"} alt="Profile" referrerPolicy="no-referrer" className="w-12 h-12 rounded-full border-2 border-slate-50 shadow-md shrink-0" />
-        <div className="truncate">
-          <p className="text-sm font-black text-white truncate">{user?.displayName}</p>
-          <p className="text-xs text-slate-400 font-medium truncate">{user?.email}</p>
+    {/* 📊 1. Top Navbar (🌟 แสดงเฉพาะบน Desktop เท่านั้น - hidden sm:flex) */}
+    <div className="hidden sm:flex relative z-[999] flex-row justify-between items-center gap-4 w-full mb-8">
+      
+      {/* Desktop: Profile Box */}
+      <div className="flex items-center justify-between bg-white/5 p-1.5 pl-2 pr-4 rounded-full border border-white/10 backdrop-blur-sm shadow-xl w-auto min-w-[220px] hover:bg-white/10 transition-colors">
+        <div className="flex items-center gap-3 min-w-0 text-left">
+          <img src={user?.photoURL || "/default-avatar.png"} alt="Profile" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full border-2 border-slate-50 shadow-md shrink-0" />
+          <div className="truncate pr-2">
+            <p className="text-xs font-black text-white truncate">{user?.displayName}</p>
+            <p className="text-[9px] text-slate-400 font-medium truncate">{user?.email}</p>
+          </div>
         </div>
+        <button onClick={handleLogout} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0">
+          <LogOut size={14} className="group-hover/btn:-translate-x-0.5 transition-transform" />
+        </button>
       </div>
-      <button onClick={handleLogout} className="ml-2 p-2.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0">
-        <LogOut size={18} className="group-hover/btn:-translate-x-0.5 transition-transform" />
-      </button>
+
+     {/* 📊 1.2 Level Box (Desktop) */}
+      <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[220px] hover:border-yellow-500/50 transition-colors">
+        <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.3)] shrink-0 group-hover:scale-110 transition-transform">
+          <Trophy size={14} className="fill-current" />
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-black text-white">LV.{currentLevel}</span>
+            <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors shrink-0">
+              <Info size={12} />
+            </button>
+          </div>
+          <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5 truncate">
+            {getLevelTitle(currentLevel)}
+          </p>
+          <div className="w-full h-1.5 bg-slate-700 rounded-full mt-1.5 overflow-hidden flex items-center relative">
+            <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000 relative" style={{ width: `${currentLevelXP}%` }} />
+          </div>
+        </div>
+
+        {/* 🎯 Desktop Popup: คืนชีพ Total XP สะสม */}
+        <AnimatePresence>
+          {showLevelInfo && (
+            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="absolute top-[120%] right-0 mt-2 w-72 bg-slate-800 border border-slate-600 p-5 rounded-3xl shadow-2xl z-[999] text-left origin-top-right">
+              <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Sparkles size={14} className="text-yellow-400"/> ระบบ Level การเรียนรู้</h4>
+              <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัพ Level การเรียนรู้ของคุณ!</p>
+              <ul className="text-[11px] font-medium space-y-2.5 text-slate-300">
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9 : Rookie Upskiller</li>
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19 : Habit Master</li>
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"/> LV 20-29 : Life Architect</li>
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"/> LV 30+ : Legacy Shaper</li>
+              </ul>
+              
+              {/* ✨ แถบ Total XP ที่หายไป กลับมาแล้วครับ! */}
+              <div className="mt-4 pt-3 border-t border-slate-700 flex justify-between items-center">
+                <span className="text-xs font-bold text-slate-400">Total XP สะสม</span>
+                <span className="text-sm font-black text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-lg border border-yellow-500/20">{totalXP} XP</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
 
-    {/* กล่อง Level & XP */}
-    <div className="flex items-center gap-4 bg-slate-800/80 p-3 px-5 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full hover:border-yellow-500/50 transition-colors">
-      <div className="p-2.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.3)] shrink-0 group-hover:scale-110 transition-transform">
-        <Trophy size={20} className="fill-current" />
-      </div>
-      <div className="flex-1 min-w-0 text-left">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-black text-white">LV.{currentLevel}</span>
-          <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors shrink-0">
-            <Info size={14} />
+{/* 🎯 2. Hero Section (จัดข้อความซ้าย อวตาร+Badge ขวา) */}
+    <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-6 mb-6 relative z-30">
+      
+      {/* ⬅️ ฝั่งซ้าย: ข้อความและปุ่มจัดการ */}
+      <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
+        <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-tight mb-3 mt-4 sm:mt-0">
+          ยินดีต้อนรับกลับมา <br className="hidden sm:block lg:hidden" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-extrabold">{user?.displayName?.split(' ')[0]} 🚀</span>
+        </h1>
+        <p className="text-slate-300 text-sm xl:text-base font-medium max-w-md mx-auto lg:mx-0 mb-5">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
+        
+        <div className="flex flex-wrap justify-center lg:justify-start items-center gap-3">
+          {/* Toggle เพศ */}
+          <div className="flex items-center bg-white/5 rounded-full p-0.5 backdrop-blur-md border border-white/10 shadow-inner w-fit">
+            <button onClick={() => handleGenderChange("male")} className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wide transition-all duration-300 ${gender === "male" ? "bg-gradient-to-r from-blue-500 to-sky-400 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+              <span className="text-[10px]">👨🏻</span> ชาย
+            </button>
+            <button onClick={() => handleGenderChange("female")} className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wide transition-all duration-300 ${gender === "female" ? "bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+              <span className="text-[10px]">👩🏻</span> หญิง
+            </button>
+          </div>
+
+          {/* ปุ่ม Get Player Card */}
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowShareModal(true)} className="flex items-center gap-2 px-4 py-1.5 bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-500/50 rounded-full transition-all duration-300 group/share">
+            <Camera size={12} className="text-slate-400 group-hover/share:text-yellow-400 group-hover/share:rotate-12 transition-all" />
+            <span className="text-[9px] font-black text-slate-500 group-hover/share:text-yellow-400 uppercase tracking-[0.2em] mt-0.5">Player Card</span>
+          </motion.button>
+        </div>
+
+        {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
+        <div className="flex sm:hidden items-center justify-center gap-2 w-full max-w-[260px] mt-6 relative z-[999]">
+          
+          {/* 🎯 Mobile: Level Box */}
+           <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[220px] hover:border-yellow-500/50 transition-colors">
+        <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.3)] shrink-0 group-hover:scale-110 transition-transform">
+          <Trophy size={14} className="fill-current" />
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-black text-white">LV.{currentLevel}</span>
+            <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors shrink-0">
+              <Info size={12} />
+            </button>
+          </div>
+          <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5 truncate">
+            {getLevelTitle(currentLevel)}
+          </p>
+          <div className="w-full h-1.5 bg-slate-700 rounded-full mt-1.5 overflow-hidden flex items-center relative">
+            <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000 relative" style={{ width: `${currentLevelXP}%` }} />
+          </div>
+        </div>
+
+            {/* Mobile Popup */}
+               <AnimatePresence>
+          {showLevelInfo && (
+            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="absolute top-[120%] right-0 mt-2 w-72 bg-slate-800 border border-slate-600 p-5 rounded-3xl shadow-2xl z-[999] text-left origin-top-right">
+              <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Sparkles size={14} className="text-yellow-400"/> ระบบ Level การเรียนรู้</h4>
+              <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัพ Level การเรียนรู้ของคุณ!</p>
+              <ul className="text-[11px] font-medium space-y-2.5 text-slate-300">
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9 : Rookie Upskiller</li>
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19 : Habit Master</li>
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"/> LV 20-29 : Life Architect</li>
+                <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"/> LV 30+ : Legacy Shaper</li>
+              </ul>
+              
+              {/* ✨ แถบ Total XP ที่หายไป กลับมาแล้วครับ! */}
+              <div className="mt-4 pt-3 border-t border-slate-700 flex justify-between items-center">
+                <span className="text-xs font-bold text-slate-400">Total XP สะสม</span>
+                <span className="text-sm font-black text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-lg border border-yellow-500/20">{totalXP} XP</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+          </div>
+
+          {/* Mobile: Logout Button */}
+          <button onClick={handleLogout} className="p-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full shadow-lg transition-all shrink-0">
+            <LogOut size={14} />
           </button>
         </div>
-        <p className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-1 truncate">{getLevelTitle(currentLevel)}</p>
-        <div className="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden flex items-center relative group/xp">
-          <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000 relative" style={{ width: `${currentLevelXP}%` }}>
-            <div className="absolute inset-0 bg-white/20 w-full h-[50%] top-0" />
-          </div>
-          <span className="absolute right-0 top-3 text-[9px] text-slate-400 font-bold opacity-0 group-hover/xp:opacity-100 transition-opacity">{currentLevelXP}/100 XP</span>
-        </div>
       </div>
 
-      {/* Popup Level Info */}
-      <AnimatePresence>
-        {showLevelInfo && (
-          <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute top-full left-0 md:left-auto md:right-0 mt-4 w-72 bg-slate-800 border border-slate-600 p-5 rounded-2xl shadow-2xl z-[100] text-left">
-            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Sparkles size={14} className="text-yellow-400"/> ระบบ Level การเรียนรู้</h4>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">ทุกๆ 100 XP ที่สะสมจากการทำภารกิจรายวัน จะถูกนำมาอัพ Level การเรียนรู้ของคุณ!</p>
-            <ul className="text-[11px] font-medium space-y-2.5 text-slate-300">
-              <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-sm"/> LV 1-9 : Rookie Upskiller</li>
-              <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"/> LV 10-19 : Habit Master</li>
-              {/* แอบแก้ตัวเลขตรงนี้ให้นิดนึงครับ ของเดิมมันทับซ้อนกัน 20-39 กับ 30+ 😆 */}
-              <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"/> LV 20-29 : Life Architect</li>
-              <li className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"/> LV 30+ : Legacy Shaper</li>
-            </ul>
-            <div className="mt-4 pt-3 border-t border-slate-700 flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-400">Total XP สะสม</span>
-              <span className="text-sm font-black text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-lg border border-yellow-500/20">{totalXP} XP</span>
+      {/* ➡️ ฝั่งขวา: Avatar + Badge (รวมร่างกันแล้ว!) */}
+      <div className="flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center mt-4 lg:mt-0 lg:ml-8">
+        
+        {/* รูป Avatar */}
+        <div className="scale-90 sm:scale-100 origin-center mb-4">
+          <AvatarDisplay currentLevel={currentLevel} gender={gender} />
+        </div>
+
+        {/* ✨ ย้าย Badge มาตรงนี้ครับ: แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
+        <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap sm:flex-nowrap px-2">
+          <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+            <Flame size={12} className="text-orange-500 fill-current shrink-0" />
+            <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">{streakCount} Days</span>
+          </div>
+          {lastDisc && (
+            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+              <Zap size={12} className="text-blue-400 shrink-0" />
+              <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">{DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+          {lastMoney && (
+            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+              <Star size={12} className="text-amber-400 fill-current shrink-0" />
+              <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">{MONEY_DATA[lastMoney.resultKey]?.title}</span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
+
+    {/* 🌟 3. Bottom Bar (เหลือแค่เส้น Progress Track เดี่ยวๆ แล้ว) */}
+    <div className="w-full mt-auto pt-4 border-t border-white/5 flex flex-col items-center relative z-20">
+      
+      {/* Slim Progress Track */}
+      <div className="relative flex items-center justify-between w-full max-w-[380px] mb-4 h-8 px-2">
+        <div className="absolute left-4 right-4 h-[1px] bg-white/10 top-1/2 -translate-y-1/2" />
+        <motion.div initial={{ width: 0 }} animate={{ width: `${((streakCount % 7 === 0 && streakCount > 0 ? 7 : streakCount % 7) - 1) / 6 * 100}%` }} className="absolute left-4 h-[1px] bg-gradient-to-r from-orange-500 to-yellow-400 top-1/2 -translate-y-1/2 origin-left shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+        {[1, 2, 3, 4, 5, 6, 7].map((dot) => {
+          const currentProgress = streakCount % 7 === 0 && streakCount > 0 ? 7 : streakCount % 7;
+          const isFilled = dot <= currentProgress;
+          const isLastDot = dot === 7;
+          return (
+            <div key={dot} className="relative z-10">
+              <div className={`w-2 h-2 rounded-full transition-all duration-1000 border ${isFilled ? 'bg-orange-500 border-orange-400 shadow-[0_0_10px_rgba(249,115,22,0.8)] scale-125' : 'bg-slate-900 border-white/20'}`} />
+              {isLastDot && (
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group/reward">
+                  <span className={`text-[8px] font-black tracking-tighter transition-colors ${isFilled ? 'text-yellow-400' : 'text-slate-500 hover:text-orange-400'}`}>{isFilled ? 'DONE' : '+50XP'}</span>
+                  <div className={`w-[1px] h-2 ${isFilled ? 'bg-yellow-400' : 'bg-slate-800'}`} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 opacity-60">Complete Quest 7 days for +50 XP Bonus</p>
+    </div>
+
   </div>
 </header>
-
           <div className="lg:col-span-1 bg-slate-800 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-center border border-slate-700 group transition-all duration-500 hover:shadow-[0_20px_50px_rgba(239,68,68,0.15)] hover:border-slate-600">
             {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-red-500/20 to-orange-500/10 blur-[80px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
@@ -2368,6 +2587,105 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
       <p className="text-center text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-widest">
         ⚠️ เมื่อยืนยันแล้วจะไม่สามารถแก้ไขได้
       </p>
+    </motion.div>
+  </motion.div>
+)}
+
+{/* 🎖️ Modal: Upskill Player Card */}
+{showShareModal && (
+  <motion.div 
+    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl"
+    onClick={() => setShowShareModal(false)}
+  >
+    <motion.div 
+      initial={{ scale: 0.8, y: 50, rotateY: 20 }}
+      animate={{ scale: 1, y: 0, rotateY: 0 }}
+      className="relative max-w-[360px] w-full"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* 💳 ตัวการ์ด (The Card Canvas) */}
+      <div id="player-card" className="relative bg-[#0F172A] rounded-[3rem] overflow-hidden border-[1px] border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center p-8">
+        
+        {/* ✨ Premium Lighting Effects */}
+        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-500/10 to-transparent" />
+        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-orange-500/10 blur-[80px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
+
+        {/* Header: Logo & Title */}
+        <div className="relative z-10 w-full flex justify-between items-center mb-8">
+          <div className="flex flex-col">
+             <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Official Pro Member</span>
+             <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
+          </div>
+         <div className="w-10 h-10 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden p-1.5">
+  <img 
+    src="/logo-invert.png" 
+    alt="Upskill Logo" 
+    className="w-full h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity" 
+    onError={(e) => {
+      (e.target as HTMLImageElement).style.display = 'none';
+    }}
+  />
+</div>
+        </div>
+
+        {/* Avatar Section: ปรับขนาดให้เด่น */}
+        <div className="relative z-10 mb-6 group/card-avatar h-48 flex items-center justify-center">
+          <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full scale-75" />
+        
+            <AvatarDisplay currentLevel={currentLevel} gender={gender} />
+         
+        </div>
+
+       {/* User Info & Level Badge */}
+        <div className="relative z-10 text-center w-full mb-8">
+          <h2 className="text-4xl font-black text-white tracking-tight mb-3 drop-shadow-lg">
+            {user?.displayName?.split(' ')[0]}
+          </h2>
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl text-[12px] font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]">
+            {/* 🎯 แก้ตรง getLevelTitle ให้ตัดด้วย ' (' แทนครับ */}
+            <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
+          </div>
+        </div>
+
+        {/* Stats Grid: ปรับให้รองรับภาษาไทยและเห็นชัดขึ้น */}
+        <div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-4">
+          {/* Box 1: DISC */}
+          <div className="bg-white/[0.03] backdrop-blur-md p-3.5 rounded-[1.5rem] border border-blue-500/20 flex flex-col items-center">
+            <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Identity</span>
+            <Zap size={14} className="text-blue-400 mb-1.5" />
+            <p className="text-[11px] font-bold text-white text-center leading-snug">
+               {lastDisc ? DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle : "Life Explorer"}
+            </p>
+          </div>
+          {/* Box 2: Money */}
+          <div className="bg-white/[0.03] backdrop-blur-md p-3.5 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center">
+            <span className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1.5">Portfolio</span>
+            <Star size={14} className="text-amber-400 fill-current mb-1.5" />
+            <p className="text-[11px] font-bold text-white text-center leading-snug">
+               {lastMoney ? MONEY_DATA[lastMoney.resultKey]?.title : "Asset Builder"}
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Action Buttons */}
+      <div className="mt-8 flex gap-4">
+        <button 
+          onClick={() => setShowShareModal(false)}
+          className="flex-1 py-4 bg-white/5 text-white/60 font-black rounded-[1.5rem] border border-white/10 hover:bg-white/10 transition-all text-xs tracking-widest"
+        >
+          CLOSE
+        </button>
+       <button 
+  onClick={handleDownloadCard}
+  className="flex-[2] py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-black rounded-[1.5rem] shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all text-xs tracking-widest"
+>
+  <Download size={18} /> SAVE CARD
+</button>
+      </div>
     </motion.div>
   </motion.div>
 )}
