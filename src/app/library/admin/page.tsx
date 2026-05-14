@@ -103,13 +103,28 @@ export default function LibraryAdmin() {
     }
   };
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const handleDelete = async (firestoreId: string) => {
-    if (!confirm("ลบบทความนี้ใช่หรือไม่?")) return;
+    if (!firestoreId) {
+      alert("ไม่พบ ID ของบทความในระบบ");
+      return;
+    }
+    
+    if (!confirm("ยืนยันการลบบทความนี้? ข้อมูลจะหายไปถาวร")) return;
+    
+    setDeletingId(firestoreId);
+    console.log("Attempting to delete article with firestoreId:", firestoreId);
+    
     try {
       await deleteDoc(doc(db, "articles", firestoreId));
-      fetchArticles();
-    } catch (error) {
-      alert("เกิดข้อผิดพลาดในการลบ");
+      console.log("Delete successful");
+      await fetchArticles();
+    } catch (error: any) {
+      console.error("Error deleting article:", error);
+      alert(`ลบไม่สำเร็จ: ${error.message}`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -303,10 +318,19 @@ export default function LibraryAdmin() {
                         <p className="text-[10px] text-slate-500 mt-1">{article.slug}</p>
                       </div>
                       <button 
+                        disabled={deletingId === article.firestoreId}
                         onClick={() => handleDelete(article.firestoreId)}
-                        className="p-2 text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                        className={`p-2 rounded-xl transition-all ${
+                          deletingId === article.firestoreId 
+                            ? "bg-rose-500/20 text-rose-500" 
+                            : "text-slate-600 hover:text-rose-500 hover:bg-rose-500/10"
+                        }`}
                       >
-                        <Trash2 size={16} />
+                        {deletingId === article.firestoreId ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={16} />
+                        )}
                       </button>
                     </div>
                   </div>

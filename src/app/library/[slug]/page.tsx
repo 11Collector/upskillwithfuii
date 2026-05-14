@@ -32,7 +32,7 @@ const CATEGORY_THEMES: Record<string, { color: string; bgColor: string; borderCo
 export default function ArticleDetail() {
   const { slug } = useParams();
   const router = useRouter();
-  const articleSlug = Array.isArray(slug) ? slug[0] : slug;
+  const articleSlug = Array.isArray(slug) ? decodeURIComponent(slug[0]) : decodeURIComponent(slug || "");
 
   const [article, setArticle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +40,7 @@ export default function ArticleDetail() {
   const [xpClaimed, setXpClaimed] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isClaimedSuccess, setIsClaimedSuccess] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -77,38 +78,79 @@ export default function ArticleDetail() {
   // ดึง Theme ตามหมวดหมู่ของบทความนั้น ๆ
   const theme = CATEGORY_THEMES[article?.category || ""] || CATEGORY_THEMES["ทั้งหมด"];
 
+  // ตรวจสอบสถานะ Login และประวัติการอ่าน
   useEffect(() => {
     if (!isMounted) return;
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    
+    // 1. ตรวจสอบจากสถานะปัจจุบันทันที (เผื่อโหลดเสร็จแล้ว)
+    if (auth.currentUser) {
+      setUser(auth.currentUser);
+      checkReadStatus(auth.currentUser.uid, articleSlug);
+    }
+
+    // 2. ติดตามการเปลี่ยนแปลงสถานะ (Standard Way)
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        try {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            if (userData.readArticles?.includes(articleSlug)) {
-              setXpClaimed(true);
-            }
-          }
-        } catch (error) { console.error("Error fetching user data:", error); }
+        checkReadStatus(currentUser.uid, articleSlug);
+      } else {
+        setUser(null);
       }
     });
+
     return () => unsubscribe();
-  }, [articleSlug]);
+  }, [isMounted, articleSlug]);
+
+  // แยกฟังก์ชันเช็คประวัติการอ่านออกมาให้เรียกใช้ง่ายขึ้น
+  const checkReadStatus = async (uid: string, slug: string) => {
+    try {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.readArticles?.includes(slug)) {
+          setXpClaimed(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking read status:", error);
+    }
+  };
 
   const handleClaimXP = async () => {
-    if (!user || xpClaimed || isClaiming) return;
+    // Force Sync User State
+    let activeUser = user;
+    if (!activeUser && auth.currentUser) {
+      activeUser = auth.currentUser;
+      setUser(auth.currentUser);
+    }
+
+    if (xpClaimed || isClaiming) return;
+    
+    if (!activeUser) {
+      alert("กรุณาเข้าสู่ระบบเพื่อสะสม XP ครับ");
+      return;
+    }
+
     setIsClaiming(true);
+    
     try {
-      const userRef = doc(db, "users", user.uid);
+      const userRef = doc(db, "users", activeUser.uid);
+      
       await setDoc(userRef, {
         totalXP: increment(5),
         readArticles: arrayUnion(articleSlug)
       }, { merge: true });
+
+      setIsClaimedSuccess(true);
       setXpClaimed(true);
-    } catch (error) { alert("เกิดข้อผิดพลาดในการรับ XP"); } 
-    finally { setIsClaiming(false); }
+
+    } catch (error) {
+      console.error("XP Claim Error:", error);
+      alert("ไม่สามารถบันทึก XP ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsClaiming(false);
+    }
   };
 
   if (loading) return (
@@ -214,13 +256,41 @@ export default function ArticleDetail() {
                 <h3 className="text-2xl md:text-3xl font-bold text-white leading-[1.5] mb-10 italic pr-6 drop-shadow-sm">
                   "{article.summary}"
                 </h3>
-                {!xpClaimed ? (
-                  <button onClick={handleClaimXP} disabled={isClaiming || !user} className="flex items-center gap-3 px-8 py-3.5 bg-amber-500 text-black text-xs font-black rounded-2xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-amber-500/20 uppercase tracking-widest">
-                    {isClaiming ? <Loader2 className="animate-spin" size={16} /> : <><Sparkles size={16} /> Claim +5 XP</>}
+                {isClaimedSuccess ? (
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex flex-col items-center gap-4 py-4"
+                  >
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+                      <CheckCircle2 size={32} className="text-white" />
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-emerald-400 font-black text-xl">ยินดีด้วย! รับ +5 XP สำเร็จ</span>
+                      <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1 block">Your wisdom is growing</span>
+                    </div>
+                  </motion.div>
+                ) : !xpClaimed ? (
+                  <button 
+                    onClick={handleClaimXP} 
+                    disabled={isClaiming} 
+                    className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-amber-500 text-black text-sm font-black rounded-3xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-amber-500/20 uppercase tracking-[0.2em]"
+                  >
+                    {isClaiming ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <>
+                        <Sparkles size={20} /> 
+                        Claim +5 XP Now
+                      </>
+                    )}
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-black bg-emerald-500/10 w-fit px-6 py-3 rounded-2xl border border-emerald-500/20 uppercase tracking-widest">
-                    <CheckCircle2 size={18} /> <span>อ่านแล้ว (XP CLAIMED)</span>
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-black bg-emerald-500/10 w-fit px-8 py-4 rounded-2xl border border-emerald-500/20 uppercase tracking-[0.2em]">
+                      <CheckCircle2 size={18} /> <span>คุณอ่านบทความนี้แล้ว</span>
+                    </div>
+                    <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">XP already claimed</span>
                   </div>
                 )}
               </div>
