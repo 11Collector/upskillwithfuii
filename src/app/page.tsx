@@ -173,8 +173,13 @@ const handleLogin = async () => {
       className="h-full w-full bg-gradient-to-r from-red-800 via-amber-500 to-transparent opacity-30" 
     />
   </div>
+  
 </motion.div>
+
+
       )}
+
+      
 
 {/* --- 2. Tools Grid (เปิดให้ทุกคนเห็นเพื่อสร้าง Trust) --- */}
       <section className="mb-12">

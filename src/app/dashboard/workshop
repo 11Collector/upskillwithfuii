@@ -1,0 +1,66 @@
+{/* 🚀 --- DISC Workshop Banner (Fixed Version: With Instruction Modal) --- 🚀 */}
+<motion.div 
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="w-full mt-4 relative z-[60]"
+>
+  <div 
+    className={`block relative overflow-hidden rounded-[2rem] p-4 sm:p-5 group/event transition-all duration-500 border
+      ${currentLevel >= 5 
+        ? 'bg-indigo-500/10 border-indigo-500/40 hover:border-indigo-400 hover:bg-indigo-500/20 cursor-pointer shadow-[0_15px_30px_-10px_rgba(79,70,229,0.2)]' 
+        : 'bg-slate-800/50 border-slate-700 cursor-default'
+      }`}
+    onClick={() => { 
+      if (currentLevel >= 5) {
+        setShowLineModal(true); // 👈 เปิด Modal คำแนะนำ
+      } 
+    }}
+  >
+    {/* ✨ Background Glow */}
+    <div className="absolute top-0 right-0 w-32 h-full bg-indigo-500/10 blur-3xl -mr-10 group-hover/event:bg-indigo-500/20 transition-all" />
+    
+    <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex items-center gap-4 text-left w-full sm:w-auto">
+        {/* Icon Ticket */}
+        <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500
+          ${currentLevel >= 5 
+            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 group-hover/event:scale-110 group-hover/event:rotate-3' 
+            : 'bg-slate-700 opacity-50'
+          }`}>
+          <Ticket size={24} className="text-white transform -rotate-12" />
+        </div>
+        
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="bg-amber-400 text-amber-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">
+              Limited 10 Seats
+            </span>
+            {currentLevel >= 5 && (
+              <span className="text-indigo-300 text-[9px] font-black uppercase tracking-widest animate-pulse">
+                ● สิทธิ์ของคุณพร้อมแล้ว
+              </span>
+            )}
+          </div>
+          <h4 className={`text-sm sm:text-base font-black leading-tight truncate ${currentLevel >= 5 ? 'text-white' : 'text-slate-500'}`}>
+            DISC Workshop : <span className={currentLevel >= 5 ? 'text-indigo-300' : ''}> ค้นหาตัวตน นิสัยของคุณ </span>
+          </h4>
+          <p className="text-slate-400 text-[10px] sm:text-[11px] font-medium mt-0.5">
+            พิสูจน์วินัยถึง LV.5 : รับ Reward Ticket ส่วนลด Exclusive 10 คนแรก
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full sm:w-auto">
+        {currentLevel >= 5 ? (
+          <div className="w-full px-6 py-2.5 bg-white text-indigo-950 font-black text-[12px] rounded-xl shadow-xl group-hover/event:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+            <Sparkles size={14} className="text-amber-500" /> จองสิทธิ์ฟรี
+          </div>
+        ) : (
+          <div className="w-full px-6 py-2.5 bg-slate-800/80 border border-slate-700 text-slate-500 font-bold text-[11px] rounded-xl flex items-center justify-center gap-2">
+            <Lock size={12} /> ปลดล็อกที่ LV.5
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</motion.div>
