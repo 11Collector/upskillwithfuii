@@ -12,14 +12,15 @@ export async function POST(req: Request) {
         "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat", // ใช้ V3 ซึ่งเร็วและประหยัด
+        model: "deepseek-chat",
         messages: [
-          { role: "system", content: "คุณคือนักเขียนคำคมมือฉมัง สไตล์ปรัชญาชีวิต" },
+          // ปรับ System ให้เป็นที่ปรึกษาที่ฉลาดและอบอุ่น ตามสไตล์ที่คุณฟุ้ยต้องการ
+          { role: "system", content: "คุณคือที่ปรึกษาและ Life Coach ที่เชี่ยวชาญการวิเคราะห์ศักยภาพมนุษย์ พูดจาเป็นกันเอง อบอุ่น และให้คำแนะนำที่นำไปใช้ได้จริง" },
           { role: "user", content: prompt }
         ],
         stream: false,
-        temperature: 0.7, // เพิ่มความสร้างสรรค์ให้คำคม
-        max_tokens: 200
+        temperature: 0.6, // ลดลงนิดหน่อยเพื่อให้แผน 7 วันมีความสมเหตุสมผล ไม่เพ้อฝันเกินไป
+        max_tokens: 1500  // 🔥 เพิ่มเป็น 1500 เพื่อให้ครอบคลุมเนื้อหาทั้งหมด ไม่โดนตัดจบ
       })
     });
 
