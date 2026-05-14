@@ -564,6 +564,7 @@ const [improvement, setImprovement] = useState(0);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isToggling, setIsToggling] = useState(false);
 
   const [lastWheel, setLastWheel] = useState<any>(null);
   const [lastQuote, setLastQuote] = useState<any>(null);
@@ -782,13 +783,16 @@ useEffect(() => {
           }
 
           // --- 3. จัดการ Daily Quest และชื่อเควส (เช็กวันใหม่) ---
-          if (userData.lastQuestDate === todayStr) {
-            setCompletedQuests(userData.completedQuestIds || []);
-            setCustomQuestTitle(userData.customQuestTitle || ""); // ดึงชื่อเควสที่เคยพิมพ์ไว้กลับมา
-          } else {
-            setCompletedQuests([]);
-            setCustomQuestTitle(""); // วันใหม่ให้ล้างทิ้งรอใส่ใหม่
-          }
+// 🌟 THE FIX: ใช้ตัวแปรใหม่ lastActiveDate เป็นหลัก ถ้าไม่มีค่อยใช้ของเก่า
+const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
+
+if (activeDateToCheck === todayStr) {
+  setCompletedQuests(userData.completedQuestIds || []);
+  setCustomQuestTitle(userData.customQuestTitle || "");
+} else {
+  setCompletedQuests([]);
+  setCustomQuestTitle("");
+}
 
           // --- 4. จัดการสถานะคำคม ---
           if (userData.lastQuoteDate === todayStr) {
@@ -831,7 +835,7 @@ const handleResetAllData = async () => {
       setLoading(true);
       const batch = writeBatch(db);
 
-      // 1. รีเซ็ต User Profile (เพิ่มการลบ lastQuoteDate ด้วย)
+      // 1. รีเซ็ต User Profile
       const userRef = doc(db, "users", user.uid);
       batch.set(userRef, {
         totalXP: 0,
@@ -839,9 +843,9 @@ const handleResetAllData = async () => {
         hasDiscXP: false,
         hasMoneyXP: false,
         completedQuestIds: [],
-        customQuestTitle: "", // ล้างชื่อเควส,
+        customQuestTitle: "",
         lastQuestDate: null,
-        lastQuoteDate: null // ✅ ลบประวัติการกดรับคำคมรายวัน
+        lastQuoteDate: null 
       }, { merge: true });
 
       // 2. ลบประวัติ Wheel of Life
@@ -856,21 +860,29 @@ const handleResetAllData = async () => {
       const moneySnap = await getDocs(query(collection(db, "quiz_results"), where("userId", "==", user.uid)));
       moneySnap.forEach((doc) => batch.delete(doc.ref));
 
-      // ✅ 5. ลบประวัติคำคม (คมสัดสัด)
+      // 5. ลบประวัติคำคม (คมสัดสัด)
       const quoteSnap = await getDocs(query(collection(db, "quotes"), where("userId", "==", user.uid)));
       quoteSnap.forEach((doc) => batch.delete(doc.ref));
+
+      // 🚀 เพิ่มใหม่: 6. ลบประวัติ Weekly Stats ทั้งหมด!
+      const weeklySnap = await getDocs(collection(db, "users", user.uid, "weekly_stats"));
+      weeklySnap.forEach((doc) => batch.delete(doc.ref));
 
       // 💥 สั่งประหาร! (Execute)
       await batch.commit();
 
-      // 6. เคลียร์ State หน้าจอทั้งหมดให้เป็นหน้าว่าง
+      // --- เคลียร์ State หน้าจอทั้งหมดให้เป็นหน้าว่าง ---
       setTotalXP(0);
       setLastWheel(null);
       setLastDisc(null);
       setLastMoney(null);
-      setLastQuote(null); // ✅ เคลียร์ข้อความคำคมหน้าจอ
+      setLastQuote(null); 
       setCompletedQuests([]);
-      setHasClaimedQuoteToday(false); // ✅ เคลียร์สถานะการกดรับ XP คำคม
+      setHasClaimedQuoteToday(false); 
+      
+      // 🚀 เพิ่มใหม่: เคลียร์ State หลอดพลังรายสัปดาห์หน้าจอให้กลับเป็น 0
+      setWeeklyData({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
+      setImprovement(0);
       
       alert("♻️ รีเซ็ตข้อมูลเรียบร้อย! คลีนสุดๆ เริ่มต้นใหม่ได้เลยครับ 🚀");
     } catch (error) {
@@ -879,7 +891,7 @@ const handleResetAllData = async () => {
     } finally {
       setLoading(false);
     }
-  };
+};
 
   const openInfo = (e: React.MouseEvent, title: string, content: string | React.ReactNode) => {
     e.preventDefault(); 
@@ -1206,150 +1218,150 @@ const dailyXPGained = useMemo(() => {
   };
 
 const toggleQuest = async (id: number | string, xp: number) => {
-  if (!user) return;
+  // 🌟 บล็อกไม่ให้กดซ้ำถ้าระบบกำลังเซฟอยู่
+  if (!user || isToggling) return; 
+  setIsToggling(true);
 
-  const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
-  const userRef = doc(db, "users", user.uid);
-  const isDone = completedQuests.includes(id);
-
-  // 1. XP Logic (ใช้คะแนนเต็มตามเควสนั้นๆ ตามที่คุณฟุ้ยต้องการ)
-  let actualXP = xp;
-  let xpChange = isDone ? -actualXP : actualXP;
-
-  // 2. เตรียมข้อมูล Array ใหม่
-  let newCompleted = isDone 
-    ? completedQuests.filter(qId => qId !== id) 
-    : [...completedQuests, id];
-
-  let newStreak = streakCount;
-  let newLastQuestDate = todayStr;
-
-  // --- ภายใน toggleQuest ---
-  
-  // นับจำนวนเควสที่ทำเสร็จในเซ็ตใหม่ (รวมเควสปกติ + พิเศษ)
-  const newCount = newCompleted.length;
-  const oldCount = completedQuests.length;
-
-  // 🔥 [Logic Streak ใหม่: ต้องครบ 3 ถึงนับเป็น 1 วัน] 🔥
-  
-  // กรณีที่ 1: "กดยืนยัน" จนครบ 3 ข้อพอดี (เข้าเงื่อนไขบรรลุเป้าหมายรายวัน)
-  if (!isDone && newCount === 3) {
-    const userSnap = await getDoc(userRef);
-    const lastDate = userSnap.data()?.lastQuestDate;
-
-    if (lastDate) {
-      const last = new Date(lastDate);
-      const today = new Date(todayStr);
-      const diffTime = today.getTime() - last.getTime();
-      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) {
-        newStreak += 1; // ต่อเนื่องจากเมื่อวาน
-      } else if (diffDays > 1) {
-        newStreak = 1; // ขาดช่วง (เมื่อวานทำไม่ครบ 3) เริ่มนับ 1 ใหม่
-      }
-      // ถ้า diffDays === 0 แปลว่าวันนี้เคยทำครบ 3 ไปแล้วรอบหนึ่ง (อาจจะเคยกดออกแล้วกดเข้าใหม่) 
-      // ไม่ต้องบวกเพิ่ม
-    } else {
-      newStreak = 1; // ครั้งแรกสุดในระบบที่ทำครบ 3
-    }
-
-    // โบนัสวินัย 7 วัน (เฉพาะตอนที่ Streak เพิ่งเพิ่ม)
-    if (newStreak > streakCount && newStreak % 7 === 0) {
-      xpChange += 100;
-      setTimeout(() => alert(`🎊 สุดยอดวินัย! ครบ ${newStreak} วัน (3 เควส/วัน) รับโบนัส +50 XP`), 800);
-    }
-    newLastQuestDate = todayStr; // บันทึกว่า "วันนี้ทำเป้าหมายสำเร็จแล้ว"
-  }
-
-  // กรณีที่ 2: "กดยกเลิก" จาก 3 เหลือ 2 (ยกเลิกสถานะบรรลุเป้าหมาย)
-  else if (isDone && oldCount === 3 && newCount === 2) {
-    // ริบคืนโบนัส 50 XP ถ้าดันไปกดยกเลิกในวันครบสัปดาห์พอดี
-    if (newStreak % 7 === 0 && newStreak !== 0) {
-      xpChange -= 100; 
-    }
-
-    newStreak = Math.max(0, newStreak - 1); // หัก Streak คืน
-    
-    if (newStreak > 0) {
-      // ถอยวันที่กลับไป 1 วัน เพื่อให้พรุ่งนี้ทำแล้วนับต่อได้ หรือวันนี้กดใหม่ให้นับคืนมา
-      const [year, month, day] = todayStr.split('-').map(Number);
-      const yesterdayDate = new Date(year, month - 1, day - 1);
-      newLastQuestDate = [
-        yesterdayDate.getFullYear(),
-        String(yesterdayDate.getMonth() + 1).padStart(2, '0'),
-        String(yesterdayDate.getDate()).padStart(2, '0')
-      ].join('-');
-    } else {
-      newLastQuestDate = ""; 
-    }
-  } 
-  else {
-    // กรณีทำข้อที่ 1, 2, 4, 5 หรือกดยกเลิกข้อที่ 4, 5
-    // ให้รักษาค่า Streak และ LastQuestDate เดิมไว้ ไม่ต้องเปลี่ยนแปลง
-    newStreak = streakCount;
-    const userSnap = await getDoc(userRef);
-    newLastQuestDate = userSnap.data()?.lastQuestDate || "";
-  }
-
-  // 🛠️ [Weekly Stats Logic - บันทึกเพื่อหลอดพลังรายสัปดาห์]
-  const weekId = getWeekId();
-  const weeklyRef = doc(db, "users", user.uid, "weekly_stats", weekId);
-  const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
-  const incValue = isDone ? -1 : 1; 
-
-  if (quest) {
-    const statKeys: Record<string, string> = {
-      WHEEL: "wheel",
-      DISC: "disc",
-      MONEY: "money",
-      WILDCARD: "wildcard",
-      CHALLENGE: "challenge"
-    };
-    const statKey = statKeys[quest.type];
-
-    if (statKey) {
-      try {
-        await setDoc(weeklyRef, {
-          [statKey]: increment(incValue),
-          updatedAt: new Date()
-        }, { merge: true });
-
-        // อัปเดต UI ทันทีไม่ต้องรอ Load
-        setWeeklyData((prev: any) => ({
-          ...prev,
-          [statKey]: Math.max(0, (prev[statKey] || 0) + incValue)
-        }));
-      } catch (err) {
-        console.error("Weekly stats error:", err);
-      }
-    }
-  }
-
-  // 3. คำนวณ Level และอัปเดต State หน้าจอ
-  const finalNewXP = totalXP + xpChange;
-  const newLevel = Math.floor(finalNewXP / 100) + 1;
-  const oldLevel = Math.floor(totalXP / 100) + 1;
-
-  setCompletedQuests(newCompleted);
-  setTotalXP(finalNewXP);
-  setStreakCount(newStreak);
-
-  if (newLevel > oldLevel && xpChange > 0) {
-    setShowLevelUp({ isOpen: true, newLevel });
-    setTimeout(() => setShowLevelUp(null), 4000);
-  }
-
-  // 4. บันทึกลง Firebase (User Profile หลัก)
+  // 🛡️ ใส่ try ครอบเนื้อหาทั้งหมด
   try {
+    const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+    const userRef = doc(db, "users", user.uid);
+    const isDone = completedQuests.includes(id);
+
+    // 1. XP Logic (ใช้คะแนนเต็มตามเควสนั้นๆ)
+    let actualXP = xp;
+    let xpChange = isDone ? -actualXP : actualXP;
+
+    // 2. เตรียมข้อมูล Array ใหม่
+    let newCompleted = isDone 
+      ? completedQuests.filter(qId => qId !== id) 
+      : [...completedQuests, id];
+
+    let newStreak = streakCount;
+    let newLastQuestDate = todayStr;
+    
+    // นับจำนวนเควสที่ทำเสร็จในเซ็ตใหม่ (รวมเควสปกติ + พิเศษ)
+    const newCount = newCompleted.length;
+    const oldCount = completedQuests.length;
+
+    // 🔥 [Logic Streak ใหม่: ต้องครบ 3 ถึงนับเป็น 1 วัน] 🔥
+    if (!isDone && newCount === 3) {
+      const userSnap = await getDoc(userRef);
+      const lastDate = userSnap.data()?.lastQuestDate;
+
+      if (lastDate) {
+        const last = new Date(lastDate);
+        const today = new Date(todayStr);
+        const diffTime = today.getTime() - last.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          newStreak += 1; // ต่อเนื่องจากเมื่อวาน
+        } else if (diffDays > 1) {
+          newStreak = 1; // ขาดช่วง (เมื่อวานทำไม่ครบ 3) เริ่มนับ 1 ใหม่
+        }
+      } else {
+        newStreak = 1; // ครั้งแรกสุดในระบบที่ทำครบ 3
+      }
+
+      // โบนัสวินัย 7 วัน (เฉพาะตอนที่ Streak เพิ่งเพิ่ม)
+      if (newStreak > streakCount && newStreak % 7 === 0) {
+        xpChange += 100;
+        // 🛠️ แก้ข้อความใน alert ให้ตรงกับคะแนนจริง
+        setTimeout(() => alert(`🎊 สุดยอดวินัย! ครบ ${newStreak} วัน (3 เควส/วัน) รับโบนัสพิเศษ +100 XP`), 800);
+      }
+      newLastQuestDate = todayStr; // บันทึกว่า "วันนี้ทำเป้าหมายสำเร็จแล้ว"
+    }
+    // กรณีที่ 2: "กดยกเลิก" จาก 3 เหลือ 2 (ยกเลิกสถานะบรรลุเป้าหมาย)
+    else if (isDone && oldCount === 3 && newCount === 2) {
+      if (newStreak % 7 === 0 && newStreak !== 0) {
+        xpChange -= 100; 
+      }
+
+      newStreak = Math.max(0, newStreak - 1); 
+      
+      if (newStreak > 0) {
+        const [year, month, day] = todayStr.split('-').map(Number);
+        const yesterdayDate = new Date(year, month - 1, day - 1);
+        newLastQuestDate = [
+          yesterdayDate.getFullYear(),
+          String(yesterdayDate.getMonth() + 1).padStart(2, '0'),
+          String(yesterdayDate.getDate()).padStart(2, '0')
+        ].join('-');
+      } else {
+        newLastQuestDate = ""; 
+      }
+    } 
+    else {
+      // กรณีทำข้อที่ 1, 2, 4, 5 หรือกดยกเลิกข้อที่ 4, 5 ให้รักษาค่าเดิม
+      newStreak = streakCount;
+      const userSnap = await getDoc(userRef);
+      newLastQuestDate = userSnap.data()?.lastQuestDate || "";
+    }
+
+    // 🛠️ [Weekly Stats Logic - บันทึกเพื่อหลอดพลังรายสัปดาห์]
+    const weekId = getWeekId();
+    const weeklyRef = doc(db, "users", user.uid, "weekly_stats", weekId);
+    const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
+    const incValue = isDone ? -1 : 1; 
+
+    if (quest) {
+      const statKeys: Record<string, string> = {
+        WHEEL: "wheel",
+        DISC: "disc",
+        MONEY: "money",
+        WILDCARD: "wildcard",
+        CHALLENGE: "challenge"
+      };
+      const statKey = statKeys[quest.type];
+
+      if (statKey) {
+        try {
+          await setDoc(weeklyRef, {
+            [statKey]: increment(incValue),
+            updatedAt: new Date()
+          }, { merge: true });
+
+          // อัปเดต UI ทันทีไม่ต้องรอ Load
+          setWeeklyData((prev: any) => ({
+            ...prev,
+            [statKey]: Math.max(0, (prev[statKey] || 0) + incValue)
+          }));
+        } catch (err) {
+          console.error("Weekly stats error:", err);
+        }
+      }
+    }
+
+    // 3. คำนวณ Level และอัปเดต State หน้าจอ (ส่วนที่ขาดหายไป)
+    const finalNewXP = totalXP + xpChange;
+    const newLevel = Math.floor(finalNewXP / 100) + 1;
+    const oldLevel = Math.floor(totalXP / 100) + 1;
+
+    setCompletedQuests(newCompleted);
+    setTotalXP(finalNewXP);
+    setStreakCount(newStreak);
+
+    if (newLevel > oldLevel && xpChange > 0) {
+      setShowLevelUp({ isOpen: true, newLevel });
+      setTimeout(() => setShowLevelUp(null), 4000);
+    }
+
+    // 4. บันทึกลง Firebase (User Profile หลัก)
     await setDoc(userRef, {
       totalXP: finalNewXP,
       completedQuestIds: newCompleted,
-      lastQuestDate: newLastQuestDate,
+      lastQuestDate: newLastQuestDate, // ใช้นับ Streak
+      lastActiveDate: todayStr,        // 🌟 บันทึกการเข้าใช้งานรายวัน (แก้บั๊กเคลียร์เควส)
       streakCount: newStreak
     }, { merge: true });
+
   } catch (error) {
-    console.error("Error updating profile:", error);
+    // 🛡️ ดัก Error เผื่อเน็ตหลุด
+    console.error("Error toggling quest:", error);
+  } finally {
+    // 🌟 ปลดล็อกให้กดปุ่มใหม่ได้เสมอ ไม่ว่าจะทำงานสำเร็จหรือไม่
+    setIsToggling(false); 
   }
 };
 
@@ -2841,10 +2853,13 @@ const handleDownloadCard = async () => {
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         customQuestTitle: val,
-        lastQuestDate: new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'})
+        // 🌟 เปลี่ยนคำว่า lastQuestDate เป็น lastActiveDate ตรงนี้ครับ
+        lastActiveDate: new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'})
       }, { merge: true });
     }
   }}
+  // ... className เดิม
+
         className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl hover:bg-indigo-600 hover:shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2"
       >
         <Sparkles size={18} /> ยืนยันและเริ่มทำทันที
