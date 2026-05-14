@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
@@ -57,6 +57,10 @@ export default function Home() {
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'yearly'>('monthly');
+
+  const [guideStep, setGuideStep] = useState(1);
+  const [showGuide, setShowGuide] = useState(false);
+  const totalGuideSteps = 6;
 
   const handleUpgrade = async () => {
     if (!user) return alert("Please login first");
@@ -212,6 +216,7 @@ export default function Home() {
   }
 
   return (
+    <>
     <div className="w-full max-w-4xl mx-auto px-4 py-6 font-sans">
 
       {/* --- 1. Hero Section --- */}
