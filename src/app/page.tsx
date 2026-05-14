@@ -10,10 +10,6 @@ import { auth, googleProvider, db } from "../lib/firebase";
 
 export default function Home() {
   
-  useEffect(() => {
-  window.scrollTo(0, 0);
-}, []);
-  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -25,6 +21,13 @@ export default function Home() {
     });
     return () => unsubscribe();
   }, []);
+
+   useEffect(() => {
+    if (user) {
+      // ถ้ามี user (เพิ่ง Login สำเร็จ) ให้ดีดขึ้นบนสุดทันที
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [user]);
 
 const handleLogin = async () => {
     try {
