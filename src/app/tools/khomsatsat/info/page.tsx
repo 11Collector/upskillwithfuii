@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function KhomsatsatInfoPage() {
+  
   return (
     <div className="min-h-screen bg-fuchsia-50/50 text-slate-800 font-sans pb-20">
       
