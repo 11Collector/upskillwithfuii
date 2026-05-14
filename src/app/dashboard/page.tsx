@@ -4230,7 +4230,7 @@ export default function DashboardPage() {
             { id: 'overview', label: 'อวาตาร์', icon: <div className="text-2xl mb-1">👤</div> },
             { id: 'quests', label: 'ภารกิจ', icon: <div className="text-2xl mb-1">🎯</div> },
             { id: 'identity', label: 'ตัวตน', icon: <div className="text-2xl mb-2">🧬</div> },
-            { id: 'resources', label: 'คลังอัพสกิล', icon: <div className="text-2xl mb-2">🧠</div> }
+            { id: 'resources', label: 'อัพสกิล', icon: <div className="text-2xl mb-2">🧠</div> }
           ].map((tab) => (
             <button
               key={tab.id}
