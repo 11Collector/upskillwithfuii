@@ -291,14 +291,16 @@ export default function SoulGuidePage() {
 
   const getCharacterTier = (xp: number) => {
     const level = Math.floor(xp / 100) + 1;
-    if (level >= 30) return "Legacy";
+    if (level >= 30) return "Legacy Shaper";
     if (level >= 20) return "Architect";
-    if (level >= 10) return "Master";
+    if (level >= 10) return "Habit Master";
     return "Rookie";
   };
 
   const getAvatarPath = () => {
-    const tier = getCharacterTier(userData?.totalXP || 0).toLowerCase();
+    let tier = getCharacterTier(userData?.totalXP || 0).toLowerCase();
+    if (tier === "habit master") tier = "master";
+    if (tier === "legacy shaper") tier = "legacy";
     const suffix = userData?.gender === 'female' ? '-w' : '';
     return `/avatars/${tier}-static${suffix}.png`;
   };
@@ -357,7 +359,7 @@ export default function SoulGuidePage() {
             className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
           >
             {userData ? (
-              <img loading="lazy" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
+              <img fetchPriority="high" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
             ) : (
               <UserIcon size={20} className="text-zinc-600" />
             )}

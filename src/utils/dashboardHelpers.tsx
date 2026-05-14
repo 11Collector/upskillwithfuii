@@ -131,17 +131,25 @@ export const AvatarDisplay = ({ currentLevel, gender, streak = 0, isCompact = fa
       <div className={`absolute inset-0 bg-gradient-to-t ${avatarData.glow} to-transparent blur-[120px] rounded-full opacity-60 scale-110`} />
 
       {/* 👾 รูปอวตาร (ขยายขนาดใหม่ ใหญ่ขึ้นเยอะ!) */}
+      <AvatarImage src={avatarData.image} alt={`User Avatar Level ${currentLevel}`} isCompact={isCompact} />
+    </div>
+  );
+};
+
+// 🖼️ Internal Component for handling image loading (Simplified for instant display)
+const AvatarImage = ({ src, alt, isCompact }: { src: string; alt: string; isCompact: boolean }) => {
+  return (
+    <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
       <img
-        src={avatarData.image}
-        alt={`User Avatar Level ${currentLevel}`}
-        className="w-64 h-64 md:w-80 md:h-80 object-contain flex-shrink-0 relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+        src={src}
+        alt={alt}
+        className="w-full h-full object-contain flex-shrink-0 relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
         fetchPriority="high"
         decoding="async"
         onError={(e) => {
-          (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
+          (e.target as HTMLImageElement).src = "/avatars/rookie-static.png";
         }}
       />
-
     </div>
   );
 };

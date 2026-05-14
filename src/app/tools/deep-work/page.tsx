@@ -126,9 +126,9 @@ export default function DeepWorkPage() {
             const xp = userData.totalXP || 0;
             const level = Math.floor(xp / 100) + 1;
             let tier = "rookie";
-            if (level >= 30) tier = "legacy";
+            if (level >= 30) tier = "legacy shaper";
             else if (level >= 20) tier = "architect";
-            else if (level >= 10) tier = "master";
+            else if (level >= 10) tier = "habit master";
             setCharacterTier(tier);
           }
         } catch (error) {
@@ -588,7 +588,10 @@ export default function DeepWorkPage() {
 
   const getAvatarPath = () => {
     const suffix = gender === 'female' ? '-w' : '';
-    return `/avatars/${characterTier}-meditation${suffix}.png`;
+    let fileName = characterTier.toLowerCase();
+    if (fileName === "habit master") fileName = "master";
+    if (fileName === "legacy shaper") fileName = "legacy";
+    return `/avatars/${fileName}-meditation${suffix}.png`;
   };
 
   return (
@@ -603,8 +606,13 @@ export default function DeepWorkPage() {
             exit={{ opacity: 0 }}
             className="absolute inset-0 pointer-events-none"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-800/20 via-transparent to-transparent" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 blur-[150px] rounded-full" />
+            {/* Primary Deep Blue Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 blur-[120px] rounded-full animate-pulse" />
+            
+            {/* Secondary Cyan Aura (Adds depth) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-cyan-500/10 blur-[100px] rounded-full" />
+            
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -739,8 +747,12 @@ export default function DeepWorkPage() {
               {/* Avatar Container */}
               <motion.div
                 animate={isActive ? {
-                  scale: [1, 1.02, 1],
-                  filter: ["drop-shadow(0 0 0px rgba(59, 130, 246, 0))", "drop-shadow(0 0 15px rgba(59, 130, 246, 0.3))", "drop-shadow(0 0 0px rgba(59, 130, 246, 0))"]
+                  scale: [1, 1.03, 1],
+                  filter: [
+                    "drop-shadow(0 0 0px rgba(59, 130, 246, 0))", 
+                    "drop-shadow(0 0 30px rgba(59, 130, 246, 0.5))", 
+                    "drop-shadow(0 0 0px rgba(59, 130, 246, 0))"
+                  ]
                 } : {}}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute inset-0 flex items-center justify-center z-10"
