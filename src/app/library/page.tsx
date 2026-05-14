@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Clock, ArrowRight, BookMarked, Target, 
@@ -10,6 +10,9 @@ import Link from "next/link";
 
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
+import { db, auth } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 // 🎨 2. Themes
 const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: string; borderColor: string }> = {
@@ -57,6 +60,29 @@ const cardVariants: Variants = {
 
 export default function PremiumLibraryPage() {
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
+  const [readArticles, setReadArticles] = useState<string[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        try {
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.readArticles) {
+              setReadArticles(userData.readArticles);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching read articles:", error);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const filteredArticles = activeCategory === "ทั้งหมด" 
     ? mockArticles 
@@ -129,9 +155,15 @@ export default function PremiumLibraryPage() {
                     <div className="h-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 flex flex-col transition-all duration-500 hover:border-amber-500/30 hover:bg-[#151515] relative overflow-hidden shadow-2xl">
                       
                       {/* XP Badge */}
-                      <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
-                        <Sparkles size={10} className="fill-emerald-400" /> +5 XP
-                      </div>
+                      {readArticles.includes(article.slug) ? (
+                        <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
+                          <BookMarked size={10} className="fill-emerald-400" /> อ่านแล้ว
+                        </div>
+                      ) : (
+                        <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
+                          <Sparkles size={10} className="fill-emerald-400" /> +5 XP
+                        </div>
+                      )}
 
                       {/* Icon Section */}
                       <div className="mb-8 relative">

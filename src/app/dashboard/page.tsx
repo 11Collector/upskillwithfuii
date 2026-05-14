@@ -548,7 +548,7 @@ const formatAnalysisText = (text: string) => {
 };
 
 // --- Component: AvatarDisplay (เวอร์ชันขยายขนาด ใหญ่สะใจคุณฟุ้ย! 🔥) ---
-const AvatarDisplay = ({ currentLevel, gender }: { currentLevel: number, gender: "male" | "female" }) => {
+const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: number; gender: "male" | "female"; streak?: number }) => {
   const avatarData = React.useMemo(() => {
     // 💡 Logic เลือกรูปเดิม
     const suffix = gender === 'female' ? '-w' : '';
@@ -565,6 +565,50 @@ const AvatarDisplay = ({ currentLevel, gender }: { currentLevel: number, gender:
 
   return (
     <div className="relative flex items-center justify-center group/avatar p-6">
+      {/* 🌈 Aura Effect (Milestone Reward) */}
+      {streak >= 7 && (
+        <motion.div 
+           initial={{ opacity: 0, scale: 0.8 }}
+           animate={{ 
+             opacity: [0.3, 0.5, 0.3], 
+             scale: [1, 1.15, 1],
+             rotate: 360
+           }}
+           transition={{ 
+             duration: 8, 
+             repeat: Infinity, 
+             ease: "easeInOut" 
+           }}
+           className={`absolute w-[140%] h-[140%] rounded-full blur-[60px] z-0 pointer-events-none
+             ${streak >= 30 ? 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600' : 
+               streak >= 14 ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-indigo-600' : 
+               'bg-gradient-to-tr from-blue-400 via-cyan-400 to-teal-400'}`}
+        />
+      )}
+
+      {/* 🌟 Rare Particle Effect for 30+ Days */}
+      {streak >= 30 && (
+        <div className="absolute inset-0 z-[5] pointer-events-none">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{ 
+                y: [-20, -100],
+                x: Math.random() * 100 - 50,
+                opacity: [0, 1, 0],
+                scale: [0, 1.5, 0]
+              }}
+              transition={{ 
+                duration: 2 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 2
+              }}
+              className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-yellow-200 rounded-full shadow-[0_0_10px_#fef08a]"
+            />
+          ))}
+        </div>
+      )}
+
       {/* ✨ แสงฟุ้งข้างหลัง (ปรับขนาดตามรูป) */}
       <div className={`absolute inset-0 bg-gradient-to-t ${avatarData.glow} to-transparent blur-[120px] rounded-full opacity-60 scale-110`} />
 
@@ -572,9 +616,6 @@ const AvatarDisplay = ({ currentLevel, gender }: { currentLevel: number, gender:
       <img
         src={avatarData.image}
         alt={`User Avatar Level ${currentLevel}`}
-        // 🎯 แก้ขนาดตรงนี้ครับ: 
-        // Mobile: w-48/h-48 -> w-64/h-64 (~256px)
-        // Desktop (md): w-60/h-60 -> w-80/h-80 (~320px)
         className="w-64 h-64 md:w-80 md:h-80 object-contain flex-shrink-0 relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
         onError={(e) => {
           (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
@@ -736,6 +777,17 @@ export default function DashboardPage() {
 
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean, title: string, content: string | React.ReactNode } | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [showDailySuccess, setShowDailySuccess] = useState(false);
+  const [currentSuccessQuote, setCurrentSuccessQuote] = useState("");
+
+  // 🏆 สุ่มคำคมใหม่ทุกครั้งที่เปิด Modal
+  useEffect(() => {
+    if (showDailySuccess) {
+      const randomIndex = Math.floor(Math.random() * INSPIRATIONAL_MESSAGES.length);
+      setCurrentSuccessQuote(INSPIRATIONAL_MESSAGES[randomIndex]);
+    }
+  }, [showDailySuccess]);
 
   const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false);
   const [isGoalExpanded, setIsGoalExpanded] = useState(false);
@@ -1591,7 +1643,6 @@ export default function DashboardPage() {
   }, [completedQuests, dailyQuests]);
 
   const currentLevel = Math.floor(totalXP / 100) + 1;
-  //const currentLevel =10;
   const currentLevelXP = totalXP % 100;
 
   const getLevelTitle = (level: number) => {
@@ -1608,7 +1659,7 @@ export default function DashboardPage() {
 
     const isDone = completedQuests.includes(id);
 
-    if (!isDone) {
+    if (!isDone && (completedQuests.length + 1) !== 3) {
       const randomIndex = Math.floor(Math.random() * INSPIRATIONAL_MESSAGES.length);
       setShowSuccessToast(INSPIRATIONAL_MESSAGES[randomIndex]);
 
@@ -1663,6 +1714,13 @@ export default function DashboardPage() {
 
     setCompletedQuests(newCompleted);
     setTotalXP(prev => prev + xpChange);
+
+    // 🏆 [NEW] Trigger: ฉลองความสำเร็จเมื่อครบ 3 เควส
+    if (!isDone && newCompleted.length === 3) {
+      setTimeout(() => {
+        setShowDailySuccess(true);
+      }, 300);
+    }
 
     // 🛡️ ใส่ try ครอบเนื้อหาที่เป็นการดึง/เซฟข้อมูล Firebase
     try {
@@ -1940,22 +1998,30 @@ export default function DashboardPage() {
   };
 
   const handleDownloadCard = async () => {
-    const { domToPng } = await import("modern-screenshot");
+    const { toPng } = await import("html-to-image");
     const element = document.getElementById("player-card");
 
     if (!element) return;
 
     try {
+      setIsCapturing(true);
+      // รอให้ State อัปเดตและ Font โหลดเสร็จ
+      await new Promise(r => setTimeout(r, 150));
+      await document.fonts.ready;
+
       const currentBgColor = theme?.hexBg || '#0F172A';
 
-      const dataUrl = await domToPng(element, {
-        scale: 2,             // 💡 ความชัดกำลังดีและเสถียร
-        quality: 1,           // คุณภาพสูงสุด
+      const dataUrl = await toPng(element, {
+        pixelRatio: 3,
         backgroundColor: currentBgColor,
-        // 🚀 ลบ fontEmbedCSS และ copyStyles ออกเพื่อความคลีน
-        features: {
-          removeControlCharacter: true,
+        cacheBust: true,
+        style: {
+          borderRadius: '2.5rem',
         },
+        filter: (node) => {
+          if (node.tagName === 'BUTTON' && node.innerText?.includes('Save')) return false;
+          return true;
+        }
       });
 
       const link = document.createElement("a");
@@ -1965,6 +2031,8 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Download Card Error:", error);
       alert("ขออภัย! ไม่สามารถสร้างรูปภาพได้ในขณะนี้");
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -2363,7 +2431,7 @@ export default function DashboardPage() {
 
                       {/* 1. รูป Avatar หลัก */}
                       <div className="relative z-10 translate-y-[2px]">
-                        <AvatarDisplay currentLevel={currentLevel} gender={gender} />
+                        <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
                       </div>
 
                       {/* 🐾 สัตว์เลี้ยง (หน้า Dashboard) - โชว์ทันที ไม่มี Fade-in */}
@@ -3937,7 +4005,7 @@ export default function DashboardPage() {
                     <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
                   </div>
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] border border-white/20 flex items-center justify-center backdrop-blur-xl overflow-hidden p-2.5 shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+                    <div className={`w-16 h-16 bg-white/10 rounded-[1.5rem] border border-white/20 flex items-center justify-center ${isCapturing ? '' : 'backdrop-blur-xl'} overflow-hidden p-2.5 ${isCapturing ? '' : 'shadow-[0_20px_40px_rgba(0,0,0,0.4)]'}`}>
                       <img
                         src={lastLibrarySoul?.type ? `/books/${lastLibrarySoul.type}.png` : "/logo-invert.png"}
                         alt="Soul Type"
@@ -3960,7 +4028,7 @@ export default function DashboardPage() {
 
                   {/* 👤 รูป Avatar หลัก - แก้ไขขนาด: ลบสเกล-110 sm:scale-125 ออกไป */}
                   <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-90 origin-bottom">
-                    <AvatarDisplay currentLevel={currentLevel} gender={gender} />
+                    <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
                   </div>
 
                   {/* 🐾 สัตว์เลี้ยง */}
@@ -3994,8 +4062,7 @@ export default function DashboardPage() {
                 {/* เปลี่ยน mb-6 เป็น mb-0 เพื่อให้ชิดขอบล่างพอดี px และ sm:px คงเดิมเพื่อความสวยงาม */}
                 <div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-0 px-2 sm:px-4">
                   {/* Box 1: Identity */}
-                  {/* ลด p-4 เหลือ p-3 และ min-h-[100px] เหลือ 85px เพื่อให้พอดีกรอบ aspect ratio การ์ด */}
-                  <div className={`bg-white/[0.05] backdrop-blur-xl p-3 rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center min-h-[85px] shadow-xl`}>
+                  <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
                     <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] mb-1.5`}>DISC STYLE</span>
                     <Zap size={14} className={`${theme.accent} mb-1.5`} />
                     <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
@@ -4004,7 +4071,7 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Box 2: Portfolio */}
-                  <div className="bg-white/[0.05] backdrop-blur-xl p-3 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center min-h-[85px] shadow-xl">
+                  <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
                     <span className="text-[8px] font-black text-amber-400 uppercase tracking-[0.2em] mb-1.5">MONEY AVATAR</span>
                     <Star size={14} className="text-amber-400 fill-current mb-1.5" />
                     <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
@@ -4205,6 +4272,28 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* 🔥 Streak Reward Section */}
+                <div className="mb-4">
+                  <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Streak Reward (ออร่าแห่งวินัย)</h5>
+                  <div className="space-y-2">
+                    {[
+                      { day: "7 Days", title: "ออร่าประกายวินัย (Blue)", color: "text-blue-400", desc: "ปลดล็อกออร่าสีฟ้าแห่งการเริ่มต้น" },
+                      { day: "14 Days", title: "รัศมีจอมทัพวินัยเหล็ก (Purple)", color: "text-purple-400", desc: "ปลดล็อกออร่าสีม่วงแห่งความแกร่ง" },
+                      { day: "30 Days", title: "มหาเพลิงสุริยะตำนาน (Fire)", color: "text-orange-400", desc: "ปลดล็อกออร่าไฟ + ละอองแสงระดับเทพ" }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                        <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center font-black text-[10px] ${item.color} border border-white/10`}>
+                          {item.day.split(' ')[0]}D
+                        </div>
+                        <div>
+                          <span className={`text-[12px] font-black ${item.color} block leading-none mb-1 uppercase tracking-wide`}>{item.title}</span>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">{item.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Footer */}
@@ -4243,6 +4332,196 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* 🏆 Modal: ฉลองความสำเร็จรายวัน (Daily Success Celebration) */}
+      <AnimatePresence>
+        {showDailySuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-2xl"
+          >
+            {/* ✨ Celebration Background Sparkles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{
+                    y: [0, 800],
+                    opacity: [0, 1, 0],
+                    x: Math.random() * 1000 - 500
+                  }}
+                  transition={{
+                    duration: 2 + Math.random() * 2,
+                    repeat: Infinity,
+                    delay: Math.random() * 2
+                  }}
+                  className="absolute top-0 left-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
+                />
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="relative w-full max-w-sm flex flex-col items-center"
+            >
+              {/* 🎫 The Shareable Card */}
+              <div
+                id="daily-success-card"
+                className={`w-full aspect-[4/5] bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950 rounded-[3rem] border-2 border-white/20 overflow-hidden relative flex flex-col items-center p-8 shadow-2xl ${isCapturing ? '' : 'shadow-slate-500/20'}`}
+              >
+                {/* 🥈 Metallic Shimmer Overlay */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay" />
+                  <motion.div
+                    animate={{
+                      x: ['-100%', '200%'],
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                    className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-20deg]"
+                  />
+                  {/* Glossy top-left highlight */}
+                  <div className="absolute -top-40 -left-40 w-96 h-96 bg-white/10 blur-[100px] rounded-full" />
+                </div>
+
+                <div className="relative z-10 w-full flex flex-col items-center h-full">
+                  <div className="mt-2 mb-4 text-center">
+                    <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.4em] mb-1 block">Daily Goal Achieved</span>
+                    <h3 className="text-xl font-black text-white tracking-tight">ยินดีด้วย ! คุณทำสำเร็จแล้ว</h3>
+                  </div>
+
+                  {/* 🏆 Rank & Streak Section (New Layout) */}
+                  <div className="flex flex-col items-center gap-2 mb-4">
+                    <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black flex items-center gap-2 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} shadow-lg shadow-black/20`}>
+                      <span>{rankInfo.emoji}</span>
+                      <span className="uppercase tracking-widest">{rankInfo.name} RANK</span>
+                    </div>
+                    <div className="bg-orange-500 text-white px-6 py-1.5 rounded-xl font-black text-[10px] shadow-lg border border-orange-400 whitespace-nowrap">
+                      🔥 {streakCount} DAYS STREAK!
+                    </div>
+
+                    {/* 💬 Inspirational Quote */}
+                    <div className="mt-1 px-8 text-center max-w-[200px] h-[24px] flex items-center justify-center">
+                      <p 
+                        className="text-[9px] font-bold text-slate-400 italic leading-tight overflow-hidden"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        "{currentSuccessQuote}"
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 👤 Large Avatar */}
+                  <div className="relative mb-0 flex flex-col items-center flex-1 justify-start pt-0">
+                    <div className="relative z-10 scale-[1.15] origin-bottom translate-y-0">
+                      <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
+                    </div>
+                  </div>
+
+                  {/* 🧬 Identity Row (Level + Personality) */}
+                  <div className="mb-4 flex flex-wrap justify-center gap-2 px-6">
+                    {/* 🥇 Solid Level Badge */}
+                    <div className="px-4 py-2 bg-yellow-400 border border-yellow-500 rounded-2xl flex items-center gap-2 shadow-lg shadow-yellow-500/20">
+                      <Trophy size={12} className="text-slate-900 fill-current" />
+                      <span className="text-[11px] font-black text-slate-950 uppercase">LEVEL {currentLevel}</span>
+                    </div>
+
+                    {lastDisc && (
+                      <div className="px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center gap-2">
+                        <Zap size={10} className="text-blue-400" />
+                        <span className="text-[9px] font-black text-blue-300 uppercase">{DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}</span>
+                      </div>
+                    )}
+
+                    {lastMoney && (
+                      <div className="px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-2">
+                        <Star size={10} className="text-amber-400 fill-current" />
+                        <span className="text-[9px] font-black text-amber-300 uppercase">{MONEY_DATA[lastMoney.resultKey]?.title}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* 🎯 Next Milestone Indicator */}
+                  <div className="mb-6 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                      {streakCount < 7 ? `${7 - streakCount} DAYS TO BLUE AURA` :
+                       streakCount < 14 ? `${14 - streakCount} DAYS TO PURPLE AURA` :
+                       streakCount < 30 ? `${30 - streakCount} DAYS TO FIRE AURA` :
+                       'LEGENDARY AURA UNLOCKED!'}
+                    </span>
+                  </div>
+
+                  <div className="mt-auto w-full grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center">
+                      <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">XP EARNED</span>
+                      <span className="text-sm font-black text-yellow-400">+{completedQuests.length * 10} XP</span>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center">
+                      <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">DATE</span>
+                      <span className="text-[10px] font-bold text-white uppercase">
+                        {new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 opacity-20">
+                    <div className="h-px w-6 bg-white" />
+                    <span className="text-[7px] font-black text-white uppercase tracking-[0.3em]">Upskill Everyday</span>
+                    <div className="h-px w-6 bg-white" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Controls */}
+              <div className="mt-8 w-full flex flex-col gap-3">
+                <button
+                  onClick={async () => {
+                    const { toPng } = await import("html-to-image");
+                    const cardElement = document.getElementById("daily-success-card");
+                    if (!cardElement) return;
+                    try {
+                      setIsCapturing(true);
+                      await new Promise(r => setTimeout(r, 150));
+                      await document.fonts.ready;
+                      const dataUrl = await toPng(cardElement, {
+                        pixelRatio: 3,
+                        backgroundColor: '#0f172a',
+                        cacheBust: true,
+                        style: { borderRadius: '3rem' }
+                      });
+                      const link = document.createElement("a");
+                      link.href = dataUrl;
+                      link.download = `daily-success-${streakCount}days.png`;
+                      link.click();
+                    } catch (err) { console.error(err); }
+                    finally { setIsCapturing(false); }
+                  }}
+                  className="w-full py-4 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 hover:bg-orange-400 transition-all active:scale-95 text-xs tracking-widest uppercase"
+                >
+                  <Download size={18} /> Download Success Card
+                </button>
+                <button
+                  onClick={() => setShowDailySuccess(false)}
+                  className="w-full py-4 bg-white/5 text-white/50 font-black rounded-2xl border border-white/10 hover:bg-white/10 transition-all text-[10px] tracking-widest uppercase"
+                >
+                  Continue Journey
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

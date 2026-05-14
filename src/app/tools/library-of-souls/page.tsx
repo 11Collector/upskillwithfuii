@@ -76,7 +76,8 @@ export default function LibrarySoulsQuizPage() {
         setGameState("start");
       }
     } else {
-      router.push("/dashboard");
+      const user = auth.currentUser;
+      router.push(user ? "/dashboard" : "/");
     }
   };
 
