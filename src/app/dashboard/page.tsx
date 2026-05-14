@@ -517,7 +517,46 @@ const AvatarDisplay = ({ currentLevel, gender }: { currentLevel: number, gender:
   );
 };
 
+
+const getWeekId = (date = new Date()) => {
+  // ปรับเวลาให้เป็นเวลาไทย (GMT+7) ก่อนคำนวณ
+  const tzOffset = 7 * 60 * 60 * 1000;
+  const localTime = date.getTime();
+  const thaiDate = new Date(localTime + (date.getTimezoneOffset() * 60000) + tzOffset);
+  
+  const d = new Date(Date.UTC(thaiDate.getFullYear(), thaiDate.getMonth(), thaiDate.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${weekNo}`;
+};
+
+const getWeekRangeThai = () => {
+  const now = new Date();
+  const day = now.getDay() || 7; // ปรับให้วันจันทร์เป็น 1 และวันอาทิตย์เป็น 7
+  
+  // หาความแตกต่างจากวันจันทร์ (Monday)
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1);
+  
+  // หาความแตกต่างไปจนถึงวันอาทิตย์ (Sunday)
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  
+  const options = { month: 'short', day: 'numeric' };
+  
+  // จัดรูปแบบ: "6 เม.ย. - 12 เม.ย."
+  const start = monday.toLocaleDateString('th-TH', options);
+  const end = sunday.toLocaleDateString('th-TH', options);
+  
+  return `${start} - ${end}`;
+};
+
 export default function DashboardPage() {
+
+  const [weeklyData, setWeeklyData] = useState({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0 ,momentum_count: 0});
+const [improvement, setImprovement] = useState(0);
  useEffect(() => {
   window.scrollTo(0, 0);
 }, []);
@@ -595,24 +634,34 @@ useEffect(() => {
       setUser(currentUser);
 
       try {
+        // 💡 1. เตรียม Week ID ก่อนดึงข้อมูล
+        const currentWeekId = getWeekId();
+        const lastWeekDate = new Date();
+        lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+        const prevWeekId = getWeekId(lastWeekDate);
+
         const authWheelRef = collection(db, "users", currentUser.uid, "assessments");
 
-        // 🚀 THE FIX: ใช้ Promise.all สั่งดึงข้อมูล 5 อย่างพร้อมกันในเสี้ยววินาที!
+        // 🚀 THE FIX: เพิ่ม Query สำหรับรายสัปดาห์ (สัปดาห์นี้ + สัปดาห์ก่อน) เข้าไปใน Array เดิม
         const [
           authWheelSnap,
           discSnap,
           moneySnap,
           quoteSnap,
-          userDocSnap
+          userDocSnap,
+          thisWeekSnap, // 👈 เพิ่มใหม่
+          prevWeekSnap  // 👈 เพิ่มใหม่
         ] = await Promise.all([
           getDocs(query(authWheelRef, orderBy("createdAt", "desc"), limit(1))),
           getDocs(query(collection(db, "discResults"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
           getDocs(query(collection(db, "quiz_results"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
           getDocs(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1))),
-          getDoc(doc(db, "users", currentUser.uid))
+          getDoc(doc(db, "users", currentUser.uid)),
+          getDoc(doc(db, "users", currentUser.uid, "weekly_stats", currentWeekId)), // 👈 เพิ่มใหม่
+          getDoc(doc(db, "users", currentUser.uid, "weekly_stats", prevWeekId))    // 👈 เพิ่มใหม่
         ]);
 
-        // --- 1. จัดการข้อมูลแบบประเมิน ---
+        // --- 1. จัดการข้อมูลแบบประเมิน (โค้ดเดิมของคุณฟุ้ย) ---
         let wheelData = null;
         let discData = null;
         let moneyData = null;
@@ -636,6 +685,45 @@ useEffect(() => {
           setLastQuote(quoteSnap.docs[0].data());
         }
 
+  // --- 💡 2. จัดการข้อมูลสถิติรายสัปดาห์ (ส่วนที่แก้ไข) ---
+        let thisWeekTotal = 0;
+        let prevWeekTotal = 0;
+
+        if (thisWeekSnap.exists()) {
+          const data = thisWeekSnap.data();
+          // 1. อัปเดตข้อมูล State เพื่อไปโชว์ใน Progress Bar
+          setWeeklyData({
+            wheel: data.wheel || 0,
+            disc: data.disc || 0,
+            money: data.money || 0,
+            wildcard: data.wildcard || 0,
+            challenge: data.challenge || 0,
+            momentum_count: data.momentum_count || 0
+          });
+          // 2. คำนวณผลรวมทั้งหมดของสัปดาห์นี้
+          thisWeekTotal = (data.wheel || 0) + (data.disc || 0) + (data.money || 0) + (data.wildcard || 0) + (data.challenge || 0);
+        } else {
+          // ถ้ายังไม่มีข้อมูลสัปดาห์นี้เลย ให้เซ็ตเป็น 0 ป้องกันการโชว์ข้อมูลค้างจากสัปดาห์ก่อน
+          setWeeklyData({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
+        }
+
+        if (prevWeekSnap.exists()) {
+          const prevData = prevWeekSnap.data();
+          // 3. คำนวณผลรวมทั้งหมดของสัปดาห์ที่แล้ว
+          prevWeekTotal = (prevData.wheel || 0) + (prevData.disc || 0) + (prevData.money || 0) + (prevData.wildcard || 0) + (prevData.challenge || 0);
+          
+          if (prevWeekTotal > 0) {
+            // สูตรหา % พัฒนาการ: ((ใหม่ - เก่า) / เก่า) * 100
+            const diff = ((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100;
+            setImprovement(Math.round(diff));
+          } else {
+            // ถ้าสัปดาห์ที่แล้วเป็น 0 แต่สัปดาห์นี้เริ่มทำแล้ว ให้โชว์เป็น 100%
+            setImprovement(thisWeekTotal > 0 ? 100 : 0);
+          }
+        } else {
+          // ถ้าไม่มีข้อมูลสัปดาห์ที่แล้วเลย (User ใหม่) ให้ improvement เป็น 0
+          setImprovement(0);
+        }
       // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
@@ -947,6 +1035,14 @@ const openDiscInfo = (e: React.MouseEvent) => {
 
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";
 
+const weeklyStats = useMemo(() => [
+  { label: "Wheel", count: weeklyData.wheel || 0, max: 7, color: "bg-red-500", icon: <PieChart size={14} /> },
+  { label: "DISC", count: weeklyData.disc || 0, max: 7, color: "bg-blue-500", icon: <Users size={14} /> },
+  { label: "Money", count: weeklyData.money || 0, max: 7, color: "bg-amber-500", icon: <Wallet size={14} /> },
+  { label: "Wild", count: weeklyData.wildcard || 0, max: 7, color: "bg-emerald-500", icon: <Zap size={14} /> },
+  { label: "Challenge", count: weeklyData.challenge || 0, max: 7, color: "bg-purple-500", icon: <Target size={14} /> },
+], [weeklyData]);
+
   const focusAreas = useMemo(() => {
     const areas = [];
     if (lastWheel?.currentScores) {
@@ -1019,7 +1115,7 @@ const dailyGuidedPrompt = useMemo(() => {
   // 💡 3. ฟังก์ชันสร้าง Daily Quests แบบ Seeded Random (เพื่อความเสถียรรายวัน)
   const dailyQuests = useMemo(() => {
     // ถ้ายังไม่ได้ค่า Date ให้รีเทิร์นอาเรย์ว่างๆ ไปก่อน ป้องกัน Hydration Error
-    if (!todayDateStr) {
+    if (!todayDateStr || !user?.uid) {
        return [
          { id: 1, type: "WHEEL", title: "กำลังโหลดภารกิจ...", xp: 15 },
          { id: 2, type: "DISC", title: "กำลังโหลดภารกิจ...", xp: 15 },
@@ -1029,36 +1125,36 @@ const dailyGuidedPrompt = useMemo(() => {
        ];
     }
 
-    // สร้าง Seed ตัวเลขจากวันที่ เช่น "2026-04-01" -> 20260401
-    const seedStr = todayDateStr.replace(/-/g, '');
-    const seed = parseInt(seedStr, 10) || 1;
+ // 2. สร้าง Personal Seed: ผสมวันที่ + UID (เอาเฉพาะ 5 ตัวท้ายของ UID มาทำเป็นตัวเลข)
+    const dateSeed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+    const userSeed = user.uid.split('').slice(-5).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const finalSeed = dateSeed + userSeed; // Seed ที่ไม่ซ้ำกันในแต่ละคนและแต่ละวัน
 
-  // ใน useMemo ของ dailyQuests
-const pseudoRandom = (max: number, salt: number) => {
-    // 👈 [FIX] เปลี่ยนเป็น * หรือใช้สมการที่ทำให้ตัวเลขกระจายตัวมากขึ้น
-    const x = Math.sin(seed * salt * 1.234) * 10000; 
-    return Math.floor((x - Math.floor(x)) * max);
-};
+    // 3. ปรับฟังก์ชันสุ่มให้กระจายตัวดีขึ้น (ใช้สูตรที่ซับซ้อนขึ้นนิดนึง)
+    const pseudoRandom = (max: number, salt: number) => {
+        // ใช้ค่า Sine ผสมกับตัวคูณที่ทำให้เลขกระจายตัว (Irrational numbers)
+        const x = Math.sin(finalSeed * salt * 12.9898 + salt * 78.233) * 43758.5453123;
+        return Math.floor((x - Math.floor(x)) * max);
+    };
     
     const qList = [
       { id: 1, type: "WHEEL", title: "", xp: 15 },
       { id: 2, type: "DISC", title: "", xp: 15 },
-      { id: 3, type: "MONEY", title: "", xp: 20 },
+      { id: 3, type: "MONEY", title: "", xp: 15 },
       { id: 4, type: "WILDCARD", title: "", xp: 10 },
-      { id: 5, type: "CHALLENGE", title: "", xp: 25 },
+      { id: 5, type: "CHALLENGE", title: "", xp: 10 },
     ];
-// ✅ ใช้ wheelArea จากด้านบนมาดึง Pool ภารกิจ
-    const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
-    qList[0].title = wheelPool[pseudoRandom(wheelPool.length, 1)];
+const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
+    qList[0].title = wheelPool[pseudoRandom(wheelPool.length, 1.5)];
 
     // ✅ 2. ดึงจาก DISC
-   const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
+const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
     const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
-    qList[1].title = discPool[pseudoRandom(discPool.length, 2)];
+    qList[1].title = discPool[pseudoRandom(discPool.length, 2.7)];
 
-    const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
+const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
     const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
-    qList[2].title = moneyPool[pseudoRandom(moneyPool.length, 3)];
+    qList[2].title = moneyPool[pseudoRandom(moneyPool.length, 3.9)];
 
    const getUniqueQuest = (pool: string[], existingTitles: string[], salt: number) => {
     let index = pseudoRandom(pool.length, salt);
@@ -1071,23 +1167,32 @@ const pseudoRandom = (max: number, salt: number) => {
     return selectedQuest;
 };
 
-    const currentTitles = [qList[0].title, qList[1].title, qList[2].title];
-    qList[3].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 4);
-    currentTitles.push(qList[3].title);
-    qList[4].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, 5);
+// เตรียม Array สำหรับเช็คค่าซ้ำในวันเดียวกัน
+const currentTitles = [qList[0].title, qList[1].title, qList[2].title];
 
-    return qList;
-}, [lastWheel, lastDisc, lastMoney, todayDateStr, wheelArea]);
+// 🛡️ ช่องที่ 4: Wildcard (ใช้ Salt 4.2 เพื่อให้ห่างจากช่องอื่น)
+qList[3].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 4.2);
+currentTitles.push(qList[3].title); // เพิ่มอันที่สุ่มได้ลงไปเช็คต่อ
 
-const dailyXPGained = completedQuests.reduce((sum: number, id) => {
-  if (id === 'special-01') return sum + 20; // ⚡ แก้เป็น 20 XP
-  
-  const quest = typeof id === 'number' 
-    ? dailyQuests.find(q => q.id === id) 
-    : null;
+// 🛡️ ช่องที่ 5: Challenge (ใช้ Salt 5.8)
+qList[4].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, 5.8);
 
-  return sum + (quest?.xp || 0);
-}, 0);
+return qList;
+
+}, [lastWheel, lastDisc, lastMoney, todayDateStr, wheelArea, user?.uid]); // 👈 เพิ่ม user?.uid ตรงนี้ด้วย!
+
+const dailyXPGained = useMemo(() => {
+  return completedQuests.reduce((sum: number, id) => {
+    // 1. เควสพิเศษได้ 20 เสมอ
+    if (id === 'special-01') return sum + 20;
+
+    // 2. เควสปกติหาจาก dailyQuests
+    const quest = dailyQuests.find(q => q.id === id);
+    
+    // 3. บวกคะแนนเต็ม (quest.xp) ไม่ต้องเช็กลำดับข้อแล้ว
+    return sum + (quest?.xp || 0);
+  }, 0);
+}, [completedQuests, dailyQuests]);
 
  const currentLevel = Math.floor(totalXP / 100) + 1;
 
@@ -1106,28 +1211,29 @@ const toggleQuest = async (id: number | string, xp: number) => {
   const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
   const userRef = doc(db, "users", user.uid);
   const isDone = completedQuests.includes(id);
-  const normalQuestsDone = completedQuests.filter(qId => typeof qId === 'number').length;
-  
-  // 1. Check Limit (ทำได้สูงสุด 3 เควสปกติ)
-  if (!isDone && id !== 'special-01' && normalQuestsDone >= 3) {
-    setShowLimitModal(true); 
-    return;
-  }
 
-  // 2. เตรียมข้อมูลใหม่
+  // 1. XP Logic (ใช้คะแนนเต็มตามเควสนั้นๆ ตามที่คุณฟุ้ยต้องการ)
+  let actualXP = xp;
+  let xpChange = isDone ? -actualXP : actualXP;
+
+  // 2. เตรียมข้อมูล Array ใหม่
   let newCompleted = isDone 
     ? completedQuests.filter(qId => qId !== id) 
     : [...completedQuests, id];
 
-  let xpChange = isDone ? -xp : xp;
   let newStreak = streakCount;
   let newLastQuestDate = todayStr;
 
-  // 🔥 [Logic แก้บั๊ก Streak] 🔥
+  // --- ภายใน toggleQuest ---
   
-  // กรณีที่ 1: "กดยืนยันทำ" (Check-in) และเป็นเควสแรกของวันนี้
-  if (!isDone && completedQuests.length === 0) {
-    // เช็กว่าเมื่อวานทำไหม เพื่อรัน Streak ต่อ หรือเริ่มนับ 1 ใหม่
+  // นับจำนวนเควสที่ทำเสร็จในเซ็ตใหม่ (รวมเควสปกติ + พิเศษ)
+  const newCount = newCompleted.length;
+  const oldCount = completedQuests.length;
+
+  // 🔥 [Logic Streak ใหม่: ต้องครบ 3 ถึงนับเป็น 1 วัน] 🔥
+  
+  // กรณีที่ 1: "กดยืนยัน" จนครบ 3 ข้อพอดี (เข้าเงื่อนไขบรรลุเป้าหมายรายวัน)
+  if (!isDone && newCount === 3) {
     const userSnap = await getDoc(userRef);
     const lastDate = userSnap.data()?.lastQuestDate;
 
@@ -1138,73 +1244,112 @@ const toggleQuest = async (id: number | string, xp: number) => {
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
-        newStreak += 1; // ต่อเนื่อง
+        newStreak += 1; // ต่อเนื่องจากเมื่อวาน
       } else if (diffDays > 1) {
-        newStreak = 1; // ขาดช่วง เริ่มใหม่
+        newStreak = 1; // ขาดช่วง (เมื่อวานทำไม่ครบ 3) เริ่มนับ 1 ใหม่
       }
+      // ถ้า diffDays === 0 แปลว่าวันนี้เคยทำครบ 3 ไปแล้วรอบหนึ่ง (อาจจะเคยกดออกแล้วกดเข้าใหม่) 
+      // ไม่ต้องบวกเพิ่ม
     } else {
-      newStreak = 1; // ครั้งแรกสุดในระบบ
+      newStreak = 1; // ครั้งแรกสุดในระบบที่ทำครบ 3
     }
 
-    // โบนัสวินัย 7 วัน
-    if (newStreak % 7 === 0 && newStreak !== 0) {
-      xpChange += 50;
-      setTimeout(() => alert(`🎊 พลังแห่งวินัย! ครบ ${newStreak} วัน รับโบนัสเพิ่ม +50 XP`), 800);
+    // โบนัสวินัย 7 วัน (เฉพาะตอนที่ Streak เพิ่งเพิ่ม)
+    if (newStreak > streakCount && newStreak % 7 === 0) {
+      xpChange += 100;
+      setTimeout(() => alert(`🎊 สุดยอดวินัย! ครบ ${newStreak} วัน (3 เควส/วัน) รับโบนัส +50 XP`), 800);
     }
+    newLastQuestDate = todayStr; // บันทึกว่า "วันนี้ทำเป้าหมายสำเร็จแล้ว"
   }
 
- // กรณีที่ 2: "กดยกเลิก" (Untoggle) และไม่เหลือเควสอื่นที่ทำค้างไว้เลยในวันนี้
-  else if (isDone && newCompleted.length === 0) {
-    
-    // 🛠️ [FIX BUG 1]: ป้องกันบั๊กปั๊ม XP! ถ้ายกเลิกตอนที่ Streak หาร 7 ลงตัวเป๊ะ ต้องริบโบนัส 50 XP คืนด้วย
+  // กรณีที่ 2: "กดยกเลิก" จาก 3 เหลือ 2 (ยกเลิกสถานะบรรลุเป้าหมาย)
+  else if (isDone && oldCount === 3 && newCount === 2) {
+    // ริบคืนโบนัส 50 XP ถ้าดันไปกดยกเลิกในวันครบสัปดาห์พอดี
     if (newStreak % 7 === 0 && newStreak !== 0) {
-      xpChange -= 50; 
+      xpChange -= 100; 
     }
 
     newStreak = Math.max(0, newStreak - 1); // หัก Streak คืน
     
     if (newStreak > 0) {
-      // 🛠️ [FIX BUG 2]: ถอยวันที่กลับไป 1 วัน (เมื่อวาน) 
+      // ถอยวันที่กลับไป 1 วัน เพื่อให้พรุ่งนี้ทำแล้วนับต่อได้ หรือวันนี้กดใหม่ให้นับคืนมา
       const [year, month, day] = todayStr.split('-').map(Number);
       const yesterdayDate = new Date(year, month - 1, day - 1);
-      const yesterdayStr = [
+      newLastQuestDate = [
         yesterdayDate.getFullYear(),
         String(yesterdayDate.getMonth() + 1).padStart(2, '0'),
         String(yesterdayDate.getDate()).padStart(2, '0')
       ].join('-');
-      
-      newLastQuestDate = yesterdayStr;
     } else {
-      newLastQuestDate = ""; // ถ้า Streak เป็น 0 ไปแล้ว ค่อยล้างทิ้ง
+      newLastQuestDate = ""; 
+    }
+  } 
+  else {
+    // กรณีทำข้อที่ 1, 2, 4, 5 หรือกดยกเลิกข้อที่ 4, 5
+    // ให้รักษาค่า Streak และ LastQuestDate เดิมไว้ ไม่ต้องเปลี่ยนแปลง
+    newStreak = streakCount;
+    const userSnap = await getDoc(userRef);
+    newLastQuestDate = userSnap.data()?.lastQuestDate || "";
+  }
+
+  // 🛠️ [Weekly Stats Logic - บันทึกเพื่อหลอดพลังรายสัปดาห์]
+  const weekId = getWeekId();
+  const weeklyRef = doc(db, "users", user.uid, "weekly_stats", weekId);
+  const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
+  const incValue = isDone ? -1 : 1; 
+
+  if (quest) {
+    const statKeys: Record<string, string> = {
+      WHEEL: "wheel",
+      DISC: "disc",
+      MONEY: "money",
+      WILDCARD: "wildcard",
+      CHALLENGE: "challenge"
+    };
+    const statKey = statKeys[quest.type];
+
+    if (statKey) {
+      try {
+        await setDoc(weeklyRef, {
+          [statKey]: increment(incValue),
+          updatedAt: new Date()
+        }, { merge: true });
+
+        // อัปเดต UI ทันทีไม่ต้องรอ Load
+        setWeeklyData((prev: any) => ({
+          ...prev,
+          [statKey]: Math.max(0, (prev[statKey] || 0) + incValue)
+        }));
+      } catch (err) {
+        console.error("Weekly stats error:", err);
+      }
     }
   }
 
-  // 3. คำนวณ Level ใหม่
+  // 3. คำนวณ Level และอัปเดต State หน้าจอ
   const finalNewXP = totalXP + xpChange;
   const newLevel = Math.floor(finalNewXP / 100) + 1;
   const oldLevel = Math.floor(totalXP / 100) + 1;
 
-  // 4. อัปเดต State หน้าจอ
   setCompletedQuests(newCompleted);
   setTotalXP(finalNewXP);
   setStreakCount(newStreak);
 
-  // 5. แจ้งเตือน Level Up
   if (newLevel > oldLevel && xpChange > 0) {
     setShowLevelUp({ isOpen: true, newLevel });
     setTimeout(() => setShowLevelUp(null), 4000);
   }
 
-  // 6. บันทึกลง Firebase
+  // 4. บันทึกลง Firebase (User Profile หลัก)
   try {
     await setDoc(userRef, {
       totalXP: finalNewXP,
       completedQuestIds: newCompleted,
-      lastQuestDate: newLastQuestDate, // บันทึกวันที่ (หรือล้างออก)
+      lastQuestDate: newLastQuestDate,
       streakCount: newStreak
     }, { merge: true });
   } catch (error) {
-    console.error("Error updating progress:", error);
+    console.error("Error updating profile:", error);
   }
 };
 
@@ -1582,7 +1727,7 @@ const handleDownloadCard = async () => {
               <div className={`w-2 h-2 rounded-full transition-all duration-1000 border ${isFilled ? 'bg-orange-500 border-orange-400 shadow-[0_0_10px_rgba(249,115,22,0.8)] scale-125' : 'bg-slate-900 border-white/20'}`} />
               {isLastDot && (
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group/reward">
-                  <span className={`text-[8px] font-black tracking-tighter transition-colors ${isFilled ? 'text-yellow-400' : 'text-slate-500 hover:text-orange-400'}`}>{isFilled ? 'DONE' : '+50XP'}</span>
+                  <span className={`text-[8px] font-black tracking-tighter transition-colors ${isFilled ? 'text-yellow-400' : 'text-slate-500 hover:text-orange-400'}`}>{isFilled ? 'DONE' : '+100XP'}</span>
                   <div className={`w-[1px] h-2 ${isFilled ? 'bg-yellow-400' : 'bg-slate-800'}`} />
                 </div>
               )}
@@ -1591,49 +1736,128 @@ const handleDownloadCard = async () => {
         })}
       </div>
 
-      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 opacity-60">Complete Quest 7 days for +50 XP Bonus</p>
+      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 opacity-60">Complete Daily Quest 7 days for +100 XP Bonus</p>
     
 
     </div>
   </div>
 </header>
-          <div className="lg:col-span-1 bg-slate-800 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-center border border-slate-700 group transition-all duration-500 hover:shadow-[0_20px_50px_rgba(239,68,68,0.15)] hover:border-slate-600">
-            {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-red-500/20 to-orange-500/10 blur-[80px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-rose-500/10 to-pink-500/10 blur-[60px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-            
-            {/* เส้นขอบสีด้านบน */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-orange-500 opacity-70 group-hover:h-3 transition-all duration-300" />
+<div className="lg:col-span-1 bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl border border-slate-800 relative overflow-hidden group transition-all duration-500 hover:border-slate-700">
+  {/* ✨ แสงฟุ้งพื้นหลัง (Premium Glow) */}
+  <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-orange-500/10 to-yellow-500/5 blur-[80px] rounded-full pointer-events-none" />
+  <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-500/5 to-purple-500/5 blur-[60px] rounded-full pointer-events-none" />
+  
+  {/* เส้นขอบสีด้านบน */}
+  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-yellow-400 to-red-500 opacity-80" />
 
-            <div className="absolute -right-10 -bottom-10 opacity-5 text-red-400 transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-12">
-              <Target size={180} />
-            </div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-red-500/20 text-red-400 rounded-xl border border-red-500/30 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300">
-                  <AlertCircle size={20} strokeWidth={2.5} />
-                </div>
-                <h2 className="text-xl font-black text-white tracking-wide">จุดที่ควรโฟกัส</h2>
-              </div>
+  <div className="relative z-10 flex flex-col h-full">
+    {/* 1. Header & Improvement Badge */}
+    <div className="flex justify-between items-start mb-8">
+      <div>
+        <h2 className="text-xl font-black tracking-tight flex items-center gap-2 text-white">
+          <Zap className="text-yellow-400 fill-current" size={18} /> 
+          Weekly Progress
+        </h2>
+   <p className="text-[10px] text-orange-500/80 font-bold uppercase tracking-[0.1em] mt-1"> ประจำวันที่ {getWeekRangeThai()} </p>
+      </div>
+      
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className={`px-3 py-1.5 rounded-xl border text-[11px] font-black shadow-sm ${improvement >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}
+      >
+        {improvement >= 0 ? '↑' : '↓'} {Math.abs(improvement)}%
+      </motion.div>
+    </div>
 
-              {focusAreas.length > 0 ? (
-                <ul className="space-y-5">
-                  {focusAreas.map((area, idx) => (
-                    <li key={idx} className="flex gap-4 items-start group/item">
-                      <div className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${area.color} shadow-[0_0_8px_rgba(255,255,255,0.2)] group-hover/item:scale-150 transition-transform`} />
-                      <div>
-                        <span className={`text-[11px] font-black uppercase tracking-wider ${area.textColor}`}>{area.title}</span>
-                        <p className="text-sm font-medium text-slate-300 mt-1 leading-relaxed group-hover/item:text-white transition-colors">{area.desc}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-slate-400 leading-relaxed font-medium">ทำแบบทดสอบด้านล่างเพื่อให้ระบบวิเคราะห์จุดที่ควรโฟกัสให้นะครับ 🎯</p>
-              )}
+    {/* 2. Core Identity (3 วงกลมหลัก - สื่อถึงความสมดุล) */}
+    <div className="grid grid-cols-3 gap-3 mb-10">
+      {[
+        { label: "Wheel", val: weeklyData.wheel, color: "text-red-500", icon: <PieChart size={14}/> },
+        { label: "DISC", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14}/> },
+        { label: "Money", val: weeklyData.money, color: "text-amber-400", icon: <Wallet size={14}/> }
+      ].map((item, i) => {
+        const radius = 20;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (circumference * Math.min(item.val, 7)) / 7;
+
+        return (
+          <div key={i} className="bg-white/5 rounded-[2rem] p-3 border border-white/5 flex flex-col items-center gap-2 hover:bg-white/10 transition-colors">
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <svg className="w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r={radius} fill="none" stroke="#1e293b" strokeWidth="4" />
+                <motion.circle 
+                  cx="24" cy="24" r={radius} fill="none" stroke="currentColor" strokeWidth="4" 
+                  strokeDasharray={circumference}
+                  initial={{ strokeDashoffset: circumference }}
+                  animate={{ strokeDashoffset: offset }}
+                  className={item.color}
+                  transition={{ duration: 1.5, delay: i * 0.2 }}
+                />
+              </svg>
+              <div className="absolute opacity-40">{item.icon}</div>
             </div>
+            <span className="text-[9px] font-black uppercase text-slate-500 tracking-tighter">{item.label}</span>
+            <span className="text-xs font-bold text-slate-200">{item.val}/7</span>
           </div>
+        );
+      })}
+    </div>
+
+    {/* 3. Combined Momentum Section (หลอดพลังงานรวม Wild + Challenge) */}
+    <div className="flex-1 flex flex-col justify-center">
+      <div className="bg-gradient-to-br from-white/5 to-transparent p-5 rounded-[2rem] border border-white/5 relative overflow-hidden group/momentum">
+        {/* Background Sparkle Effect */}
+        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/momentum:opacity-20 transition-opacity">
+           <Flame size={40} className="text-orange-400" />
+        </div>
+
+        <div className="flex justify-between items-end mb-3 relative z-10">
+          <div>
+            <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.2em] block mb-1">Daily Momentum</span>
+            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <Sparkles size={14} className="text-yellow-400" />
+              พลังขับเคลื่อนชีวิต
+            </h3>
+          </div>
+          <div className="text-right">
+            <span className="text-xl font-black text-white">
+{ (Number(weeklyData.wildcard) || 0) + (Number(weeklyData.challenge) || 0) }
+            </span>
+            <span className="text-[10px] font-bold text-slate-500 ml-1">/ 14</span>
+          </div>
+        </div>
+
+        <div className="h-3 bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-700/50 shadow-inner relative z-10">
+          <motion.div 
+            initial={{ width: 0 }} 
+            animate={{ width: `${((weeklyData.wildcard + weeklyData.challenge) / 14) * 100}%` }}
+            transition={{ duration: 1.5, delay: 0.8, type: "spring" }}
+            className="h-full bg-gradient-to-r from-orange-500 via-yellow-500 to-emerald-500 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] relative" 
+          >
+            {/* Glossy Overlay */}
+            <div className="absolute inset-0 bg-white/20 w-full h-[40%] top-0" />
+          </motion.div>
+        </div>
+        
+        <p className="text-[10px] text-slate-500 font-medium mt-3 leading-relaxed">
+          รวมการจัดการสิ่งจุกจิก (Wildcard) และความท้าทายใหม่ (Challenge)
+        </p>
+      </div>
+    </div>
+
+    {/* 4. Motivational Footer */}
+    <div className="mt-8 pt-4 border-t border-slate-800/80">
+      <p className="text-[13px] text-slate-400 leading-relaxed font-medium text-center italic">
+        {improvement >= 0 ? (
+          <>คุณทำสำเร็จเพิ่มขึ้นจากวีคก่อน <span className="text-orange-400 font-black">{improvement}%</span> 🚀</>
+        ) : (
+          <>สัปดาห์นี้แผ่วไปนิด <span className="text-red-400 font-black">{Math.abs(improvement)}%</span> ลุยต่อให้ชนะตัวเอง! 🔥</>
+        )}
+      </p>
+    </div>
+  </div>
+</div>
 
         </div>
 
@@ -1655,7 +1879,7 @@ const handleDownloadCard = async () => {
       <div>
         <h2 className="text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
         <p className="text-sm text-slate-500 font-bold flex items-center gap-1.5">
-          <Sparkles size={14} className="text-orange-400" /> เลือกทำ 3 จาก 5 ข้อ เพื่อรับ XP ในวันนี้
+          <Sparkles size={14} className="text-orange-400" /> เลือกทำได้ทุกข้อ เพื่ออัพสกิลสัปดาห์นี้ของคุณ
         </p>
       </div>
     </div>
@@ -1671,39 +1895,63 @@ const handleDownloadCard = async () => {
     </div>
   </div>
 
-  {/* Progress Bar ทรงพรีเมียม */}
+  {/* Progress Bar แบบ Super User (5 ช่อง) */}
   <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
     <div className="flex justify-between items-center mb-3 px-1">
       <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full animate-ping ${completedQuests.length >= 3 ? 'bg-green-500' : 'bg-orange-500'}`} />
-        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Mission Progress</span>
+        <div className={`w-2 h-2 rounded-full ${completedQuests.length >= 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
+        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
+          {completedQuests.length >= 3 ? '🎯 Daily Target Reached!' : 'Mission Progress'}
+        </span>
       </div>
-      <span className={`text-xs font-black px-3 py-1 rounded-full ${completedQuests.length >= 3 ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-        {completedQuests.length} / 3 COMPLETED
-      </span>
+    {/* --- ส่วนแสดงสถานะเป้าหมาย --- */}
+<span className={`text-xs font-black px-3 py-1 rounded-full transition-all duration-500 ${
+  completedQuests.length > 3 // ⚡ เปลี่ยนจาก >= 5 เป็น > 3
+    ? 'bg-yellow-400 text-white shadow-[0_0_15px_rgba(250,204,21,0.5)] animate-pulse' 
+    : completedQuests.length >= 3 
+      ? 'bg-green-100 text-green-600' 
+      : 'bg-orange-100 text-orange-600'
+}`}>
+  {completedQuests.length > 3 ? '🔥 SUPER UPSKILL' : `${completedQuests.length} / 3 GOAL`}
+</span>
     </div>
-    <div className="w-full h-4 bg-slate-200/50 rounded-full overflow-hidden p-1 border border-white shadow-inner">
+
+    <div className="w-full h-4 bg-slate-200/50 rounded-full overflow-hidden p-1 border border-white shadow-inner relative">
+      <div className="absolute left-[60%] top-0 w-[2px] h-full bg-white/50 z-20" /> 
+      
       <motion.div 
         initial={{ width: 0 }}
-        animate={{ width: `${(Math.min(completedQuests.length, 3) / 3) * 100}%` }}
-        transition={{ type: "spring", stiffness: 100 }}
-        className={`h-full rounded-full transition-all duration-500 relative ${
-          completedQuests.length >= 3 
-          ? 'bg-gradient-to-r from-green-400 to-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
-          : 'bg-gradient-to-r from-orange-400 to-red-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]'
+        animate={{ width: `${(Math.min(completedQuests.length, 5) / 5) * 100}%` }}
+        className={`h-full rounded-full transition-all duration-700 relative ${
+          completedQuests.length >= 5 ? 'bg-gradient-to-r from-green-400 via-emerald-500 to-yellow-400' :
+          completedQuests.length >= 3 ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 
+          'bg-gradient-to-r from-orange-400 to-red-500'
         }`}
       >
+        {completedQuests.length >= 5 && (
+          <motion.div 
+            animate={{ x: ['-100%', '200%'] }} 
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-20" 
+          />
+        )}
         <div className="absolute inset-0 bg-white/20 w-full h-[50%] top-0" /> 
       </motion.div>
     </div>
+    
+    <p className="text-[10px] text-slate-400 font-bold mt-3 text-center uppercase tracking-widest">
+      {completedQuests.length < 3 ? 'ทำอีก ' + (3 - completedQuests.length) + ' ข้อเพื่อรักษาวินัยวันนี้' : 'คุณยอดเยี่ยมมาก! เควสที่เหลือจะช่วยเติมสถิติรายสัปดาห์'}
+    </p>
   </div>
 
-  {/* 3. รายการ Quests */}
+  {/* 3. รายการ Quests (ปลดล็อกสีเทาออกแล้ว) */}
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-    {dailyQuests.map((quest, index) => {
+    {dailyQuests.map((quest) => {
       const isDone = completedQuests.includes(quest.id);
-      const isLocked = !isDone && completedQuests.length >= 3;
-        
+      
+      // ✅ แก้จุดนี้: ปิด isLocked ทิ้งไปเลย เพื่อไม่ให้ขึ้นสีเทา
+      const isLocked = false; 
+
       const getTypeStyles = (type: string) => {
         switch(type) {
           case 'WHEEL': return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', icon: <PieChart size={18}/> };
@@ -1718,10 +1966,9 @@ const handleDownloadCard = async () => {
       return (
         <motion.div 
           key={quest.id} 
-          whileHover={!isLocked && !isDone ? { y: -3, scale: 1.01 } : {}}
+          whileHover={!isDone ? { y: -3, scale: 1.01 } : {}}
           className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] border-2 transition-all duration-300 
             ${isDone ? 'bg-green-50 border-green-200 shadow-sm' : 
-              isLocked ? 'bg-slate-50 border-slate-100 opacity-40 grayscale' : 
               'bg-white border-slate-50 hover:border-orange-200 cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.02)] hover:shadow-lg'}
           `}
           onClick={() => toggleQuest(quest.id, quest.xp)}
@@ -1732,8 +1979,9 @@ const handleDownloadCard = async () => {
                 <CheckCircle2 size={24} strokeWidth={3} />
               </div>
             ) : (
-              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${isLocked ? 'border-slate-200' : 'border-slate-200 group-hover/card:border-orange-400 bg-white'}`}>
-                {isLocked ? <Lock size={14} className="text-slate-300" /> : <Circle size={18} className="text-slate-100 group-hover/card:text-orange-100" />}
+              <div className="w-8 h-8 rounded-full border-2 border-slate-200 flex items-center justify-center bg-white group-hover/card:border-orange-400 transition-colors">
+                {/* ✅ เปลี่ยนจากแม่กุญแจเป็นวงกลมปกติเสมอ */}
+                <Circle size={18} className="text-slate-100 group-hover/card:text-orange-100" />
               </div>
             )}
           </div>
@@ -1762,17 +2010,14 @@ const handleDownloadCard = async () => {
       );
     })}
 
-{/* ✨ Special Quest Section (Lv.5 โชว์ล็อค, Lv.10 ปลดล็อคเล่นได้จริง) */}
+    {/* ✨ Special Quest Section (Personalized Mission) */}
     {currentLevel >= 5 && (
       currentLevel < 10 ? (
-        /* 🔒 ร่างที่ 1: เลเวล 5-9 (แสดงแบบล็อคสีเทา) */
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative group/locked p-5 rounded-[1.8rem] border-2 border-dashed border-slate-300 bg-slate-50 flex items-center gap-5 overflow-hidden grayscale-[20%] opacity-80 hover:opacity-100 hover:grayscale-0 transition-all duration-300"
+          className="relative group/locked p-5 rounded-[1.8rem] border-2 border-dashed border-slate-300 bg-slate-50 flex items-center gap-5 overflow-hidden grayscale-[20%] opacity-80"
         >
-          <div className="absolute inset-0 bg-slate-200/20 opacity-0 group-hover/locked:opacity-100 transition-opacity duration-500" />
-          
           <div className="shrink-0 relative z-10">
             <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm text-slate-400">
               <Zap size={20} className="fill-slate-100" />
@@ -1781,119 +2026,74 @@ const handleDownloadCard = async () => {
               <Lock size={10} strokeWidth={3} />
             </div>
           </div>
-
           <div className="flex-1 min-w-0 relative z-10">
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-slate-200 text-slate-500 shadow-inner">
-                Personalized
-              </span>
+              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-slate-200 text-slate-500 shadow-inner">Personalized</span>
             </div>
-            <p className="text-[15px] font-bold leading-tight text-slate-400 italic">
-              ภารกิจพิเศษเฉพาะคุณ...
-            </p>
+            <p className="text-[15px] font-bold leading-tight text-slate-400 italic">ภารกิจพิเศษเฉพาะคุณ...</p>
           </div>
-
           <div className="shrink-0 text-right relative z-10">
             <div className="flex flex-col items-end gap-1">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Required</span>
-              <span className="text-[11px] font-black px-3 py-1.5 rounded-xl bg-slate-200 text-slate-500 border border-slate-300 shadow-inner">
-                LEVEL 10
-              </span>
+              <span className="text-[11px] font-black px-3 py-1.5 rounded-xl bg-slate-200 text-slate-500 border border-slate-300 shadow-inner">LEVEL 10</span>
             </div>
           </div>
         </motion.div>
       ) : (
-
-        /* ⚡ ร่างที่ 2: เลเวล 10+ (ปลดล็อคให้กำหนดภารกิจเอง) */
-<motion.div 
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  whileHover={!completedQuests.includes('special-01') ? { y: -3, scale: 1.01 } : {}}
-  onClick={() => {
-    // 1. ถ้ายังไม่ได้ตั้งชื่อเควส ให้เปิด Modal (เฉพาะตอนที่ยังไม่ได้ทำเท่านั้น)
-    if (!customQuestTitle && !completedQuests.includes('special-01')) {
-      setShowCustomInputModal(true);
-    } 
-    // 2. ถ้าตั้งชื่อแล้ว หรือทำไปแล้ว ให้สามารถกด Toggle สลับสถานะ (ทำ/ไม่ทำ) ได้ตลอด (แก้เผลอ)
-    else {
-      toggleQuest('special-01', 20);
-    }
-  }}
-className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] border-2 transition-all duration-300 overflow-hidden
-  ${completedQuests.includes('special-01') 
-    ? 'bg-emerald-50/50 border-emerald-200 shadow-sm' 
-    : 'bg-white border-amber-100/60 hover:border-amber-400 cursor-pointer shadow-[0_5px_15px_rgba(251,191,36,0.05)] hover:shadow-[0_10px_30px_rgba(251,191,36,0.15)]'}
-`}
->
-  {/* --- 1. ส่วนไอคอน (Premium Gold Theme) --- */}
-<div className="shrink-0 relative z-10">
-  {completedQuests.includes('special-01') ? (
-    <div className="bg-emerald-500 text-white p-1.5 rounded-full shadow-lg shadow-emerald-200">
-      <CheckCircle2 size={24} strokeWidth={3} />
-    </div>
-  ) : (
-    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors 
-      ${customQuestTitle 
-        ? 'border-amber-400 bg-amber-50 text-amber-600 shadow-[0_0_15px_rgba(251,191,36,0.3)]' 
-        : 'border-stone-200 bg-white text-stone-200 group-hover/card:border-amber-400'}`}>
-      {customQuestTitle ? <Flame size={18} className="fill-current animate-pulse" /> : <Circle size={18} />}
-    </div>
-  )}
-</div>
-
-{/* --- 2. ส่วนเนื้อหา (Luxury Typography) --- */}
-<div className="flex-1 min-w-0 relative z-10">
-  <div className="flex items-center gap-2 mb-1">
-    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider 
-      ${completedQuests.includes('special-01') 
-        ? 'bg-emerald-100 text-emerald-700' 
-        : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>
-      Personalized Mission
-    </span>
-    {customQuestTitle && !completedQuests.includes('special-01') && (
-      <span className="text-[9px] font-black text-amber-500 animate-pulse hidden sm:inline">● ภารกิจเฉพาะคุณ</span>
+        /* ⚡ ร่างที่ 2: เลเวล 10+ (ปลดล็อกอิสระ) */
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={!completedQuests.includes('special-01') ? { y: -3, scale: 1.01 } : {}}
+          onClick={() => {
+            if (!customQuestTitle && !completedQuests.includes('special-01')) {
+              setShowCustomInputModal(true);
+            } else {
+              toggleQuest('special-01', 20);
+            }
+          }}
+          className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] border-2 transition-all duration-300 overflow-hidden
+            ${completedQuests.includes('special-01') 
+              ? 'bg-emerald-50/50 border-emerald-200 shadow-sm' 
+              : 'bg-white border-amber-100/60 hover:border-amber-400 cursor-pointer shadow-[0_5px_15px_rgba(251,191,36,0.05)] hover:shadow-[0_10px_30px_rgba(251,191,36,0.15)]'}
+          `}
+        >
+          <div className="shrink-0 relative z-10">
+            {completedQuests.includes('special-01') ? (
+              <div className="bg-emerald-500 text-white p-1.5 rounded-full shadow-lg shadow-emerald-200">
+                <CheckCircle2 size={24} strokeWidth={3} />
+              </div>
+            ) : (
+              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors 
+                ${customQuestTitle ? 'border-amber-400 bg-amber-50 text-amber-600 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'border-stone-200 bg-white group-hover/card:border-amber-400'}`}>
+                {customQuestTitle ? <Flame size={18} className="fill-current animate-pulse" /> : <Circle size={18} />}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0 relative z-10">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>Personalized Mission</span>
+            </div>
+            <p className={`text-[15px] font-bold leading-tight truncate ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>{customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}</p>
+          </div>
+          <div className="shrink-0 text-right relative z-10">
+            <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all ${completedQuests.includes('special-01') ? 'bg-stone-100 border-stone-200 text-stone-400' : 'bg-white border-amber-200 text-amber-700 group-hover/card:bg-gradient-to-r group-hover/card:from-amber-400 group-hover/card:to-yellow-600 group-hover/card:text-white group-hover/card:border-transparent'}`}>+20 XP</span>
+          </div>
+        </motion.div>
+      )
     )}
   </div>
-  <p className={`text-[15px] font-bold leading-tight truncate 
-    ${completedQuests.includes('special-01') 
-      ? 'line-through text-stone-400' 
-      : 'text-stone-800'}`}>
-    {customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}
-  </p>
-</div>
-
-{/* --- 3. ส่วน XP (Gold Ribbon Style) --- */}
-<div className="shrink-0 text-right relative z-10">
-  <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all
-    ${completedQuests.includes('special-01') 
-      ? 'bg-stone-100 border-stone-200 text-stone-400' 
-      : 'bg-white border-amber-200 text-amber-700 group-hover/card:bg-gradient-to-r group-hover/card:from-amber-400 group-hover/card:to-yellow-600 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-md'}
-  `}>
-    +20 XP
-  </span>
-</div>
-</motion.div>
-     )
-    )}
-  </div> {/* 🚨 กล่องปิด Grid ที่เคยก่อเรื่องคราวก่อน อยู่ตรงนี้ครับ 🚨 */}
 
   {/* ✨ กล่องข้อความเตือนทำแบบประเมิน ✨ */}
   {missingAssessments.length > 0 && (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 flex items-start sm:items-center gap-3 shadow-sm relative z-10"
-    >
-      <div className="p-1.5 bg-blue-100 text-blue-600 rounded-full shrink-0 mt-0.5 sm:mt-0">
-        <Sparkles size={16} />
-      </div>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 flex items-start sm:items-center gap-3 shadow-sm relative z-10">
+      <div className="p-1.5 bg-blue-100 text-blue-600 rounded-full shrink-0 mt-0.5 sm:mt-0"><Sparkles size={16} /></div>
       <p className="text-xs font-medium text-blue-800 leading-relaxed">
-        <span className="font-bold">💡 ทริคอัพสกิล:</span> ภารกิจวันนี้ยังเป็นแบบสุ่มพื้นฐานอยู่ 
-        อย่าลืมไปทำแบบประเมิน <span className="font-bold text-indigo-600 underline decoration-indigo-200 underline-offset-2">({missingAssessments.join(", ")})</span> ด้านล่างให้ครบ เพื่อรับภารกิจที่ตรงกับตัวคุณที่สุดนะครับ!
+        <span className="font-bold">💡 ทริคอัพสกิล:</span> ภารกิจวันนี้ยังเป็นแบบสุ่มพื้นฐานอยู่ อย่าลืมไปทำแบบประเมิน <span className="font-bold text-indigo-600 underline decoration-indigo-200 underline-offset-2">({missingAssessments.join(", ")})</span> ด้านล่างให้ครบ เพื่อรับภารกิจที่ตรงกับตัวคุณที่สุดนะครับ!
       </p>
     </motion.div>
   )}
-</div> {/* ปิดกล่อง Daily Quests ใหญ่ */}
+</div>
       {/* --- 📦 3. Bento Grid --- */}
         
         
@@ -2451,6 +2651,8 @@ className={`group/card relative flex items-center gap-5 p-5 rounded-[1.8rem] bor
     </div>
   </motion.div>
 </Link>
+
+
         </div>
         
         
