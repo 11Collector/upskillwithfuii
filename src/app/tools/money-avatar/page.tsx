@@ -348,38 +348,54 @@ export default function Home() {
         setIsTransitioning(false); 
       }, 250);
     } else {
-      const riskTotal = newAnswers.reduce((sum, ans) => sum + (ans?.risk || 0), 0);
-      const discTotal = newAnswers.reduce((sum, ans) => sum + (ans?.disc || 0), 0);
-      const calculated = calculatePersona(riskTotal, discTotal);
-      const personaId = calculated.primary.id;
-      const personaName = resultData[personaId as keyof typeof resultData]?.title || "นักลงทุนผู้มุ่งมั่น";
+  const riskTotal = newAnswers.reduce((sum, ans) => sum + (ans?.risk || 0), 0);
+  const discTotal = newAnswers.reduce((sum, ans) => sum + (ans?.disc || 0), 0);
+  
+  // 1. คำนวณหาทั้ง Primary และ Secondary
+  const calculated = calculatePersona(riskTotal, discTotal);
+  
+  const primaryId = calculated.primary.id;
+  const primaryName = resultData[primaryId as keyof typeof resultData]?.title || "นักลงทุนผู้มุ่งมั่น";
+  const primaryMatch = calculated.primary.matchPercentage;
 
-      const detailedResults = activeScenarios.map((scenario, i) => {
-        const answerData = newAnswers[i]; 
-        const selectedIdx = answerData ? answerData.choiceIndex : 0;
-        const selectedChoice = scenario.choices[selectedIdx];
-        return {
-          q_id: scenario.id,
-          npc: scenario.npcName,
-          question: scenario.message,
-          answer: selectedChoice.text,
-          points: { risk: selectedChoice.risk, disc: selectedChoice.disc }
-        };
-      });
+  const secondaryId = calculated.secondary.id;
+  const secondaryName = resultData[secondaryId as keyof typeof resultData]?.title || "นักลงทุนนิรนาม";
+  const secondaryMatch = calculated.secondary.matchPercentage;
+
+  const detailedResults = activeScenarios.map((scenario, i) => {
+    const answerData = newAnswers[i]; 
+    const selectedIdx = answerData ? answerData.choiceIndex : 0;
+    const selectedChoice = scenario.choices[selectedIdx];
+    return {
+      q_id: scenario.id,
+      npc: scenario.npcName,
+      question: scenario.message,
+      answer: selectedChoice.text,
+      points: { risk: selectedChoice.risk, disc: selectedChoice.disc }
+    };
+  });
 
       const saveMoneyResult = async () => {
-        try {
-          await addDoc(collection(db, "quiz_results"), {
-            userId: currentUser?.uid || "guest",
-            avatarType: personaName, 
-            nickname: nickname || "นักล่าความมั่งคั่ง",
-            persona: personaName,
-            resultKey: personaId,
-            riskScore: riskTotal,
-            discScore: discTotal,
-            history: detailedResults,
-            createdAt: serverTimestamp(),
-          });
+try {
+      await addDoc(collection(db, "quiz_results"), {
+        userId: currentUser?.uid || "guest",
+        nickname: nickname || "นักล่าความมั่งคั่ง",
+        
+        // 2. เก็บข้อมูล Primary Persona
+        persona: primaryName, // Field เดิมที่เคยใช้
+        resultKey: primaryId,  // Field เดิมที่เคยใช้
+        primaryMatch: primaryMatch,
+        
+        // 3. เพิ่มข้อมูล Secondary Persona ลงไป
+        secondaryPersona: secondaryName,
+        secondaryKey: secondaryId,
+        secondaryMatch: secondaryMatch,
+
+        riskScore: riskTotal,
+        discScore: discTotal,
+        history: detailedResults,
+        createdAt: serverTimestamp(),
+      });
 
           if (currentUser) {
             const userRef = doc(db, "users", currentUser.uid);
