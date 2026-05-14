@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, Clock, ArrowRight, BookMarked, Target, 
-  Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight 
+import {
+  BookOpen, Clock, ArrowRight, BookMarked, Target,
+  Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -16,35 +16,35 @@ import { onAuthStateChanged } from "firebase/auth";
 
 // 🎨 2. Themes
 const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: string; borderColor: string }> = {
-  "ทั้งหมด": { 
-    icon: <LayoutGrid size={18} />, 
-    color: "text-slate-400", 
-    bgColor: "bg-white/5", 
-    borderColor: "border-white/10" 
+  "ทั้งหมด": {
+    icon: <LayoutGrid size={18} />,
+    color: "text-slate-400",
+    bgColor: "bg-white/5",
+    borderColor: "border-white/10"
   },
-  "หนังสือ": { 
-    icon: <BookOpen size={20} />, 
-    color: "text-emerald-400", 
-    bgColor: "bg-emerald-500/10", 
-    borderColor: "border-emerald-500/20" 
+  "หนังสือ": {
+    icon: <BookOpen size={20} />,
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/20"
   },
-  "พัฒนาตัวเอง": { 
-    icon: <Sparkles size={20} />, 
-    color: "text-amber-400", 
-    bgColor: "bg-amber-500/10", 
-    borderColor: "border-amber-500/20" 
+  "พัฒนาตัวเอง": {
+    icon: <Sparkles size={20} />,
+    color: "text-amber-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20"
   },
-  "การเงิน & ลงทุน": { 
-    icon: <Wallet size={20} />, 
-    color: "text-rose-400", 
-    bgColor: "bg-rose-500/10", 
-    borderColor: "border-rose-500/20" 
+  "การเงิน & ลงทุน": {
+    icon: <Wallet size={20} />,
+    color: "text-rose-400",
+    bgColor: "bg-rose-500/10",
+    borderColor: "border-rose-500/20"
   },
-  "ธุรกิจ": { 
-    icon: <Briefcase size={20} />, 
-    color: "text-indigo-400", 
-    bgColor: "bg-indigo-500/10", 
-    borderColor: "border-indigo-500/20" 
+  "ธุรกิจ": {
+    icon: <Briefcase size={20} />,
+    color: "text-indigo-400",
+    bgColor: "bg-indigo-500/10",
+    borderColor: "border-indigo-500/20"
   }
 };
 
@@ -79,7 +79,7 @@ export default function PremiumLibraryPage() {
         const articlesRef = collection(db, "articles");
         const q = query(articlesRef, orderBy("id", "desc"));
         const querySnapshot = await getDocs(q);
-        
+
         const fetchedArticles = querySnapshot.docs.map(doc => ({
           ...doc.data(),
           id: doc.id
@@ -122,21 +122,21 @@ export default function PremiumLibraryPage() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [isMounted]);
 
-  const filteredArticles = activeCategory === "ทั้งหมด" 
-    ? articles 
+  const filteredArticles = activeCategory === "ทั้งหมด"
+    ? articles
     : articles.filter(article => article.category === activeCategory);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-slate-50 p-6 md:p-10 font-sans selection:bg-amber-500/30 overflow-x-hidden">
-      
+
       {/* Background Decor */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-5xl mx-auto relative z-10">
-        
+
         {/* --- Header --- */}
         <header className="mb-10 pt-8">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-400 rounded-full text-[10px] font-black mb-6 border border-amber-500/20 uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(245,158,11,0.1)]">
@@ -148,70 +148,69 @@ export default function PremiumLibraryPage() {
           <p className="text-slate-500 text-lg font-medium">สรุปหนังสือและบทความพรีเมียมคัดมาเพื่อคุณโดยเฉพาะ</p>
         </header>
 
-       {/* --- 🛠️ Categories (แก้ไขจุดที่ขอบซ้ายขาด) --- */}
-<div className="relative mb-14">
-  {/* เพิ่ม px-6 เพื่อให้มีที่ให้เงาและ Scale ด้านซ้ายไม่ขาด และใส่ -mx-6 เพื่อให้เลื่อนได้สุดขอบจอ */}
-  <div className="flex gap-3 overflow-x-auto pt-8 pb-8 px-6 no-scrollbar -mt-8 -mb-8 -mx-6"> 
-    {Object.keys(CATEGORY_THEMES).map((cat, index) => (
-      <button 
-          key={cat} 
-          onClick={() => setActiveCategory(cat)} 
-          className={`flex-none flex items-center gap-2.5 px-6 py-3.5 rounded-full text-[13px] font-black uppercase tracking-widest transition-all duration-300 border ${
-              activeCategory === cat 
-              ? "bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_10px_30px_rgba(245,158,11,0.4)] scale-105 z-20" 
-              : "bg-[#161616] text-zinc-500 border-zinc-800/50 hover:bg-[#1c1c1c] hover:text-zinc-300 hover:border-zinc-700"
-          } ${index === 0 ? "ml-2" : ""}`} // เพิ่ม ml-2 เล็กน้อยที่ปุ่มแรกเพื่อเผื่อพื้นที่ให้ Scale-105
-      >
-        <span className={activeCategory === cat ? "text-black" : "text-zinc-600"}>
-          {CATEGORY_THEMES[cat].icon}
-        </span>
-        {cat}
-      </button>
-    ))}
-  </div>
-  {/* Gradient กันขอบขวาดูแข็งเกินไป */}
-  <div className="absolute right-[-24px] top-0 bottom-0 w-20 bg-gradient-to-l from-[#0A0A0A] to-transparent pointer-events-none z-10" />
-</div>
+        {/* --- 🛠️ Categories (แก้ไขจุดที่ขอบซ้ายขาด) --- */}
+        <div className="relative mb-14">
+          {/* เพิ่ม px-6 เพื่อให้มีที่ให้เงาและ Scale ด้านซ้ายไม่ขาด และใส่ -mx-6 เพื่อให้เลื่อนได้สุดขอบจอ */}
+          <div className="flex gap-3 overflow-x-auto pt-8 pb-8 px-6 no-scrollbar -mt-8 -mb-8 -mx-6">
+            {Object.keys(CATEGORY_THEMES).map((cat, index) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex-none flex items-center gap-2.5 px-6 py-3.5 rounded-full text-[13px] font-black uppercase tracking-widest transition-all duration-300 border ${activeCategory === cat
+                  ? "bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_10px_30px_rgba(245,158,11,0.4)] scale-105 z-20"
+                  : "bg-[#161616] text-zinc-500 border-zinc-800/50 hover:bg-[#1c1c1c] hover:text-zinc-300 hover:border-zinc-700"
+                  } ${index === 0 ? "ml-2" : ""}`} // เพิ่ม ml-2 เล็กน้อยที่ปุ่มแรกเพื่อเผื่อพื้นที่ให้ Scale-105
+              >
+                <span className={activeCategory === cat ? "text-black" : "text-zinc-600"}>
+                  {CATEGORY_THEMES[cat].icon}
+                </span>
+                {cat}
+              </button>
+            ))}
+          </div>
+          {/* Gradient กันขอบขวาดูแข็งเกินไป */}
+          <div className="absolute right-[-24px] top-0 bottom-0 w-20 bg-gradient-to-l from-[#0A0A0A] to-transparent pointer-events-none z-10" />
+        </div>
 
         {/* --- Grid Area --- */}
-        <motion.div 
-            key={activeCategory} 
-            initial="hidden" 
-            animate="show" 
-            variants={containerVariants} 
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        <motion.div
+          key={activeCategory}
+          initial="hidden"
+          animate="show"
+          variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           <AnimatePresence mode="popLayout">
             {filteredArticles.map((article) => {
               const theme = CATEGORY_THEMES[article.category] || CATEGORY_THEMES["ทั้งหมด"];
               return (
-                <motion.div 
-                    key={article.id} 
-                    variants={cardVariants} 
-                    layout 
-                    className="h-full"
+                <motion.div
+                  key={article.id}
+                  variants={cardVariants}
+                  layout
+                  className="h-full"
                 >
                   <Link href={`/library/${article.slug}`} className="group block h-full">
                     <div className="h-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 flex flex-col transition-all duration-500 hover:border-amber-500/30 hover:bg-[#151515] relative overflow-hidden shadow-2xl">
-                      
+
                       {/* XP Badge */}
                       {readArticles.includes(article.slug) ? (
                         <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
                           <BookMarked size={10} className="fill-emerald-400" /> อ่านแล้ว
                         </div>
                       ) : (
-                        <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
-                          <Sparkles size={10} className="fill-emerald-400" /> +5 XP
+                        <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
+                          <Sparkles size={10} className="fill-amber-400" /> +5 XP
                         </div>
                       )}
 
                       {/* Icon Section */}
                       <div className="mb-8 relative">
-                         <div className={`w-14 h-14 rounded-2xl ${theme.bgColor} ${theme.borderColor} border flex items-center justify-center ${theme.color} group-hover:scale-110 transition-transform duration-500`}>
-                            {theme.icon}
-                         </div>
+                        <div className={`w-14 h-14 rounded-2xl ${theme.bgColor} ${theme.borderColor} border flex items-center justify-center ${theme.color} group-hover:scale-110 transition-transform duration-500`}>
+                          {theme.icon}
+                        </div>
                       </div>
-                      
+
                       <div className="flex-1">
                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 block ${theme.color}`}>
                           {article.category} • {article.readTime}
@@ -240,9 +239,9 @@ export default function PremiumLibraryPage() {
 
         {/* --- Footer --- */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-24 text-center py-12 border-t border-white/5">
-           <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-[0_20px_40px_rgba(255,255,255,0.05)] uppercase tracking-widest">
-              <LayoutGrid size={18} /> กลับสู่ DASHBOARD
-           </Link>
+          <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-[0_20px_40px_rgba(255,255,255,0.05)] uppercase tracking-widest">
+            <LayoutGrid size={18} /> กลับสู่ DASHBOARD
+          </Link>
         </motion.footer>
 
       </div>

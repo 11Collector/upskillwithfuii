@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { 
-  ChevronLeft, Share2, Calendar, Clock, ArrowLeft, 
+import {
+  ChevronLeft, Share2, Calendar, Clock, ArrowLeft,
   User, Sparkles, Crown, Target, CheckCircle2, Loader2,
   LayoutGrid
 } from "lucide-react";
@@ -56,7 +56,7 @@ export default function ArticleDetail() {
         const articlesRef = collection(db, "articles");
         const q = query(articlesRef, where("slug", "==", articleSlug), limit(1));
         const querySnapshot = await getDocs(q);
-        
+
         if (!querySnapshot.empty) {
           setArticle(querySnapshot.docs[0].data());
         } else {
@@ -74,14 +74,14 @@ export default function ArticleDetail() {
 
     if (articleSlug) fetchArticle();
   }, [articleSlug, isMounted]);
-  
+
   // ดึง Theme ตามหมวดหมู่ของบทความนั้น ๆ
   const theme = CATEGORY_THEMES[article?.category || ""] || CATEGORY_THEMES["ทั้งหมด"];
 
   // ตรวจสอบสถานะ Login และประวัติการอ่าน
   useEffect(() => {
     if (!isMounted) return;
-    
+
     // 1. ตรวจสอบจากสถานะปัจจุบันทันที (เผื่อโหลดเสร็จแล้ว)
     if (auth.currentUser) {
       setUser(auth.currentUser);
@@ -126,17 +126,17 @@ export default function ArticleDetail() {
     }
 
     if (xpClaimed || isClaiming) return;
-    
+
     if (!activeUser) {
       alert("กรุณาเข้าสู่ระบบเพื่อสะสม XP ครับ");
       return;
     }
 
     setIsClaiming(true);
-    
+
     try {
       const userRef = doc(db, "users", activeUser.uid);
-      
+
       await setDoc(userRef, {
         totalXP: increment(5),
         readArticles: arrayUnion(articleSlug)
@@ -170,7 +170,7 @@ export default function ArticleDetail() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] pb-20 font-sans text-slate-200 selection:bg-amber-500/30">
-      
+
       {/* 🎇 Dynamic Glows ตามหมวดหมู่ */}
       <div className={`fixed top-[-10%] right-[-10%] w-[40%] h-[40%] ${theme.glow} blur-[120px] rounded-full pointer-events-none transition-colors duration-1000`} />
       <div className="fixed bottom-[10%] left-[-10%] w-[30%] h-[30%] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -182,7 +182,7 @@ export default function ArticleDetail() {
             <ChevronLeft size={18} /> Back
           </button>
           <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full text-[9px] font-black border border-amber-500/20 uppercase tracking-[0.2em]">
-             <Crown size={12} /> Exclusive Insight
+            <Crown size={12} /> Exclusive Insight
           </div>
           <button className="p-2 hover:bg-white/5 rounded-full text-slate-400">
             <Share2 size={18} />
@@ -191,7 +191,7 @@ export default function ArticleDetail() {
       </nav>
 
       <main className="max-w-3xl mx-auto px-6 pt-16 relative z-10">
-        
+
         {/* Header */}
         <motion.header initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-14">
           <div className="inline-block mb-8">
@@ -225,7 +225,7 @@ export default function ArticleDetail() {
             prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-3xl prose-blockquote:not-italic prose-blockquote:text-slate-200 prose-blockquote:my-10
             prose-li:text-slate-300 prose-li:marker:text-amber-500 prose-li:mb-2
             prose-code:text-amber-300 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded">
-            
+
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {article.content}
             </ReactMarkdown>
@@ -257,7 +257,7 @@ export default function ArticleDetail() {
                   "{article.summary}"
                 </h3>
                 {isClaimedSuccess ? (
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="flex flex-col items-center gap-4 py-4"
@@ -271,16 +271,16 @@ export default function ArticleDetail() {
                     </div>
                   </motion.div>
                 ) : !xpClaimed ? (
-                  <button 
-                    onClick={handleClaimXP} 
-                    disabled={isClaiming} 
+                  <button
+                    onClick={handleClaimXP}
+                    disabled={isClaiming}
                     className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-amber-500 text-black text-sm font-black rounded-3xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-amber-500/20 uppercase tracking-[0.2em]"
                   >
                     {isClaiming ? (
                       <Loader2 className="animate-spin" size={20} />
                     ) : (
                       <>
-                        <Sparkles size={20} /> 
+                        <Sparkles size={20} />
                         Claim +5 XP Now
                       </>
                     )}
@@ -301,14 +301,14 @@ export default function ArticleDetail() {
 
         {/* Footer */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-28 text-center pt-16 border-t border-white/5">
-            <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-xl uppercase tracking-widest">
-                <LayoutGrid size={18} /> กลับสู่ DASHBOARD
+          <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-xl uppercase tracking-widest">
+            <LayoutGrid size={18} /> กลับสู่ DASHBOARD
+          </Link>
+          <div className="mt-12">
+            <Link href="/library" className="text-slate-600 hover:text-slate-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
+              <ArrowLeft size={14} /> Back to Library
             </Link>
-            <div className="mt-12">
-              <Link href="/library" className="text-slate-600 hover:text-slate-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
-                  <ArrowLeft size={14} /> Back to Library
-              </Link>
-            </div>
+          </div>
         </motion.footer>
 
       </main>
