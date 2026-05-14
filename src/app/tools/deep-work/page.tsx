@@ -28,7 +28,7 @@ export default function DeepWorkPage() {
     const dur = localStorage.getItem("deepWork_duration");
     const saved = localStorage.getItem("deepWork_selectedTime");
     const autoStart = localStorage.getItem("deepWork_autoStart");
-    
+
     if (dur) {
       const mins = parseInt(dur);
       setSelectedTime(mins);
@@ -121,7 +121,7 @@ export default function DeepWorkPage() {
         const autoStartFlag = localStorage.getItem("deepWork_autoStart");
         const savedEndTime = localStorage.getItem("deepWork_endTime");
         const savedSelectedTime = localStorage.getItem("deepWork_selectedTime");
-        
+
         // ถ้ามีธง autoStart (คำท้า/Lounge) ห้ามโหลดเวลาเก่ามาทับเด็ดขาด
         if (autoStartFlag !== "true" && savedEndTime && savedSelectedTime) {
           const now = Date.now();
@@ -152,7 +152,7 @@ export default function DeepWorkPage() {
         } else {
           setXpReward(10);
         }
-        
+
         // เช็คเวลาที่ท้ามาทันทีเพื่อลดการกะพริบ (Flicker)
         const savedDuration = localStorage.getItem("deepWork_duration");
         if (savedDuration) {
@@ -171,7 +171,7 @@ export default function DeepWorkPage() {
   // Heartbeat System: Update lastActive every 60 seconds
   useEffect(() => {
     if (!user?.uid) return;
-    
+
     const heartbeat = setInterval(async () => {
       try {
         const sessionRef = doc(db, "active_sessions", user.uid);
@@ -653,9 +653,9 @@ export default function DeepWorkPage() {
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-10">You've mastered {selectedTime} minutes</p>
 
             <div className="flex items-center gap-1.5 mb-10 bg-black/50 px-5 py-2.5 rounded-full border border-zinc-700/50 backdrop-blur-md">
-              <Zap size={12} className={hasClaimedToday ? "fill-zinc-600 text-zinc-600" : "fill-emerald-400 text-emerald-400"} />
-              <p className={`text-[10px] font-black uppercase tracking-widest ${hasClaimedToday ? 'text-zinc-500' : 'text-emerald-400'}`}>
-                {hasClaimedToday ? `+${selectedTime} MINS SAVED` : `+${xpReward} XP EARNED`}
+              <Zap size={12} className="fill-emerald-400 text-emerald-400" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                {`+${xpReward} XP ${xpReward === 15 ? 'LOUNGE' : 'SOLO'} REWARD READY`}
               </p>
             </div>
 
@@ -674,12 +674,13 @@ export default function DeepWorkPage() {
             <button
               onClick={handleClaimXP}
               disabled={isSaving}
-              className={`w-full py-5 rounded-full font-black text-[11px] uppercase tracking-[0.3em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl ${hasClaimedToday
-                ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              className={`w-full py-5 rounded-full font-black text-[11px] uppercase tracking-[0.3em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl ${
+                xpReward === 15 
+                ? 'bg-cyan-500 text-black hover:bg-cyan-400 shadow-cyan-500/20' 
                 : 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-emerald-500/20'
-                }`}
+              }`}
             >
-              {isSaving ? "Syncing..." : hasClaimedToday ? "Save Focus Time" : `Claim +${xpReward} XP & Finish`}
+              {isSaving ? "Syncing..." : `Claim +${xpReward} XP & Finish`}
             </button>
           </motion.div>
         )}

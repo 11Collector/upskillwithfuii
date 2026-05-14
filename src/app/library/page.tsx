@@ -60,6 +60,7 @@ const cardVariants: Variants = {
 
 export default function PremiumLibraryPage() {
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
+  const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [readArticles, setReadArticles] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
   const [articles, setArticles] = useState<any[]>([]);
@@ -124,9 +125,14 @@ export default function PremiumLibraryPage() {
     return () => unsubscribe();
   }, [isMounted]);
 
-  const filteredArticles = activeCategory === "ทั้งหมด"
-    ? articles
-    : articles.filter(article => article.category === activeCategory);
+  const filteredArticles = articles.filter(article => {
+    const matchesCategory = activeCategory === "ทั้งหมด" || article.category === activeCategory;
+    const isRead = readArticles.includes(article.slug);
+    const matchesStatus = statusFilter === "ทั้งหมด"
+      || (statusFilter === "อ่านแล้ว" && isRead)
+      || (statusFilter === "ยังไม่อ่าน" && !isRead);
+    return matchesCategory && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-slate-50 p-6 md:p-10 font-sans selection:bg-amber-500/30 overflow-x-hidden">
@@ -172,6 +178,34 @@ export default function PremiumLibraryPage() {
           <div className="absolute right-[-24px] top-0 bottom-0 w-20 bg-gradient-to-l from-[#0A0A0A] to-transparent pointer-events-none z-10" />
         </div>
 
+        {/* --- 🏷️ Minimal Status Filters --- */}
+        <div className="flex items-center gap-3 mb-10 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full border border-white/5">
+            <LayoutGrid size={12} className="text-slate-500" />
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Filter</span>
+          </div>
+          
+          <div className="flex gap-2">
+            {[
+              { id: "ทั้งหมด", label: "ทั้งหมด" },
+              { id: "อ่านแล้ว", label: "อ่านแล้ว" },
+              { id: "ยังไม่อ่าน", label: "ยังไม่อ่าน" }
+            ].map((status) => (
+              <button
+                key={status.id}
+                onClick={() => setStatusFilter(status.id)}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${
+                  statusFilter === status.id
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.05)]"
+                    : "bg-transparent text-slate-500 border-white/5 hover:border-white/10 hover:text-slate-300"
+                }`}
+              >
+                {status.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* --- Grid Area --- */}
         <motion.div
           key={activeCategory}
@@ -181,6 +215,26 @@ export default function PremiumLibraryPage() {
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           <AnimatePresence mode="popLayout">
+            {filteredArticles.length === 0 && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="col-span-full py-24 text-center bg-[#111]/30 rounded-[3rem] border border-dashed border-white/10"
+              >
+                <div className="bg-amber-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/20 text-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+                  <BookOpen size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">ไม่พบบทความในหมวดนี้</h3>
+                <p className="text-slate-500 font-medium max-w-xs mx-auto">ลองเลือกหมวดหมู่ใหม่หรือเปลี่ยนตัวกรองการอ่านดูนะครับ</p>
+                <button
+                  onClick={() => { setActiveCategory("ทั้งหมด"); setStatusFilter("ทั้งหมด"); }}
+                  className="mt-8 text-amber-500 text-xs font-black uppercase tracking-[0.2em] hover:text-amber-400 transition-colors"
+                >
+                  ล้างตัวกรองทั้งหมด
+                </button>
+              </motion.div>
+            )}
             {filteredArticles.map((article) => {
               const theme = CATEGORY_THEMES[article.category] || CATEGORY_THEMES["ทั้งหมด"];
               return (

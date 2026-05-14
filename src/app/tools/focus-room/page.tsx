@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Swords, Play, ArrowLeft, Zap, User as UserIcon, Globe, Sparkles, HelpCircle, Info, Clock } from "lucide-react";
+import { Users, Swords, Play, ArrowLeft, Zap, User as UserIcon, Globe, Sparkles, HelpCircle, Info, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
@@ -37,6 +37,9 @@ export default function FocusRoomPage() {
   const [incomingChallenge, setIncomingChallenge] = useState<{ fromUid: string, fromName: string, fromTask: string, duration: number } | null>(null);
   const [showSentToast, setShowSentToast] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(25);
 
   const [viewMode, setViewMode] = useState<"selection" | "lounge">("selection");
@@ -121,6 +124,37 @@ export default function FocusRoomPage() {
 
     return () => unsubscribe();
   }, [user]);
+  
+  // 3. Fetch Leaderboard Data
+  useEffect(() => {
+    if (showLeaderboard) {
+      const fetchLeaderboard = async () => {
+        setLoadingLeaderboard(true);
+        try {
+          const { collection, query, orderBy, limit, getDocs, where } = await import("firebase/firestore");
+          const usersRef = collection(db, "users");
+          // กรองเอาเฉพาะคนที่มีเวลาโฟกัสมากกว่า 0 นาทีเท่านั้น
+          const q = query(
+            usersRef, 
+            where("totalFocusMinutes", ">", 0), 
+            orderBy("totalFocusMinutes", "desc"), 
+            limit(10)
+          );
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setLeaderboardData(data);
+        } catch (error) {
+          console.error("Error fetching leaderboard:", error);
+        } finally {
+          setLoadingLeaderboard(false);
+        }
+      };
+      fetchLeaderboard();
+    }
+  }, [showLeaderboard]);
 
 
 
@@ -319,6 +353,12 @@ export default function FocusRoomPage() {
           >
             <HelpCircle size={18} />
           </button>
+          <button
+            onClick={() => setShowLeaderboard(true)}
+            className="p-3 rounded-full bg-blue-900/20 backdrop-blur-md border border-amber-500/20 text-amber-400 hover:text-white hover:bg-amber-800/40 transition-all shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+          >
+            <Trophy size={18} />
+          </button>
         </div>
       </header>
 
@@ -401,6 +441,47 @@ export default function FocusRoomPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="flex-1 w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 relative z-10 mt-4"
           >
+            {/* --- ⚡ Focus Synergy Background Effect --- */}
+            <AnimatePresence>
+              {focusingCount >= 3 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-blue-600/5 to-purple-500/10 animate-pulse duration-[4000ms]" />
+                  
+                  {/* Floating Synergy Particles (Simulated with Blur Orbs) */}
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ 
+                        x: Math.random() * 100 + "%", 
+                        y: Math.random() * 100 + "%",
+                        scale: 0,
+                        opacity: 0 
+                      }}
+                      animate={{ 
+                        y: [null, "-20%", "120%"],
+                        scale: [0, 1.5, 0],
+                        opacity: [0, 0.3, 0]
+                      }}
+                      transition={{ 
+                        duration: 8 + Math.random() * 10,
+                        repeat: Infinity,
+                        delay: i * 2,
+                        ease: "linear"
+                      }}
+                      className="absolute w-64 h-64 bg-cyan-400/10 blur-[100px] rounded-full"
+                    />
+                  ))}
+
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full border-[1px] border-cyan-500/5 rounded-full scale-[1.5] animate-[spin_60s_linear_infinite]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Left Side: My Status (Glassmorphism) */}
             <div className="w-full lg:w-1/3 flex flex-col gap-4">
               <div className="bg-blue-950/30 backdrop-blur-2xl border border-blue-500/20 rounded-[2rem] p-6 sm:p-8 relative overflow-hidden shadow-2xl">
@@ -718,6 +799,107 @@ export default function FocusRoomPage() {
                 className="w-full mt-10 bg-white text-blue-950 py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
               >
                 เข้าใจแล้ว
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Leaderboard Modal */}
+      <AnimatePresence>
+        {showLeaderboard && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[20000] flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-[#020813]/90 backdrop-blur-2xl" onClick={() => setShowLeaderboard(false)} />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-blue-950/40 border border-blue-500/30 rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)] overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-blue-500 to-cyan-400" />
+
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-400/30">
+                    <Trophy size={24} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-wider">หอเกียรติยศแห่งการโฟกัส</h3>
+                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Focus Hall of Fame</p>
+                  </div>
+                </div>
+                <div className="bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-500/20">
+                  <span className="text-[10px] font-black text-blue-300 uppercase tracking-widest">All Time</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6 px-4 py-2.5 rounded-2xl bg-blue-500/5 border border-blue-500/10">
+                <Info size={14} className="text-blue-400 shrink-0" />
+                <p className="text-[10px] text-blue-300/70 font-bold uppercase tracking-wider leading-relaxed">
+                  อันดับคำนวณจากเวลาโฟกัสรวมทั้งหมด (Solo & Lounge)
+                </p>
+              </div>
+
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 no-scrollbar min-h-[200px] flex flex-col justify-start">
+                {loadingLeaderboard ? (
+                  <div className="flex-1 flex flex-col items-center justify-center py-10">
+                    <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-400 rounded-full animate-spin mb-4" />
+                    <p className="text-[10px] font-black text-amber-500/50 uppercase tracking-widest">กำลังดึงข้อมูลระดับตำนาน...</p>
+                  </div>
+                ) : leaderboardData.length > 0 ? (
+                  leaderboardData.map((item, idx) => {
+                    const rank = idx + 1;
+                    const tier = getTierFromXP(item.totalXP || 0);
+                    const hours = Math.floor((item.totalFocusMinutes || 0) / 60);
+                    const mins = (item.totalFocusMinutes || 0) % 60;
+                    
+                    return (
+                      <div key={item.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${rank === 1 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-blue-900/10 border-blue-500/10'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${
+                          rank === 1 ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 
+                          rank === 2 ? 'bg-slate-300 text-black' :
+                          rank === 3 ? 'bg-amber-800 text-white' : 'text-blue-400 border border-blue-500/20'
+                        }`}>
+                          {rank}
+                        </div>
+                        
+                        <img 
+                          src={getAvatarPath(tier, item.gender || 'male')} 
+                          alt="" 
+                          className={`w-10 h-10 object-contain drop-shadow-sm ${rank === 1 ? 'scale-125' : ''}`}
+                        />
+    
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-black text-white truncate">{item.displayName || "Unknown Spirit"}</h4>
+                          <p className="text-[10px] text-blue-300/50 uppercase tracking-widest font-bold">{tier}</p>
+                        </div>
+    
+                        <div className="text-right shrink-0">
+                          <div className="text-sm font-black text-blue-50">{hours}h {mins}m</div>
+                          <div className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">LV. {Math.floor((item.totalXP || 0) / 100) + 1}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-50">
+                    <Trophy size={48} className="text-blue-900 mb-4" />
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">ยังไม่มีข้อมูลอันดับในขณะนี้</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowLeaderboard(false)}
+                className="w-full mt-8 bg-white text-blue-950 py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              >
+                ปิดหน้าต่าง
               </button>
             </motion.div>
           </motion.div>
