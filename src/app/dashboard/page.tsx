@@ -7,7 +7,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
 import React from 'react'
 import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
@@ -766,6 +766,14 @@ export default function DashboardPage() {
   // 🌟 เพิ่ม State เก็บข้อมูล Week ปัจจุบันของผู้ใช้
   const [relativeWeekInfo, setRelativeWeekInfo] = useState({ id: "week-1", label: "สัปดาห์ที่ 1", range: "กำลังโหลด..." });
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ["home", "overview", "quests", "identity", "resources"].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -876,6 +884,11 @@ export default function DashboardPage() {
   const [showSpecialQuestModal, setShowSpecialQuestModal] = useState(false);
   const [customQuestTitle, setCustomQuestTitle] = useState(""); // เก็บชื่อเควสที่กรอก
   const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เปิด/ปิด Modal
+  const [pendingDailySuccess, setPendingDailySuccess] = useState(false); // 👈 คิวรอโชว์ Daily Success
+  const [rerollCount, setRerollCount] = useState(0); // 👈 สถานะการสุ่มเควสใหม่
+  const [lastRerollDate, setLastRerollDate] = useState(""); // 👈 วันที่สุ่มล่าสุด
+  const [slotSeeds, setSlotSeeds] = useState<number[]>([0, 0, 0, 0, 0, 0]); // 👈 Seeds รายข้อ
+  const [showRerollConfirm, setShowRerollConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันสุ่มเควส
 
   // --- ภายใน DashboardPage Component ---
   const [gender, setGender] = useState<"male" | "female">("male");
@@ -920,6 +933,18 @@ export default function DashboardPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // 🛡️ [Modal Queueing]: ป้องกัน Modal เด้งซ้อนกัน (Level Up มาก่อน Daily Success เสมอ)
+  useEffect(() => {
+    if (!showLevelUp && pendingDailySuccess) {
+      // ให้เวลา Level Up หายไปจากจอแป๊บนึงค่อยโชว์ตัวถัดไป
+      const timer = setTimeout(() => {
+        setShowDailySuccess(true);
+        setPendingDailySuccess(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showLevelUp, pendingDailySuccess]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -1077,6 +1102,8 @@ export default function DashboardPage() {
             setWheelPlanDay(userData.wheelPlanDay || 0); // 🌟 เพิ่มบรรทัดนี้ครับ
             setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
             setDailyClaimed(userData.dailyClaimedStats || {});
+            setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
+            setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
 
             let xpToClaim = 0;
             // ... (โค้ดดึงตัวแปร xpToClaim และอื่นๆ ด้านล่างปล่อยไว้เหมือนเดิมครับ)
@@ -1150,6 +1177,25 @@ export default function DashboardPage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  // 🛡️ [UI Control]: ซ่อน Header และ Bottom Navigation เมื่อมี Modal สำคัญเด้งขึ้นมา
+  useEffect(() => {
+    const shouldHide = showRerollConfirm || showLevelUp || showDailySuccess;
+    const nav = document.querySelector('nav');
+
+    if (shouldHide) {
+      document.body.classList.add('hide-bottom-nav');
+      if (nav) nav.style.display = 'none';
+    } else {
+      document.body.classList.remove('hide-bottom-nav');
+      if (nav) nav.style.display = 'flex';
+    }
+
+    return () => {
+      document.body.classList.remove('hide-bottom-nav');
+      if (nav) nav.style.display = 'flex';
+    };
+  }, [showRerollConfirm, showLevelUp, showDailySuccess]);
 
   const handleLogout = async () => {
     try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
@@ -1582,15 +1628,25 @@ export default function DashboardPage() {
 
   const dailyQuests = useMemo(() => {
     if (!todayDateStr || !user?.uid) return [];
-
     const dateSeed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
     const userSeed = user.uid.split('').slice(-5).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const finalSeed = dateSeed + userSeed;
 
-    const pseudoRandom = (max: number, salt: number) => {
-      const x = Math.sin(finalSeed * salt * 12.9898 + salt * 78.233) * 43758.5453123;
+    // 🎡 Seed สำหรับ Wheel (คงที่ตามวัน)
+    const wheelSeed = dateSeed + userSeed;
+
+    // 🎲 ฟังก์ชันสุ่มตาม Seed รายข้อ
+    const getSeedForSlot = (slotIdx: number) => {
+      const base = dateSeed + userSeed;
+      const extra = (slotSeeds[slotIdx] || 0) * 137;
+      return base + extra;
+    };
+
+    const pseudoRandomSlot = (max: number, salt: number, slotIdx: number) => {
+      const s = getSeedForSlot(slotIdx);
+      const x = Math.sin(s * salt * 12.9898 + salt * 78.233) * 43758.5453123;
       return Math.floor((x - Math.floor(x)) * max);
     };
+
 
     const qList = [
       { id: 1, type: "WHEEL", title: "", xp: 20 },
@@ -1638,7 +1694,9 @@ export default function DashboardPage() {
     // ลำดับ 3: ถ้าไม่มีอะไรเลย สุ่มจาก Pool ตามด้านที่ Gap เยอะ (Logic เดิม)
     if (!wheelQuestSet) {
       const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
-      qList[0].title = wheelPool[pseudoRandom(wheelPool.length, 1.5)];
+      const x = Math.sin(wheelSeed * 1.5 * 12.9898 + 1.5 * 78.233) * 43758.5453123;
+      const wheelIdx = Math.floor((x - Math.floor(x)) * wheelPool.length);
+      qList[0].title = wheelPool[wheelIdx];
     }
 
     if (lastWheel?.analysis) {
@@ -1678,20 +1736,22 @@ export default function DashboardPage() {
       }
     }
 
-    // 🎲 ถ้าทำครบแผนแล้ว หรือเกินเวลาเตือน Audit ให้สุ่มจาก Pool ปกติ
+    // ลำดับ 3: ถ้าไม่มีอะไรเลย สุ่มจาก Pool ตามด้านที่ Gap เยอะ (ใช้ wheelSeed เพื่อให้คงที่)
     if (!wheelQuestSet) {
       const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
-      qList[0].title = wheelPool[pseudoRandom(wheelPool.length, 1.5)];
+      const x = Math.sin(wheelSeed * 1.5 * 12.9898 + 1.5 * 78.233) * 43758.5453123;
+      const wheelIdx = Math.floor((x - Math.floor(x)) * wheelPool.length);
+      qList[0].title = wheelPool[wheelIdx];
     }
 
     // ✅ 2. ดึงจาก DISC
     const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
     const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
-    qList[1].title = discPool[pseudoRandom(discPool.length, 2.7)];
+    qList[1].title = discPool[pseudoRandomSlot(discPool.length, 2.7, 1)];
 
     const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
     const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
-    qList[2].title = moneyPool[pseudoRandom(moneyPool.length, 3.9)];
+    qList[2].title = moneyPool[pseudoRandomSlot(moneyPool.length, 3.9, 2)];
 
     // ✅ 4. ดึงจาก Library of Souls (MBTI Style)
     const soulType = lastLibrarySoul?.type || "INFP";
@@ -1702,15 +1762,16 @@ export default function DashboardPage() {
     else if (["ISTP", "ISFP", "ESTP", "ESFP"].includes(soulType)) soulGroup = "SP";
 
     const libraryPool = QUEST_POOL.LIBRARY[soulGroup] || QUEST_POOL.LIBRARY["NF"];
-    qList[3].title = libraryPool[pseudoRandom(libraryPool.length, 4.2)];
+    qList[3].title = libraryPool[pseudoRandomSlot(libraryPool.length, 4.2, 3)];
 
-    const getUniqueQuest = (pool: string[], existingTitles: string[], salt: number) => {
-      let index = pseudoRandom(pool.length, salt);
+    const getUniqueQuestSlot = (pool: string[], existingTitles: string[], salt: number, slotIdx: number) => {
+      let index = pseudoRandomSlot(pool.length, salt, slotIdx);
       let selectedQuest = pool[index];
-      // 👈 [FIX] เปลี่ยนจาก 5 เป็น 8 หรือ 10 เพื่อให้ครอบคลุมตัวหนังสือหลัง Emoji
-      while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 10)))) {
+      let attempts = 0;
+      while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 10))) && attempts < 10) {
         index = (index + 1) % pool.length;
         selectedQuest = pool[index];
+        attempts++;
       }
       return selectedQuest;
     };
@@ -1719,14 +1780,14 @@ export default function DashboardPage() {
     const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
 
     // 🛡️ ช่องที่ 5: Wildcard (ใช้ Salt 5.5)
-    qList[4].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 5.5);
+    qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
     currentTitles.push(qList[4].title);
 
     // 🛡️ ช่องที่ 6: Challenge (ใช้ Salt 6.8)
-    qList[5].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, 6.8);
+    qList[5].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 5);
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, wheelPlanDay, completedQuests]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds]);
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
@@ -1741,6 +1802,14 @@ export default function DashboardPage() {
     }, 0);
   }, [completedQuests, dailyQuests]);
 
+  const canReroll = useMemo(() => {
+    if (!dailyQuests || dailyQuests.length === 0) return false;
+    // เควสที่สุ่มใหม่ได้คือ ID 2, 3, 4, 5, 6 (ไม่รวม 1 คือ Wheel)
+    // ใช้ String() เพื่อดักทั้งกรณีที่เป็น Number และ String ใน Firebase
+    const completedSet = new Set(completedQuests.map(id => String(id)));
+    return [2, 3, 4, 5, 6].some(id => !completedSet.has(String(id)));
+  }, [dailyQuests, completedQuests]);
+
   const currentLevel = Math.floor(totalXP / 100) + 1;
   const currentLevelXP = totalXP % 100;
 
@@ -1751,6 +1820,60 @@ export default function DashboardPage() {
     return "Legacy Shaper (ผู้จารึกตำนานชีวิต)";
   };
 
+  const handleRerollQuests = async () => {
+    if (!user || isToggling) return;
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+    if (lastRerollDate === today) {
+      alert("วันนี้คุณใช้สิทธิ์สุ่มใหม่ไปแล้วครับ (จำกัด 1 ครั้ง/วัน)");
+      return;
+    }
+    if (totalXP < 5) {
+      alert("แต้ม XP ไม่เพียงพอครับ (ต้องใช้ 5 XP)");
+      return;
+    }
+
+    // 🎯 หาเควสที่ "ยังไม่เสร็จ" และ "ไม่ใช่ Wheel"
+    const incompleteNonWheelIndices = [1, 2, 3, 4, 5].filter(idx =>
+      !completedQuests.includes(dailyQuests[idx]?.id)
+    );
+
+    if (incompleteNonWheelIndices.length === 0) {
+      alert("คุณทำเควสที่สุ่มใหม่ได้ครบหมดแล้วครับ!");
+      setShowRerollConfirm(false);
+      return;
+    }
+
+    setShowRerollConfirm(false);
+    setIsToggling(true);
+
+    // 🎲 สุ่มเลือกมา 1 ช่อง จากช่องที่ยังไม่เสร็จ
+    const targetIdx = incompleteNonWheelIndices[Math.floor(Math.random() * incompleteNonWheelIndices.length)];
+    const newSlotSeeds = [...slotSeeds];
+    newSlotSeeds[targetIdx] = (newSlotSeeds[targetIdx] || 0) + 1;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        slotSeeds: newSlotSeeds,
+        lastRerollDate: today,
+        totalXP: totalXP - 5
+      }, { merge: true });
+
+      setSlotSeeds(newSlotSeeds);
+      setLastRerollDate(today);
+      setTotalXP(prev => prev - 5);
+    } catch (e) {
+      console.error("Reroll error:", e);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  const handleOpenRerollConfirm = () => {
+    setShowRerollConfirm(true);
+  };
+
   const toggleQuest = async (id: number | string, xp: number) => {
     // 🌟 บล็อกไม่ให้กดซ้ำถ้าระบบกำลังเซฟอยู่
     if (!user || isToggling) return;
@@ -1758,7 +1881,9 @@ export default function DashboardPage() {
 
     const isDone = completedQuests.includes(id);
 
-    if (!isDone && (completedQuests.length + 1) !== 3) {
+    // 🌟 [COMPLIMENT]: โชว์คำชมเฉพาะเมื่อไม่ใช่ข้อที่ 3 (เพราะข้อ 3 จะโชว์หน้าฉลองใหญ่) 
+    // และจะไม่โชว์ถ้ากำลังจะมี Modal ใหญ่เด้งขึ้นมา (Level Up)
+    if (!isDone && (completedQuests.length + 1) !== 3 && !showLevelUp) {
       const randomIndex = Math.floor(Math.random() * COMPLIMENTARY_MESSAGES.length);
       setShowSuccessToast(COMPLIMENTARY_MESSAGES[randomIndex]);
 
@@ -1814,11 +1939,9 @@ export default function DashboardPage() {
     setCompletedQuests(newCompleted);
     setTotalXP(prev => prev + xpChange);
 
-    // 🏆 [NEW] Trigger: ฉลองความสำเร็จเมื่อครบ 3 เควส
+    // 🏆 [NEW] Trigger: ฉลองความสำเร็จเมื่อครบ 3 เควส (ใช้ระบบ Queue เพื่อไม่ให้ทับกับ Level Up)
     if (!isDone && newCompleted.length === 3) {
-      setTimeout(() => {
-        setShowDailySuccess(true);
-      }, 300);
+      setPendingDailySuccess(true);
     }
 
     // 🛡️ ใส่ try ครอบเนื้อหาที่เป็นการดึง/เซฟข้อมูล Firebase
@@ -2270,8 +2393,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-4 pb-28 md:pb-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-transparent px-6 md:px-8 py-4 pb-28 md:pb-4">
+      <div className="max-w-6xl mx-auto">
 
         {/* --- 🧭 Desktop Tabs Navigation (Head) --- */}
         <div className="hidden sm:flex items-center justify-center gap-2 mb-8 w-full">
@@ -2460,7 +2583,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 🎯 2. Hero Section (จัดข้อความซ้าย อวตาร+Badge ขวา) */}
-                <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-6 mb-6 relative z-30">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between w-full gap-6 mb-6 relative z-30">
 
                   {/* ⬅️ ฝั่งซ้าย: ข้อความและปุ่มจัดการ */}
                   <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
@@ -2489,10 +2612,10 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
-                    <div className="flex sm:hidden items-center justify-center gap-2 w-full max-w-[260px] mt-6 relative z-[999]">
+                    <div className="flex sm:hidden items-center justify-center gap-2 w-full mt-6 relative z-[999]">
 
                       {/* 🎯 Mobile: Level Box & Edit Name */}
-                      <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full hover:border-yellow-500/50 transition-colors">
+                      <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-yellow-500/50 transition-colors">
                         <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shrink-0">
                           <Trophy size={14} className="fill-current" />
                         </div>
@@ -2826,7 +2949,23 @@ export default function DashboardPage() {
                   <Flame size={28} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+                    <button
+                      onClick={handleOpenRerollConfirm}
+                      disabled={isToggling}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all duration-300 group/reroll ${isToggling
+                        ? 'opacity-40 bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                        : 'bg-white text-slate-400 border-slate-100 hover:text-orange-500 hover:border-orange-200 hover:shadow-sm'
+                        }`}
+                      title="สุ่มใหม่ (ใช้ 5 XP)"
+                    >
+                      <RotateCcw size={14} className={`transition-transform duration-500 ${isToggling ? 'animate-spin' : 'group-hover/reroll:rotate-180'}`} />
+                      <span className="text-[10px] font-black uppercase tracking-tight">
+                        {isToggling ? "Rerolling..." : "Reroll Quests"}
+                      </span>
+                    </button>
+                  </div>
                   <p className="text-sm text-slate-500 font-bold flex items-center gap-1.5">
                     <Sparkles size={14} className="text-orange-400" /> เลือกทำได้ทุกข้อ เพื่ออัพสกิลสัปดาห์นี้ของคุณ
                   </p>
@@ -2844,50 +2983,90 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Progress Bar แบบ Super User (5 ช่อง) */}
+            {/* Progress Bar แบบ Super State (Full at 3, Bonus after) */}
             <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
               <div className="flex justify-between items-center mb-3 px-1">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${completedQuests.length >= 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
-                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-                    {completedQuests.length >= 3 ? '🎯 Daily Target Reached!' : 'Mission Progress'}
+                  <div className={`w-2.5 h-2.5 rounded-full ${completedQuests.length > 3 ? 'bg-yellow-400 animate-ping' : completedQuests.length === 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
+                  <span className={`text-[11px] font-black uppercase tracking-widest transition-colors duration-500 ${completedQuests.length >= 6 ? 'text-[#bf953f]' : completedQuests.length >= 4 ? 'text-orange-500' : completedQuests.length === 3 ? 'text-green-600' : 'text-slate-500'}`}>
+                    {completedQuests.length >= 6 ? '👑 Legend Upskill State!' : completedQuests.length >= 4 ? '🔥 Super Upskill State!' : completedQuests.length === 3 ? '🎯 Daily Goal Reached!' : 'Mission Progress'}
                   </span>
                 </div>
                 {/* --- ส่วนแสดงสถานะเป้าหมาย --- */}
-                <span className={`text-xs font-black px-3 py-1 rounded-full transition-all duration-500 ${completedQuests.length >= 6
-                  ? 'bg-yellow-400 text-white shadow-[0_0_15px_rgba(250,204,21,0.5)] animate-pulse'
-                  : completedQuests.length >= 3
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-orange-100 text-orange-600'
-                  }`}>
-                  {completedQuests.length >= 6 ? '🔥 SUPER UPSKILL' : `${completedQuests.length} / 3 GOAL`}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-black px-3 py-1 rounded-full transition-all duration-500 shadow-sm ${completedQuests.length >= 6
+                    ? 'bg-gradient-to-r from-[#bf953f] to-[#aa771c] text-white' // Legend Gold
+                    : completedQuests.length >= 4
+                      ? 'bg-orange-500 text-white animate-pulse' // Super Orange
+                      : completedQuests.length === 3
+                        ? 'bg-green-500 text-white' // Goal Green
+                        : 'bg-orange-100 text-orange-600'
+                    }`}>
+                    {completedQuests.length >= 6 ? 'LEGEND' : completedQuests.length >= 4 ? 'SUPER' : completedQuests.length === 3 ? 'GOAL' : `${completedQuests.length} / 3`}
+                  </span>
+                </div>
               </div>
 
-              <div className="w-full h-4 bg-slate-200/50 rounded-full overflow-hidden p-1 border border-white shadow-inner relative">
-                <div className="absolute left-[60%] top-0 w-[2px] h-full bg-white/50 z-20" />
-
+              <div className="w-full h-5 bg-slate-100/80 rounded-full overflow-hidden p-1 border border-white shadow-inner relative">
+                {/* Background Progress Bar (The track) */}
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(Math.min(completedQuests.length, 6) / 6) * 100}%` }}
-                  className={`h-full rounded-full transition-all duration-700 relative ${completedQuests.length >= 6 ? 'bg-gradient-to-r from-green-400 via-emerald-500 to-yellow-400' :
-                    completedQuests.length >= 3 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
-                      'bg-gradient-to-r from-orange-400 to-red-500'
+                  animate={{
+                    width: `${(Math.min(completedQuests.length, 3) / 3) * 100}%`,
+                  }}
+                  className={`h-full rounded-full transition-all duration-700 relative shadow-md ${completedQuests.length >= 6
+                    ? 'bg-gradient-to-r from-[#8a6d3b] via-[#fcf6ba] to-[#8a6d3b]' // 6: Deep Luxury Gold
+                    : completedQuests.length === 5
+                      ? 'bg-gradient-to-r from-[#2c3e50] via-[#bdc3c7] to-[#2c3e50]' // 5: Gunmetal Silver
+                      : completedQuests.length === 4
+                        ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500' // 4: Rainbow Start
+                        : completedQuests.length === 3
+                          ? 'bg-gradient-to-r from-green-400 to-emerald-500' // 3: Goal Reached
+                          : 'bg-gradient-to-r from-orange-400 to-red-500' // 0-2: Progressing
                     }`}
                 >
-                  {completedQuests.length >= 6 && (
-                    <motion.div
-                      animate={{ x: ['-100%', '200%'] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-20"
-                    />
+                  {/* ✨ Super State Effects (No Sparkles, Just Premium Glow) */}
+                  {completedQuests.length >= 4 && (
+                    <>
+                      <motion.div
+                        animate={{ opacity: completedQuests.length >= 6 ? [0.2, 0.5, 0.2] : [0.1, 0.3, 0.1] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                        className={`absolute inset-0 mix-blend-overlay ${completedQuests.length >= 6 ? 'bg-yellow-100' : 'bg-white'
+                          }`}
+                      />
+                      <motion.div
+                        animate={{ x: ['-100%', '200%'] }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: completedQuests.length >= 6 ? 3 : 2,
+                          ease: "easeInOut"
+                        }}
+                        className={`absolute inset-0 bg-gradient-to-r from-transparent ${completedQuests.length >= 6 ? 'via-white/30' : 'via-white/20'
+                          } to-transparent w-40`}
+                      />
+                    </>
                   )}
-                  <div className="absolute inset-0 bg-white/20 w-full h-[50%] top-0" />
+
+                  {/* Luxury Glow for Level 6 */}
+                  {completedQuests.length >= 6 && (
+                    <div className="absolute inset-0 shadow-[0_0_20px_rgba(191,149,63,0.3)] rounded-full" />
+                  )}
+
+                  {/* Glossy Overlay */}
+                  <div className="absolute inset-0 bg-white/5 w-full h-[40%] top-0" />
                 </motion.div>
               </div>
 
-              <p className="text-[10px] text-slate-400 font-bold mt-3 text-center uppercase tracking-widest">
-                {completedQuests.length < 3 ? 'ทำอีก ' + (3 - completedQuests.length) + ' ข้อเพื่อรักษาวินัยวันนี้' : 'คุณยอดเยี่ยมมาก! เควสที่เหลือจะช่วยเติมสถิติรายสัปดาห์'}
+              <p className="text-[10px] font-bold mt-3 text-center uppercase tracking-widest transition-all duration-500">
+                {completedQuests.length < 3 ? (
+                  <span className="text-slate-400">ทำอีก <span className="text-orange-500">{3 - completedQuests.length}</span> ข้อเพื่อบรรลุเป้าหมาย</span>
+                ) : completedQuests.length >= 6 ? (
+                  <span className="text-[#bf953f] font-black tracking-[0.2em] drop-shadow-sm">🏆 The Legendary Upskiller 🏆</span>
+                ) : completedQuests.length >= 4 ? (
+                  <span className="text-orange-500">SUPER MODE! <span className="text-slate-400">ทำให้ครบเพื่อเข้าสู่โหมด <span className="text-amber-500">LEGEND</span> 🔥</span></span>
+                ) : (
+                  <span className="text-emerald-500">เป้าหมายสำเร็จ! <span className="text-slate-400">ทำเพิ่มเพื่อเข้าสู่โหมด <span className="text-orange-500">SUPER</span></span></span>
+                )}
               </p>
             </div>
 
@@ -3609,7 +3788,6 @@ export default function DashboardPage() {
                         <Zap size={10} className="fill-white" /> +50 XP
                       </motion.div>
                     )}
-
                     <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-emerald-400/5 to-teal-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-emerald-400/10 transition-colors duration-700" />
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-300 via-teal-500 to-emerald-300 opacity-80 transition-all duration-500 group-hover:h-2" />
 
@@ -3753,7 +3931,7 @@ export default function DashboardPage() {
 
                 {/* 🌟 6. AI Personal Mentor - Silver Premium Style (Placed after Deep Work) */}
                 {(activeTab === "home" || activeTab === "resources" || activeTab === "identity") && (
-                  <Link href="/tools/soul-guide" className="md:col-span-2 group block h-full relative">
+                  <Link href="/tools/soul-guide" className="group block h-full relative">
                     <motion.div
                       whileHover={{ y: -6 }}
                       className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-slate-300 relative overflow-hidden group"
@@ -3808,7 +3986,7 @@ export default function DashboardPage() {
                 <Link
                   href={currentLevel >= 5 ? "/library" : "#"}
                   onClick={(e) => { if (currentLevel < 5) e.preventDefault(); }}
-                  className={`md:col-span-3 group block h-full relative ${currentLevel >= 5 ? 'cursor-pointer' : 'cursor-default'}`}
+                  className={`group block h-full relative ${currentLevel >= 5 ? 'cursor-pointer' : 'cursor-default'}`}
                 >
                   <motion.div
                     whileHover={currentLevel >= 5 ? { y: -6 } : {}}
@@ -4484,27 +4662,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* --- 📱 Mobile Bottom Navigation --- */}
-      <div className="sm:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 z-[9999] px-3 py-3 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] pb-safe">
-        <div className="flex items-center justify-between gap-2 max-w-md mx-auto">
-          {[
-            { id: 'home', label: 'หน้าหลัก', icon: <div className="text-2xl mb-1"><LayoutDashboard size={24} /></div> },
-            { id: 'overview', label: 'อวาตาร์', icon: <div className="text-2xl mb-1">👤</div> },
-            { id: 'quests', label: 'ภารกิจ', icon: <div className="text-2xl mb-1">🎯</div> },
-            { id: 'identity', label: 'ตัวตน', icon: <div className="text-2xl mb-2">🧬</div> },
-            { id: 'resources', label: 'อัพสกิล', icon: <div className="text-2xl mb-2">🧠</div> }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id as any)}
-              className={`flex flex-col items-center justify-center flex-1 py-2.5 px-2 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg -translate-y-1' : 'text-slate-400 hover:text-slate-800 hover:bg-slate-50'}`}
-            >
-              {tab.icon}
-              <span className={`text-[10px] font-black tracking-wide ${activeTab === tab.id ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* 📱 Mobile Bottom Navigation was removed to use the global BottomNavigation component */}
 
       {/* 🏆 Modal: ฉลองความสำเร็จรายวัน (Daily Success Celebration) */}
       <AnimatePresence>
@@ -4706,7 +4864,7 @@ export default function DashboardPage() {
           >
             <motion.div
               initial={{ scale: 0.9, y: 40, opacity: 0 }}
-              animate={{ 
+              animate={{
                 scale: 1, y: 0, opacity: 1,
                 transition: { type: "spring", damping: 20, stiffness: 200 }
               }}
@@ -4718,17 +4876,17 @@ export default function DashboardPage() {
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500" />
               <div className="absolute -top-32 -left-32 w-80 h-80 bg-indigo-600/30 blur-[100px] rounded-full pointer-events-none" />
               <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-purple-600/20 blur-[100px] rounded-full pointer-events-none" />
-              
+
               <div className="relative z-10">
                 {/* 🎨 Icon Section (Floating Purple Glass) */}
-                <motion.div 
+                <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                   className="w-28 h-28 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl border border-white/20 relative group"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity" />
                   <Quote size={52} className="text-indigo-600 fill-indigo-500/10 -rotate-6" />
-                  
+
                   {/* Floating +10 XP Badge (Purple) */}
                   <div className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[11px] font-black px-3 py-1.5 rounded-xl shadow-lg border-2 border-white rotate-12">
                     +10 XP
@@ -4741,7 +4899,7 @@ export default function DashboardPage() {
                     ด้วยคำคมกันเถอะ
                   </span> ✨
                 </h3>
-                
+
                 <p className="text-slate-400 text-[14px] font-medium mb-10 leading-relaxed px-4 opacity-80">
                   สุ่มคำคมที่ทัชใจวันนี้ <br />
                   เพื่อปลดล็อกพลังงานบวกของคุณ
@@ -4755,7 +4913,7 @@ export default function DashboardPage() {
                     ไปที่แอปคมสัดสัด
                     <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  
+
                   <button
                     onClick={() => setShowWelcomeQuotePopup(false)}
                     className="w-full py-4 text-slate-500 text-[11px] font-black uppercase tracking-[0.3em] hover:text-indigo-400 transition-colors"
@@ -4769,6 +4927,156 @@ export default function DashboardPage() {
                   <div className="h-1 w-8 bg-indigo-500/30 rounded-full" />
                   <div className="h-1 w-1 bg-indigo-500/30 rounded-full" />
                   <div className="h-1 w-1 bg-indigo-500/30 rounded-full" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 💬 Floating AI Mentor Chat Button - Clean & Defined Version */}
+      <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[90]">
+        <Link href="/tools/soul-guide">
+          <motion.div
+            whileHover={{ scale: 1.1, y: -4 }}
+            whileTap={{ scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative group"
+          >
+            {/* Glow Effect */}
+            <div className="absolute inset-0 bg-indigo-500/10 blur-2xl group-hover:opacity-30 transition-opacity rounded-full" />
+
+            {/* Button Body (Premium Solid White with Defined Border) */}
+            <div className="relative w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border-2 border-slate-300 overflow-hidden group-hover:border-indigo-500/50 group-hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.2)] transition-all duration-500">
+              {/* Subtle Inner Glow on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-50/20 to-purple-50/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <div className="relative z-10 flex items-center justify-center">
+                <MessageSquare size={26} className="text-indigo-600 drop-shadow-sm group-hover:scale-110 transition-transform duration-500" />
+                {/* ⚡ Active Energy Orb (Replaced Sparkles) */}
+                <motion.div
+                  animate={{
+                    y: [0, -2, 0],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"
+                >
+                  <Zap size={10} className="text-indigo-500 fill-indigo-400" />
+                </motion.div>
+              </div>
+
+              {/* Subtle Pulse Ring */}
+              <motion.div
+                animate={{ scale: [1, 1.4, 1], opacity: [0.15, 0, 0.15] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 border-2 border-indigo-500/10 rounded-full"
+              />
+            </div>
+
+            {/* Label Tooltip - Ultra Refined (Hover Only) */}
+            <div className="absolute right-full mr-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500">
+              <div className="bg-white/95 backdrop-blur-xl text-slate-900 text-[11px] font-bold tracking-wider px-5 py-3 rounded-[1.8rem] border-2 border-slate-100 shadow-2xl flex items-center gap-3 whitespace-nowrap">
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+                  <div className="w-1 h-1 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-1 h-1 bg-indigo-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                </div>
+                คุยกับ Mentor
+              </div>
+            </div>
+          </motion.div>
+        </Link>
+      </div>
+
+      {/* 🎲 Modal: ยืนยันการสุ่มเควสใหม่ (Luxury Spring Style) */}
+      <AnimatePresence>
+        {showRerollConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.5, y: 100, opacity: 0 }}
+              animate={{
+                scale: 1,
+                y: 0,
+                opacity: 1,
+                transition: { type: "spring", damping: 20, stiffness: 300 }
+              }}
+              exit={{ scale: 0.5, y: 100, opacity: 0 }}
+              className="relative w-full max-w-sm bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.2)] text-center overflow-hidden"
+            >
+              {/* ✨ แสงฟุ้งพื้นหลัง */}
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+              <div className="relative z-10">
+                <div className="flex justify-end mb-2 -mt-4 -mr-4">
+                  <button
+                    onClick={() => setShowRerollConfirm(false)}
+                    className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner relative">
+                  <div className="absolute inset-0 bg-orange-400/20 blur-xl rounded-full animate-pulse" />
+                  <RotateCcw className="text-orange-500 relative z-10" size={32} />
+                </div>
+
+                <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">สุ่มเควสใหม่? 🎲</h3>
+                <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">
+                  ใช้ <span className="text-orange-600 font-black">5 XP</span> เพื่อเปลี่ยนเควส (ยกเว้น Wheel)<br />คุณสุ่มใหม่ได้อีกเพียง <span className="text-slate-800 font-black">1 ครั้ง</span> ในวันนี้ครับ
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  {(() => {
+                    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+                    const hasRerolled = lastRerollDate === today;
+                    const hasNotEnoughXP = totalXP < 5;
+                    const noQuestsLeft = !canReroll;
+
+                    if (hasRerolled) {
+                      return (
+                        <div className="p-4 bg-slate-50 rounded-2xl text-slate-500 text-xs font-bold leading-relaxed border border-slate-100">
+                          วันนี้คุณใช้สิทธิ์สุ่มใหม่ไปแล้วครับ <br />(จำกัด 1 ครั้ง/วัน)
+                        </div>
+                      );
+                    }
+
+                    if (noQuestsLeft) {
+                      return (
+                        <div className="p-4 bg-amber-50 rounded-2xl text-amber-600 text-xs font-bold leading-relaxed border border-amber-100">
+                          ไม่เหลือเควสที่สามารถสุ่มใหม่ได้แล้วครับ <br />(ยกเว้น Wheel)
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <>
+                        <button
+                          onClick={handleRerollQuests}
+                          disabled={hasNotEnoughXP}
+                          className={`w-full py-4 rounded-2xl font-black text-sm transition-all active:scale-95 ${hasNotEnoughXP
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-200'
+                            }`}
+                        >
+                          {hasNotEnoughXP ? "XP ไม่เพียงพอ (ใช้ 5 XP)" : "ยืนยัน (จ่าย 5 XP)"}
+                        </button>
+                      </>
+                    );
+                  })()}
+                  <button
+                    onClick={() => setShowRerollConfirm(false)}
+                    className="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all"
+                  >
+                    ยกเลิก
+                  </button>
                 </div>
               </div>
             </motion.div>
