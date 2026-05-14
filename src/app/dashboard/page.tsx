@@ -1269,6 +1269,8 @@ export default function DashboardPage() {
         hasLibrarySoulXP: false, // 🌟 รีเซ็ต XP Library Soul
         hasReadXP: false,  // 🌟 ปลดล็อกรีเซ็ต XP การอ่าน
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
+        dailyChatCount: 0,  // 🤖 รีเซ็ตพลังงาน AI Mentor
+        chatUsageDate: null,
         createdAt: resetDate // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
       }, { merge: true });
 
@@ -1288,6 +1290,7 @@ export default function DashboardPage() {
       setWeeklyData({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
       setIsFirstWeek(true);
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
+      setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
 
       // 🧹 5. เคลียร์ Cache ของ Deep Work (สำคัญมาก)
       localStorage.removeItem("lastFocusDate_cache");
@@ -3944,15 +3947,16 @@ export default function DashboardPage() {
                       whileHover={{ y: -6 }}
                       className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-slate-300 relative overflow-hidden group"
                     >
-                      {/* 🏷️ Status Badge */}
+
+
+                      {/* 🏷️ AI Active Status Badge */}
                       <div className="absolute top-8 right-8 z-30">
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Energy</span>
-                          <div className="bg-slate-900 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                            <Zap size={10} className={chatQuota.used >= chatQuota.total && chatQuota.total !== Infinity ? "text-red-500" : "text-yellow-400 fill-current"} />
-                            {chatQuota.total === Infinity ? "Unlimited" : `${chatQuota.total - chatQuota.used}/${chatQuota.total}`}
-                          </div>
-                        </div>
+                        <motion.div
+                          initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          className="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-slate-200 flex items-center gap-1.5 uppercase tracking-wider border border-slate-700"
+                        >
+                          <Zap size={10} className="fill-blue-400 text-blue-400" /> AI Active
+                        </motion.div>
                       </div>
 
                       {/* ✨ Silver Ambient Light & Top Bar */}

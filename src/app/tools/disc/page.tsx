@@ -1,22 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react"; 
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  MessageSquare, Trophy, RefreshCcw, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Wallet ,LayoutDashboard
-} from "lucide-react"; 
-import { toPng } from "html-to-image"; 
+import {
+  MessageSquare, Trophy, RefreshCcw, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Wallet, LayoutDashboard
+} from "lucide-react";
+import { toPng } from "html-to-image";
 import { Kanit } from "next/font/google";
 import { scenarios, ChatScenario } from "@/data/discScenarios"; // ปรับ Path กลับเป็นแบบเดิมของคุณ
 
-import { db ,auth} from "@/lib/firebase"; 
-import { collection, addDoc, serverTimestamp,getDoc,setDoc,increment,doc} from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp, getDoc, setDoc, increment, doc } from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
 
-const kanit = Kanit({ 
-  subsets: ["thai", "latin"], 
-  weight: ["300", "400", "500", "700"] 
+const kanit = Kanit({
+  subsets: ["thai", "latin"],
+  weight: ["300", "400", "500", "700"]
 });
 
 const shuffleArray = (array: any[]) => {
@@ -82,12 +82,12 @@ export default function Home() {
       if (user) {
         setCurrentUser(user);
         if (user.displayName && !nickname) {
-          setNickname(user.displayName.split(" ")[0]); 
+          setNickname(user.displayName.split(" ")[0]);
         }
       }
     });
     return () => unsubscribe();
-  }, []); 
+  }, []);
 
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -107,12 +107,12 @@ export default function Home() {
   const handleStart = () => {
     if (!gender) { alert("เลือกสไตล์พนักงานของคุณก่อนนะ!"); return; }
     if (!nickname.trim()) { alert("กรอกชื่อเล่นของคุณก่อนนะ!"); return; }
-    
+
     const randomScenarios = shuffleArray(scenarios).slice(0, TOTAL_QUESTIONS).map(scenario => ({
       ...scenario,
-      choices: shuffleArray(scenario.choices) 
+      choices: shuffleArray(scenario.choices)
     }));
-    
+
     setActiveScenarios(randomScenarios);
     setAnswers([]);
     setCurrentIndex(0);
@@ -168,7 +168,7 @@ export default function Home() {
 
   const getPercentages = () => {
     const scores = getScores();
-    const total = answers.length || 1; 
+    const total = answers.length || 1;
     return {
       D: Math.round((scores.D / total) * 100),
       I: Math.round((scores.I / total) * 100),
@@ -187,62 +187,62 @@ export default function Home() {
     if (gender === "ตัวมัม") return `ตัวมัม${baseTitle} ${emoji}`;
     return `ชาวออฟฟิศ${baseTitle} ${emoji}`;
   };
-  
-const saveResultToFirebase = async () => {
-  if (hasSavedData) return;
-  try {
-    setHasSavedData(true);
-    const finalResult = getFinalResult();
-    const percentages = getPercentages();
-    
-    const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
-    const finalUserName = currentUser ? currentUser.displayName : "Guest User";
 
-    const resultPayload = {
-      userId: finalUserId,
-      userName: finalUserName,
-      result: finalResult, 
-      nickname: nickname,
-      gender: gender,
-      finalResult: finalResult,
-      percentages: percentages,
-      title: getDynamicTitle(),
-      answers: answers,
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp()  
-    };
+  const saveResultToFirebase = async () => {
+    if (hasSavedData) return;
+    try {
+      setHasSavedData(true);
+      const finalResult = getFinalResult();
+      const percentages = getPercentages();
 
-    if (currentUser) {
-      await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
-    } else {
-      await addDoc(collection(db, "discResults"), resultPayload);
-    }
+      const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
+      const finalUserName = currentUser ? currentUser.displayName : "Guest User";
 
-    if (currentUser) {
-      const userRef = doc(db, "users", currentUser.uid);
-      const userSnap = await getDoc(userRef);
+      const resultPayload = {
+        userId: finalUserId,
+        userName: finalUserName,
+        result: finalResult,
+        nickname: nickname,
+        gender: gender,
+        finalResult: finalResult,
+        percentages: percentages,
+        title: getDynamicTitle(),
+        answers: answers,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp()
+      };
 
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        if (!userData.hasDiscXP) {
-          await setDoc(userRef, {
-            totalXP: increment(50),
-            hasDiscXP: true 
-          }, { merge: true });
+      if (currentUser) {
+        await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
+      } else {
+        await addDoc(collection(db, "discResults"), resultPayload);
+      }
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (!userData.hasDiscXP) {
+            await setDoc(userRef, {
+              totalXP: increment(50),
+              hasDiscXP: true
+            }, { merge: true });
+          }
         }
       }
-    }
 
-  } catch (error) {
-    console.error("Firebase Error: ", error);
-    setHasSavedData(false);
-  }
-};
+    } catch (error) {
+      console.error("Firebase Error: ", error);
+      setHasSavedData(false);
+    }
+  };
   useEffect(() => {
     if (gameState === "result") {
       saveResultToFirebase();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState]);
 
   const restartGame = () => {
@@ -279,14 +279,14 @@ const saveResultToFirebase = async () => {
     { id: "ชาว", label: "ไม่ระบุ", emoji: "👤" },
   ];
 
-// ======================== RENDER START ========================
-return (
+  // ======================== RENDER START ========================
+  return (
     // ✨ ปรับ min-h-[100dvh] เหมือนโค้ดอ้างอิง
     <div className={`min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
-      
+
       {/* ✨ ปรับ Class h และ max-h ของกรอบหลัก ให้เหมือนโค้ดอ้างอิงเป๊ะๆ h-[100dvh] sm:h-[850px] sm:max-h-[90vh] */}
       <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
-        
+
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
           // ✨ ปรับ flex-1 เพื่อให้ยืดเต็มกรอบที่จำกัดไว้
@@ -316,27 +316,26 @@ return (
               <div className="w-full mb-4">
                 <label className="block text-sm font-bold text-slate-800 mb-2 text-center">ชื่อเล่นของคุณ?</label>
 
-<input
-  type="text"
-  placeholder={currentUser ? "ชื่อเล่นของคุณ..." : "เช่น มายด์, ฝน, บอย"}
-  value={nickname}
-  onChange={(e) => setNickname(e.target.value)}
-  className="w-full px-4 py-2.5 text-center rounded-xl border-2 border-blue-300 focus:border-blue-600 focus:outline-none font-bold text-slate-800 text-[13px] transition-colors mb-4"
-/>
+                <input
+                  type="text"
+                  placeholder={currentUser ? "ชื่อเล่นของคุณ..." : "เช่น มายด์, ฝน, บอย"}
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  className="w-full px-4 py-2.5 text-center rounded-xl border-2 border-blue-300 focus:border-blue-600 focus:outline-none font-bold text-slate-800 text-[13px] transition-colors mb-4"
+                />
               </div>
 
               <div className="w-full mb-6">
                 <label className="block text-sm font-bold text-slate-800 mb-3 text-center">คุณคือใครใน Office?</label>
                 <div className="grid grid-cols-4 gap-2">
                   {genderOptions.map((opt) => (
-                    <button 
+                    <button
                       key={opt.id}
-                      onClick={() => setGender(opt.id)} 
-                      className={`py-2 px-1 rounded-xl font-bold flex flex-col items-center justify-center transition-all duration-300 ${
-                        gender === opt.id 
-                        ? "bg-slate-800 text-white shadow-md border-transparent scale-105 -translate-y-1" 
-                        : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300"
-                      }`}
+                      onClick={() => setGender(opt.id)}
+                      className={`py-2 px-1 rounded-xl font-bold flex flex-col items-center justify-center transition-all duration-300 ${gender === opt.id
+                          ? "bg-slate-800 text-white shadow-md border-transparent scale-105 -translate-y-1"
+                          : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300"
+                        }`}
                     >
                       <span className="text-[22px] mb-0.5">{opt.emoji}</span>
                       <span className="text-[10px] leading-tight text-center">{opt.label}</span>
@@ -346,8 +345,8 @@ return (
               </div>
 
               <div className="w-full flex flex-col items-center gap-2 mb-2">
-                <button 
-                  onClick={handleStart} 
+                <button
+                  onClick={handleStart}
                   disabled={!gender || !nickname.trim()}
                   className={`bg-blue-600 text-white font-bold text-[16px] py-3 px-10 rounded-full shadow-md transition-all hover:scale-105 active:scale-95 w-[85%] border-b-[3px] border-blue-800 ${!gender || !nickname.trim() ? "opacity-50 grayscale cursor-not-allowed" : "hover:bg-blue-700"}`}
                 >
@@ -367,7 +366,7 @@ return (
         {gameState === "playing" && activeScenarios.length > 0 && (
           // ✨ ปรับ h-full เหมือนโค้ดอ้างอิง
           <div className="flex flex-col h-full bg-[#E2E8F0]">
-             
+
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
               <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                 {currentIndex > 0 && (
@@ -383,7 +382,7 @@ return (
                   <p className="text-[10px] text-blue-300 leading-tight truncate w-full">{activeScenarios[currentIndex].role}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 shrink-0">
                 <div className="bg-slate-800 text-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-700 shrink-0">
                   {currentIndex + 1} / {activeScenarios.length}
@@ -417,7 +416,7 @@ return (
             <div className="bg-slate-100 p-4 pt-4 border-t border-slate-200 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.06)] shrink-0 z-20 relative">
               <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
               <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide">เลือกคำตอบสไตล์คุณ</p>
-              
+
               <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
                 {activeScenarios[currentIndex].choices.map((choice, index) => {
                   const isSelected = answers[currentIndex] === choice.type;
@@ -425,15 +424,15 @@ return (
                   return (
                     <button
                       key={`${activeScenarios[currentIndex].id}-${index}`}
-                      disabled={isTransitioning && !isSelected} 
+                      disabled={isTransitioning && !isSelected}
                       onClick={(e) => {
                         e.currentTarget.blur();
                         handleChoice(choice.type);
                       }}
                       className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
-                        ${isSelected 
-                          ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" 
-                          : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm" 
+                        ${isSelected
+                          ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm"
+                          : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm"
                         }
                         ${isTransitioning && !isSelected ? "opacity-40" : "opacity-100"}
                       `}
@@ -449,8 +448,8 @@ return (
 
         {/* ================= 3. หน้าจอ Loading ================= */}
         {gameState === "loading" && (
-        // ✨ ปรับ flex-1 เพื่อให้ยืดเต็มกรอบที่จำกัดไว้
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
+          // ✨ ปรับ flex-1 เพื่อให้ยืดเต็มกรอบที่จำกัดไว้
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
             <Loader2 size={48} className="text-blue-500 animate-spin mb-6" />
             <h2 className="text-2xl font-bold text-white mb-2 text-center">กำลังประมวลผลความตึง...</h2>
             <p className="text-slate-400 text-sm text-center">แอบส่องพฤติกรรมคุณในออฟฟิศอยู่ แป๊บนึงนะ 🕵️‍♂️</p>
@@ -461,11 +460,11 @@ return (
         {gameState === "result" && (
           // ✨ ปรับโครงสร้างหน้า Result ใหม่หมด ให้เหมือนโค้ดอ้างอิง เพื่อให้ปุ่มติดล่างและ Scroll เนื้อหาได้
           <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
-            
+
             {/* ✨ ส่วนเนื้อหาที่ Scroll ได้ (ปรับ pb-40 เพื่อเว้นที่ให้กล่องปุ่มด้านล่าง เหมือนโค้ดอ้างอิง) */}
-            <div className="w-full h-full overflow-y-auto pb-40"> 
+            <div className="w-full h-full overflow-y-auto pb-40">
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
-                
+
                 <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-md shrink-0`}>
                   <Trophy size={28} className="text-white/80 mb-2 mt-2" />
                   <p className="text-white/90 text-[11px] font-bold tracking-wider mb-2">
@@ -480,14 +479,14 @@ return (
                     {resultData[getFinalResult()].emoji}
                   </div>
 
-               <div className="text-center mt-2 mb-4">
+                  <div className="text-center mt-2 mb-4">
                     <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">ฉายาของคุณคือ</p>
                     <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">{nickname}</h1>
                     <p className={`text-lg font-black leading-tight px-2 ${resultData[getFinalResult()].titleColor}`}>
                       {getDynamicTitle()}
                     </p>
                   </div>
-                  
+
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-3 text-center">
                     <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{resultData[getFinalResult()].desc}</p>
                   </div>
@@ -508,19 +507,19 @@ return (
                         <Info size={16} />
                       </button>
                     </h3>
-                    
+
                     <div className="w-full h-4 bg-slate-100 rounded-full flex overflow-hidden mb-4 shadow-inner">
                       {["D", "I", "S", "C"].map((type) => {
                         const percent = getPercentages()[type as keyof typeof resultData];
                         const data = resultData[type as keyof typeof resultData];
-                        if (percent === 0) return null; 
+                        if (percent === 0) return null;
                         return (
-                          <motion.div 
+                          <motion.div
                             key={type}
                             initial={{ width: 0 }}
                             animate={{ width: `${percent}%` }}
                             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-                            className={`h-full ${data.barColor} border-r border-white/20 last:border-0`} 
+                            className={`h-full ${data.barColor} border-r border-white/20 last:border-0`}
                           />
                         );
                       })}
@@ -546,10 +545,10 @@ return (
                     <h3 className="font-bold text-slate-800 mb-3 text-sm border-b pb-2 flex items-center gap-2">
                       <span className="text-[16px]">🤝</span> ทำงานกับใครเวิร์คสุด?
                     </h3>
-                    
+
                     <div className={`${themeColors[resultData[getFinalResult()].bestPartner.type].bg} border ${themeColors[resultData[getFinalResult()].bestPartner.type].border} p-3 rounded-xl mb-2 transition-colors`}>
                       <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].title} mb-1 flex items-center gap-1`}>
-                        <Zap size={14}/> คู่หูแบกงาน (Best Partner)
+                        <Zap size={14} /> คู่หูแบกงาน (Best Partner)
                       </p>
                       <p className={`font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].name} text-[13px] mb-0.5`}>
                         {resultData[getFinalResult()].bestPartner.name}
@@ -561,7 +560,7 @@ return (
 
                     <div className={`${themeColors[resultData[getFinalResult()].kryptonite.type].bg} border ${themeColors[resultData[getFinalResult()].kryptonite.type].border} p-3 rounded-xl transition-colors`}>
                       <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].title} mb-1 flex items-center gap-1`}>
-                        <ShieldAlert size={14}/> คู่กรรมทำปวดหัว (Kryptonite)
+                        <ShieldAlert size={14} /> คู่กรรมทำปวดหัว (Kryptonite)
                       </p>
                       <p className={`font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].name} text-[13px] mb-0.5`}>
                         {resultData[getFinalResult()].kryptonite.name}
@@ -571,88 +570,88 @@ return (
                       </p>
                     </div>
                   </div>
-            
-                    <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
-                    <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
-                {/* ✨ ส่วนเครื่องมืออื่นๆ (Dashboard, etc.) ของคุณ ยังคงอยู่ภายในพื้นที่ Scroll */}
-           <div className="mb-6 mt-4">
-  <div className="flex items-center justify-center gap-3 mb-4">
-    <div className="h-[1px] bg-slate-100 flex-1"></div>
-    <p className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">เครื่องมืออัปสกิลอื่นๆ</p>
-    <div className="h-[1px] bg-slate-100 flex-1"></div>
-  </div>
+                  <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
+                  <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
-  <div className="flex flex-col gap-3">
-    <div className="grid grid-cols-2 gap-3">
-      <a 
-        href="/tools/wheel-of-life" 
-        target="_blank" 
-        rel="noreferrer"
-        className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group"
-      >
-        <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-          <PieChart size={18} className="text-orange-500" />
-        </div>
-        <span className="text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
-      </a>
+                  {/* ✨ ส่วนเครื่องมืออื่นๆ (Dashboard, etc.) ของคุณ ยังคงอยู่ภายในพื้นที่ Scroll */}
+                  <div className="mb-6 mt-4">
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <div className="h-[1px] bg-slate-100 flex-1"></div>
+                      <p className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">เครื่องมืออัปสกิลอื่นๆ</p>
+                      <div className="h-[1px] bg-slate-100 flex-1"></div>
+                    </div>
 
-      <a 
-        href="/tools/money-avatar" 
-        target="_blank" 
-        rel="noreferrer"
-        className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-amber-200 hover:bg-amber-50/50 transition-all active:scale-95 group"
-      >
-        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-          <Wallet size={18} className="text-amber-500" />
-        </div>
-        <span className="text-[13px] font-bold text-slate-700">สไตล์การเงิน</span>
-      </a>
-    </div>
+                    <div className="flex flex-col gap-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <a
+                          href="/tools/wheel-of-life"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                            <PieChart size={18} className="text-orange-500" />
+                          </div>
+                          <span className="text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
+                        </a>
 
-    {/* ปุ่ม Dashboard เดิมของคุณ */}
-    <a 
-      href={currentUser ? "/dashboard" : "/"} 
-      className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
-    >
-      <div className="flex items-center gap-3 pl-4 py-3">
-        {currentUser ? (
-          <>
-            <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
-              <LayoutDashboard size={20} className="text-blue-400" />
-            </div>
-            <div className="flex flex-col items-start text-left">
-              <span className="text-[14px] font-black text-white tracking-wide">ไปที่ Dashboard หลัก</span>
-              <span className="text-[10px] text-slate-400 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
-              <ArrowLeft size={20} className="text-slate-300" />
-            </div>
-            <div className="flex flex-col items-start text-left">
-              <span className="text-[14px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
-              <span className="text-[10px] text-slate-400 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
-            </div>
-          </>
-        )}
-      </div>
+                        <a
+                          href="/tools/money-avatar"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-amber-200 hover:bg-amber-50/50 transition-all active:scale-95 group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                            <Wallet size={18} className="text-amber-500" />
+                          </div>
+                          <span className="text-[13px] font-bold text-slate-700">สไตล์การเงิน</span>
+                        </a>
+                      </div>
 
-      <div className="pr-4">
-        {currentUser ? (
-          <ArrowRight size={18} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
-        ) : (
-          <RefreshCcw size={16} className="text-slate-500 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />
-        )}
-      </div>
+                      {/* ปุ่ม Dashboard เดิมของคุณ */}
+                      <a
+                        href={currentUser ? "/dashboard" : "/"}
+                        className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
+                      >
+                        <div className="flex items-center gap-3 pl-4 py-3">
+                          {currentUser ? (
+                            <>
+                              <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+                                <LayoutDashboard size={20} className="text-blue-400" />
+                              </div>
+                              <div className="flex flex-col items-start text-left">
+                                <span className="text-[14px] font-black text-white tracking-wide">ไปที่ Dashboard หลัก</span>
+                                <span className="text-[10px] text-slate-400 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
+                                <ArrowLeft size={20} className="text-slate-300" />
+                              </div>
+                              <div className="flex flex-col items-start text-left">
+                                <span className="text-[14px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
+                                <span className="text-[10px] text-slate-400 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
 
-      {currentUser && (
-        <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl rounded-full"></div>
-      )}
-    </a>
-  </div>
-</div>
+                        <div className="pr-4">
+                          {currentUser ? (
+                            <ArrowRight size={18} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                          ) : (
+                            <RefreshCcw size={16} className="text-slate-500 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />
+                          )}
+                        </div>
+
+                        {currentUser && (
+                          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl rounded-full"></div>
+                        )}
+                      </a>
+                    </div>
+                  </div>
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">
                     Created by อัพสกิลกับฟุ้ย
@@ -705,27 +704,27 @@ return (
               )}
             </AnimatePresence>
 
-          {/* ✨ กล่องปุ่มด้านล่าง (ปรับให้เป็น absolute bottom-0 เพื่อให้ตรึงติดด้านล่าง เหมือนโค้ดอ้างอิง) */}
-          <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 pb-8 sm:pb-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex gap-2 z-20">
-  {/* ปุ่มเซฟรูป */}
-  <button 
-    onClick={handleDownloadImage}
-    disabled={isCapturing}
-    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all text-[12px] sm:text-[14px] shadow-md disabled:bg-slate-400 active:scale-95"
-  >
-    <Camera size={18} /> {isCapturing ? "รอแป๊บ..." : "เซฟรูปขิงใน Story"}
-  </button>
-  
-  {/* ปุ่ม LINE OA ของคุณ */}
-  <a 
-    href="https://lin.ee/rQawKUM" 
-    target="_blank" 
-    rel="noreferrer" 
-    className="flex-1 bg-[#00c300] text-white font-bold py-3.5 rounded-xl text-center text-[12px] sm:text-[14px] flex items-center justify-center gap-1.5 hover:bg-[#00aa00] transition-all shadow-sm active:scale-95"
-  >
-    <MessageSquare size={16} /> ติดตาม LINE OA
-  </a>
-</div>
+            {/* ✨ กล่องปุ่มด้านล่าง (ปรับให้เป็น absolute bottom-0 เพื่อให้ตรึงติดด้านล่าง เหมือนโค้ดอ้างอิง) */}
+            <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 pb-8 sm:pb-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex gap-2 z-20">
+              {/* ปุ่มเซฟรูป */}
+              <button
+                onClick={handleDownloadImage}
+                disabled={isCapturing}
+                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all text-[12px] sm:text-[14px] shadow-md disabled:bg-slate-400 active:scale-95"
+              >
+                <Camera size={18} /> {isCapturing ? "รอแป๊บ..." : "เซฟรูปขิงใน Story"}
+              </button>
+
+              {/* ปุ่ม LINE OA ของคุณ */}
+              <a
+                href="https://lin.ee/rQawKUM"
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 bg-[#00c300] text-white font-bold py-3.5 rounded-xl text-center text-[12px] sm:text-[14px] flex items-center justify-center gap-1.5 hover:bg-[#00aa00] transition-all shadow-sm active:scale-95"
+              >
+                <MessageSquare size={16} /> ติดตาม LINE OA
+              </a>
+            </div>
 
           </div>
         )}
@@ -758,11 +757,11 @@ return (
                   <X size={16} />
                 </button>
               </div>
-              
+
               <p className="text-[12px] text-slate-600 mb-5 leading-relaxed font-medium">
                 ทฤษฎีจิตวิทยาที่แบ่งสไตล์คนทำงานเป็น 4 แบบหลักๆ รู้ไว้ช่วยให้เราเอาตัวรอดจากเพื่อนร่วมงานได้!
               </p>
-              
+
               <div className="space-y-2.5 mb-6">
                 <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 flex items-start gap-2.5">
                   <span className="text-lg leading-none mt-0.5">🚀</span>
@@ -793,7 +792,7 @@ return (
                   </div>
                 </div>
               </div>
-              
+
               <button
                 onClick={() => setShowDiscInfo(false)}
                 className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"

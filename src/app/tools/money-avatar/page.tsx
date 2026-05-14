@@ -1,18 +1,18 @@
 "use client";
-import { collection, addDoc, serverTimestamp ,doc,setDoc,getDoc,increment} from "firebase/firestore";
-import { useState, useRef, useMemo, useEffect } from "react"; 
+import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, increment } from "firebase/firestore";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   Trophy, RefreshCcw, Camera, AlertTriangle, ArrowLeft, ArrowRight, Loader2, Zap, Info, X, BookOpen, PieChart, Users, MessageCircle, LayoutDashboard
-} from "lucide-react"; 
-import { toPng } from "html-to-image"; 
+} from "lucide-react";
+import { toPng } from "html-to-image";
 import Image from "next/image";
 import { Prompt } from "next/font/google";
 
-import { scenarios } from "@/data/moneyScenarios"; 
+import { scenarios } from "@/data/moneyScenarios";
 import { resultData } from "@/data/moneyResult";
 import DisclaimerFooter from '@/app/components/DisclaimerFooter';
-import { auth, db } from "@/lib/firebase"; 
+import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 // 💡 กำหนดโครงสร้างข้อมูลให้ชัดเจน
@@ -58,9 +58,9 @@ const loadingQuotes = [
 ];
 
 // --- 1. SETUP & UTILS ---
-const promptFont = Prompt({ 
-  subsets: ["thai", "latin"], 
-  weight: ["300", "400", "500", "600", "700"] 
+const promptFont = Prompt({
+  subsets: ["thai", "latin"],
+  weight: ["300", "400", "500", "600", "700"]
 });
 
 const shuffleArray = (array: any[]) => {
@@ -103,33 +103,33 @@ const preloadAvatars = () => {
   if (typeof window !== "undefined") {
     Object.values(avatarImages).forEach((src) => {
       // 🟢 เติม window. นำหน้า เพื่อเรียกใช้ Native JS Image Constructor
-      const img = new window.Image(); 
+      const img = new window.Image();
       img.src = src;
     });
   }
 };
 
 const calculatePersona = (riskScore: number, discScore: number): CalculationResult => {
-    const results = profileCenters.map((profile) => {
-      const distance = Math.hypot(riskScore - profile.risk, discScore - profile.disc);
-      return { id: profile.id, distance, profileRisk: profile.risk, profileDisc: profile.disc };
-    });
+  const results = profileCenters.map((profile) => {
+    const distance = Math.hypot(riskScore - profile.risk, discScore - profile.disc);
+    return { id: profile.id, distance, profileRisk: profile.risk, profileDisc: profile.disc };
+  });
 
-    results.sort((a, b) => {
-      if (a.distance === b.distance) {
-        if (a.profileDisc !== b.profileDisc) return a.profileDisc - b.profileDisc; 
-        return a.profileRisk - b.profileRisk;
-      }
-      return a.distance - b.distance;
-    });
-    
-    const maxDist = 14.14;
-    const calculateMatch = (dist: number) => Math.max(0, Math.round(((maxDist - dist) / maxDist) * 100));
+  results.sort((a, b) => {
+    if (a.distance === b.distance) {
+      if (a.profileDisc !== b.profileDisc) return a.profileDisc - b.profileDisc;
+      return a.profileRisk - b.profileRisk;
+    }
+    return a.distance - b.distance;
+  });
 
-    return {
-      primary: { id: results[0].id, matchPercentage: calculateMatch(results[0].distance) },
-      secondary: { id: results[1].id, matchPercentage: calculateMatch(results[1].distance) },
-    };
+  const maxDist = 14.14;
+  const calculateMatch = (dist: number) => Math.max(0, Math.round(((maxDist - dist) / maxDist) * 100));
+
+  return {
+    primary: { id: results[0].id, matchPercentage: calculateMatch(results[0].distance) },
+    secondary: { id: results[1].id, matchPercentage: calculateMatch(results[1].distance) },
+  };
 };
 
 // --- 3. DATA & CONSTANTS ---
@@ -272,25 +272,25 @@ export const jargonDict = [
 export const levelMapping = {
   // Level 1: พื้นฐานการเอาตัวรอด, นิสัยการเงิน, และการจัดการกิเลส (34 ข้อ)
   level1: [
-    8, 9, 11, 13, 14, 15, 18, 21, 24, 32, 
-    33, 36, 39, 41, 43, 45, 47, 49, 50, 51, 
-    52, 53, 54, 56, 67, 68, 69, 70, 76, 77, 
+    8, 9, 11, 13, 14, 15, 18, 21, 24, 32,
+    33, 36, 39, 41, 43, 45, 47, 49, 50, 51,
+    52, 53, 54, 56, 67, 68, 69, 70, 76, 77,
     79, 81, 95, 100
   ],
 
   // Level 2: โลกการลงทุน, การประเมินโอกาส, และการรับมือความผันผวน (33 ข้อ)
   level2: [
-    1, 2, 3, 4, 5, 6, 7, 17, 19, 22, 
-    23, 28, 30, 35, 37, 38, 40, 44, 46, 55, 
-    57, 58, 59, 60, 73, 74, 75, 78, 83, 84, 
+    1, 2, 3, 4, 5, 6, 7, 17, 19, 22,
+    23, 28, 30, 35, 37, 38, 40, 44, 46, 55,
+    57, 58, 59, 60, 73, 74, 75, 78, 83, 84,
     91, 92, 97
   ],
 
   // Level 3: บททดสอบจิตวิทยา, ความลำเอียง (Biases), และปรัชญาความมั่งคั่ง (33 ข้อ)
   level3: [
-    10, 12, 16, 20, 25, 26, 27, 29, 31, 34, 
-    42, 48, 61, 62, 63, 64, 65, 66, 71, 72, 
-    80, 82, 85, 86, 87, 88, 89, 90, 93, 94, 
+    10, 12, 16, 20, 25, 26, 27, 29, 31, 34,
+    42, 48, 61, 62, 63, 64, 65, 66, 71, 72,
+    80, 82, 85, 86, 87, 88, 89, 90, 93, 94,
     96, 98, 99
   ]
 };
@@ -318,7 +318,7 @@ const getProgressiveQuestionSet = (allScenarios: any[], numQuestions: number) =>
 
     if (progressPercent <= 25) { // ช่วงต้นเกม
       const rand = Math.random();
-      drawnId = rand <= 0.80 
+      drawnId = rand <= 0.80
         ? (drawFromLevel('level1') || drawFromLevel('level2'))
         : (drawFromLevel('level2') || drawFromLevel('level1'));
     } else if (progressPercent <= 75) { // ช่วงกลางเกม
@@ -328,7 +328,7 @@ const getProgressiveQuestionSet = (allScenarios: any[], numQuestions: number) =>
       else drawnId = drawFromLevel('level3') || drawFromLevel('level2') || drawFromLevel('level1');
     } else { // ช่วงท้ายเกม
       const rand = Math.random();
-      drawnId = rand <= 0.80 
+      drawnId = rand <= 0.80
         ? (drawFromLevel('level3') || drawFromLevel('level2'))
         : (drawFromLevel('level2') || drawFromLevel('level3'));
     }
@@ -344,15 +344,15 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<{risk: number, disc: number, choiceIndex: number}[]>([]);
-  
+  const [answers, setAnswers] = useState<{ risk: number, disc: number, choiceIndex: number }[]>([]);
+
   const [nickname, setNickname] = useState("");
-  const [persona, setPersona] = useState<string | null>(null); 
+  const [persona, setPersona] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeScenarios, setActiveScenarios] = useState<any[]>([]);
   const [showInfo, setShowInfo] = useState(false);
-  const [showJargon, setShowJargon] = useState(false); 
+  const [showJargon, setShowJargon] = useState(false);
   const [matrixRotation, setMatrixRotation] = useState(0);
 
   const printRef = useRef<HTMLDivElement>(null);
@@ -373,16 +373,16 @@ export default function Home() {
       }
     });
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- DERIVED RESULTS ---
   const matchStats = useMemo(() => {
     if (gameState !== "result" || answers.length < TOTAL_QUESTIONS) return null;
-    
+
     const rawRiskScore = answers.reduce((sum, ans) => sum + (ans?.risk || 0), 0);
     const rawDiscScore = answers.reduce((sum, ans) => sum + (ans?.disc || 0), 0);
-    
+
     // แปลงให้เป็นสเกลเต็ม 10 เสมอ (Normalization) 
     const finalRiskScore = (rawRiskScore / TOTAL_QUESTIONS) * 10;
     const finalDiscScore = (rawDiscScore / TOTAL_QUESTIONS) * 10;
@@ -403,12 +403,12 @@ export default function Home() {
   const handleStart = () => {
     if (!persona) { alert("เลือกทรงทางการเงินของคุณก่อนนะ!"); return; }
     if (!nickname.trim()) { alert("พิมพ์ชื่อเล่นของคุณก่อนนะ!"); return; }
-    
+
     // เรียกใช้ระบบสุ่มคำถามแบบ Progressive
     const selectedScenarios = getProgressiveQuestionSet(scenarios, TOTAL_QUESTIONS);
 
     setActiveScenarios(selectedScenarios);
-    setAnswers([]); 
+    setAnswers([]);
     setCurrentIndex(0);
     setGameState("playing");
   };
@@ -424,18 +424,18 @@ export default function Home() {
     if (currentIndex < TOTAL_QUESTIONS - 1) {
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
-        setIsTransitioning(false); 
+        setIsTransitioning(false);
       }, 250);
     } else {
       const riskTotal = newAnswers.reduce((sum, ans) => sum + ans.risk, 0);
       const discTotal = newAnswers.reduce((sum, ans) => sum + ans.disc, 0);
-      
+
       // Calculate Match (for Firebase)
       const calculated = calculatePersona(riskTotal, discTotal);
       const primaryId = calculated.primary.id;
       const primaryName = resultData[primaryId as keyof typeof resultData]?.title || "นักลงทุน";
       const primaryMatch = calculated.primary.matchPercentage;
-      
+
       const secondaryId = calculated.secondary.id;
       const secondaryName = resultData[secondaryId as keyof typeof resultData]?.title || "นักลงทุน";
       const secondaryMatch = calculated.secondary.matchPercentage;
@@ -458,7 +458,7 @@ export default function Home() {
             userId: currentUser?.uid || "guest",
             nickname: nickname || "นักล่าความมั่งคั่ง",
             persona: primaryName,
-            resultKey: primaryId, 
+            resultKey: primaryId,
             primaryMatch: primaryMatch,
             secondaryPersona: secondaryName,
             secondaryKey: secondaryId,
@@ -484,14 +484,14 @@ export default function Home() {
           console.error("❌ บันทึกล้มเหลว:", error);
         }
       };
-      
+
       saveMoneyResult();
 
       // หน่วงเวลา 600ms ให้ User เห็นหลอดสีวิ่งเต็ม 100% ฟินๆ ก่อนเปลี่ยนฉาก
       setTimeout(() => {
         setIsTransitioning(false);
         setGameState("loading");
-        setTimeout(() => setGameState("result"), 4500); 
+        setTimeout(() => setGameState("result"), 4500);
       }, 600);
     }
   };
@@ -522,14 +522,13 @@ export default function Home() {
 
   const getMatrixClass = (key: string) => {
     const isActive = matchStats?.primary.id === key;
-    
+
     // ปรับลดขนาดลงเป็น text-[9px] (มือถือ) และ text-[9.5px] (จอใหญ่ขึ้น) 
     // เพิ่ม px-1 และ text-center เผื่อคำยาวจะได้ไม่ชนขอบ
-    return `h-11 rounded-xl flex justify-center items-center text-[9px] sm:text-[9.5px] px-1 text-center transition-all ${
-      isActive 
-      ? 'bg-amber-500 text-stone-900 font-bold shadow-md ring-[2px] ring-amber-500 scale-[1.08] z-10 tracking-tight' 
-      : 'bg-white text-stone-400 font-medium tracking-tight'
-    }`;
+    return `h-11 rounded-xl flex justify-center items-center text-[9px] sm:text-[9.5px] px-1 text-center transition-all ${isActive
+        ? 'bg-amber-500 text-stone-900 font-bold shadow-md ring-[2px] ring-amber-500 scale-[1.08] z-10 tracking-tight'
+        : 'bg-white text-stone-400 font-medium tracking-tight'
+      }`;
   };
 
   const getCurrentJargons = () => {
@@ -540,13 +539,13 @@ export default function Home() {
     } else if (gameState === "result" && currentResult) {
       // ดึงข้อมูลจากตัวตนหลัก
       let resultTexts = [
-        currentResult.title, 
-        currentResult.subtitle, 
-        currentResult.desc, 
-        currentResult.motto, 
-        currentResult.bestPartner.name, 
-        currentResult.bestPartner.desc, 
-        currentResult.kryptonite.name, 
+        currentResult.title,
+        currentResult.subtitle,
+        currentResult.desc,
+        currentResult.motto,
+        currentResult.bestPartner.name,
+        currentResult.bestPartner.desc,
+        currentResult.kryptonite.name,
         currentResult.kryptonite.desc
       ];
 
@@ -570,14 +569,14 @@ export default function Home() {
       return textPool.includes(keyword);
     }));
   };
-  
+
   const activeJargons = getCurrentJargons();
 
   return (
     <div className={`min-h-[100dvh] bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className}`}>
-      
+
       <div className={`w-full max-w-md shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
-        
+
         {/* --- START SCREEN --- */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col p-6 sm:p-8 bg-gradient-to-br from-[#FCFBF8] via-[#F4EDE4] to-[#E8DCC4] overflow-y-auto">
@@ -588,15 +587,15 @@ export default function Home() {
               <button onClick={() => setShowInfo(true)} className="mb-6 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-100/80 hover:bg-amber-200 px-3 py-1.5 rounded-full transition-colors border border-amber-300/50 shadow-sm">
                 <Info size={14} /> ทรง AVATAR ทางการเงิน
               </button>
-             
-{/* 🟢 ส่วนรูป Capybara แบบคลีนๆ ไม่มีขอบบนล่าง */}
-<div className="w-full flex justify-center">
-  <img
-    src="/avatars/capybara.png"
-    alt="Capybara"
-    className="w-48 h-auto object-contain drop-shadow-xl" 
-  />
-</div>
+
+              {/* 🟢 ส่วนรูป Capybara แบบคลีนๆ ไม่มีขอบบนล่าง */}
+              <div className="w-full flex justify-center">
+                <img
+                  src="/avatars/capybara.png"
+                  alt="Capybara"
+                  className="w-48 h-auto object-contain drop-shadow-xl"
+                />
+              </div>
 
               <div className="w-full mb-6">
                 <label className="block text-[13px] font-bold text-stone-700 mb-3 text-center uppercase tracking-wider">คุณมาในทรงไหน?</label>
@@ -636,22 +635,22 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <div className="flex items-center gap-2.5 shrink-0 mr-1 sm:mr-3">
-                  
+
                   {/* Progress Bar Section */}
-                  <div className="relative w-28 sm:w-36 flex items-center pr-8"> 
-                    
+                  <div className="relative w-28 sm:w-36 flex items-center pr-8">
+
                     {/* Wrapper ครอบหลอดและเหรียญไว้ด้วยกัน */}
                     <div className="relative w-full">
-                      
+
                       {/* หลอด Progress */}
                       <div className="w-full h-2.5 bg-stone-800 rounded-full overflow-hidden border border-stone-700/50 shadow-inner relative">
-                        <motion.div 
+                        <motion.div
                           className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-500 to-yellow-300"
                           initial={{ width: '2%' }}
                           animate={{ width: `${Math.max(2, (answers.length / TOTAL_QUESTIONS) * 100)}%` }}
                           transition={{ duration: 0.4, ease: "easeOut" }}
                         />
-                        <motion.div 
+                        <motion.div
                           className="absolute top-0 bottom-0 w-4 bg-white/30 blur-[2px]"
                           initial={{ left: '-10%' }}
                           animate={{ left: `calc(${Math.max(2, (answers.length / TOTAL_QUESTIONS) * 100)}% - 8px)` }}
@@ -659,52 +658,52 @@ export default function Home() {
                         />
                       </div>
 
-                    {/* ไอคอนเหรียญทอง (ตัววิ่ง) */}
-<motion.div
-  // เอา -translate-y-1/2 ออกจากตรงนี้
-  className="absolute top-1/2 text-[18px] drop-shadow-md z-10"
-  
-  // บังคับแกน Y ตรงนี้แทน
-  initial={{ left: '0%', rotate: 0, y: '-50%' }}
-  animate={{ 
-    left: `calc(${Math.max(2, (answers.length / TOTAL_QUESTIONS) * 100)}% - 12px)`,
-    rotate: answers.length * 360,
-    scale: [1, 1.3, 1],
-    y: '-50%' // ล็อกแกน Y ไว้ตรงกลางเสมอตอน Animate
-  }}
-  transition={{ 
-    left: { type: "spring", bounce: 0.4, duration: 0.5 },
-    rotate: { type: "spring", bounce: 0.4, duration: 0.5 },
-    scale: { duration: 0.3 } 
-  }}
->
-  💰
-</motion.div>
-                      
+                      {/* ไอคอนเหรียญทอง (ตัววิ่ง) */}
+                      <motion.div
+                        // เอา -translate-y-1/2 ออกจากตรงนี้
+                        className="absolute top-1/2 text-[18px] drop-shadow-md z-10"
+
+                        // บังคับแกน Y ตรงนี้แทน
+                        initial={{ left: '0%', rotate: 0, y: '-50%' }}
+                        animate={{
+                          left: `calc(${Math.max(2, (answers.length / TOTAL_QUESTIONS) * 100)}% - 12px)`,
+                          rotate: answers.length * 360,
+                          scale: [1, 1.3, 1],
+                          y: '-50%' // ล็อกแกน Y ไว้ตรงกลางเสมอตอน Animate
+                        }}
+                        transition={{
+                          left: { type: "spring", bounce: 0.4, duration: 0.5 },
+                          rotate: { type: "spring", bounce: 0.4, duration: 0.5 },
+                          scale: { duration: 0.3 }
+                        }}
+                      >
+                        💰
+                      </motion.div>
+
                     </div>
 
                     {/* Emoji เป้าหมายปลายทาง (Target) */}
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 text-[20px] drop-shadow-sm opacity-80 z-0">
-                      🏆 
+                      🏆
                     </div>
 
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div className="flex-1 p-5 overflow-y-auto flex flex-col justify-center min-h-[250px]"> 
+
+            <div className="flex-1 p-5 overflow-y-auto flex flex-col justify-center min-h-[250px]">
               <AnimatePresence mode="wait">
                 <motion.div key={currentIndex} initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} className="bg-stone-800 p-6 pt-7 rounded-2xl shadow-xl w-full max-w-[92%] border-l-4 border-amber-400 relative mx-auto my-auto">
-                  
+
                   {/* Tag Situation ด้านซ้าย */}
                   <div className="absolute -top-3 left-4 bg-amber-400 text-stone-900 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
-                    <AlertTriangle size={12}/> Situation
+                    <AlertTriangle size={12} /> Situation
                   </div>
 
                   {/* ปุ่มคลังศัพท์ */}
-                  <button 
-                    onClick={() => setShowJargon(true)} 
+                  <button
+                    onClick={() => setShowJargon(true)}
                     className="absolute -top-3 right-4 p-1.5 bg-stone-900 text-[#00bfff] hover:text-white hover:bg-stone-700 rounded-full transition-all active:scale-90 border border-stone-600 shadow-md flex items-center justify-center z-10"
                   >
                     <BookOpen size={14} />
@@ -715,7 +714,7 @@ export default function Home() {
                 </motion.div>
               </AnimatePresence>
             </div>
-            
+
             <div className="bg-[#FCFBF8] p-4 pb-6 border-t border-stone-200 rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.03)] shrink-0 z-20">
               <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4"></div>
               <div className="space-y-3 max-h-[45vh] overflow-y-auto p-1 pb-6 custom-scrollbar">
@@ -731,37 +730,37 @@ export default function Home() {
             </div>
           </div>
         )}
-        
+
         {/* --- LOADING SCREEN --- */}
         {gameState === "loading" && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="flex-1 flex flex-col items-center justify-center p-8 bg-stone-950 relative overflow-hidden"
           >
             {/* เอฟเฟกต์แสงเงาด้านหลัง (Glow Effect) */}
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-[60px] pointer-events-none"></div>
 
             <Loader2 size={52} className="text-amber-500 animate-spin mb-6 z-10 drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]" />
-            
+
             <h2 className="text-xl font-bold text-white mb-2 text-center tracking-wide z-10">กำลังประมวลผล...</h2>
             <p className="text-stone-400 text-[13px] text-center font-light mb-12 z-10">สแกน AVATAR การเงินของคุณ 📉📈</p>
 
             {/* กรอบโชว์ Quote */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }} 
-              animate={{ opacity: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
               className="max-w-[280px] text-center z-10 bg-stone-900/60 p-5 rounded-2xl border border-stone-800/80 backdrop-blur-sm shadow-xl"
             >
               <div className="text-amber-500/40 text-4xl leading-none absolute -top-3 -left-2 font-serif">"</div>
-              
+
               <p className="text-stone-300 text-[12px] italic leading-relaxed mb-4 relative z-10">
-                {randomQuote.text.split("'").map((part, i) => 
+                {randomQuote.text.split("'").map((part, i) =>
                   i % 2 === 1 ? <span key={i} className="text-amber-400 font-semibold">{part}</span> : part
                 )}
               </p>
-              
+
               <div className="flex flex-col items-center justify-center gap-0.5 relative z-10">
                 <span className="text-stone-100 text-[10px] font-bold tracking-wide uppercase">
                   — {randomQuote.author} —
@@ -789,34 +788,34 @@ export default function Home() {
                   <p className="relative z-20 whitespace-nowrap text-white/95 text-[11px] bg-black/50 px-4 py-1.5 rounded-full font-medium tracking-wide border border-white/10">{currentResult.subtitle}</p>
                 </div>
 
-             <div className="p-5 pt-10 flex flex-col relative">
-<div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-[6px] border-[#FCFBF8] z-10 overflow-hidden">
-    {avatarImages[matchStats.primary.id] ? (
-      <img 
-        src={avatarImages[matchStats.primary.id]} 
-        alt={currentResult.title} 
-        className="object-contain w-[85%] h-[85%]" 
-        crossOrigin="anonymous" /* แนะนำให้ใส่เพิ่มเพื่อป้องกันปัญหา CORS ตอนใช้ html-to-image */
-      />
-    ) : (
-      <span className="text-6xl">{currentResult.emoji}</span> 
-    )}
-  </div>
+                <div className="p-5 pt-10 flex flex-col relative">
+                  <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-[6px] border-[#FCFBF8] z-10 overflow-hidden">
+                    {avatarImages[matchStats.primary.id] ? (
+                      <img
+                        src={avatarImages[matchStats.primary.id]}
+                        alt={currentResult.title}
+                        className="object-contain w-[85%] h-[85%]"
+                        crossOrigin="anonymous" /* แนะนำให้ใส่เพิ่มเพื่อป้องกันปัญหา CORS ตอนใช้ html-to-image */
+                      />
+                    ) : (
+                      <span className="text-6xl">{currentResult.emoji}</span>
+                    )}
+                  </div>
 
-  {/* ปรับ mt-3 เป็น mt-10 หรือ mt-12 เพื่อหลบวงกลมที่ใหญ่ขึ้น */}
-  <div className="text-center mt-12 mb-5">
-    <p className="text-stone-400 text-[11px] font-semibold tracking-widest uppercase mb-1">AVATAR การเงินของคุณ</p>
-    <h1 className="text-2xl font-black text-stone-900 leading-tight mb-1">
-      {persona === "ไม่ระบุ" ? nickname : `${persona}${nickname}`}
-    </h1>
-    <p className={`text-lg font-bold leading-tight ${currentResult.titleColor}`}>{currentResult.title}</p>
-    <div className="flex items-center justify-center mt-2">
-       <span className="bg-stone-100 text-stone-500 px-3 py-1 rounded-full text-[10px] font-bold border border-stone-200 shadow-sm">
-         ตรงกับคุณ {matchStats.primary.matchPercentage}%
-       </span>
-    </div>
-  </div>
-                  
+                  {/* ปรับ mt-3 เป็น mt-10 หรือ mt-12 เพื่อหลบวงกลมที่ใหญ่ขึ้น */}
+                  <div className="text-center mt-12 mb-5">
+                    <p className="text-stone-400 text-[11px] font-semibold tracking-widest uppercase mb-1">AVATAR การเงินของคุณ</p>
+                    <h1 className="text-2xl font-black text-stone-900 leading-tight mb-1">
+                      {persona === "ไม่ระบุ" ? nickname : `${persona}${nickname}`}
+                    </h1>
+                    <p className={`text-lg font-bold leading-tight ${currentResult.titleColor}`}>{currentResult.title}</p>
+                    <div className="flex items-center justify-center mt-2">
+                      <span className="bg-stone-100 text-stone-500 px-3 py-1 rounded-full text-[10px] font-bold border border-stone-200 shadow-sm">
+                        ตรงกับคุณ {matchStats.primary.matchPercentage}%
+                      </span>
+                    </div>
+                  </div>
+
                   {/* 1️⃣ จุดแข็ง / มุมมองต่อเงิน */}
                   <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-3 text-center">
                     <p className="text-[13px] text-stone-600 leading-relaxed font-light">
@@ -828,7 +827,7 @@ export default function Home() {
                   <div className="bg-sky-50/60 border border-sky-100 p-4 rounded-2xl mb-4 shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-sky-400"></div>
                     <p className="text-[11px] font-bold text-sky-600 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
-                      <Zap size={14} className="text-sky-500"/> หลุมพรางทางการเงิน
+                      <Zap size={14} className="text-sky-500" /> หลุมพรางทางการเงิน
                     </p>
                     <p className="font-bold text-sky-900 text-[13px] mb-1">{currentResult.kryptonite.name}</p>
                     <p className="text-[12px] text-sky-800/80 leading-relaxed font-light">
@@ -842,7 +841,7 @@ export default function Home() {
                       <div className="flex items-center gap-2"><span className="text-[16px]">🧭</span> พิกัดตัวตนการเงิน</div>
                       <button onClick={() => setShowInfo(true)} className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200 hover:bg-amber-100 transition-colors font-medium active:scale-95"><Info size={12} /></button>
                     </h3>
-                    
+
                     {/* ตาราง 3x3 */}
                     <div className="flex flex-col items-center">
                       <div className="flex w-full justify-center pl-4 pr-1">
@@ -900,7 +899,7 @@ export default function Home() {
                         *Not Financial Advice
                       </span>
                     </div>
-                    
+
                     <div className="flex flex-col gap-3">
                       {/* อันดับ 1 จากตัวตนหลัก */}
                       <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-xl relative overflow-hidden shadow-sm">
@@ -937,7 +936,7 @@ export default function Home() {
                       <p className="text-[10px] font-bold text-stone-400 tracking-[0.1em] uppercase whitespace-nowrap">เครื่องมืออัปสกิลอื่นๆ</p>
                       <div className="h-[1px] bg-stone-200 flex-1"></div>
                     </div>
-                    
+
                     <div className="flex flex-col gap-3 w-full">
                       <div className="grid grid-cols-2 gap-3">
                         <a href="/tools/wheel-of-life" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white border border-stone-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group">
@@ -991,7 +990,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            
+
             <div className="absolute bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl p-4 border-t border-stone-200 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] flex flex-col gap-2.5 z-30">
               <button onClick={handleDownloadImage} disabled={isCapturing} className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 font-bold py-3.5 rounded-xl hover:from-amber-400 hover:to-yellow-400 transition-all text-[14px] shadow-lg disabled:opacity-50"><Camera size={18} /> {isCapturing ? "กำลังประมวลผลรูปภาพ..." : "เซฟรูปอวดเพื่อนลง Story"}</button>
               <div className="flex gap-2">
@@ -1003,138 +1002,138 @@ export default function Home() {
         )}
       </div>
 
-    {/* === POPUP 9 DNA === */}
-<AnimatePresence>
-  {showInfo && (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      exit={{ opacity: 0 }} 
-      className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6" 
-      onClick={() => setShowInfo(false)}
-    >
-      <motion.div 
-        initial={{ scale: 0.9, y: 20 }} 
-        animate={{ scale: 1, y: 0 }} 
-        exit={{ scale: 0.9, y: 20 }} 
-        className="bg-[#FCFBF8] w-full max-w-[360px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200" 
-        onClick={e => e.stopPropagation()}
-      >
-        {/* ส่วนหัว: ปรับสีเป็นทอง Gradient */}
-        <div className="bg-stone-900 p-5 flex justify-between items-center shrink-0 border-b border-amber-500/20">
-          <h3 className="font-bold text-[16px] flex items-center gap-2">
-            <Info size={18} className="text-amber-500" />
-            <span className="bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200 bg-clip-text text-transparent">
-              9 AVATAR ทางการเงิน
-            </span>
-          </h3>
-          <button 
-            onClick={() => setShowInfo(false)} 
-            className="bg-stone-800 p-2 rounded-full hover:bg-stone-700 transition-all active:scale-90 text-stone-400"
+      {/* === POPUP 9 DNA === */}
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6"
+            onClick={() => setShowInfo(false)}
           >
-            <X size={20}/>
-          </button>
-        </div>
-
-       <div className="overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[#FCFBF8]">
-  {/* เปลี่ยนเป็น Object.entries เพื่อให้ดึง 'key' มาใช้แมพรูปภาพได้ */}
-  {Object.entries(resultData).map(([key, type]) => (
-    <div key={key} className="bg-white p-4 rounded-2xl border border-stone-100 flex items-start gap-4 shadow-sm hover:border-amber-200 transition-colors">
-      
-      {/* ส่วนแสดงรูปภาพ Avatar */}
-      <div className="w-16 h-16 shrink-0 bg-stone-50 rounded-2xl overflow-hidden border border-stone-100 flex items-center justify-center">
-        <img 
-          src={avatarImages[key]} 
-          alt={type.title}
-          className="w-14 h-14 object-contain" // ใช้ object-contain เพื่อให้เห็นตัวการ์ตูนครบตัว
-          onError={(e) => { e.currentTarget.src = "/avatars/default.png" }} // Fallback กรณีหาไฟล์ไม่เจอ
-        />
-      </div>
-
-      <div className="flex-1">
-        <p className={`font-bold text-[14px] ${type.titleColor}`}>{type.title}</p>
-        <p className="text-[11px] text-stone-400 font-medium mb-2 uppercase tracking-tight">{type.subtitle}</p>
-        <p className="text-[12px] text-stone-600 leading-relaxed font-light">
-          {highlightText(type.desc, "font-bold text-stone-800 bg-amber-50 px-1 rounded-sm border-b border-amber-200")}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
-     
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
-     {/* === POPUP คลังศัพท์การเงิน === */}
-<AnimatePresence>
-  {showJargon && (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      exit={{ opacity: 0 }} 
-      // เพิ่ม p-6 เพื่อให้ตัว Popup ลอยเด่น ไม่ติดขอบจอ
-      className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6" 
-      onClick={() => setShowJargon(false)}
-    >
-      <motion.div 
-        initial={{ scale: 0.9, y: 20 }} 
-        animate={{ scale: 1, y: 0 }} 
-        exit={{ scale: 0.9, y: 20 }} 
-        // ปรับ rounded-[2.5rem] ให้โค้งมนสวยเท่ากัน และคุม max-h ไว้ที่ 75vh
-        className="bg-white w-full max-w-[340px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-2 border-sky-100" 
-        onClick={e => e.stopPropagation()}
-      >
-        {/* ส่วนหัว: ใช้โทนสีฟ้า/น้ำเงินเพื่อสื่อถึงข้อมูล/ความรู้ */}
-        <div className="bg-slate-900 p-5 flex justify-between items-center shrink-0 border-b border-sky-500/20">
-          <h3 className="font-bold text-[16px] text-white flex items-center gap-2">
-            <BookOpen size={18} className="text-sky-400"/> 
-            <span className="bg-gradient-to-r from-sky-200 to-sky-400 bg-clip-text text-transparent">
-              คลังศัพท์น่ารู้
-            </span>
-          </h3>
-          <button 
-            onClick={() => setShowJargon(false)} 
-            className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-all active:scale-90 text-slate-400"
-          >
-            <X size={20}/>
-          </button>
-        </div>
-
-        {/* เนื้อหาด้านใน: ปรับปรุงระยะห่าง (Spacing) */}
-        <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar bg-white">
-          {activeJargons.length > 0 ? (
-            <div className="space-y-4">
-              <p className="text-[11px] font-bold text-sky-600/60 uppercase tracking-[0.1em] mb-1">ศัพท์ที่เกี่ยวข้องในหน้านี้</p>
-              {activeJargons.map((jargon, idx) => (
-                <div key={idx} className="bg-sky-50/50 p-4 rounded-2xl border border-sky-100 shadow-sm">
-                  <p className="font-bold text-[15px] text-slate-900 mb-1.5">{jargon.word}</p>
-                  <p className="text-[13px] text-slate-600 leading-relaxed font-light">{jargon.desc}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="text-5xl mb-4 grayscale opacity-50">📖</div>
-              <p className="font-bold text-slate-800 text-[15px]">ไม่มีคลังศัพท์ในข้อนี้</p>
-              <p className="text-[12px] text-slate-500 font-light mt-2 px-6">ลุยตอบตามสัญชาตญาณได้เลยครับ!</p>
-            </div>
-          )}
-          
-          <div className="pt-6 border-t border-slate-100">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">เกร็ดการเงินอื่นๆ</p>
-            {jargonDict.filter(j => !activeJargons.includes(j)).slice(0, 2).map((jargon, idx) => (
-              <div key={idx} className="mb-4 last:mb-0 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                <p className="font-bold text-[13px] text-slate-700 mb-1">{jargon.word}</p>
-                <p className="text-[12px] text-slate-500 font-light leading-snug">{jargon.desc}</p>
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#FCFBF8] w-full max-w-[360px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* ส่วนหัว: ปรับสีเป็นทอง Gradient */}
+              <div className="bg-stone-900 p-5 flex justify-between items-center shrink-0 border-b border-amber-500/20">
+                <h3 className="font-bold text-[16px] flex items-center gap-2">
+                  <Info size={18} className="text-amber-500" />
+                  <span className="bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200 bg-clip-text text-transparent">
+                    9 AVATAR ทางการเงิน
+                  </span>
+                </h3>
+                <button
+                  onClick={() => setShowInfo(false)}
+                  className="bg-stone-800 p-2 rounded-full hover:bg-stone-700 transition-all active:scale-90 text-stone-400"
+                >
+                  <X size={20} />
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+
+              <div className="overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[#FCFBF8]">
+                {/* เปลี่ยนเป็น Object.entries เพื่อให้ดึง 'key' มาใช้แมพรูปภาพได้ */}
+                {Object.entries(resultData).map(([key, type]) => (
+                  <div key={key} className="bg-white p-4 rounded-2xl border border-stone-100 flex items-start gap-4 shadow-sm hover:border-amber-200 transition-colors">
+
+                    {/* ส่วนแสดงรูปภาพ Avatar */}
+                    <div className="w-16 h-16 shrink-0 bg-stone-50 rounded-2xl overflow-hidden border border-stone-100 flex items-center justify-center">
+                      <img
+                        src={avatarImages[key]}
+                        alt={type.title}
+                        className="w-14 h-14 object-contain" // ใช้ object-contain เพื่อให้เห็นตัวการ์ตูนครบตัว
+                        onError={(e) => { e.currentTarget.src = "/avatars/default.png" }} // Fallback กรณีหาไฟล์ไม่เจอ
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <p className={`font-bold text-[14px] ${type.titleColor}`}>{type.title}</p>
+                      <p className="text-[11px] text-stone-400 font-medium mb-2 uppercase tracking-tight">{type.subtitle}</p>
+                      <p className="text-[12px] text-stone-600 leading-relaxed font-light">
+                        {highlightText(type.desc, "font-bold text-stone-800 bg-amber-50 px-1 rounded-sm border-b border-amber-200")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* === POPUP คลังศัพท์การเงิน === */}
+      <AnimatePresence>
+        {showJargon && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            // เพิ่ม p-6 เพื่อให้ตัว Popup ลอยเด่น ไม่ติดขอบจอ
+            className="fixed inset-0 z-[100] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-6"
+            onClick={() => setShowJargon(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              // ปรับ rounded-[2.5rem] ให้โค้งมนสวยเท่ากัน และคุม max-h ไว้ที่ 75vh
+              className="bg-white w-full max-w-[340px] max-h-[75vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-2 border-sky-100"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* ส่วนหัว: ใช้โทนสีฟ้า/น้ำเงินเพื่อสื่อถึงข้อมูล/ความรู้ */}
+              <div className="bg-slate-900 p-5 flex justify-between items-center shrink-0 border-b border-sky-500/20">
+                <h3 className="font-bold text-[16px] text-white flex items-center gap-2">
+                  <BookOpen size={18} className="text-sky-400" />
+                  <span className="bg-gradient-to-r from-sky-200 to-sky-400 bg-clip-text text-transparent">
+                    คลังศัพท์น่ารู้
+                  </span>
+                </h3>
+                <button
+                  onClick={() => setShowJargon(false)}
+                  className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-all active:scale-90 text-slate-400"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* เนื้อหาด้านใน: ปรับปรุงระยะห่าง (Spacing) */}
+              <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar bg-white">
+                {activeJargons.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-[11px] font-bold text-sky-600/60 uppercase tracking-[0.1em] mb-1">ศัพท์ที่เกี่ยวข้องในหน้านี้</p>
+                    {activeJargons.map((jargon, idx) => (
+                      <div key={idx} className="bg-sky-50/50 p-4 rounded-2xl border border-sky-100 shadow-sm">
+                        <p className="font-bold text-[15px] text-slate-900 mb-1.5">{jargon.word}</p>
+                        <p className="text-[13px] text-slate-600 leading-relaxed font-light">{jargon.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-5xl mb-4 grayscale opacity-50">📖</div>
+                    <p className="font-bold text-slate-800 text-[15px]">ไม่มีคลังศัพท์ในข้อนี้</p>
+                    <p className="text-[12px] text-slate-500 font-light mt-2 px-6">ลุยตอบตามสัญชาตญาณได้เลยครับ!</p>
+                  </div>
+                )}
+
+                <div className="pt-6 border-t border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">เกร็ดการเงินอื่นๆ</p>
+                  {jargonDict.filter(j => !activeJargons.includes(j)).slice(0, 2).map((jargon, idx) => (
+                    <div key={idx} className="mb-4 last:mb-0 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                      <p className="font-bold text-[13px] text-slate-700 mb-1">{jargon.word}</p>
+                      <p className="text-[12px] text-slate-500 font-light leading-snug">{jargon.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1142,7 +1141,7 @@ export default function Home() {
 const highlightText = (text: string, colorClass: string = "font-bold text-stone-900 bg-amber-100/60 px-1 rounded-md") => {
   if (!text) return null;
   const parts = text.split(/\*\*(.*?)\*\*/g);
-  return parts.map((part, index) => 
+  return parts.map((part, index) =>
     index % 2 === 1 ? (
       <span key={index} className={colorClass}>
         {part}
