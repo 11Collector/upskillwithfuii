@@ -38,7 +38,7 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
   // 💡 2. ดึงข้อมูล Assessments และ Weekly Stats อย่างปลอดภัย
   const authWheelRef = collection(db, "users", uid, "assessments");
 
-  const emptyQuery = { empty: true, docs: [] } as QuerySnapshot<DocumentData>;
+  const emptyQuery = { empty: true, docs: [] } as unknown as QuerySnapshot<DocumentData>;
   const emptyDoc = { exists: () => false, data: () => undefined } as unknown as DocumentSnapshot<DocumentData>;
 
   let authWheelSnap: QuerySnapshot<DocumentData> = emptyQuery;
