@@ -398,6 +398,7 @@ export default function DeepWorkPage() {
       if (noiseSourceRef.current) {
         try { noiseSourceRef.current.stop(); } catch(e) {}
         noiseSourceRef.current.disconnect();
+        noiseSourceRef.current = null;
       }
 
       const ctx = audioCtxRef.current;
@@ -432,26 +433,31 @@ export default function DeepWorkPage() {
   };
 
   const stopNatureSound = () => {
-    if (noiseSourceRef.current) {
+    const sourceToStop = noiseSourceRef.current;
+    const gainToStop = gainNodeRef.current;
+
+    // Clear refs immediately so new playNatureSound calls don't see them
+    noiseSourceRef.current = null;
+    gainNodeRef.current = null;
+
+    if (sourceToStop) {
       try {
-        if (gainNodeRef.current && audioCtxRef.current) {
+        if (gainToStop && audioCtxRef.current) {
           const ctx = audioCtxRef.current;
-          gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, ctx.currentTime);
-          gainNodeRef.current.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+          // Fade out smoothly
+          gainToStop.gain.setValueAtTime(gainToStop.gain.value, ctx.currentTime);
+          gainToStop.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+          
           setTimeout(() => {
-            if (noiseSourceRef.current) {
-              noiseSourceRef.current.stop();
-              noiseSourceRef.current.disconnect();
-              noiseSourceRef.current = null;
-            }
-          }, 500);
+            try { sourceToStop.stop(); } catch(e) {}
+            sourceToStop.disconnect();
+          }, 350);
         } else {
-          noiseSourceRef.current.stop();
-          noiseSourceRef.current.disconnect();
-          noiseSourceRef.current = null;
+          try { sourceToStop.stop(); } catch(e) {}
+          sourceToStop.disconnect();
         }
       } catch (e) {
-        noiseSourceRef.current = null;
+        console.error("Stop sound failed:", e);
       }
     }
   };
