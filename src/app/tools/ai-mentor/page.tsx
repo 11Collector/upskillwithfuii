@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Sparkles, ArrowLeft, Bot, User as UserIcon,
@@ -36,6 +36,7 @@ export default function SoulGuidePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันล้างแชท
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const todayDateStr = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
@@ -513,5 +514,4 @@ export default function SoulGuidePage() {
       </AnimatePresence>
     </div>
   );
-}
 }
