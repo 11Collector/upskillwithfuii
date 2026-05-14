@@ -64,8 +64,8 @@ const handleLogin = async () => {
   const handleLogout = () => signOut(auth);
 
   const tools = [
-        { name: "Wheel of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", icon: <PieChart size={28} className="text-red-600" />, path: "/tools/wheel-of-life", color: "bg-red-50 border-red-200" },
-    { name: "วิเคราะห์ DISC", desc: "ค้นหาตัวตนและการสื่อสารในที่ทำงาน", icon: <Users size={28} className="text-blue-600" />, path: "/tools/disc", color: "bg-blue-50 border-blue-200" },
+        { name: "Wheel Of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", icon: <PieChart size={28} className="text-red-600" />, path: "/tools/wheel-of-life", color: "bg-red-50 border-red-200" },
+    { name: "Who Are You ?", desc: "ค้นหาตัวตนและการสื่อสารในที่ทำงานผ่าน DISC", icon: <Users size={28} className="text-blue-600" />, path: "/tools/disc", color: "bg-blue-50 border-blue-200" },
     { name: "Money Avatar", desc: "ถอดรหัสสไตล์การเงินของคุณ", icon: <Wallet size={28} className="text-amber-600" />, path: "/tools/money-avatar", color: "bg-amber-50 border-amber-200" },
     { name: "คมสัดสัด", desc: "สร้างคำคมฮีลใจเฉพาะคุณ", icon: <Quote size={28} className="text-purple-600" />, path: "/tools/khomsatsat", color: "bg-purple-50 border-purple-200" }
   ];
@@ -191,7 +191,7 @@ const handleLogin = async () => {
             let gimmick = null;
             
            // 💡 1. DISC
-if (tool.name.toLowerCase().includes("disc")) {
+if (tool.name.toLowerCase().includes("who")) {
   gimmick = (
     // เปลี่ยน group-hover:text-white เป็น group-hover:text-blue-900
     <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 shadow-sm group-hover:bg-blue-100 group-hover:text-blue-900 transition-colors duration-300">
@@ -206,7 +206,7 @@ else if (tool.name.toLowerCase().includes("wheel")) {
     // เปลี่ยน group-hover:text-white เป็น group-hover:text-red-900
     <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-orange-50 text-red-600 rounded-full text-[10px] font-black tracking-widest border border-red-100 shadow-sm group-hover:bg-red-100 group-hover:text-red-900 transition-colors duration-300">
       <Flame size={12} className="text-red-500 group-hover:text-red-900 transition-colors animate-pulse" />
-      <span>290K+ Views บน Social</span>
+      <span>500K+ Views บน Social</span>
     </div>
   );
 }

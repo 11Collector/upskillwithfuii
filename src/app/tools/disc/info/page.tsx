@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Mic, MessageSquare, Users, Sparkles, ArrowRight, Zap } from "lucide-react";
 
-// 💡 1. Metadata เจาะกลุ่มคนทำงานและทีม (SEO)
+// 💡 1. Metadata เจาะกลุ่มคนทำงาน ทีมเวิร์ก และปรับให้เข้ากับแบรนดิ้ง (SEO)
 export const metadata: Metadata = {
-  title: "แบบทดสอบ DISC: วิเคราะห์ตัวตนและการสื่อสารในที่ทำงาน | Upskill Everyday",
-  description: "ค้นหาตัวตนผ่านแบบประเมิน DISC เพื่อเข้าใจจุดแข็งและการทำงานร่วมกับผู้อื่นอย่างมืออาชีพ ลดความขัดแย้ง และเพิ่มประสิทธิภาพในทีมวิศวกรและวัยทำงาน",
+  title: "คุณเป็นคนแบบไหนในออฟฟิศ? (Who Are You) | แบบประเมินบุคลิกภาพ DISC - Upskill with Fuii",
+  description: "ทำแบบทดสอบบุคลิกภาพ DISC ค้นหาว่าคุณเป็นคนแบบไหนในที่ทำงาน เพื่อเข้าใจจุดแข็ง อัปสกิลการสื่อสาร และทำงานร่วมกับทีมได้อย่างโปรเฟสชันนัล",
 };
 
 export default function DiscInfoPage() {
@@ -30,13 +30,13 @@ export default function DiscInfoPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] mb-6 rotate-3">
             <Mic size={40} />
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
-            วิเคราะห์ DISC <br/>
-            <span className="text-blue-800">ค้นหาตัวตนและการสื่อสาร</span>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
+            Who Are You ? <br/>
+            <span className="text-blue-800 text-3xl md:text-4xl">คุณเป็นคนแบบไหนในออฟฟิศ</span>
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto leading-relaxed">
             เคยสงสัยไหมว่าทำไมคุยกับเพื่อนร่วมงานบางคนแล้วเหนื่อย? <br className="hidden md:block"/>
-            ใช้เวลา 1-2 นาที ค้นหา &quot;สี&quot; ของคุณ เพื่อรู้วิธีสื่อสารให้ได้ใจคนทุกสไตล์
+            ใช้เวลา 1-2 นาที ค้นหา &quot;สี&quot; ของคุณ ผ่านหลักการ DISC เพื่อรู้วิธีสื่อสารให้ได้ใจคนทุกสไตล์
           </p>
           
           <Link href="/tools/disc">
@@ -56,50 +56,46 @@ export default function DiscInfoPage() {
             <strong>DISC</strong> คือทฤษฎีบุคลิกภาพที่แบ่งคนออกเป็น 4 สไตล์หลัก การเข้าใจ DISC จะช่วยให้คุณสามารถปรับจูนการสื่อสาร (Adaptive Communication) ให้เข้ากับคนแต่ละประเภทได้ ซึ่งเป็นทักษะสำคัญของผู้นำและคนที่ประสบความสำเร็จ
           </p>
 
-<div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-8">
-  {[
-    { 
-      id: "D", 
-      title: "Dominance (สีแดง)", 
-      desc: "เน้นผลลัพธ์ ตรงไปตรงมา ชอบความท้าทาย",
-      color: "bg-red-50 border-red-100 text-red-800 hover:border-red-300" 
-    },
-    { 
-      id: "I", 
-      title: "Influence (สีเหลือง)", 
-      desc: "เน้นการเข้าสังคม สนุกสนาน มีพลังงานสูง",
-      color: "bg-amber-50 border-amber-100 text-amber-800 hover:border-amber-300" 
-    },
-    { 
-      id: "S", 
-      title: "Steadiness (สีเขียว)", 
-      desc: "เน้นทีมเวิร์ก ใจเย็น พร้อมช่วยเหลือผู้อื่น",
-      color: "bg-emerald-50 border-emerald-100 text-emerald-800 hover:border-emerald-300" 
-    },
-    { 
-      id: "C", 
-      title: "Conscientiousness (สีน้ำเงิน)", 
-      desc: "เน้นข้อมูล ความแม่นยำ และความถูกต้อง",
-      color: "bg-blue-50 border-blue-100 text-blue-800 hover:border-blue-300" 
-    }
-  ].map((item) => (
-    <div 
-      key={item.id} 
-      // 💡 ปรับ p-2.5 บนมือถือเพื่อเพิ่มพื้นที่ขยับขยาย
-      className={`p-2.5 sm:p-5 rounded-2xl border ${item.color} transition-all duration-300 shadow-sm hover:shadow-md flex flex-col`}
-    >
-      {/* 💡 ใส่ break-words กันชื่อ Conscientiousness ทะลุ และลดฟอนต์เหลือ 11px บนมือถือ */}
-      <p className="font-black text-[11px] sm:text-[16px] mb-1 sm:mb-1.5 leading-tight break-words">
-        {item.title}
-      </p>
-      {/* 💡 รายละเอียดใช้ text-[10px] บนมือถือเพื่อให้จุข้อความได้ครบโดยไม่ยืดการ์ดจนเบี้ยว */}
-      <p className="text-slate-600 text-[10px] sm:text-[14px] leading-relaxed font-medium">
-        {item.desc}
-      </p>
-    </div>
-  ))}
-</div>
-
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 mt-8">
+            {[
+              { 
+                id: "D", 
+                title: "Dominance (สีแดง)", 
+                desc: "เน้นผลลัพธ์ ตรงไปตรงมา ชอบความท้าทาย",
+                color: "bg-red-50 border-red-100 text-red-800 hover:border-red-300" 
+              },
+              { 
+                id: "I", 
+                title: "Influence (สีเหลือง)", 
+                desc: "เน้นการเข้าสังคม สนุกสนาน มีพลังงานสูง",
+                color: "bg-amber-50 border-amber-100 text-amber-800 hover:border-amber-300" 
+              },
+              { 
+                id: "S", 
+                title: "Steadiness (สีเขียว)", 
+                desc: "เน้นทีมเวิร์ก ใจเย็น พร้อมช่วยเหลือผู้อื่น",
+                color: "bg-emerald-50 border-emerald-100 text-emerald-800 hover:border-emerald-300" 
+              },
+              { 
+                id: "C", 
+                title: "Conscientiousness (สีน้ำเงิน)", 
+                desc: "เน้นข้อมูล ความแม่นยำ และความถูกต้อง",
+                color: "bg-blue-50 border-blue-100 text-blue-800 hover:border-blue-300" 
+              }
+            ].map((item) => (
+              <div 
+                key={item.id} 
+                className={`p-2.5 sm:p-5 rounded-2xl border ${item.color} transition-all duration-300 shadow-sm hover:shadow-md flex flex-col`}
+              >
+                <p className="font-black text-[11px] sm:text-[16px] mb-1 sm:mb-1.5 leading-tight break-words">
+                  {item.title}
+                </p>
+                <p className="text-slate-600 text-[10px] sm:text-[14px] leading-relaxed font-medium">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
         </article>
 
         {/* Content Section 2 (Social Proof/Value) */}
@@ -128,7 +124,7 @@ export default function DiscInfoPage() {
           </div>
         </article>
 
-        {/* --- 💡 ท่อนท้ายที่คุณต้องการ: Bottom CTA (ปรับตามรูปภาพ) --- */}
+        {/* --- Bottom CTA --- */}
         <div className="text-center pb-10 mt-16">
           <Link href="/tools/disc">
             <button className="bg-stone-900 text-white px-10 py-4 rounded-full font-black text-[17px] hover:bg-black transition-all hover:scale-105 shadow-xl flex items-center gap-3 mx-auto border border-stone-800">
@@ -139,7 +135,7 @@ export default function DiscInfoPage() {
           
           {/* คำเตือนสไตล์คนทำธุรกิจ */}
           <p className="text-slate-400 text-[13px] mt-6 font-medium">
-            การสื่อสารมีความเสี่ยง จงมีสติก่อนใช้คำพูด
+            เพราะการสื่อสารคือทักษะ ยิ่งเข้าใจคนยิ่งคุยสนุก
           </p>
           
           <Link href="/" className="inline-block mt-10 text-slate-500 hover:text-slate-800 font-bold text-base transition-colors underline underline-offset-8 decoration-slate-300">
