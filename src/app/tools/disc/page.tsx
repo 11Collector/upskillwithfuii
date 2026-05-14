@@ -4,16 +4,15 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Users, Wallet ,LayoutDashboard
+  MessageSquare, Trophy, RefreshCcw, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Wallet ,LayoutDashboard
 } from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
-import { scenarios, ChatScenario } from "@/data/discScenarios"; 
+import { scenarios, ChatScenario } from "@/data/discScenarios"; // ปรับ Path กลับเป็นแบบเดิมของคุณ
 
 import { db ,auth} from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp,getDoc,setDoc,increment,doc} from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
-import Link from "next/link";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
@@ -29,7 +28,7 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-// ✨ 1. เพิ่ม properties `type` และ `titleColor` เข้าไปใน bestPartner และ kryptonite 
+// Data Structure (ใช้แบบเดิมของคุณที่มี titleColor และ XP logic)
 const resultData = {
   D: {
     rpgTitle: "เดอะแบกสายบวก", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀",
@@ -65,7 +64,6 @@ const resultData = {
   },
 };
 
-// ✨ 2. สร้างชุดสีอ้างอิงให้แต่ละ Type
 const themeColors: Record<string, { bg: string, border: string, title: string, name: string, desc: string }> = {
   D: { bg: "bg-red-50", border: "border-red-200", title: "text-red-700", name: "text-red-900", desc: "text-red-800" },
   I: { bg: "bg-orange-50", border: "border-orange-200", title: "text-orange-700", name: "text-orange-900", desc: "text-orange-800" },
@@ -76,23 +74,20 @@ const themeColors: Record<string, { bg: string, border: string, title: string, n
 type GenderType = "หนุ่ม" | "สาว" | "ตัวมัม" | "ชาว";
 
 export default function Home() {
-// 💡 1. สร้างที่เก็บข้อมูล User
+  // Logic เดิมของคุณทั้งหมด
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // 💡 2. สั่งให้เริ่มจับสัญญาณว่าใคร Login
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    if (user) {
-      setCurrentUser(user);
-      console.log("จับสัญญาณ User ได้แล้ว:", user.uid);
-
-      if (user.displayName && !nickname) {
-        setNickname(user.displayName.split(" ")[0]); 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        if (user.displayName && !nickname) {
+          setNickname(user.displayName.split(" ")[0]); 
+        }
       }
-    }
-  });
-  return () => unsubscribe();
-}, []); 
+    });
+    return () => unsubscribe();
+  }, []); 
 
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -193,7 +188,6 @@ useEffect(() => {
     return `ชาวออฟฟิศ${baseTitle} ${emoji}`;
   };
   
-
 const saveResultToFirebase = async () => {
   if (hasSavedData) return;
   try {
@@ -201,7 +195,6 @@ const saveResultToFirebase = async () => {
     const finalResult = getFinalResult();
     const percentages = getPercentages();
     
-    // 1. เตรียมข้อมูลพื้นฐาน
     const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
     const finalUserName = currentUser ? currentUser.displayName : "Guest User";
 
@@ -221,10 +214,8 @@ const saveResultToFirebase = async () => {
 
     if (currentUser) {
       await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
-      console.log("✅ อัปเดตผลลัพธ์ DISC ล่าสุดให้เรียบร้อย!");
     } else {
       await addDoc(collection(db, "discResults"), resultPayload);
-      console.log("✅ บันทึกข้อมูล Guest เรียบร้อย!");
     }
 
     if (currentUser) {
@@ -238,13 +229,12 @@ const saveResultToFirebase = async () => {
             totalXP: increment(50),
             hasDiscXP: true 
           }, { merge: true });
-          console.log("🎉 ได้รับ 50 XP ครั้งแรกเรียบร้อย!");
         }
       }
     }
 
   } catch (error) {
-    console.error("เกิดข้อผิดพลาด: ", error);
+    console.error("Firebase Error: ", error);
     setHasSavedData(false);
   }
 };
@@ -275,7 +265,7 @@ const saveResultToFirebase = async () => {
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error("Image Capture Error:", err);
+      console.error("Capture Error:", err);
       alert("เกิดข้อผิดพลาดในการเซฟรูป ลองแคปหน้าจอแทนนะครับ");
     } finally {
       setIsCapturing(false);
@@ -289,14 +279,17 @@ const saveResultToFirebase = async () => {
     { id: "ชาว", label: "ไม่ระบุ", emoji: "👤" },
   ];
 
+// ======================== RENDER START ========================
 return (
+    // ✨ ปรับ min-h-[100dvh] เหมือนโค้ดอ้างอิง
     <div className={`min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
       
-      {/* 💡 กรอบนอกสุด ใส่ overflow-hidden ให้มุมโค้งสวยงาม และ h-full ให้พอดีจอ */}
-      <div className={`w-full max-w-md md:max-w-2xl lg:max-w-4xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] lg:h-[900px] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
+      {/* ✨ ปรับ Class h และ max-h ของกรอบหลัก ให้เหมือนโค้ดอ้างอิงเป๊ะๆ h-[100dvh] sm:h-[850px] sm:max-h-[90vh] */}
+      <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
+          // ✨ ปรับ flex-1 เพื่อให้ยืดเต็มกรอบที่จำกัดไว้
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full flex flex-col p-5 sm:p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
             <div className="flex flex-col items-center justify-center shrink-0 w-full pt-2">
               <div className="text-center mb-5">
@@ -371,10 +364,9 @@ return (
         )}
 
         {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
- {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
         {gameState === "playing" && activeScenarios.length > 0 && (
-          // 💡 แก้ไขตรงนี้: เปลี่ยน h-full เป็น flex-1 และบังคับ min-h ให้ยืดเต็มจอ (หัก Navbar บน 64px และ Bottom Nav ล่าง 72px)
-          <div className="flex flex-col flex-1 min-h-[calc(100dvh-136px)] bg-[#E2E8F0] overflow-hidden w-full">
+          // ✨ ปรับ h-full เหมือนโค้ดอ้างอิง
+          <div className="flex flex-col h-full bg-[#E2E8F0]">
              
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
               <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
@@ -404,7 +396,6 @@ return (
               </div>
             </div>
 
-            {/* 💡 แชทเลื่อนได้ */}
             <div className="flex-1 p-5 overflow-y-auto flex flex-col pb-4">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -422,12 +413,12 @@ return (
               </AnimatePresence>
             </div>
 
-            {/* 💡 กรอบตัวเลือก กำหนดความสูงสูงสุด (max-h) และให้เลื่อนได้ */}
-            <div className="bg-slate-100 p-4 pt-4 border-t border-slate-200 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.06)] shrink-0 z-20 flex flex-col max-h-[50vh]">
-              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3 shrink-0"></div>
-              <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide shrink-0">เลือกคำตอบสไตล์คุณ</p>
+            {/* ✨ ปรับ Class กล่องตัวเลือก ให้เหมือนโค้ดอ้างอิง: space-y-3 max-h-[45vh] overflow-y-auto */}
+            <div className="bg-slate-100 p-4 pt-4 border-t border-slate-200 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.06)] shrink-0 z-20 relative">
+              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
+              <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide">เลือกคำตอบสไตล์คุณ</p>
               
-              <div className="space-y-3 overflow-y-auto pr-1 pb-2">
+              <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
                 {activeScenarios[currentIndex].choices.map((choice, index) => {
                   const isSelected = answers[currentIndex] === choice.type;
 
@@ -439,7 +430,7 @@ return (
                         e.currentTarget.blur();
                         handleChoice(choice.type);
                       }}
-                      className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words shrink-0
+                      className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
                         ${isSelected 
                           ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" 
                           : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm" 
@@ -458,11 +449,8 @@ return (
 
         {/* ================= 3. หน้าจอ Loading ================= */}
         {gameState === "loading" && (
-        <motion.div 
-  initial={{ opacity: 0 }} 
-  animate={{ opacity: 1 }} 
-  className="flex-1 flex flex-col min-h-[calc(100dvh-136px)] w-full items-center justify-center p-8 bg-slate-900"
->
+        // ✨ ปรับ flex-1 เพื่อให้ยืดเต็มกรอบที่จำกัดไว้
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
             <Loader2 size={48} className="text-blue-500 animate-spin mb-6" />
             <h2 className="text-2xl font-bold text-white mb-2 text-center">กำลังประมวลผลความตึง...</h2>
             <p className="text-slate-400 text-sm text-center">แอบส่องพฤติกรรมคุณในออฟฟิศอยู่ แป๊บนึงนะ 🕵️‍♂️</p>
@@ -471,11 +459,11 @@ return (
 
         {/* ================= 4. หน้าจอสรุปผล ================= */}
         {gameState === "result" && (
-          // 💡 ใช้ Flex จัดโครงสร้าง หน้าจอเลื่อนได้ ส่วนปุ่มติดขอบล่าง
-          <div className="flex flex-col h-full bg-slate-50 relative overflow-hidden">
+          // ✨ ปรับโครงสร้างหน้า Result ใหม่หมด ให้เหมือนโค้ดอ้างอิง เพื่อให้ปุ่มติดล่างและ Scroll เนื้อหาได้
+          <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
             
-            {/* 💡 พื้นที่แสดงผลลัพธ์ (เลื่อนขึ้นลงได้) */}
-            <div className="flex-1 overflow-y-auto w-full pb-8"> 
+            {/* ✨ ส่วนเนื้อหาที่ Scroll ได้ (ปรับ pb-40 เพื่อเว้นที่ให้กล่องปุ่มด้านล่าง เหมือนโค้ดอ้างอิง) */}
+            <div className="w-full h-full overflow-y-auto pb-40"> 
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
                 
                 <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-md shrink-0`}>
@@ -486,7 +474,8 @@ return (
                   <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1.5 rounded-full">{resultData[getFinalResult()].discTitle}</p>
                 </div>
 
-                <div className="p-5 pt-12 flex flex-col relative bg-slate-50">
+                {/* ✨ เพิ่ม flex-1 ตรงนี้เพื่อให้ยืดเต็มพื้นที่ */}
+                <div className="p-5 pt-12 flex-1 flex flex-col relative bg-slate-50">
                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-5xl w-24 h-24 rounded-full flex items-center justify-center shadow-xl border-[6px] border-slate-50 z-10">
                     {resultData[getFinalResult()].emoji}
                   </div>
@@ -586,6 +575,7 @@ return (
                     <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
                     <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
+                {/* ✨ ส่วนเครื่องมืออื่นๆ (Dashboard, etc.) ของคุณ ยังคงอยู่ภายในพื้นที่ Scroll */}
            <div className="mb-6 mt-4">
   <div className="flex items-center justify-center gap-3 mb-4">
     <div className="h-[1px] bg-slate-100 flex-1"></div>
@@ -620,6 +610,7 @@ return (
       </a>
     </div>
 
+    {/* ปุ่ม Dashboard เดิมของคุณ */}
     <a 
       href={currentUser ? "/dashboard" : "/"} 
       className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
@@ -670,6 +661,7 @@ return (
               </div>
             </div>
 
+            {/* Popup Info ของคุณยังคงอยู่ */}
             <AnimatePresence>
               {selectedDiscType && (
                 <motion.div
@@ -713,7 +705,8 @@ return (
               )}
             </AnimatePresence>
 
-          <div className="shrink-0 w-full bg-white/95 backdrop-blur-md p-4 pb-8 sm:pb-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex gap-2 z-20">
+          {/* ✨ กล่องปุ่มด้านล่าง (ปรับให้เป็น absolute bottom-0 เพื่อให้ตรึงติดด้านล่าง เหมือนโค้ดอ้างอิง) */}
+          <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 pb-8 sm:pb-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex gap-2 z-20">
   {/* ปุ่มเซฟรูป */}
   <button 
     onClick={handleDownloadImage}
@@ -723,7 +716,7 @@ return (
     <Camera size={18} /> {isCapturing ? "รอแป๊บ..." : "เซฟรูปขิงใน Story"}
   </button>
   
-  {/* ปุ่ม LINE OA */}
+  {/* ปุ่ม LINE OA ของคุณ */}
   <a 
     href="https://lin.ee/rQawKUM" 
     target="_blank" 
@@ -742,6 +735,7 @@ return (
         Created by <span className="font-bold text-slate-300">อัพสกิลกับฟุ้ย</span>
       </div>
 
+      {/* Disc Info Popup */}
       <AnimatePresence>
         {showDiscInfo && (
           <motion.div
