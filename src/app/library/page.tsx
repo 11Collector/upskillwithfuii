@@ -62,8 +62,48 @@ export default function PremiumLibraryPage() {
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [readArticles, setReadArticles] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 1. Fetch Articles from Firestore
+  useEffect(() => {
+    if (!isMounted) return;
+    const fetchArticles = async () => {
+      try {
+        const { collection, getDocs, query, orderBy } = await import("firebase/firestore");
+        const articlesRef = collection(db, "articles");
+        const q = query(articlesRef, orderBy("id", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedArticles = querySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        }));
+
+        if (fetchedArticles.length > 0) {
+          setArticles(fetchedArticles);
+        } else {
+          setArticles(mockArticles);
+        }
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+        setArticles(mockArticles);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, [isMounted]);
+
+  // 2. Fetch User Read History
+  useEffect(() => {
+    if (!isMounted) return;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -85,8 +125,8 @@ export default function PremiumLibraryPage() {
   }, []);
 
   const filteredArticles = activeCategory === "ทั้งหมด" 
-    ? mockArticles 
-    : mockArticles.filter(article => article.category === activeCategory);
+    ? articles 
+    : articles.filter(article => article.category === activeCategory);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-slate-50 p-6 md:p-10 font-sans selection:bg-amber-500/30 overflow-x-hidden">

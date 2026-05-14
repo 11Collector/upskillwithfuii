@@ -34,18 +34,51 @@ export default function ArticleDetail() {
   const router = useRouter();
   const articleSlug = Array.isArray(slug) ? slug[0] : slug;
 
+  const [article, setArticle] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
   const [xpClaimed, setXpClaimed] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // ค้นหาบทความจาก slug
-  const article = mockArticles.find((a) => a.slug === articleSlug);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // ดึงข้อมูลบทความจาก Firestore
+  useEffect(() => {
+    if (!isMounted) return;
+    const fetchArticle = async () => {
+      try {
+        const { collection, query, where, getDocs, limit } = await import("firebase/firestore");
+        const articlesRef = collection(db, "articles");
+        const q = query(articlesRef, where("slug", "==", articleSlug), limit(1));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          setArticle(querySnapshot.docs[0].data());
+        } else {
+          const mockMatch = mockArticles.find((a) => a.slug === articleSlug);
+          if (mockMatch) setArticle(mockMatch);
+        }
+      } catch (error) {
+        console.error("Error fetching article:", error);
+        const mockMatch = mockArticles.find((a) => a.slug === articleSlug);
+        if (mockMatch) setArticle(mockMatch);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (articleSlug) fetchArticle();
+  }, [articleSlug, isMounted]);
   
   // ดึง Theme ตามหมวดหมู่ของบทความนั้น ๆ
   const theme = CATEGORY_THEMES[article?.category || ""] || CATEGORY_THEMES["ทั้งหมด"];
 
   useEffect(() => {
+    if (!isMounted) return;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -77,6 +110,12 @@ export default function ArticleDetail() {
     } catch (error) { alert("เกิดข้อผิดพลาดในการรับ XP"); } 
     finally { setIsClaiming(false); }
   };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+      <Loader2 className="animate-spin text-amber-500" size={40} />
+    </div>
+  );
 
   if (!article) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-[#0A0A0A] text-white">
