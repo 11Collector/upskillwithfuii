@@ -1976,21 +1976,21 @@ const theme = discThemes[discType as keyof typeof discThemes] || discThemes.C;
     <AvatarDisplay currentLevel={currentLevel} gender={gender} />
   </div>
 
-  {/* 🐾 สัตว์เลี้ยง (วางตำแหน่งแบบซ้อนทับประชิด) */}
-  {lastMoney?.resultKey && (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-
-      className="absolute bottom-0 left-1/2 translate-x-[-15%] sm:translate-x-[0%] z-20 w-36 h-36 sm:w-44 sm:h-44"
-    >
-      <img 
-        src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img} 
-        alt={PET_DATA[lastMoney.resultKey]?.name}
-        className="w-full h-full object-contain object-bottom animate-bounce-slow drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" 
-      />
-    </motion.div>
-  )}
+{/* 🐾 สัตว์เลี้ยง (หน้า Dashboard) - โชว์ทันที ไม่มี Fade-in */}
+{lastMoney?.resultKey && (
+  // 🎯 เปลี่ยน motion.div เป็น div ธรรมดา และลบ initial, animate, transition ทิ้งให้หมด!
+  <div className="absolute bottom-0 left-1/2 translate-x-[-15%] sm:translate-x-[0%] z-20 w-36 h-36 sm:w-44 sm:h-44">
+    <img 
+      src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img} 
+      alt={PET_DATA[lastMoney.resultKey]?.name}
+      
+      fetchPriority="high" 
+      loading="eager"
+      decoding="async"
+      className="w-full h-full object-contain object-bottom animate-bounce-slow drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" 
+    />
+  </div>
+)}
 </div>
   {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
   <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap sm:flex-nowrap px-2">
