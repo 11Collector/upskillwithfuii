@@ -1875,7 +1875,7 @@ export default function DashboardPage() {
                       <span className="shrink-0 text-[10px] font-black text-amber-400 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full">+{next.xp} XP</span>
                     )}
                   </div>
-                  <p className="text-slate-400 text-[11px] mt-0.5 truncate">{next.desc}</p>
+                  <p className="text-slate-400 text-[11px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำแบบประเมินเพื่อให้ AI Mentor รู้จักคุณ" : next.desc}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 relative z-10">
                   <span className="text-[11px] font-black text-slate-500 hidden sm:block">{doneCount}/5</span>
