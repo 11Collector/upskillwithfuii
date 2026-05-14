@@ -22,6 +22,8 @@ export default function BottomNavigation() {
     pathname === '/tools/focus-room' ||
     pathname === '/report-review';
 
+  if (pathname === '/tools/soul-guide' || pathname === '/tools/ai-mentor') return null;
+
   if (isDashboardFlow) {
     // 🏠 Dashboard/App Context Navigation (Using the exact Emojis and Logic from the original Dashboard)
     const navItems = [

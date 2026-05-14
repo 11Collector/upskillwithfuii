@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Sparkles, ArrowLeft, Bot, User as UserIcon,
@@ -36,6 +36,7 @@ export default function SoulGuidePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันล้างแชท
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const todayDateStr = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
@@ -137,6 +138,23 @@ export default function SoulGuidePage() {
       unsubs.forEach(unsub => unsub());
     };
   }, [router]);
+  
+  const wheelArea = useMemo(() => {
+    if (userData?.lastWheel?.scores && userData?.lastWheel?.targetScores) {
+      const gaps = userData.lastWheel.scores.map((current: number, i: number) => ({
+        index: i,
+        gap: (userData.lastWheel.targetScores[i] || 0) - current,
+        label: ["สุขภาพ", "การเงิน", "การงาน", "ครอบครัว", "เพื่อนฝูง", "พัฒนาตนเอง", "จิตใจ", "ช่วยเหลือสังคม"][i]
+      }));
+      const top3Gaps = [...gaps].sort((a, b) => b.gap - a.gap).slice(0, 3);
+      if (todayDateStr && top3Gaps.length > 0) {
+        const seed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+        return top3Gaps[seed % top3Gaps.length].label;
+      }
+      return top3Gaps[0]?.label || "การงาน";
+    }
+    return "การงาน";
+  }, [userData?.lastWheel, todayDateStr]);
 
   // 🛡️ [UI Control]: ซ่อน Bottom Navigation เมื่อมี Modal ยืนยัน
   useEffect(() => {
@@ -150,34 +168,54 @@ export default function SoulGuidePage() {
 
   const isFirstScroll = useRef(true);
 
-  useEffect(() => {
-    // เลื่อนลงล่างสุดทุกครั้งที่มีการตอบโต้
-    if (messages.length > 0) {
-      const isFirst = isFirstScroll.current;
-      const scrollBehavior = "auto"; // เปลี่ยนเป็น auto เสมอเพื่อให้วาร์ปไปเลย ไม่ต้องเลื่อน (ลดอาการปวดหัว)
+  // 🔄 Persistent Scroll Logic
+  const scrollToBottom = (behavior: "smooth" | "auto" = "smooth") => {
+    const container = mainRef.current;
+    if (!container) return;
 
-      // ใช้ setTimeout เพื่อให้แน่ใจว่า DOM Render เสร็จแล้ว (โดยเฉพาะ Markdown และรูปภาพ)
-      const timer = setTimeout(() => {
-        if (chatEndRef.current) {
-          chatEndRef.current.scrollIntoView({
-            behavior: scrollBehavior as any,
-            block: "end"
-          });
-        }
-
-        // ถ้าเป็นครั้งแรก ให้เลื่อนซ้ำอีกรอบหลังจากแอนิเมชั่นเผื่อกรณีเนื้อหาโหลดช้า
-        if (isFirst) {
-          isFirstScroll.current = false;
-          // เลื่อนซ้ำแบบ auto อีกครั้งสั้นๆ เพื่อความเป๊ะ
-          setTimeout(() => {
-            chatEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-          }, 100);
-        }
-      }, isFirst ? 50 : 150);
-
-      return () => clearTimeout(timer);
+    // Use a more aggressive approach for the 'bottom'
+    // 10000 is safe to ensure we hit the real end of the scrollHeight
+    container.scrollTo({
+      top: container.scrollHeight + 10000,
+      behavior
+    });
+    
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior, block: "end" });
     }
-  }, [messages]);
+  };
+
+  useEffect(() => {
+    const scrollWithBehavior = (isInitial: boolean) => {
+      const behavior = isInitial ? "auto" : "smooth";
+      scrollToBottom(behavior);
+    };
+
+    if (messages.length > 0) {
+      if (isFirstScroll.current) {
+        // Snap immediately on first load
+        scrollWithBehavior(true);
+        isFirstScroll.current = false;
+        
+        // Short delay snap to catch late-rendering elements (Markdown/Images)
+        setTimeout(() => scrollToBottom("auto"), 50);
+        setTimeout(() => scrollToBottom("auto"), 150);
+      } else {
+        // Smooth scroll for new messages
+        scrollWithBehavior(false);
+        const timers = [150, 300, 600].map(ms => setTimeout(() => scrollWithBehavior(false), ms));
+        return () => timers.forEach(clearTimeout);
+      }
+    }
+  }, [messages, isTyping]);
+
+  useEffect(() => {
+    const handleViewportChange = () => {
+      setTimeout(() => scrollToBottom("smooth"), 100);
+    };
+    window.visualViewport?.addEventListener("resize", handleViewportChange);
+    return () => window.visualViewport?.removeEventListener("resize", handleViewportChange);
+  }, []);
 
   useEffect(() => {
     if (userData) {
@@ -194,8 +232,6 @@ export default function SoulGuidePage() {
     if (buttons.length < 3) buttons.push("วางแผนพัฒนาตัวเองให้ที");
     setDynamicButtons(buttons.slice(0, 3));
   };
-
-  // ลบ window.scrollTo(0, 0) ที่ขัดขวางการเลื่อนลงล่างสุด
 
   const handleResetChat = async () => {
     if (!user) return;
@@ -224,13 +260,15 @@ export default function SoulGuidePage() {
     const messageText = text || input;
     if (!messageText.trim() || isLoading) return;
 
-    // 🚫 ลบการเช็กโควตา Energy ออกเพื่อให้ใช้ได้ Unlimited
-
     const userMessage: Message = { role: "user", content: messageText.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
     setIsTyping(true);
+
+    // ⚡ Immediate scroll to show the question right after Enter
+    setTimeout(() => scrollToBottom("auto"), 10);
+    setTimeout(() => scrollToBottom("auto"), 50);
 
     try {
       if (!user) return;
@@ -260,7 +298,6 @@ export default function SoulGuidePage() {
             totalFocusMinutes: userData?.totalFocusMinutes,
             characterTier: getCharacterTier(userData?.totalXP || 0),
             level: userData?.level,
-            // 🚫 ไม่ต้องบันทึก dailyChatCount แล้ว
           }
         })
       });
@@ -276,8 +313,6 @@ export default function SoulGuidePage() {
           createdAt: serverTimestamp()
         });
 
-        // 🚫 [NO USAGE TRACKING]
-
       } else {
         setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบเชื่อมต่อขัดข้องนิดหน่อย ลองใหม่อีกครั้งนะครับ" }]);
       }
@@ -291,22 +326,20 @@ export default function SoulGuidePage() {
 
   const getCharacterTier = (xp: number) => {
     const level = Math.floor(xp / 100) + 1;
-    if (level >= 30) return "Legacy Shaper";
+    if (level >= 30) return "Legacy";
     if (level >= 20) return "Architect";
-    if (level >= 10) return "Habit Master";
+    if (level >= 10) return "Master";
     return "Rookie";
   };
 
   const getAvatarPath = () => {
-    let tier = getCharacterTier(userData?.totalXP || 0).toLowerCase();
-    if (tier === "habit master") tier = "master";
-    if (tier === "legacy shaper") tier = "legacy";
+    const tier = getCharacterTier(userData?.totalXP || 0).toLowerCase();
     const suffix = userData?.gender === 'female' ? '-w' : '';
     return `/avatars/${tier}-static${suffix}.png`;
   };
 
   return (
-    <div className={`min-h-[100dvh] bg-zinc-950 text-white flex flex-col items-center relative overflow-hidden ${inter.className}`}>
+    <div className={`fixed inset-0 bg-zinc-950 text-white flex flex-col items-center overflow-hidden z-[9999] ${inter.className}`}>
 
       {/* 🌈 Background Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -338,7 +371,7 @@ export default function SoulGuidePage() {
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-2 h-2 rounded-full animate-pulse ${isTyping ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
-              <h1 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-200">AI Personal Mentor</h1>
+              <h1 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-200">AI MENTOR</h1>
             </div>
 
             {/* 🏷️ [AI ACTIVE] Status Badge */}
@@ -353,62 +386,68 @@ export default function SoulGuidePage() {
             </div>
           </div>
 
-          <motion.div
-            animate={isTyping ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
-          >
-            {userData ? (
-              <img fetchPriority="high" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
-            ) : (
-              <UserIcon size={20} className="text-zinc-600" />
-            )}
-          </motion.div>
+          <div className="flex items-center gap-3">
+            <motion.div
+              animate={isTyping ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
+            >
+              {userData ? (
+                <img loading="lazy" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
+              ) : (
+                <UserIcon size={20} className="text-zinc-600" />
+              )}
+            </motion.div>
+          </div>
         </header>
       )}
 
-      {/* Chat Container */}
-      <main ref={mainRef} className="flex-1 w-full max-w-3xl flex flex-col gap-6 p-6 z-10 overflow-y-auto pb-60 no-scrollbar">
-        <AnimatePresence mode="popLayout">
-          {messages.map((msg, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] px-6 py-4 rounded-[2rem] border relative transition-all duration-300 ${msg.role === "user"
-                  ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
-                  : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
-                  }`}
+      {/* Chat Area (Scrollable) */}
+      <div 
+        ref={mainRef} 
+        className="flex-1 w-full overflow-y-auto no-scrollbar"
+      >
+        <div className="max-w-3xl mx-auto flex flex-col gap-6 p-6">
+          <AnimatePresence mode="popLayout">
+            {messages.map((msg, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div className="prose prose-invert prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content}
-                  </ReactMarkdown>
+                <div
+                  className={`max-w-[85%] px-6 py-4 rounded-[2rem] border relative transition-all duration-300 ${msg.role === "user"
+                    ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
+                    : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
+                    }`}
+                >
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-          {isTyping && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-              <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-[2rem] rounded-tl-none backdrop-blur-xl flex gap-1.5 items-center">
-                <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
-                <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
-                <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <div ref={chatEndRef} />
-      </main>
+              </motion.div>
+            ))}
+            {isTyping && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-[2rem] rounded-tl-none backdrop-blur-xl flex gap-1.5 items-center">
+                  <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
+                  <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
+                  <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div ref={chatEndRef} className="h-4" />
+        </div>
+      </div>
 
-      {/* Input Area */}
-      <div className="fixed bottom-0 w-full pb-32 pt-6 px-6 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent z-50">
+      {/* Input Area (Pinned to bottom) */}
+      <footer className="w-full bg-zinc-950/95 backdrop-blur-md border-t border-white/5 px-6 pt-4 pb-14 z-50">
         <div className="max-w-3xl mx-auto flex flex-col items-center">
-
           <AnimatePresence>
             {!isLoading && dynamicButtons.length > 0 && (
               <div className="flex overflow-x-auto gap-3 mb-5 w-full no-scrollbar pb-2">
@@ -425,7 +464,6 @@ export default function SoulGuidePage() {
             )}
           </AnimatePresence>
 
-          {/* 🚫 [UNLIMITED] แสดงช่อง Input เสมอ */}
           <div className="w-full relative">
             <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
               <button
@@ -453,7 +491,7 @@ export default function SoulGuidePage() {
             </div>
           </div>
         </div>
-      </div>
+      </footer>
 
       {/* 🗑️ Modal: ยืนยันการล้างประวัติแชท (Luxury Style) */}
       <AnimatePresence>
@@ -473,7 +511,7 @@ export default function SoulGuidePage() {
                 transition: { type: "spring", damping: 20, stiffness: 300 }
               }}
               exit={{ scale: 0.5, y: 100, opacity: 0 }}
-              className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
+              className="w-full max-sm bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
             >
               <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <History className="text-blue-400" size={28} />
