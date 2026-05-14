@@ -409,7 +409,8 @@ export default function SwipeQuoteApp() {
     hour: '2-digit', minute: '2-digit' 
   });
 
-  return (
+return (
+    // 💡 กลับมาใช้ min-h-[100dvh] และ overflow-hidden เพื่อความสวยงามนิ่งๆ แบบแอป
     <div className={`min-h-[100dvh] bg-stone-100 flex flex-col items-center justify-center sm:p-4 ${kanit.className} overflow-hidden`}>
       <div className="w-full max-w-md bg-white shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-900">
 {/* === 1. START SCREEN === */}
@@ -722,114 +723,100 @@ export default function SwipeQuoteApp() {
     </div>
   </motion.div>
 )}
-{/* === 4. RESULT SCREEN (แก้ปัญหาสีเพี้ยนตอนเซฟรูป ✨) === */}
+{/* === 4. RESULT SCREEN (เวอร์ชันสวยล็อกจอ + เลื่อนเฉพาะเนื้อหา) === */}
 {gameState === "result" && (
   <div className="flex-1 flex flex-col bg-slate-950 relative h-full overflow-hidden">
     
-    {/* ✨ พื้นที่แคปเจอร์ภาพ (ใช้สีพื้นฐานที่ Capture ง่ายขึ้น) ✨ */}
-    <div 
-      ref={quoteCardRef} 
-      // 💡 แก้ไข: ใช้ style เพื่อระบุสีพื้นหลังแบบ Hex/RGB ชัดเจน (slate-950) ช่วยให้ไลบรารีวาดรูปได้แม่นยำขึ้น
-      className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-6 relative"
-      style={{ backgroundColor: '#020617' }}
-    >
-      {/* ลายจุด Polkadot (ปรับ CSS ให้เป็นรูปแบบมาตรฐาน) */}
+    {/* 💡 ส่วนที่ 1: พื้นที่แสดงการ์ด (Scrollable Area) */}
+    <div className="flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-4 custom-scrollbar">
       <div 
-        className="absolute inset-0 z-0 opacity-40"
-        style={{
-          backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)',
-          backgroundSize: '20px 20px'
-        }}
-      ></div>
-
-      {/* Dynamic Background Glow - แสงออร่า (เก็บไว้ได้ แต่ต้องคุม opacity ดีๆ) */}
-      <div 
-        className="absolute inset-0 opacity-40 blur-[80px] pointer-events-none transition-all duration-1000"
-        style={{
-          background: `radial-gradient(circle at center, ${playerMood ? ({happy: "#facc15", sad: "#60a5fa", angry: "#ef4444", fear: "#a855f7", love: "#ec4899", lonely: "#78716c", hope: "#34d399", confused: "#818cf8", apathetic: "#94a3b8", exhausted: "#fb923c"})[playerMood.id] || "#3b82f6" : "#3b82f6"} 0%, transparent 60%)`
-        }}
-      ></div>
-
-      {/* 💳 การ์ดคำคม (แก้จากกระจกใส เป็นสีทึบเพื่อความชัวร์ตอนเซฟ) */}
-      <div 
-        // 💡 แก้ไข: เปลี่ยนจาก bg-slate-900/40 backdrop-blur-2xl (โปร่งแสง) 
-        // เป็น bg-slate-900 (ทึบ) หรือสีน้ำเงินเข้มทึบ เพื่อให้ตอนเซฟรูปไม่เพี้ยน
-        className="relative z-10 w-full max-w-[95%] bg-slate-900 border border-slate-700/50 rounded-[2.5rem] shadow-[0_30px_70px_-10px_rgba(0,0,0,0.8)] pt-12 pb-6 sm:pt-14 sm:pb-8 px-8 sm:px-10 flex flex-col items-center gap-8"
-        style={{ backgroundColor: '#0f172a' }} // มั่นใจว่าเป็นสีทึบ slate-900
+        ref={quoteCardRef} 
+        className="flex flex-col items-center justify-center text-center p-4 sm:p-6 relative min-h-full"
+        style={{ backgroundColor: '#020617' }}
       >
-        
-        {/* ไอคอน Quote แต่งขอบ */}
+        {/* ลายจุด Polkadot */}
         <div 
-          className="absolute -top-5 left-8 bg-slate-800 p-3 rounded-full shadow-2xl border-[2px] border-slate-600/50 rotate-[-10deg]"
-        >
-          <Quote size={28} className="text-blue-400" />
-        </div>
-
-{/* ส่วนคำคม: สไตล์ Marker Highlight เน้นข้อความ */}
-<div className="w-full flex flex-col items-center gap-1.5 mt-2 px-1">
-  {(finalQuote || "").replace(/\\n/g, '\n').split('\n').map((line, idx) => {
-    if (!line.trim()) return null;
-    return (
-      <span 
-        key={idx}
-        // 💡 แก้ไข: ปรับค่า drop-shadow จาก [0_3px_6px_rgba(0,0,0,0.9)]
-        // มาเป็น [0_4px_12px_rgba(0,0,0,1)] เพื่อให้เงาหนาขึ้น กระจายกว้างขึ้น และดำสนิท (rgba(0,0,0,1))
-        className="text-[20px] sm:text-[24px] font-black leading-relaxed text-white tracking-wide text-center relative inline-block drop-shadow-[0_4px_12px_rgba(0,0,0,1)] max-w-full"
-        style={{ wordBreak: 'break-word' }}
-      >
-        <span className="relative z-10 px-2 block">{line.trim()}</span>
-        
-        {/* ไฮไลท์สีด้านหลังข้อความ */}
-        <span 
-          className="absolute bottom-1.5 left-0 w-full h-[35%] opacity-80 z-0 rounded-sm -rotate-1"
+          className="absolute inset-0 z-0 opacity-40"
           style={{
-            backgroundColor: playerMood ? ({
-              happy: "#ca8a04", sad: "#2563eb", angry: "#dc2626", 
-              fear: "#9333ea", love: "#db2777", lonely: "#57534e", 
-              hope: "#059669", confused: "#4f46e5", apathetic: "#475569", 
-              exhausted: "#ea580c"
-            })[playerMood.id] || "#2563eb" : "#2563eb"
+            backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)',
+            backgroundSize: '20px 20px'
           }}
-        ></span>
-      </span>
-    );
-  })}
-</div>
+        ></div>
 
-        {/* แท็กคำศัพท์: ดีไซน์แบบ Pill Button โทนดาร์ก */}
-        <div className="flex flex-wrap justify-center items-center gap-2.5">
-          {collectedWords.map((w, i) => (
-            <span 
-              key={i} 
-              // 💡 เพิ่ม background-color ทึบๆ เข้าไปหน่อยกันตอนเซฟมองไม่เห็น
-              className={`text-[12px] font-extrabold px-4 py-1.5 rounded-full border bg-slate-800/90 shadow-sm whitespace-nowrap ${playerMood ? moodOptions.find(m => m.id === playerMood.id)?.theme.split(" ").filter(c => c.includes('text') || c.includes('border')).join(' ') : 'text-blue-300 border-blue-500/30'}`}
-              style={{ backgroundColor: 'rgba(30, 41, 59, 0.9)' }} 
+        {/* Dynamic Background Glow */}
+        <div 
+          className="absolute inset-0 opacity-40 blur-[80px] pointer-events-none transition-all duration-1000"
+          style={{
+            background: `radial-gradient(circle at center, ${playerMood ? ({happy: "#facc15", sad: "#60a5fa", angry: "#ef4444", fear: "#a855f7", love: "#ec4899", lonely: "#78716c", hope: "#34d399", confused: "#818cf8", apathetic: "#94a3b8", exhausted: "#fb923c"})[playerMood.id] || "#3b82f6" : "#3b82f6"} 0%, transparent 60%)`
+          }}
+        ></div>
+
+        {/* 💳 การ์ดคำคม */}
+        <div 
+          className="relative z-10 w-full max-w-[95%] bg-slate-900 border border-slate-700/50 rounded-[2.5rem] shadow-[0_30px_70px_-10px_rgba(0,0,0,0.8)] pt-12 pb-6 sm:pt-14 sm:pb-8 px-8 sm:px-10 flex flex-col items-center gap-8"
+          style={{ backgroundColor: '#0f172a' }}
+        >
+          <div className="absolute -top-5 left-8 bg-slate-800 p-3 rounded-full shadow-2xl border-[2px] border-slate-600/50 rotate-[-10deg]">
+            <Quote size={28} className="text-blue-400" />
+          </div>
+
+          <div className="w-full flex flex-col items-center gap-1.5 mt-2 px-1">
+            {(finalQuote || "").replace(/\\n/g, '\n').split('\n').map((line, idx) => {
+              if (!line.trim()) return null;
+              return (
+                <span 
+                  key={idx}
+                  className="text-[20px] sm:text-[24px] font-black leading-relaxed text-white tracking-wide text-center relative inline-block drop-shadow-[0_4px_12px_rgba(0,0,0,1)] max-w-full"
+                  style={{ wordBreak: 'break-word' }}
+                >
+                  <span className="relative z-10 px-2 block">{line.trim()}</span>
+                  <span 
+                    className="absolute bottom-1.5 left-0 w-full h-[35%] opacity-80 z-0 rounded-sm -rotate-1"
+                    style={{
+                      backgroundColor: playerMood ? ({
+                        happy: "#ca8a04", sad: "#2563eb", angry: "#dc2626", 
+                        fear: "#9333ea", love: "#db2777", lonely: "#57534e", 
+                        hope: "#059669", confused: "#4f46e5", apathetic: "#475569", 
+                        exhausted: "#ea580c"
+                      })[playerMood.id] || "#2563eb" : "#2563eb"
+                    }}
+                  ></span>
+                </span>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap justify-center items-center gap-2.5">
+            {collectedWords.map((w, i) => (
+              <span 
+                key={i} 
+                className={`text-[12px] font-extrabold px-4 py-1.5 rounded-full border bg-slate-800/90 shadow-sm whitespace-nowrap ${playerMood ? moodOptions.find(m => m.id === playerMood.id)?.theme.split(" ").filter((c: string) => c.includes('text') || c.includes('border')).join(' ') : 'text-blue-300 border-blue-500/30'}`}
+                style={{ backgroundColor: 'rgba(30, 41, 59, 0.9)' }} 
+              >
+                #{w}
+              </span>
+            ))}
+          </div>
+
+          <div className="relative flex flex-col items-center gap-1.5 mt-8 w-full">
+            <div 
+              className="text-[9px] font-black tracking-[0.3em] text-slate-200 uppercase drop-shadow-sm bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700/50"
+              style={{ backgroundColor: '#1e293b' }}
             >
-              #{w}
-            </span>
-          ))}
-        </div>
-
-        {/* ลายน้ำแบรนด์: ปรับเป็นโทน Dark Glass แบบทึบ */}
-        <div className="relative flex flex-col items-center gap-1.5 mt-8 w-full">
-          <div 
-            className="text-[9px] font-black tracking-[0.3em] text-slate-200 uppercase drop-shadow-sm bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700/50"
-            style={{ backgroundColor: '#1e293b' }} // slate-800 ทึบ
-          >
-            CREATED BY <span className="text-blue-400 mx-1">×</span> อัพสกิลกับฟุ้ย
-          </div>
-          <div className="text-[10px] font-bold tracking-widest text-slate-500">
-            {timestamp}
+              CREATED BY <span className="text-blue-400 mx-1">×</span> อัพสกิลกับฟุ้ย
+            </div>
+            <div className="text-[10px] font-bold tracking-widest text-slate-500">
+              {timestamp}
+            </div>
           </div>
         </div>
-
       </div>
-
     </div>
     
-<div className="p-6 pb-8 bg-slate-950 border-t border-slate-800 flex flex-col gap-3 shrink-0 relative z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+    {/* 💡 ส่วนที่ 2: แผงปุ่มด้านล่าง (Fixed Bottom Area) */}
+    {/* เพิ่ม pb-24 เพื่อดันปุ่มขึ้นมาเหนือเมนูของเว็บ และใส่ Backdrop Blur ให้ดูพรีเมียม */}
+    <div className="px-6 pt-5 pb-24 sm:pb-10 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-3 shrink-0 relative z-20 shadow-[0_-15px_30px_rgba(0,0,0,0.6)]">
       
-      {/* 1. ปุ่มเซฟรูป (Full Width) */}
       <button 
         onClick={handleSaveImage}
         disabled={isSaving}
@@ -839,7 +826,6 @@ export default function SwipeQuoteApp() {
         {isSaving ? "กำลังจัดเก็บความทรงจำ..." : "เซฟคำคมลงเครื่อง"}
       </button>
 
-      {/* 2. แถวปุ่มคู่ (สร้างใหม่ / ติดตาม) */}
       <div className="grid grid-cols-2 gap-3">
         <button 
           onClick={resetApp} 
@@ -859,38 +845,34 @@ export default function SwipeQuoteApp() {
         </a>
       </div>
 
-      {/* ✨ 3. ปุ่ม Dashboard / กลับหน้าแรก (สลับตามเงื่อนไข Login) ✨ */}
       <a 
         href={currentUser ? "/dashboard" : "/"} 
         className="flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-md hover:bg-black transition-all active:scale-[0.98] group overflow-hidden border border-slate-800 mt-1"
       >
         <div className="flex items-center gap-3 pl-4 py-3">
           {currentUser ? (
-            /* ✅ กรณี Login แล้ว: ไป Dashboard */
             <>
               <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
                 <LayoutDashboard size={18} className="text-blue-400" />
               </div>
               <div className="flex flex-col items-start text-left">
                 <span className="text-[13px] font-black text-white tracking-wide">ไปที่ Dashboard</span>
-                <span className="text-[9px] text-slate-500 font-medium">ดูคลังความรู้ของคุณ</span>
+                <span className="text-[9px] text-slate-500 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
               </div>
             </>
           ) : (
-            /* 👤 กรณีเป็น Guest: กลับหน้าแรก */
             <>
               <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
                 <ArrowLeft size={18} className="text-slate-300" />
               </div>
               <div className="flex flex-col items-start text-left">
                 <span className="text-[13px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
-                <span className="text-[9px] text-slate-500 font-medium">ไปทำความรู้จักกันก่อน</span>
+                <span className="text-[9px] text-slate-500 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
               </div>
             </>
           )}
         </div>
       </a>
-
     </div>
   </div>
 )}

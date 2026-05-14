@@ -813,7 +813,7 @@ const analyzeWithAI = async () => {
     )}
   </div>
   
-  <span>{currentUser ? "Dashboard" : "หน้าแรก"}</span>
+  <span>{currentUser ? "กลับสู่ Dashboard" : "หน้าแรก"}</span>
 </Link>
               </div>
             </div>
