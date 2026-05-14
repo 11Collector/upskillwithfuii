@@ -427,63 +427,139 @@ export const QUEST_POOL = {
     "🛠️ ลองใช้เครื่องมือ Productivity ใหม่ๆ (เช่น AI ตัวใหม่) 5 นาที",
     "🪞 พูดขอบคุณตัวเองในกระจก สำหรับความพยายามของวันนี้",
     "🔍 ค้นหา 'นิสัยเสีย' 1 อย่างของตัวเอง และจด 'ตัวกระตุ้น' ที่ทำให้เกิด"
-  ]
+  ],
+  LIBRARY: {
+    "NT": [
+      "🧩 อ่าน 5-10 หน้าและสรุป 1 ไอเดียจากหนังสือที่ดองอยู่ แล้วเอาไปแก้ในงานทันที",
+      "🗣️ เลือก 1 บทที่น่าสนใจ แล้วฝึกอธิบายคอนเซปต์นั้นให้ AI หรือเพื่อนฟังใน 3 ประโยค",
+      "📊 พักเรื่องงาน! อ่านจิตวิทยาคน 5 หน้าเพื่อรู้วิธีคุยกับคนรอบข้างให้ง่ายขึ้น",
+      "🔍 เขียน To-do List 3 ข้อ จากเล่มที่เพิ่งอ่านจบ เพื่อเริ่มทำจริงพรุ่งนี้",
+      "🧠 ท้าทายตรรกะ! อ่าน 1 หัวข้อแล้วหาจุดที่คนเขียนอาจจะมีจุดโหว่ หรือลองคิดแย้งดู",
+      "🤖 ค้นหาคีย์เวิร์ดที่น่าสนใจในหนังสือ แล้วใช้ AI สรุปแง่มุมใหม่ๆ จากบทนั้นให้ฟัง",
+      "📖 เปิดอ่าน 1 หัวข้อที่อยากรู้ที่สุดในเล่มที่ดองอยู่ (เอาให้จบหัวข้อนั้น)"
+    ],
+    "NF": [
+      "👁️ เปิดอ่านหนังสือแนวสถิติหรือความจริง 5 หน้า เพื่อลดการคิดไปเอง (Grounding)",
+      "☁️ อย่ารอฟีล! หยิบหนังสือมาอ่าน 10 หน้าทันทีตอนนี้เพื่อชนะใจตัวเอง",
+      "🕯️ เขียนสรุป 3 บทเรียนสำคัญลง Note เพื่อเอาไว้แชร์ให้คนอื่นฟังพรุ่งนี้",
+      "✨ เลือกเล่มที่ 'ต้องจบ' เดือนนี้มาอ่านให้จบ 1 บท (Focus Chapter)",
+      "💌 ส่งต่อพลัง! สรุปใจความสำคัญ 1 หน้าที่ชอบ ส่งไปให้กำลังใจเพื่อน 1 คน",
+      "🌌 ตั้งคำถามที่กังวลอยู่ แล้วอ่านหนังสือที่สุ่มเปิด 3 หน้าเพื่อหาคำตอบ",
+      "🌟 อ่านชีวประวัติคนที่มีอุดมการณ์ 5-10 หน้า เพื่อรีเฟรชเป้าหมายชีวิตของตัวเอง"
+    ],
+    "SJ": [
+      "📜 อ่านนิยายหรือเรื่องสมมติ 5-10 หน้า เพื่อให้สมองได้พักและจินตนาการนอกกรอบ",
+      "🍵 อ่านวิธีใช้ AI หรือการลงทุน 5 หน้า เพื่อเตรียมรับมือโลกที่หมุนไว",
+      "📖 ลองอ่านหนังสือแนว Storytelling 5 หน้า เพื่อดูเทคนิคการเล่าเรื่องของเขา",
+      "🤝 หาคำถามที่ตัวเองสงสัย 1 ข้อ แล้วไปอ่านหาคำตอบในหนังสือให้จบ 1 หัวข้อ",
+      "📌 เลือก 3 เคล็ดลับจากหนังสือมาจดใส่ Post-it แล้วแปะไว้ที่ขอบจอเพื่อเตือนใจ",
+      "⏳ เช็กความถูกต้อง! อ่านหนังสือเล่มเก่า 5 หน้า แล้วดูว่ายังใช้ได้ผลในยุคนี้ไหม",
+      "🥇 อ่านหนังสือพัฒนาบุคลิกภาพ 1 บท แล้วลองทำตาม (เช่น ปรับการสื่อสาร) ทันที"
+    ],
+    "SP": [
+      "⚙️ อ่าน Business Model 5 หน้า เพื่อดูว่างานที่เราทำขยายผลได้ยังไง",
+      "🎨 จดโน้ตสรุปเป็นภาพ (Visual Note) จาก 1 บทเรียนที่ได้เรียนรู้จากหนังสือวันนี้",
+      "⚡ อ่านชีวประวัติคนสำเร็จ 10 หน้า เพื่อดูว่าเขาผ่านช่วงยากๆ มาได้ยังไง",
+      "🎧 ฟัง Audiobook หรือสรุปความรู้ 10-15 นาที แล้วจด 3 ประโยคเด็ดลงมือถือ",
+      "🗺️ เปิดโลกใหม่! สุ่มหยิบหนังสือมาอ่านเรื่องที่ไม่เคยสนใจให้จบ 1 หัวข้อ (2-3 หน้า)",
+      "🛠️ หา 1 เคล็ดลับแบบ How-to จากหนังสือ แล้วลองทำตามจริงในเครื่องให้สำเร็จ",
+      "🛒 อ่านสรุปหนังสือที่น่าสนใจ 3 เล่ม แล้วจด Key takeaway ที่ 'ว้าว' ที่สุดเก็บไว้"
+    ]
+  }
 };
 
 const INSPIRATIONAL_MESSAGES = [
-  // --- หมวด: ขอบคุณตัวเองในอนาคต ---
+  // --- Steve Jobs ---
+  "วิธีเดียวที่จะสร้างผลงานที่ยิ่งใหญ่ คือการรักในสิ่งที่คุณทำ - Steve Jobs",
+  "จงหิวกระหาย และทำตัวให้โง่เขลาอยู่เสมอ - Steve Jobs",
+  "เวลาของคุณมีจำกัด อย่าเสียเวลาไปกับการใช้ชีวิตในแบบของคนอื่น - Steve Jobs",
+  "นวัตกรรมคือสิ่งที่แยกผู้นำออกจากผู้ตาม - Steve Jobs",
+
+  // --- Bill Gates ---
+  "การฉลองความสำเร็จนั้นเป็นเรื่องดี แต่สิ่งที่สำคัญกว่าคือการเรียนรู้จากความล้มเหลว - Bill Gates",
+  "ความสำเร็จคือครูที่แย่มาก เพราะมันทำให้คนฉลาดคิดว่าพวกเขาไม่มีวันแพ้ - Bill Gates",
+  "เราทุกคนล้วนต้องการคนที่ให้ Feedback เพื่อที่เราจะได้พัฒนาตัวเองขึ้น - Bill Gates",
+  "ความอดทนคือกุญแจสำคัญสู่ความสำเร็จ - Bill Gates",
+
+  // --- Elon Musk ---
+  "ถ้าบางสิ่งมีความสำคัญมากพอ คุณควรจะทำมัน แม้ว่าโอกาสสำเร็จจะมีน้อยก็ตาม - Elon Musk",
+  "ความอดทนเป็นสิ่งสำคัญมาก คุณไม่ควรยอมแพ้ เว้นแต่จะถูกบังคับให้ต้องยอมแพ้ - Elon Musk",
+  "ความล้มเหลวคือทางเลือกหนึ่ง ถ้าคุณไม่ล้มเหลว แสดงว่าคุณยังไม่ได้สร้างนวัตกรรมใหม่ๆ - Elon Musk",
+
+  // --- Jeff Bezos ---
+  "แบรนด์สำหรับบุคคลนั้นเหมือนกับชื่อเสียง คุณสร้างมันได้จากการพยายามทำเรื่องยากๆ ให้สำเร็จ - Jeff Bezos",
+  "สิ่งที่อันตรายที่สุดคือการไม่วิวัฒนาการ - Jeff Bezos",
+  "ในโลกที่เปลี่ยนแปลงไปอย่างรวดเร็ว ความผิดพลาดที่ใหญ่ที่สุดคือการไม่ลองทำอะไรเลย - Jeff Bezos",
+
+  // --- Mark Zuckerberg ---
+  "ความเสี่ยงที่ใหญ่ที่สุดคือการไม่ยอมเสี่ยงอะไรเลย - Mark Zuckerberg",
+  "กฎง่ายๆ ของการทำธุรกิจคือ ถ้าคุณทำสิ่งที่ง่ายก่อน คุณจะก้าวหน้าได้มาก - Mark Zuckerberg",
+
+  // --- Warren Buffett ---
+  "การลงทุนที่สำคัญที่สุด คือการลงทุนในตัวคุณเอง - Warren Buffett",
+  "ราคาคือสิ่งที่คุณจ่ายไป แต่คุณค่าคือสิ่งที่คุณได้รับ - Warren Buffett",
+  "ต้องใช้เวลา 20 ปีในการสร้างชื่อเสียง และใช้เวลาเพียง 5 นาทีในการทำลายมัน - Warren Buffett",
+
+  // --- Jack Ma ---
+  "วันนี้มันยาก พรุ่งนี้จะยากกว่า แต่รุ่งเช้าของมะรืนจะสวยงาม - Jack Ma",
+  "ถ้าคุณไม่ยอมแพ้ คุณยังมีโอกาส การยอมแพ้คือความล้มเหลวที่ยิ่งใหญ่ที่สุด - Jack Ma",
+
+  // --- Oprah Winfrey ---
+  "จงทำในสิ่งที่คุณคิดว่าคุณทำไม่ได้ ล้มเหลวในสิ่งนั้น แล้วลองใหม่อีกครั้ง - Oprah Winfrey",
+  "ความสำเร็จจะมีความหมายที่สุด เมื่อมันช่วยให้คุณเติบโตเป็นคนที่ดีขึ้น - Oprah Winfrey",
+
+  // --- Other World Leaders & Thinkers ---
+  "ความสำเร็จไม่ใช่จุดสิ้นสุด ความล้มเหลวไม่ใช่เรื่องตัดสินชีวิต แต่ความกล้าที่จะก้าวต่อไปต่างหากที่สำคัญ - Winston Churchill",
+  "การลงมือทำ คือกุญแจพื้นฐานของทุกความสำเร็จ - Pablo Picasso",
+  "ความลับของการก้าวไปข้างหน้า คือการเริ่มต้น - Mark Twain",
+  "โอกาสไม่ได้เกิดขึ้นเอง แต่คุณคือคนสร้างมันขึ้นมา - Chris Grosser",
+  "เป้าหมายที่ปราศจากแผนการ ก็เป็นเพียงแค่ความฝัน - Antoine de Saint-Exupéry",
+  "ผมพบว่า ยิ่งผมทำงานหนักเท่าไหร่ ผมก็ยิ่งโชคดีมากขึ้นเท่านั้น - Thomas Jefferson",
+  "จงเป็นตัวเองในเวอร์ชันที่ดีที่สุด ไม่ใช่คนอื่นในเวอร์ชันที่สอง - Judy Garland",
+  "อย่ารอจนกว่าทุกอย่างจะพร้อม เพราะมันจะไม่มีวันนั้น - Unknown",
+  "ความพยายามอย่างหนักชนะพรสวรรค์ เมื่อพรสวรรค์ไม่พยายามหนักพอ - Tim Notke",
+  "อุปสรรคคือสิ่งที่น่ากลัวเมื่อคุณละสายตาจากเป้าหมาย - Henry Ford"
+];
+
+const COMPLIMENTARY_MESSAGES = [
   "คุณในเวอร์ชันพรุ่งนี้ ต้องขอบคุณคุณในวันนี้แน่ๆ!",
   "วันนี้คุณเพิ่งซื้อเวลาและความสำเร็จให้ตัวเองในอนาคตไปนะ เก่งมาก!",
   "จดจำความรู้สึกตอนติ๊กถูกนี้ไว้ เพราะนี่คือรากฐานของความสำเร็จที่คุณฝันถึง",
   "คุณกำลังสะสม 'แต้มบุญ' ของความสำเร็จไว้ในอนาคตนะเนี่ย",
   "อนาคตที่สดใส เริ่มต้นจากการทำเรื่องเล็กๆ ในวันนี้ให้สำเร็จแบบที่คุณทำอยู่ครับ",
-
-  // --- หมวด: พลังของการทำสม่ำเสมอ (Consistency) ---
   "Consistency is Key! คุณทำได้ดีมาก รักษาจังหวะนี้ไว้!",
   "ความเก่งไม่ได้สร้างในวันเดียว แต่สร้างได้ในทุกวันแบบที่คุณทำอยู่",
   "วินัยคือสะพานที่เชื่อมระหว่าง 'เป้าหมาย' กับ 'ความสำเร็จ' และคุณเพิ่งข้ามมาอีกขั้นแล้ว",
   "ความสม่ำเสมอคือพลังวิเศษ และวันนี้คุณเพิ่งใช้พลังนั้นไป เก่งมากครับ!",
   "เป้าหมายใหญ่แค่ไหน ก็แพ้ให้กับความสม่ำเสมอของคุณในวันนี้",
-
-  // --- หมวด: ก้าวเล็กๆ ที่ยิ่งใหญ่ (Small Wins) ---
   "ก้าวเล็กๆ วันนี้ คือรากฐานของความสำเร็จที่ยิ่งใหญ่",
   "ความก้าวหน้าเพียง 1% ในวันนี้ เมื่อรวมกันครบปีจะทำให้คุณเปลี่ยนไปมหาศาล!",
   "อิฐก้อนแรกของความสำเร็จ ถูกวางลงอย่างสวยงามแล้วในวันนี้",
   "วันนี้คุณชนะใจตัวเองไปได้อีกหนึ่งก้าว... และนั่นคือชัยชนะที่ยิ่งใหญ่ที่สุด",
   "ไม่มีความพยายามไหนที่สูญเปล่า โดยเฉพาะความพยายามที่คุณทำในวันนี้",
-
-  // --- หมวด: การรักษาคำมั่นสัญญา (Integrity) ---
   "คุณเก่งมากที่รักษาคำพูดกับตัวเองได้ในวันนี้ ภูมิใจแทนจริงๆ!",
   "คุณไม่ได้แค่ทำเควสเสร็จ แต่คุณกำลังรักษาสัญญาที่ให้ไว้กับตัวเอง",
   "ทำหน้าที่ของตัวเองได้ยอดเยี่ยมที่สุดแล้ว! Keep the momentum นะครับ",
   "วันนี้เหนื่อยหน่อย แต่คุณจะภูมิใจที่ไม่ได้ยอมแพ้",
   "ยินดีด้วย! คุณเพิ่งชนะความขี้เกียจของตัวเองไปได้อีก 1 ยก!",
-  // --- หมวด: ตัวตนคนใหม่ (Identity) ---
   "ทุกครั้งที่ติ๊กถูก คือการยืนยันว่าคุณคือ 'คนจริง' ที่ลงมือทำตามคำพูดครับ",
   "คุณกำลังสร้างหลักฐานใหม่! ว่าคุณคือคนที่พัฒนาตัวเองได้ในทุกๆ วัน",
   "ตัวตนคนใหม่ของคุณ กำลังถูกสร้างขึ้นทีละนิดในทุกก้าวที่คุณเดิน!",
   "ไม่ใช่แค่ทำเควสสำเร็จ! แต่คุณกำลังฝึกเป็นคนที่ 'คุมชีวิตตัวเอง' ได้อย่างยอดเยี่ยม",
   "นี่แหละคือวิถีของคนสำเร็จ. ภูมิใจในตัวตนคนใหม่นี้ไว้นะครับ",
-
-  // --- หมวด: พลังใจ (Resilience) ---
   "ถึงจะเหนื่อยแต่ก็ยังทำ! นี่แหละครับคือหัวใจของแชมป์ตัวจริง",
   "ความกลัวทำอะไรคุณไม่ได้! เพราะความตั้งใจของคุณมันใหญ่กว่าเสมอ",
   "ชนะใครก็ไม่ยิ่งใหญ่เท่าชนะใจตัวเอง. และวันนี้คุณทำได้แล้วครับ!",
   "ในวันที่ไม่อยากทำแต่ยังทำได้! คือวันที่คุณเติบโตได้มากที่สุด",
   "ความพยายามในวันนี้. คือเกราะป้องกันความล้มเหลวในวันหน้าครับ",
-
-  // --- หมวด: เห็นคุณค่าในปัจจุบัน (Mindfulness) ---
   "ขอบคุณตัวเอง! ที่ให้ความสำคัญกับ 'ปัจจุบัน' อย่างเต็มที่ เก่งมากครับ",
   "ความสุขไม่ได้อยู่ที่เส้นชัยอย่างเดียว! แต่อยู่ที่ความภูมิใจที่คุณทำสำเร็จในตอนนี้",
   "คุณเก่งมากที่หาเวลาดูแลตัวเอง. ท่ามกลางวันที่วุ่นวายแบบนี้",
   "สูดลมหายใจลึกๆ! แล้วยิ้มให้ความสำเร็จตรงหน้านี้สักนิดนะครับ",
   "สิ่งเล็กๆ ที่ทำวันนี้. คือความหมายที่ยิ่งใหญ่ของคำว่า 'ชีวิตที่มีคุณภาพ'",
-
-  // --- หมวด: พลังของการแบ่งปัน (Contribution) ---
   "สิ่งที่คุณทำวันนี้ไม่ใช่แค่เพื่อตัวเอง! แต่กำลังส่งต่อพลังงานดีๆ ให้คนรอบข้างครับ",
   "การเติบโตของคุณ. คือแสงสว่างที่ช่วยนำทางให้คนอื่นได้เช่นกัน",
   "โลกต้องการคนแบบคุณ! คนที่ตั้งใจพัฒนาตัวเองเพื่อไปสร้างสิ่งดีๆ ต่อไป"
-
 ];
 
 // 💡 ฟังก์ชันแปลงข้อความ AI ให้สวยงาม (ไฮไลต์คำ, ใส่กรอบ, จัดบรรทัด)
@@ -567,22 +643,22 @@ const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: num
     <div className="relative flex items-center justify-center group/avatar p-6">
       {/* 🌈 Aura Effect (Milestone Reward) */}
       {streak >= 7 && (
-        <motion.div 
-           initial={{ opacity: 0, scale: 0.8 }}
-           animate={{ 
-             opacity: [0.3, 0.5, 0.3], 
-             scale: [1, 1.15, 1],
-             rotate: 360
-           }}
-           transition={{ 
-             duration: 8, 
-             repeat: Infinity, 
-             ease: "easeInOut" 
-           }}
-           className={`absolute w-[140%] h-[140%] rounded-full blur-[60px] z-0 pointer-events-none
-             ${streak >= 30 ? 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600' : 
-               streak >= 14 ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-indigo-600' : 
-               'bg-gradient-to-tr from-blue-400 via-cyan-400 to-teal-400'}`}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.15, 1],
+            rotate: 360
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className={`absolute w-[140%] h-[140%] rounded-full blur-[60px] z-0 pointer-events-none
+             ${streak >= 30 ? 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600' :
+              streak >= 14 ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-indigo-600' :
+                'bg-gradient-to-tr from-blue-400 via-cyan-400 to-teal-400'}`}
         />
       )}
 
@@ -592,13 +668,13 @@ const AvatarDisplay = ({ currentLevel, gender, streak = 0 }: { currentLevel: num
           {[...Array(6)].map((_, i) => (
             <motion.div
               key={i}
-              animate={{ 
+              animate={{
                 y: [-20, -100],
                 x: Math.random() * 100 - 50,
                 opacity: [0, 1, 0],
                 scale: [0, 1.5, 0]
               }}
-              transition={{ 
+              transition={{
                 duration: 2 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2
@@ -1508,8 +1584,9 @@ export default function DashboardPage() {
       { id: 1, type: "WHEEL", title: "", xp: 20 },
       { id: 2, type: "DISC", title: "", xp: 15 },
       { id: 3, type: "MONEY", title: "", xp: 15 },
-      { id: 4, type: "WILDCARD", title: "", xp: 10 },
-      { id: 5, type: "CHALLENGE", title: "", xp: 10 },
+      { id: 4, type: "LIBRARY", title: "", xp: 15 }, // 👈 เพิ่มเควสหนังสือตามไทป์
+      { id: 5, type: "WILDCARD", title: "", xp: 10 },
+      { id: 6, type: "CHALLENGE", title: "", xp: 10 },
     ];
 
     // 🎯 [NEW LOGIC] จัดการแผน AI: ให้เวลา 1 วันสำหรับ Audit
@@ -1604,6 +1681,17 @@ export default function DashboardPage() {
     const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
     qList[2].title = moneyPool[pseudoRandom(moneyPool.length, 3.9)];
 
+    // ✅ 4. ดึงจาก Library of Souls (MBTI Style)
+    const soulType = lastLibrarySoul?.type || "INFP";
+    let soulGroup: "NT" | "NF" | "SJ" | "SP" = "NF";
+    if (["INTJ", "INTP", "ENTJ", "ENTP"].includes(soulType)) soulGroup = "NT";
+    else if (["INFJ", "INFP", "ENFJ", "ENFP"].includes(soulType)) soulGroup = "NF";
+    else if (["ISTJ", "ISFJ", "ESTJ", "ESFJ"].includes(soulType)) soulGroup = "SJ";
+    else if (["ISTP", "ISFP", "ESTP", "ESFP"].includes(soulType)) soulGroup = "SP";
+
+    const libraryPool = QUEST_POOL.LIBRARY[soulGroup] || QUEST_POOL.LIBRARY["NF"];
+    qList[3].title = libraryPool[pseudoRandom(libraryPool.length, 4.2)];
+
     const getUniqueQuest = (pool: string[], existingTitles: string[], salt: number) => {
       let index = pseudoRandom(pool.length, salt);
       let selectedQuest = pool[index];
@@ -1616,18 +1704,17 @@ export default function DashboardPage() {
     };
 
     // เตรียม Array สำหรับเช็คค่าซ้ำในวันเดียวกัน
-    const currentTitles = [qList[0].title, qList[1].title, qList[2].title];
+    const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
 
-    // 🛡️ ช่องที่ 4: Wildcard (ใช้ Salt 4.2 เพื่อให้ห่างจากช่องอื่น)
-    qList[3].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 4.2);
-    currentTitles.push(qList[3].title); // เพิ่มอันที่สุ่มได้ลงไปเช็คต่อ
+    // 🛡️ ช่องที่ 5: Wildcard (ใช้ Salt 5.5)
+    qList[4].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 5.5);
+    currentTitles.push(qList[4].title);
 
-    // 🛡️ ช่องที่ 5: Challenge (ใช้ Salt 5.8)
-    qList[4].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, 5.8);
+    // 🛡️ ช่องที่ 6: Challenge (ใช้ Salt 6.8)
+    qList[5].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, 6.8);
 
     return qList;
-
-  }, [lastWheel, lastDisc, lastMoney, todayDateStr, wheelArea, user?.uid, wheelPlanDay, completedQuests, isRandomMode, customQuestTitle]); // 👈 เพิ่ม user?.uid ตรงนี้ด้วย!
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, wheelPlanDay, completedQuests]);
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
@@ -1660,8 +1747,8 @@ export default function DashboardPage() {
     const isDone = completedQuests.includes(id);
 
     if (!isDone && (completedQuests.length + 1) !== 3) {
-      const randomIndex = Math.floor(Math.random() * INSPIRATIONAL_MESSAGES.length);
-      setShowSuccessToast(INSPIRATIONAL_MESSAGES[randomIndex]);
+      const randomIndex = Math.floor(Math.random() * COMPLIMENTARY_MESSAGES.length);
+      setShowSuccessToast(COMPLIMENTARY_MESSAGES[randomIndex]);
 
       // ตั้งเวลาปิด (2.5 วินาทีพอกำลังสวย ไม่นานเกินไป)
       setTimeout(() => setShowSuccessToast(null), 2500);
@@ -2092,13 +2179,33 @@ export default function DashboardPage() {
 
   // เอาไปวางไว้ก่อน return ใน DashboardPage
   const formatInspirationalText = (text: string) => {
-    // หาจุดจบของประโยคแรก (ที่มี !, ?, .)
+    if (!text) return null;
+
+    // แยกส่วนคำคมกับชื่อผู้แต่ง (ถ้ามี)
+    const parts = text.split(' - ');
+    const quote = parts[0];
+    const author = parts[1];
+
+    if (author) {
+      return (
+        <>
+          <span className="block font-black text-slate-800 text-xl md:text-2xl leading-tight mb-3">
+            "{quote}"
+          </span>
+          <span className="block font-bold text-orange-500 text-[10px] md:text-xs tracking-[0.2em] uppercase">
+            — {author}
+          </span>
+        </>
+      );
+    }
+
+    // ลองแยกด้วยเครื่องหมายวรรคตอนแบบเดิม (เผื่อเป็นข้อความสั้นๆ)
     const match = text.match(/([^!?.]+)([!?.]+)(.*)/);
 
     if (match) {
       return (
         <>
-          <span className="block font-black text-slate-800 text-2xl md:text-3xl leading-tight mb-3">
+          <span className="block font-black text-slate-800 text-xl md:text-2xl leading-tight mb-3">
             {match[1]}{match[2]}
           </span>
           <span className="block font-medium text-slate-400 text-sm md:text-base tracking-wide">
@@ -2109,7 +2216,7 @@ export default function DashboardPage() {
     }
 
     // ถ้าไม่มีเครื่องหมายตัด ให้โชว์แบบปกติแต่เน้นหนา
-    return <span className="font-black text-slate-800 text-2xl">{text}</span>;
+    return <span className="font-black text-slate-800 text-xl md:text-2xl block leading-tight">"{text}"</span>;
   };
 
   const handleCheckout = async () => {
@@ -2735,13 +2842,13 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 {/* --- ส่วนแสดงสถานะเป้าหมาย --- */}
-                <span className={`text-xs font-black px-3 py-1 rounded-full transition-all duration-500 ${completedQuests.length > 3 // ⚡ เปลี่ยนจาก >= 5 เป็น > 3
+                <span className={`text-xs font-black px-3 py-1 rounded-full transition-all duration-500 ${completedQuests.length >= 6
                   ? 'bg-yellow-400 text-white shadow-[0_0_15px_rgba(250,204,21,0.5)] animate-pulse'
                   : completedQuests.length >= 3
                     ? 'bg-green-100 text-green-600'
                     : 'bg-orange-100 text-orange-600'
                   }`}>
-                  {completedQuests.length > 3 ? '🔥 SUPER UPSKILL' : `${completedQuests.length} / 3 GOAL`}
+                  {completedQuests.length >= 6 ? '🔥 SUPER UPSKILL' : `${completedQuests.length} / 3 GOAL`}
                 </span>
               </div>
 
@@ -2750,13 +2857,13 @@ export default function DashboardPage() {
 
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(Math.min(completedQuests.length, 5) / 5) * 100}%` }}
-                  className={`h-full rounded-full transition-all duration-700 relative ${completedQuests.length >= 5 ? 'bg-gradient-to-r from-green-400 via-emerald-500 to-yellow-400' :
+                  animate={{ width: `${(Math.min(completedQuests.length, 6) / 6) * 100}%` }}
+                  className={`h-full rounded-full transition-all duration-700 relative ${completedQuests.length >= 6 ? 'bg-gradient-to-r from-green-400 via-emerald-500 to-yellow-400' :
                     completedQuests.length >= 3 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
                       'bg-gradient-to-r from-orange-400 to-red-500'
                     }`}
                 >
-                  {completedQuests.length >= 5 && (
+                  {completedQuests.length >= 6 && (
                     <motion.div
                       animate={{ x: ['-100%', '200%'] }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -2785,7 +2892,8 @@ export default function DashboardPage() {
                     case 'WHEEL': return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', icon: <PieChart size={18} /> };
                     case 'DISC': return { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', icon: <Users size={18} /> };
                     case 'MONEY': return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', icon: <Wallet size={18} /> };
-                    case 'CHALLENGE': return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: <Target size={18} /> };
+                    case 'LIBRARY': return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: <BookOpen size={18} /> };
+                    case 'CHALLENGE': return { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100', icon: <Target size={18} /> };
                     default: return { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-100', icon: <Sparkles size={18} /> };
                   }
                 };
@@ -4408,10 +4516,15 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 💬 Inspirational Quote */}
-                    <div className="mt-1 px-2 text-center w-full min-h-[34px] flex items-center justify-center">
-                      <p className="text-[11px] font-bold text-slate-400 italic leading-snug">
-                        "{currentSuccessQuote}"
+                    <div className="mt-1 px-6 text-center w-full min-h-[44px] flex flex-col items-center justify-center">
+                      <p className="text-[11px] font-bold text-slate-300 italic leading-snug">
+                        "{currentSuccessQuote.split(' - ')[0]}"
                       </p>
+                      {currentSuccessQuote.includes(' - ') && (
+                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-[0.2em] mt-1 opacity-80">
+                          — {currentSuccessQuote.split(' - ')[1]}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -4449,9 +4562,9 @@ export default function DashboardPage() {
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
                       {streakCount < 7 ? `${7 - streakCount} DAYS TO BLUE AURA` :
-                       streakCount < 14 ? `${14 - streakCount} DAYS TO PURPLE AURA` :
-                       streakCount < 30 ? `${30 - streakCount} DAYS TO FIRE AURA` :
-                       'LEGENDARY AURA UNLOCKED!'}
+                        streakCount < 14 ? `${14 - streakCount} DAYS TO PURPLE AURA` :
+                          streakCount < 30 ? `${30 - streakCount} DAYS TO FIRE AURA` :
+                            'LEGENDARY AURA UNLOCKED!'}
                     </span>
                   </div>
 
