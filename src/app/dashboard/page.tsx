@@ -1025,9 +1025,9 @@ const toggleQuest = async (id: number, xp: number) => {
                          {quest.type}
                        </span>
                     </div>
-                    <p className={`text-[15px] font-bold leading-tight truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                      {quest.title}
-                    </p>
+                  <p className={`text-[15px] font-bold leading-tight ${isDone ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+  {quest.title}
+</p>
                   </div>
 
                   <div className="shrink-0 text-right">

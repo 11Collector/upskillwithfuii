@@ -16,6 +16,7 @@ export default function Home() {
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -61,6 +62,8 @@ const handleLogin = async () => {
     { name: "คมสัดสัด", desc: "สร้างคำคมฮีลใจเฉพาะคุณ", icon: <Quote size={28} className="text-purple-600" />, path: "/tools/khomsatsat", color: "bg-purple-50 border-purple-200" }
   ];
 
+
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
