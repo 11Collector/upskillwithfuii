@@ -821,14 +821,16 @@ export default function SwipeQuoteApp() {
                       className="flex flex-col items-center gap-2 mb-6"
                     >
                       {/* Name/Signature */}
-                      <div className="flex flex-col items-center px-4">
+                      <div className="flex flex-col items-center px-2 w-full max-w-[280px]">
                         <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1 opacity-80">Insight By</span>
-                        <span className={`font-black text-white tracking-tighter drop-shadow-md text-center break-words max-w-[240px] leading-tight ${
-                          (currentUser.displayName || "").length > 20 ? "text-[12px]" : "text-[15px]"
+                        <span className={`font-black text-white tracking-tighter drop-shadow-md text-center leading-tight break-words w-full ${
+                          (currentUser?.displayName || "").length > 25 ? "text-[10px]" : 
+                          (currentUser?.displayName || "").length > 15 ? "text-[12px]" : 
+                          "text-[16px]"
                         }`}>
-                          {currentUser.displayName}
+                          {currentUser?.displayName}
                         </span>
-                        <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-white/30 to-transparent mt-1" />
+                        <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-white/30 to-transparent mt-1" />
                       </div>
                     </motion.div>
                   )}

@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -846,6 +846,7 @@ export default function DashboardPage() {
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
   const [lastLibrarySoul, setLastLibrarySoul] = useState<any>(null);
+  const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
 
   const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
   const [totalXP, setTotalXP] = useState<number>(0);
@@ -946,6 +947,14 @@ export default function DashboardPage() {
           let joinDate = new Date();
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
+
+            // 🔥 Calculate AI Mentor Quota (Moved here to apply for all users)
+            const level = Math.floor((userData.totalXP || 0) / 100) + 1;
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+            let usedToday = userData.chatUsageDate === today ? (userData.dailyChatCount || 0) : 0;
+            let totalQuota = (currentUser.email === 'emotion.tuii@gmail.com' || level > 10) ? Infinity : level;
+            setChatQuota({ used: usedToday, total: totalQuota });
+
             if (userData.createdAt) {
               joinDate = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
             } else {
@@ -3742,11 +3751,64 @@ export default function DashboardPage() {
                   </motion.div>
                 </Link>
 
+                {/* 🌟 6. AI Personal Mentor - Silver Premium Style (Placed after Deep Work) */}
+                {(activeTab === "home" || activeTab === "resources" || activeTab === "identity") && (
+                  <Link href="/tools/soul-guide" className="md:col-span-2 group block h-full relative">
+                    <motion.div
+                      whileHover={{ y: -6 }}
+                      className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-slate-300 relative overflow-hidden group"
+                    >
+                      {/* 🏷️ Status Badge */}
+                      <div className="absolute top-8 right-8 z-30">
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Energy</span>
+                          <div className="bg-slate-900 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
+                            <Zap size={10} className={chatQuota.used >= chatQuota.total && chatQuota.total !== Infinity ? "text-red-500" : "text-yellow-400 fill-current"} />
+                            {chatQuota.total === Infinity ? "Unlimited" : `${chatQuota.total - chatQuota.used}/${chatQuota.total}`}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ✨ Silver Ambient Light & Top Bar */}
+                      <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-slate-200/40 to-slate-400/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-slate-300/30 transition-colors duration-700" />
+                      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-300 via-slate-500 to-slate-300 opacity-80 transition-all duration-500 group-hover:h-2" />
+
+                      <div className="relative z-10 flex flex-col items-center h-full w-full">
+                        {/* 🤖 Logo Container */}
+                        <div className="relative mb-6 mt-2">
+                          <div className="absolute inset-0 bg-slate-200 blur-3xl opacity-20" />
+                          <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-110">
+                            🤖
+                          </div>
+                        </div>
+
+                        <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> AI Personal Mentor </h3>
+                        <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
+                          ที่ปรึกษาอัจฉริยะ
+                        </h2>
+
+                        <p className="text-[14px] font-medium text-slate-500 mb-8 px-6 leading-relaxed opacity-80 max-w-[280px]">
+                          คุยได้ทุกเรื่อง ตั้งแต่เป้าหมาย <br /> จนถึงปัญหาที่ค้างคาใจ
+                        </p>
+
+                        <div className="w-full px-4 mt-auto">
+                          <div className="group/btn-mentor relative">
+                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] group-hover/btn-mentor:scale-[1.02] active:scale-95">
+                              <MessageSquare size={16} className="text-white/80" />
+                              <span>คุยกับ Mentor</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </Link>
+                )}
+
                 {/* 🌟 6. BRAIN (Upskill Library) - Premium Gold & Black Style */}
                 <Link
                   href={currentLevel >= 5 ? "/library" : "#"}
                   onClick={(e) => { if (currentLevel < 5) e.preventDefault(); }}
-                  className={`group block h-full relative ${currentLevel >= 5 ? 'cursor-pointer' : 'cursor-default'}`}
+                  className={`md:col-span-3 group block h-full relative ${currentLevel >= 5 ? 'cursor-pointer' : 'cursor-default'}`}
                 >
                   <motion.div
                     whileHover={currentLevel >= 5 ? { y: -6 } : {}}
