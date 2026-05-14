@@ -3281,7 +3281,7 @@ export default function DashboardPage() {
               <>
                 {/* 🌟 5. Deep Work Mode - Premium Monochrome Style */}
                 <Link
-                  href="/tools/deep-work"
+                  href="/tools/focus-room"
                   className="group block h-full relative cursor-pointer"
                 >
                   <motion.div
@@ -3327,7 +3327,7 @@ export default function DashboardPage() {
                         </p>
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-zinc-100 text-zinc-600 rounded-full border border-zinc-200/50 text-[10px] font-black uppercase tracking-wider">
                           <Zap size={11} className="fill-yellow-400 text-yellow-400" />
-                          Receive +20 XP
+                          รับ XP ตามโหมดที่โฟกัส
                         </span>
                       </div>
 

@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, setDoc, increment, arrayUnion, getDoc } from "firebase/firestore";
+import { doc, setDoc, increment, arrayUnion, getDoc, updateDoc, collection, query, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 
 import { Inter, Geist_Mono } from "next/font/google";
@@ -22,6 +22,24 @@ export default function DeepWorkPage() {
   const [isActive, setIsActive] = useState(false);
   const [selectedTime, setSelectedTime] = useState(15);
   const [timeLeft, setTimeLeft] = useState(15 * 60);
+
+  // ดึงค่าเวลาเริ่มต้นทันทีที่ Client-side โหลด เพื่อลดอาการกะพริบ (Flicker)
+  useEffect(() => {
+    const dur = localStorage.getItem("deepWork_duration");
+    const saved = localStorage.getItem("deepWork_selectedTime");
+    const autoStart = localStorage.getItem("deepWork_autoStart");
+    
+    if (dur) {
+      const mins = parseInt(dur);
+      setSelectedTime(mins);
+      setTimeLeft(mins * 60);
+    } else if (autoStart !== "true" && saved) {
+      const mins = parseInt(saved);
+      setSelectedTime(mins);
+      // ถ้านำไปคำนวณเหลือเวลาจริงใน useEffect ถัดไป ตัวเลขนี้จะถูกเขียนทับเอง
+      setTimeLeft(mins * 60);
+    }
+  }, []);
   const [isFinished, setIsFinished] = useState(false);
   const [reflection, setReflection] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -30,8 +48,9 @@ export default function DeepWorkPage() {
   const [characterTier, setCharacterTier] = useState("rookie");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-  const isSoundEnabledRef = useRef(true);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const [xpReward, setXpReward] = useState(20);
+  const isSoundEnabledRef = useRef(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const endTimeRef = useRef<number | null>(null);
@@ -99,9 +118,12 @@ export default function DeepWorkPage() {
           setIsCheckingStatus(false);
         }
 
+        const autoStartFlag = localStorage.getItem("deepWork_autoStart");
         const savedEndTime = localStorage.getItem("deepWork_endTime");
         const savedSelectedTime = localStorage.getItem("deepWork_selectedTime");
-        if (savedEndTime && savedSelectedTime) {
+        
+        // ถ้ามีธง autoStart (คำท้า/Lounge) ห้ามโหลดเวลาเก่ามาทับเด็ดขาด
+        if (autoStartFlag !== "true" && savedEndTime && savedSelectedTime) {
           const now = Date.now();
           const target = parseInt(savedEndTime);
           const remaining = Math.round((target - now) / 1000);
@@ -122,6 +144,22 @@ export default function DeepWorkPage() {
           setIsSoundEnabled(isEnabled);
           isSoundEnabledRef.current = isEnabled;
         }
+
+        // Load mode for XP reward
+        const mode = localStorage.getItem("deepWork_mode");
+        if (mode === "lounge") {
+          setXpReward(25);
+        } else {
+          setXpReward(20);
+        }
+        
+        // เช็คเวลาที่ท้ามาทันทีเพื่อลดการกะพริบ (Flicker)
+        const savedDuration = localStorage.getItem("deepWork_duration");
+        if (savedDuration) {
+          const mins = parseInt(savedDuration);
+          setSelectedTime(mins);
+          setTimeLeft(mins * 60);
+        }
       } else {
         router.push("/");
       }
@@ -129,6 +167,49 @@ export default function DeepWorkPage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  // เมื่อออกจากหน้า Deep Work ไม่ว่าจะกรณีใดก็ตาม ให้รีเซ็ตสถานะเป็น idle ใน Lobby
+  useEffect(() => {
+    return () => {
+      if (user?.uid) {
+        const sessionRef = doc(db, "active_sessions", user.uid);
+        updateDoc(sessionRef, { status: "idle", endTime: null }).catch(() => { });
+      }
+    };
+  }, [user]);
+
+  // Auto-start logic for Lounge/Challenge
+  useEffect(() => {
+    if (!isCheckingStatus && user) {
+      const autoStart = localStorage.getItem("deepWork_autoStart");
+      if (autoStart === "true") {
+        localStorage.removeItem("deepWork_autoStart");
+
+        // เริ่มงานทันทีแบบแทบไม่ต้องรอ
+        const timer = setTimeout(() => {
+          const savedDuration = localStorage.getItem("deepWork_duration");
+          const defaultMins = savedDuration ? parseInt(savedDuration) : selectedTime;
+          localStorage.removeItem("deepWork_duration"); // เคลียร์ทิ้งหลังใช้
+
+          const targetTime = Date.now() + defaultMins * 60 * 1000;
+
+          endTimeRef.current = targetTime;
+          localStorage.setItem("deepWork_endTime", targetTime.toString());
+          localStorage.setItem("deepWork_selectedTime", defaultMins.toString());
+
+          setSelectedTime(defaultMins);
+          setTimeLeft(defaultMins * 60);
+          setIsActive(true);
+
+          playNatureSound();
+          requestWakeLock();
+          updateSessionStatus("focusing", targetTime);
+        }, 100);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isCheckingStatus, user, isActive]);
 
   useEffect(() => {
     const syncOnFocus = () => {
@@ -169,6 +250,19 @@ export default function DeepWorkPage() {
     }
   };
 
+  const updateSessionStatus = async (status: "idle" | "focusing", targetEndTime?: number | null) => {
+    if (!user) return;
+    try {
+      const sessionRef = doc(db, "active_sessions", user.uid);
+      const docSnap = await getDoc(sessionRef);
+      if (docSnap.exists()) {
+        await updateDoc(sessionRef, { status, endTime: targetEndTime || null });
+      }
+    } catch (e) {
+      console.error("Failed to update session status:", e);
+    }
+  };
+
   const toggleTimer = async () => {
     if (!isActive) {
       const targetTime = Date.now() + timeLeft * 1000;
@@ -178,12 +272,15 @@ export default function DeepWorkPage() {
       setIsActive(true);
       playNatureSound();
       await requestWakeLock();
+      updateSessionStatus("focusing", targetTime);
     } else {
       setIsActive(false);
       stopNatureSound();
       localStorage.removeItem("deepWork_endTime");
       if (timerRef.current) clearInterval(timerRef.current);
       await releaseWakeLock();
+      // นำออก: แม้จะ Pause แต่ผู้ใช้คนอื่นในห้องรวมจะยังเห็นว่าเรา "กำลังโฟกัส" อยู่จนกว่าจะออกหน้าจอ
+      // updateSessionStatus("idle");
     }
   };
 
@@ -248,6 +345,7 @@ export default function DeepWorkPage() {
     localStorage.removeItem("deepWork_selectedTime");
     if (timerRef.current) clearInterval(timerRef.current);
     await releaseWakeLock();
+    updateSessionStatus("idle");
   };
 
   useEffect(() => {
@@ -262,6 +360,7 @@ export default function DeepWorkPage() {
             setIsFinished(true);
             playAlarm();
             releaseWakeLock();
+            updateSessionStatus("idle");
             if (timerRef.current) clearInterval(timerRef.current);
           } else {
             setTimeLeft(remaining);
@@ -282,22 +381,25 @@ export default function DeepWorkPage() {
     if (!user || isSaving) return;
     setIsSaving(true);
     try {
+      let finalXpReward = xpReward;
+
+      // ให้โบนัส Lounge เต็มจำนวนตราบใดที่เข้ามาจากห้องรวม
+      // เอาเงื่อนไขริบโบนัสออก เพื่อป้องกันความสับสนกรณีที่ตั้งเวลาไม่เท่ากันแล้วคนนึงเสร็จก่อน
+
       const payload: any = {
         totalFocusMinutes: increment(selectedTime),
+        totalXP: increment(finalXpReward),
         lastFocusDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
-        // บันทึกทุก Session ลงใน focusReflections เสมอ (แม้ text จะว่าง) เพื่อใช้คำนวณ Weekly Stats
         focusReflections: arrayUnion({
           date: new Date().toISOString(),
           duration: selectedTime,
-          text: reflection.trim() || "" // บันทึกค่าว่างถ้าไม่มีการพิมพ์
+          text: reflection.trim() || ""
         })
       };
 
-      // ให้ XP เฉพาะครั้งแรกของวัน
-      if (!hasClaimedToday) payload.totalXP = increment(20);
-
       await setDoc(doc(db, "users", user.uid), payload, { merge: true });
-      router.push("/dashboard");
+      await updateSessionStatus("idle"); // รีเซ็ตสถานะเป็น idle เมื่อเคลมแต้มเสร็จ
+      router.push("/dashboard?tab=resources");
     } catch (e) {
       console.error(e);
       setIsSaving(false);
@@ -346,11 +448,17 @@ export default function DeepWorkPage() {
       </AnimatePresence>
 
       <div className="absolute top-8 left-8 z-20">
-        <Link href="/dashboard" className="flex items-center gap-2 text-zinc-400 hover:text-black transition-all group">
+        <button
+          onClick={async () => {
+            await updateSessionStatus("idle");
+            router.push("/tools/focus-room");
+          }}
+          className="flex items-center gap-2 text-zinc-400 hover:text-black transition-all group"
+        >
           <div className={`p-2 rounded-full shadow-sm border transition-all ${isActive ? 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:text-white' : 'bg-white border-zinc-200 group-hover:border-zinc-400'}`}>
             <ArrowLeft size={16} />
           </div>
-        </Link>
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -363,10 +471,10 @@ export default function DeepWorkPage() {
             <motion.div
               animate={isActive ? { y: [0, -5, 0] } : {}}
               transition={{ repeat: Infinity, duration: 2 }}
-              className={`absolute top-6 right-6 sm:top-10 sm:right-10 flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-lg z-20 border transition-colors duration-1000 ${isActive ? 'bg-zinc-800 text-zinc-400 border-zinc-700' : (hasClaimedToday ? 'bg-zinc-100 text-zinc-400 border-zinc-200' : 'bg-zinc-900 text-white border-zinc-700')}`}
+              className={`absolute top-6 right-6 sm:top-10 sm:right-10 flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-lg z-20 border transition-colors duration-1000 ${isActive ? 'bg-zinc-800 text-zinc-400 border-zinc-700' : 'bg-zinc-900 text-white border-zinc-700'}`}
             >
-              <Zap size={10} className={hasClaimedToday ? 'fill-zinc-300' : 'fill-yellow-400 text-yellow-400'} />
-              <span className="text-[8px] sm:text-[9px] font-black tracking-widest">{hasClaimedToday ? 'DAILY LIMIT' : '+20 XP READY'}</span>
+              <Zap size={10} className="fill-yellow-400 text-yellow-400" />
+              <span className="text-[8px] sm:text-[9px] font-black tracking-widest">{`+${xpReward} XP READY`}</span>
             </motion.div>
 
             <div className={`absolute top-0 left-0 w-full h-2 opacity-90 transition-colors duration-1000 ${isActive ? 'bg-blue-500' : 'bg-zinc-900'}`} />
@@ -498,7 +606,15 @@ export default function DeepWorkPage() {
               >
                 {isActive ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" className="ml-1" />}
               </button>
-              <button onClick={() => router.push("/dashboard")} className={`transition-all p-2 ${isActive ? 'text-zinc-700 hover:text-red-500' : 'text-zinc-300 hover:text-red-500'}`}><X size={22} /></button>
+              <button
+                onClick={async () => {
+                  await updateSessionStatus("idle");
+                  router.push("/tools/focus-room");
+                }}
+                className={`transition-all p-2 ${isActive ? 'text-zinc-700 hover:text-red-500' : 'text-zinc-300 hover:text-red-500'}`}
+              >
+                <X size={22} />
+              </button>
             </div>
 
             <div className="mt-12 flex flex-col items-center opacity-20">
@@ -522,7 +638,7 @@ export default function DeepWorkPage() {
             <div className="flex items-center gap-1.5 mb-10 bg-black/50 px-5 py-2.5 rounded-full border border-zinc-700/50 backdrop-blur-md">
               <Zap size={12} className={hasClaimedToday ? "fill-zinc-600 text-zinc-600" : "fill-emerald-400 text-emerald-400"} />
               <p className={`text-[10px] font-black uppercase tracking-widest ${hasClaimedToday ? 'text-zinc-500' : 'text-emerald-400'}`}>
-                {hasClaimedToday ? `+${selectedTime} MINS SAVED` : "+20 XP EARNED"}
+                {hasClaimedToday ? `+${selectedTime} MINS SAVED` : `+${xpReward} XP EARNED`}
               </p>
             </div>
 
@@ -542,11 +658,11 @@ export default function DeepWorkPage() {
               onClick={handleClaimXP}
               disabled={isSaving}
               className={`w-full py-5 rounded-full font-black text-[11px] uppercase tracking-[0.3em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl ${hasClaimedToday
-                  ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                  : 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-emerald-500/20'
+                ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                : 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-emerald-500/20'
                 }`}
             >
-              {isSaving ? "Syncing..." : hasClaimedToday ? "Save Focus Time" : "Claim +20 XP & Finish"}
+              {isSaving ? "Syncing..." : hasClaimedToday ? "Save Focus Time" : `Claim +${xpReward} XP & Finish`}
             </button>
           </motion.div>
         )}

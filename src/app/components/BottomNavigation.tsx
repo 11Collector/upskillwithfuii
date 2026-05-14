@@ -19,6 +19,7 @@ export default function BottomNavigation() {
     pathname.startsWith('/library') ||
     pathname === '/tools/soul-guide' ||
     pathname === '/tools/deep-work' ||
+    pathname === '/tools/focus-room' ||
     pathname === '/report-review';
 
   if (isDashboardFlow) {
