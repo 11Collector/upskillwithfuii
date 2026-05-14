@@ -127,9 +127,6 @@ export default function KhomsatsatInfoPage() {
             กลับสู่หน้าหลัก
           </Link>
 
-          <div className="mt-12 text-center text-slate-400/80 text-[10px] uppercase tracking-[0.2em] font-bold">
-            Created by อัพสกิลกับฟุ้ย
-          </div>
         </div>
 
       </main>
