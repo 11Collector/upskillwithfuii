@@ -67,12 +67,14 @@ export default function WheelOfLifeInfoPage() {
   ].map((item, index) => (
     <div 
       key={index} 
-      // 💡 ปรับ p-3 ในมือถือ และ p-4 ในจอใหญ่ เพื่อประหยัดพื้นที่
-      className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-red-200 transition-colors"
+      // 💡 ปรับ p-2.5 ในมือถือเพื่อให้มีพื้นที่ด้านข้างมากขึ้น และ p-4 ในจอใหญ่เหมือนเดิม
+      className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-red-200 transition-colors"
     >
-      <CheckCircle2 size={18} className="text-red-600 shrink-0 mt-0.5" />
-      {/* 💡 ปรับ text-[12px] ในมือถือ และ text-[15px] ในจอใหญ่ เพื่อให้แสดงผล 2 คอลัมน์ได้สวยงาม */}
-      <span className="text-slate-700 text-[12px] sm:text-[15px] font-bold leading-tight">
+      {/* 💡 ลดขนาดไอคอนลงเล็กน้อยบนมือถือเป็น size-4 (16px) และ size-5 (20px) ในจอใหญ่ */}
+      <CheckCircle2 className="text-red-600 shrink-0 mt-0.5 size-4 sm:size-5" />
+      
+      {/* 💡 ลดขนาดฟอนต์บนมือถือลงอีกเป็น 11px และใช้ break-words เพื่อกันข้อความทะลุในภาษาไทย */}
+      <span className="text-slate-700 text-[11px] sm:text-[15px] font-bold leading-tight break-words">
         {item}
       </span>
     </div>
@@ -116,7 +118,7 @@ export default function WheelOfLifeInfoPage() {
               <ArrowRight size={20} className="ml-1" />
             </button>
           </Link>
-          <p className="text-slate-400 text-sm mt-4">ใช้เวลาเพียง 2 นาที • ฟรีไม่มีค่าใช้จ่าย</p>
+          <p className="text-slate-400 text-sm mt-4">เพราะความสำเร็จในชีวิต มันมีหลายมิติมากกว่าที่คิด</p>
           
           <Link href="/" className="inline-block mt-8 text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors underline underline-offset-4">
             กลับสู่หน้าหลัก

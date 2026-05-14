@@ -793,6 +793,15 @@ const toggleQuest = async (id: number, xp: number) => {
   if (!lastDisc) missingAssessments.push("DISC");
   if (!lastMoney) missingAssessments.push("Money Avatar");
 
+const quoteText = lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปกดสุ่ม 'คมสัดสัด' ดูสิ!";
+
+const getQuoteFontSize = (text: string) => {
+  if (text.length > 200) return "text-[14px] leading-tight";      // ยาวมาก (บีบฟอนต์ + ชิดบรรทัด)
+  if (text.length > 120) return "text-base md:text-lg leading-snug"; // ค่อนข้างยาว
+  if (text.length > 60) return "text-lg md:text-[19px] leading-relaxed"; // ความยาวปกติ (เดิม)
+  return "text-xl md:text-2xl leading-relaxed"; // สั้นๆ (เน้นให้ใหญ่กระแทกตา)
+};
+
   return (
 <div className="min-h-screen bg-transparent p-4"> 
       <div className="max-w-7xl mx-auto">
@@ -1179,6 +1188,8 @@ const toggleQuest = async (id: number, xp: number) => {
           </Link>
 
           {/* 🌟 2. คมสัดสัด */}
+
+          
           <Link href="/tools/khomsatsat" className="group block h-full">
             <motion.div 
               whileHover={{ y: -6, scale: 1.01 }} 
@@ -1206,11 +1217,11 @@ const toggleQuest = async (id: number, xp: number) => {
                 <div className="flex-1 flex flex-col justify-center relative my-6">
                   <Quote className="absolute -top-4 -left-2 text-indigo-100/50 rotate-180 transition-transform group-hover:-translate-y-2 group-hover:-translate-x-2" size={60} />
                   <Quote className="absolute -bottom-6 -right-2 text-purple-100/50 transition-transform group-hover:translate-y-2 group-hover:translate-x-2" size={60} />
-                  <p className="text-lg md:text-[19px] font-black leading-relaxed italic relative z-10 line-clamp-4 text-center px-4">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-br from-indigo-700 to-purple-700 drop-shadow-sm">
-                      "{lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปกดสุ่ม 'คมสัดสัด' ดูสิ!"}"
-                    </span>
-                  </p>
+                <p className={`${getQuoteFontSize(quoteText)} font-black italic relative z-10 text-center px-4 transition-all duration-300 break-words`}>
+  <span className="text-transparent bg-clip-text bg-gradient-to-br from-indigo-700 to-purple-700 drop-shadow-sm px-2 py-1 leading-normal inline-block">
+    "{quoteText}"
+  </span>
+</p>
                 </div>
                 
                 <div className="mt-auto flex justify-center">
