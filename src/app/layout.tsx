@@ -53,12 +53,10 @@ export default function RootLayout({
           </div>
         </nav>
 
-        {/* === พื้นที่แสดงผลแอป (Main Content) === */}
-        {/* 💡 3. ใส่ Padding บน (pt-16 = ความสูง Header) และล่าง (pb-[4.5rem] = ความสูง Footer) 
-            เพื่อดันเนื้อหาไม่ให้มุดไปซ่อนอยู่ใต้แถบ Navigation */}
-        <main id="main-scroll-container" className="w-full relative min-h-screen pt-16 pb-[4.5rem] md:pb-0">
-          {children}
-        </main>
+
+<main id="main-scroll-container" className="w-full relative min-h-screen flex flex-col pt-16 pb-[4.5rem] md:pb-0">
+  {children}
+</main>
 
         {/* === แถบ Bottom Navigation ด้านล่าง === */}
         {/* 💡 4. ใช้ fixed bottom-0 แปะติดขอบล่างสุดเสมอ */}
