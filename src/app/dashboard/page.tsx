@@ -757,7 +757,7 @@ const PET_DATA: Record<string, { img: string; name: string }> = {
 
 export default function DashboardPage() {
 
-  const [weeklyData, setWeeklyData] = useState({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
+  const [weeklyData, setWeeklyData] = useState({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
   const [activeTab, setActiveTab] = useState<"home" | "overview" | "quests" | "identity" | "resources">("home");
   const [improvement, setImprovement] = useState(0);
   const [isFirstWeek, setIsFirstWeek] = useState(true); // เพิ่มตัวนี้ (Default เป็น true ไว้ก่อน)
@@ -901,7 +901,6 @@ export default function DashboardPage() {
   const [isRandomMode, setIsRandomMode] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showLineModal, setShowLineModal] = useState(false);
-  const [dailyClaimed, setDailyClaimed] = useState<Record<string, string>>({});
 
   // เพิ่มฟังก์ชันสำหรับเปลี่ยนเพศและ Save ลง Firebase
   const handleGenderChange = async (newGender: "male" | "female") => {
@@ -1051,17 +1050,22 @@ export default function DashboardPage() {
           if (thisWeekSnap.exists()) {
             const data = thisWeekSnap.data();
             setWeeklyData({
-              wheel: data.wheel || 0, disc: data.disc || 0, money: data.money || 0,
-              wildcard: data.wildcard || 0, challenge: data.challenge || 0, momentum_count: data.momentum_count || 0
+              wheel: Math.min(7, data.wheel || 0), 
+              disc: Math.min(7, data.disc || 0), 
+              money: Math.min(7, data.money || 0), 
+              library: Math.min(7, data.library || 0),
+              wildcard: Math.min(7, data.wildcard || 0), 
+              challenge: Math.min(7, data.challenge || 0), 
+              momentum_count: data.momentum_count || 0
             });
-            thisWeekTotal = (data.wheel || 0) + (data.disc || 0) + (data.money || 0) + (data.wildcard || 0) + (data.challenge || 0);
+            thisWeekTotal = Math.min(42, (data.wheel || 0) + (data.disc || 0) + (data.money || 0) + (data.library || 0) + (data.wildcard || 0) + (data.challenge || 0));
           } else {
-            setWeeklyData({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
+            setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
           }
 
           if (prevWeekSnap.exists()) {
             const prevData = prevWeekSnap.data();
-            prevWeekTotal = (prevData.wheel || 0) + (prevData.disc || 0) + (prevData.money || 0) + (prevData.wildcard || 0) + (prevData.challenge || 0);
+            prevWeekTotal = (prevData.wheel || 0) + (prevData.disc || 0) + (prevData.money || 0) + (prevData.library || 0) + (prevData.wildcard || 0) + (prevData.challenge || 0);
           }
 
           // 🌟 [FIX LOGIC] เช็ก FIRST WEEK จากเลขสัปดาห์โดยตรง ชัวร์ที่สุด!
@@ -1105,7 +1109,6 @@ export default function DashboardPage() {
             setStreakCount(currentStreak); // ใช้ค่าที่เช็กความถูกต้องแล้ว
             setWheelPlanDay(userData.wheelPlanDay || 0); // 🌟 เพิ่มบรรทัดนี้ครับ
             setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
-            setDailyClaimed(userData.dailyClaimedStats || {});
             setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
             setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
 
@@ -1229,7 +1232,8 @@ export default function DashboardPage() {
         { name: "weekly_stats", query: collection(db, "users", user.uid, "weekly_stats") },
         { name: "discResults", query: query(collection(db, "discResults"), where("userId", "==", user.uid)) },
         { name: "quiz_results", query: query(collection(db, "quiz_results"), where("userId", "==", user.uid)) },
-        { name: "quotes", query: query(collection(db, "quotes"), where("userId", "==", user.uid)) }
+        { name: "quotes", query: query(collection(db, "quotes"), where("userId", "==", user.uid)) },
+        { name: "chat_history", query: collection(db, "users", user.uid, "chat_history") }
       ];
 
       // ดึงเอกสารทั้งหมดจากทุกที่ที่ระบุไว้
@@ -1291,6 +1295,9 @@ export default function DashboardPage() {
       setIsFirstWeek(true);
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
       setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
+
+      // 🚀 6. เลื่อนขึ้นไปด้านบนสุดเพื่อให้เห็นการเปลี่ยนแปลง
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       // 🧹 5. เคลียร์ Cache ของ Deep Work (สำคัญมาก)
       localStorage.removeItem("lastFocusDate_cache");
@@ -1550,13 +1557,13 @@ export default function DashboardPage() {
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";
 
   const totalWeeklyScore = useMemo(() => {
-    return (weeklyData.wheel || 0) + (weeklyData.disc || 0) + (weeklyData.money || 0) + (weeklyData.wildcard || 0) + (weeklyData.challenge || 0);
+    return (weeklyData.wheel || 0) + (weeklyData.disc || 0) + (weeklyData.money || 0) + (weeklyData.library || 0) + (weeklyData.wildcard || 0) + (weeklyData.challenge || 0);
   }, [weeklyData]);
 
   const rankInfo = useMemo(() => {
-    if (totalWeeklyScore <= 7) return { name: "Survivor", emoji: "🛡️", color: "text-slate-400", bg: "bg-slate-400/20", border: "border-slate-400/30" };
-    if (totalWeeklyScore <= 15) return { name: "Warrior", emoji: "⚔️", color: "text-orange-400", bg: "bg-orange-400/20", border: "border-orange-400/30" };
-    if (totalWeeklyScore <= 25) return { name: "Elite", emoji: "💎", color: "text-blue-400", bg: "bg-blue-400/20", border: "border-blue-400/30" };
+    if (totalWeeklyScore <= 10) return { name: "Survivor", emoji: "🛡️", color: "text-slate-400", bg: "bg-slate-400/20", border: "border-slate-400/30" };
+    if (totalWeeklyScore <= 20) return { name: "Warrior", emoji: "⚔️", color: "text-orange-400", bg: "bg-orange-400/20", border: "border-orange-400/30" };
+    if (totalWeeklyScore <= 32) return { name: "Elite", emoji: "💎", color: "text-blue-400", bg: "bg-blue-400/20", border: "border-blue-400/30" };
     return { name: "Legend", emoji: "👑", color: "text-yellow-400", bg: "bg-yellow-400/20", border: "border-yellow-400/30" };
   }, [totalWeeklyScore]);
 
@@ -1564,6 +1571,7 @@ export default function DashboardPage() {
     { label: "Wheel", count: weeklyData.wheel || 0, max: 7, color: "bg-red-500", icon: <PieChart size={14} /> },
     { label: "DISC", count: weeklyData.disc || 0, max: 7, color: "bg-blue-500", icon: <Users size={14} /> },
     { label: "Money", count: weeklyData.money || 0, max: 7, color: "bg-amber-500", icon: <Wallet size={14} /> },
+    { label: "Library", count: weeklyData.library || 0, max: 7, color: "bg-teal-500", icon: <BookOpen size={14} /> },
     { label: "Wild", count: weeklyData.wildcard || 0, max: 7, color: "bg-emerald-500", icon: <Zap size={14} /> },
     { label: "Challenge", count: weeklyData.challenge || 0, max: 7, color: "bg-purple-500", icon: <Target size={14} /> },
   ], [weeklyData]);
@@ -1906,10 +1914,9 @@ export default function DashboardPage() {
     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     const userRef = doc(db, "users", user.uid);
 
-    // 🚨 [ANTI-FARMING] 1. เช็กว่าหมวดนี้วันนี้รับแต้มไปหรือยัง?
+    // 1. หาข้อมูลเควส
     const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
     const questType = quest?.type || (id === 'special-01' ? "SPECIAL" : "OTHER");
-    const alreadyClaimedToday = dailyClaimed[questType] === todayStr;
 
     // 🌟 [NEW LOGIC] จัดการ Wheel Plan Day แยกต่างหาก
     let newWheelDay = wheelPlanDay;
@@ -1918,30 +1925,14 @@ export default function DashboardPage() {
       setWheelPlanDay(newWheelDay);
     }
 
-    // 1. คำนวณค่าต่างๆ ล่วงหน้า
+    // 2. คำนวณค่าต่างๆ ล่วงหน้า
     let actualXP = xp;
-    let shouldUpdateWeeklyStat = true;
-
-    if (!isDone && alreadyClaimedToday) {
-      actualXP = 0; // ไม่แจก XP ซ้ำ
-      shouldUpdateWeeklyStat = false; // ไม่บวกหลอดสัปดาห์ซ้ำ
-      console.log(`🛑 [Anti-Farming] หมวด ${questType} รับแต้มไปแล้ววันนี้ ให้แค่ติ๊กถูกเฉยๆ`);
-    }
     let xpChange = isDone ? -actualXP : actualXP;
 
-    // 2. เตรียมข้อมูล Array ใหม่
+    // 3. เตรียมข้อมูล Array ใหม่
     let newCompleted = isDone
       ? completedQuests.filter(qId => qId !== id)
       : [...completedQuests, id];
-
-    // 🚨 [จุดที่หายไป 1]: สร้างและอัปเดต State dailyClaimed
-    const newDailyClaimed = { ...dailyClaimed };
-    if (!isDone && shouldUpdateWeeklyStat) {
-      newDailyClaimed[questType] = todayStr; // ล็อกว่ารับแต้มแล้ว
-    } else if (isDone && alreadyClaimedToday) {
-      newDailyClaimed[questType] = ""; // ปลดล็อกถ้ายกเลิก (Undo)
-    }
-    setDailyClaimed(newDailyClaimed);
 
     // ⚡ [OPTIMISTIC UPDATE]: อัปเดต State ให้หน้าจอ UI เปลี่ยนทันที ไม่ต้องรอโหลด!
     const rollbackCompleted = [...completedQuests];
@@ -2030,10 +2021,9 @@ export default function DashboardPage() {
       const weeklyRef = doc(db, "users", user.uid, "weekly_stats", weekId);
       const incValue = isDone ? -1 : 1;
 
-      // 🚨 [จุดที่หายไป 2]: ใส่เงื่อนไข shouldUpdateWeeklyStat บล็อกไม่ให้บวกสถิติรายสัปดาห์ซ้ำ
-      if (quest && shouldUpdateWeeklyStat) {
+      if (quest) {
         const statKeys: Record<string, string> = {
-          WHEEL: "wheel", DISC: "disc", MONEY: "money", WILDCARD: "wildcard", CHALLENGE: "challenge"
+          WHEEL: "wheel", DISC: "disc", MONEY: "money", LIBRARY: "library", WILDCARD: "wildcard", CHALLENGE: "challenge"
         };
         const statKey = statKeys[quest.type];
 
@@ -2041,7 +2031,7 @@ export default function DashboardPage() {
           try {
             setWeeklyData((prev: any) => ({
               ...prev,
-              [statKey]: Math.max(0, (prev[statKey] || 0) + incValue)
+              [statKey]: Math.min(7, Math.max(0, (prev[statKey] || 0) + incValue))
             }));
 
             await setDoc(weeklyRef, {
@@ -2071,16 +2061,13 @@ export default function DashboardPage() {
         lastQuestDate: newLastQuestDate,
         lastActiveDate: todayStr,
         streakCount: newStreak,
-        wheelPlanDay: newWheelDay,
-        dailyClaimedStats: newDailyClaimed // 🚨 [จุดที่หายไป 3]: บันทึกข้อมูลต้านปั๊มคะแนนลง Firebase
+        wheelPlanDay: newWheelDay
       }, { merge: true });
 
     } catch (error) {
       console.error("Error toggling quest:", error);
       setCompletedQuests(rollbackCompleted);
       setTotalXP(rollbackXP);
-      // กรณี Error อย่าลืม Rollback ตัวดักจับด้วย
-      setDailyClaimed(dailyClaimed);
     } finally {
       setIsToggling(false);
     }
@@ -2220,6 +2207,7 @@ export default function DashboardPage() {
   if (!lastWheel) missingAssessments.push("Wheel of Life");
   if (!lastDisc) missingAssessments.push("DISC");
   if (!lastMoney) missingAssessments.push("Money Avatar");
+  if (!lastLibrarySoul) missingAssessments.push("Library of Souls");
 
   const quoteText = lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปกดสุ่ม 'คมสัดสัด' ดูสิ!";
 
@@ -2807,7 +2795,7 @@ export default function DashboardPage() {
               >
                 <div className={`px-2.5 py-1.5 rounded-xl border text-[9px] md:text-[10px] font-black shadow-lg backdrop-blur-md flex items-center gap-2 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} border-white/10`}>
                   <span className="text-white/40 font-bold tracking-tight">TOTAL</span>
-                  <span className="text-white">{totalWeeklyScore} / 35</span>
+                  <span className="text-white">{totalWeeklyScore} / 42</span>
                 </div>
                 <div className={`px-2.5 py-1.5 rounded-xl border text-[9px] md:text-[10px] font-black shadow-lg backdrop-blur-md flex items-center gap-1.5 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} border-white/10`}>
                   <span>{rankInfo.emoji}</span>
@@ -2830,12 +2818,13 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 2. Core Identity (3 วงกลมหลัก - สื่อถึงความสมดุล) */}
-                <div className="grid grid-cols-3 gap-3 mb-10">
+                {/* 2. Core Identity (4 วงกลมหลัก - สื่อถึงความสมดุล) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
                   {[
                     { label: "Wheel", val: weeklyData.wheel, color: "text-red-500", icon: <PieChart size={14} /> },
                     { label: "DISC", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
-                    { label: "Money", val: weeklyData.money, color: "text-amber-400", icon: <Wallet size={14} /> }
+                    { label: "Money", val: weeklyData.money, color: "text-amber-400", icon: <Wallet size={14} /> },
+                    { label: "Library", val: weeklyData.library, color: "text-teal-400", icon: <BookOpen size={14} /> }
                   ].map((item, i) => {
                     const radius = 20;
                     const circumference = 2 * Math.PI * radius;
@@ -2917,12 +2906,12 @@ export default function DashboardPage() {
                     </div>
 
                     {[
-                      { score: "0 - 7", emoji: "🛡️", name: "Survivor", desc: "เน้นประคองตัวให้รอดสัปดาห์นี้" },
-                      { score: "8 - 15", emoji: "⚔️", name: "Warrior", desc: "เริ่มบุกและจัดการชีวิตได้ดีขึ้น" },
-                      { score: "16 - 25", emoji: "💎", name: "Elite", desc: "ชีวิตสมดุลและมีวินัยสูงมาก" },
-                      { score: "26 - 35", emoji: "👑", name: "Legend", desc: "สุดยอดแห่งสัปดาห์ เข้าใกล้ความสมบูรณ์แบบ" },
+                      { score: "0 - 10", emoji: "🛡️", name: "Survivor", desc: "เน้นประคองตัวให้รอดสัปดาห์นี้" },
+                      { score: "11 - 20", emoji: "⚔️", name: "Warrior", desc: "เริ่มบุกและจัดการชีวิตได้ดีขึ้น" },
+                      { score: "21 - 32", emoji: "💎", name: "Elite", desc: "ชีวิตสมดุลและมีวินัยสูงมาก" },
+                      { score: "33 - 42", emoji: "👑", name: "Legend", desc: "ผู้จารึกตำนานวินัยที่แท้จริง" },
                     ].map((rank, idx) => {
-                      const isActive = totalWeeklyScore >= parseInt(rank.score.split(' - ')[0]) && totalWeeklyScore <= (rank.score.includes('35') ? 35 : parseInt(rank.score.split(' - ')[1]));
+                      const isActive = totalWeeklyScore >= parseInt(rank.score.split(' - ')[0]) && totalWeeklyScore <= parseInt(rank.score.split(' - ')[1]);
 
                       return (
                         <div
@@ -3590,7 +3579,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Description (สไตล์เดียวกับ Motto ของ Money) */}
-                            <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]">
+                            <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
                               {DISC_DATA[discMainChar]?.desc || "คุณคือส่วนผสมที่ลงตัวของการทำงานและการสื่อสาร"}
                             </p>
 
@@ -3714,7 +3703,7 @@ export default function DashboardPage() {
                               Match {lastMoney.primaryMatch || 100}%
                             </div>
 
-                            <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]">
+                            <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
                               "{MONEY_DATA[lastMoney.resultKey]?.motto}"
                             </p>
 
@@ -3831,7 +3820,7 @@ export default function DashboardPage() {
                               SOUL TYPE :  {lastLibrarySoul.type}
                             </div>
 
-                            <p className="text-[14px] font-medium text-slate-500 mb-6 px-6 leading-relaxed opacity-80 max-w-[280px]">
+                            <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
                               "{LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.description}"
                             </p>
                           </div>
@@ -4803,18 +4792,6 @@ export default function DashboardPage() {
                     </span>
                   </div>
 
-                  <div className="mt-auto w-full grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center">
-                      <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">XP EARNED</span>
-                      <span className="text-sm font-black text-yellow-400">+{completedQuests.length * 10} XP</span>
-                    </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center">
-                      <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">DATE</span>
-                      <span className="text-[10px] font-bold text-white uppercase">
-                        {new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                    </div>
-                  </div>
 
                   <div className="flex items-center gap-3 opacity-20">
                     <div className="h-px w-6 bg-white" />
