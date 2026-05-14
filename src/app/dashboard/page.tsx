@@ -845,7 +845,9 @@ const handleResetAllData = async () => {
         completedQuestIds: [],
         customQuestTitle: "",
         lastQuestDate: null,
-        lastQuoteDate: null 
+        lastActiveDate: null, // 🌟 เพิ่ม: ล้างประวัติการเข้าแอป
+        lastQuoteDate: null,
+        streakCount: 0
       }, { merge: true });
 
       // 2. ลบประวัติ Wheel of Life
@@ -883,6 +885,7 @@ const handleResetAllData = async () => {
       // 🚀 เพิ่มใหม่: เคลียร์ State หลอดพลังรายสัปดาห์หน้าจอให้กลับเป็น 0
       setWeeklyData({ wheel: 0, disc: 0, money: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
       setImprovement(0);
+      setStreakCount(0); // 🌟 เพิ่ม: รีเซ็ตหลอดสตรีคบนหน้าจอให้ไฟดับหมด
       
       alert("♻️ รีเซ็ตข้อมูลเรียบร้อย! คลีนสุดๆ เริ่มต้นใหม่ได้เลยครับ 🚀");
     } catch (error) {
