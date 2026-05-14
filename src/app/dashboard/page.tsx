@@ -1826,6 +1826,31 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* --- 🌱 New User Start Here Banner --- */}
+        {activeTab === "home" && totalXP === 0 && !lastWheel && !lastDisc && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-[2rem] bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-[1px] shadow-[0_8px_32px_rgba(139,92,246,0.35)]"
+          >
+            <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-500/20 shrink-0">
+                <Sparkles size={24} className="text-violet-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-[15px] leading-snug">ยินดีต้อนรับสู่เส้นทางของคุณ!</p>
+                <p className="text-slate-400 text-[13px] mt-0.5">เริ่มต้นด้วยการทำแบบประเมินตัวเองก่อนนะ เพื่อให้ AI Mentor รู้จักคุณและช่วยได้ตรงจุดขึ้น</p>
+              </div>
+              <Link
+                href="/tools/wheel-of-life"
+                className="shrink-0 flex items-center gap-2 bg-violet-500 hover:bg-violet-400 text-white text-[13px] font-bold px-5 py-2.5 rounded-full transition-colors"
+              >
+                เริ่มเลย <ArrowRight size={15} />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
         {/* --- 🧭 1. Top Section --- */}
         {(activeTab === "home" || activeTab === "overview") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
