@@ -30,18 +30,19 @@ export default function Header() {
 
         {/* เมนู Desktop */}
         <div className="hidden md:flex items-center gap-1">
-          <Link href="/tools/wheel-of-life" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
-            <PieChart size={17} /> สมดุลชีวิต
-          </Link>
-          <Link href="/tools/disc" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
-            <Users size={17} /> DISC
-          </Link>
-          <Link href="/tools/money-avatar" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
-            <Wallet size={17} /> สไตล์การเงิน
-          </Link>
-          <Link href="/library" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-all whitespace-nowrap">
-            <Brain size={17} /> คลังสมอง
-          </Link>
+          {[
+            { href: "/tools/wheel-of-life", label: "สมดุลชีวิต", icon: <PieChart size={17} />, activeColor: "text-red-600 bg-red-50" },
+            { href: "/tools/disc", label: "DISC", icon: <Users size={17} />, activeColor: "text-blue-600 bg-blue-50" },
+            { href: "/tools/money-avatar", label: "สไตล์การเงิน", icon: <Wallet size={17} />, activeColor: "text-amber-600 bg-amber-50" },
+            { href: "/library", label: "คลังสมอง", icon: <Brain size={17} />, activeColor: "text-amber-500 bg-amber-50" },
+          ].map(({ href, label, icon, activeColor }) => {
+            const isActive = pathname.startsWith(href);
+            return (
+              <Link key={href} href={href} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${isActive ? activeColor : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"}`}>
+                {icon} {label}
+              </Link>
+            );
+          })}
 
           {!user && (
             <button
