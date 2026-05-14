@@ -922,6 +922,11 @@ export default function FocusRoomPage() {
                       </div>
                     );
                   })
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-50">
+                    <Trophy size={48} className="text-blue-900 mb-4" />
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">ยังไม่มีข้อมูลอันดับในขณะนี้</p>
+                  </div>
                 )}
               </div>
 
