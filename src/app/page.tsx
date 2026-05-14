@@ -18,6 +18,10 @@ export default function Home() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+      if (currentUser) {
+      // ถ้ามี user (เพิ่ง Login สำเร็จ) ให้ดีดขึ้นบนสุดทันที
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
     });
     return () => unsubscribe();
   }, []);
