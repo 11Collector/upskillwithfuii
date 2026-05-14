@@ -50,13 +50,19 @@ export default function DeepWorkPage() {
   const [gender, setGender] = useState<"male" | "female">("male");
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const [soundMode, setSoundMode] = useState<"focus" | "reading" | "creative">("reading");
   const [xpReward, setXpReward] = useState(10);
   const isSoundEnabledRef = useRef(false);
+  const soundModeRef = useRef<"focus" | "reading" | "creative">("reading");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const endTimeRef = useRef<number | null>(null);
   const wakeLockRef = useRef<any>(null);
-  const natureAudioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Web Audio API for Pink Noise Lo-fi
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const noiseSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
 
   const radius = 100;
   const circumference = 2 * Math.PI * radius;
@@ -155,6 +161,12 @@ export default function DeepWorkPage() {
           const isEnabled = savedSound === "true";
           setIsSoundEnabled(isEnabled);
           isSoundEnabledRef.current = isEnabled;
+        }
+
+        const savedMode = localStorage.getItem("deepWork_soundMode") as any;
+        if (savedMode) {
+          setSoundMode(savedMode);
+          soundModeRef.current = savedMode;
         }
 
         // Load mode for XP reward
@@ -326,39 +338,121 @@ export default function DeepWorkPage() {
       if (newState) {
         playNatureSound();
       } else {
-        if (natureAudioRef.current) {
-          natureAudioRef.current.pause();
-        }
+        stopNatureSound();
       }
     }
   };
 
-  const playNatureSound = () => {
-    if (!natureAudioRef.current) {
-      const audio = new Audio("/sounds/nature.mp3");
-      audio.volume = 0.2;
+  const createNoiseBuffer = (ctx: AudioContext, mode: "focus" | "reading" | "creative") => {
+    const bufferSize = 2 * ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = buffer.getChannelData(0);
 
-      audio.addEventListener('timeupdate', function () {
-        const buffer = 0.4;
-        if (this.currentTime > this.duration - buffer) {
-          this.currentTime = 0;
-          if (isSoundEnabledRef.current) this.play().catch(() => { });
-        }
-      });
-
-      audio.loop = true;
-      natureAudioRef.current = audio;
+    if (mode === "focus") {
+      // Brown Noise (Deep & Heavy)
+      let lastOut = 0.0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        const out = (lastOut + (0.02 * white)) / 1.02;
+        lastOut = out;
+        output[i] = out * 3.5; // volume compensation
+      }
+    } else if (mode === "reading") {
+      // Pink Noise (Balanced & Natural - Voss-McCartney)
+      let b0, b1, b2, b3, b4, b5, b6;
+      b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        output[i] *= 0.11;
+        b6 = white * 0.115926;
+      }
+    } else {
+      // Creative: White Noise with subtle modulation (Breeze)
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * 0.5;
+      }
     }
+    return buffer;
+  };
 
-    if (isSoundEnabledRef.current) {
-      natureAudioRef.current.play().catch(err => console.error("Nature sound failed:", err));
+  const playNatureSound = async () => {
+    if (!isSoundEnabledRef.current) return;
+
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+
+      if (audioCtxRef.current.state === 'suspended') {
+        await audioCtxRef.current.resume();
+      }
+
+      // Stop previous if exists
+      if (noiseSourceRef.current) {
+        try { noiseSourceRef.current.stop(); } catch(e) {}
+        noiseSourceRef.current.disconnect();
+      }
+
+      const ctx = audioCtxRef.current;
+      const source = ctx.createBufferSource();
+      source.buffer = createNoiseBuffer(ctx, soundModeRef.current);
+      source.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      
+      // Filter frequency based on mode
+      if (soundModeRef.current === "focus") filter.frequency.value = 400; // Deep Brown
+      else if (soundModeRef.current === "reading") filter.frequency.value = 1000; // Warm Pink
+      else filter.frequency.value = 2500; // Bright Creative
+
+      filter.Q.value = 0.5;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 1.5);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start();
+      noiseSourceRef.current = source;
+      gainNodeRef.current = gain;
+    } catch (err) {
+      console.error("Web Audio failed:", err);
     }
   };
 
   const stopNatureSound = () => {
-    if (natureAudioRef.current) {
-      natureAudioRef.current.pause();
-      natureAudioRef.current.currentTime = 0;
+    if (noiseSourceRef.current) {
+      try {
+        if (gainNodeRef.current && audioCtxRef.current) {
+          const ctx = audioCtxRef.current;
+          gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, ctx.currentTime);
+          gainNodeRef.current.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+          setTimeout(() => {
+            if (noiseSourceRef.current) {
+              noiseSourceRef.current.stop();
+              noiseSourceRef.current.disconnect();
+              noiseSourceRef.current = null;
+            }
+          }, 500);
+        } else {
+          noiseSourceRef.current.stop();
+          noiseSourceRef.current.disconnect();
+          noiseSourceRef.current = null;
+        }
+      } catch (e) {
+        noiseSourceRef.current = null;
+      }
     }
   };
 
@@ -536,25 +630,53 @@ export default function DeepWorkPage() {
 
               <AnimatePresence>
                 {isActive && (
-                  <motion.button
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    onClick={toggleSound}
-                    className="mt-6 p-2 rounded-full transition-all duration-300 text-zinc-600 hover:text-blue-400"
-                  >
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={isSoundEnabled ? 'on' : 'off'}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {isSoundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                      </motion.div>
-                    </AnimatePresence>
-                  </motion.button>
+                  <div className="flex flex-col items-center gap-4 mt-6">
+                    <div className="flex items-center gap-1 bg-zinc-800/50 p-1 rounded-full border border-zinc-700/50">
+                      {[
+                        { id: 'focus', label: 'Deep', icon: '🎯' },
+                        { id: 'reading', label: 'Study', icon: '📖' },
+                        { id: 'creative', label: 'Flow', icon: '✨' }
+                      ].map((mode) => (
+                        <button
+                          key={mode.id}
+                          onClick={() => {
+                            const m = mode.id as any;
+                            setSoundMode(m);
+                            soundModeRef.current = m;
+                            localStorage.setItem("deepWork_soundMode", m);
+                            if (isSoundEnabled) playNatureSound();
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase transition-all ${
+                            soundMode === mode.id 
+                            ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
+                            : 'text-zinc-500 hover:text-zinc-300'
+                          }`}
+                        >
+                          <span className="mr-1">{mode.icon}</span> {mode.label}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <motion.button
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      onClick={toggleSound}
+                      className={`p-2 rounded-full transition-all duration-300 ${isSoundEnabled ? 'text-blue-400' : 'text-zinc-600 hover:text-zinc-400'}`}
+                    >
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={isSoundEnabled ? 'on' : 'off'}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          {isSoundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                        </motion.div>
+                      </AnimatePresence>
+                    </motion.button>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
