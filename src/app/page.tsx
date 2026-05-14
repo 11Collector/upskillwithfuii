@@ -196,7 +196,7 @@ if (tool.name.toLowerCase().includes("who")) {
     // เปลี่ยน group-hover:text-white เป็น group-hover:text-blue-900
     <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 shadow-sm group-hover:bg-blue-100 group-hover:text-blue-900 transition-colors duration-300">
       <Users size={12} className="text-blue-500 group-hover:text-blue-900 transition-colors" />
-      <span>ผู้ใช้งาน 100K+</span>
+      <span>ผู้ใช้งาน 120K+</span>
     </div>
   );
 } 
