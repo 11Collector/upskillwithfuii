@@ -10,6 +10,7 @@ import { doc, getDoc, setDoc, onSnapshot, collection, query, serverTimestamp, de
 import { onAuthStateChanged, User } from "firebase/auth";
 
 import { Inter, Geist_Mono } from "next/font/google";
+import { getCalendarWeekId, getStartOfMonday } from "@/utils/dashboardHelpers";
 const inter = Inter({ subsets: ["latin"] });
 const geist_mono = Geist_Mono({ subsets: ["latin"], weight: ["900"] });
 
@@ -41,6 +42,7 @@ export default function FocusRoomPage() {
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(25);
+  const [leaderboardMode, setLeaderboardMode] = useState<"weekly" | "allTime">("weekly");
 
   const [viewMode, setViewMode] = useState<"selection" | "lounge">("selection");
   const [currentTime, setCurrentTime] = useState(Date.now());
@@ -133,13 +135,26 @@ export default function FocusRoomPage() {
         try {
           const { collection, query, orderBy, limit, getDocs, where } = await import("firebase/firestore");
           const usersRef = collection(db, "users");
-          // กรองเอาเฉพาะคนที่มีเวลาโฟกัสมากกว่า 0 นาทีเท่านั้น
-          const q = query(
-            usersRef, 
-            where("totalFocusMinutes", ">", 0), 
-            orderBy("totalFocusMinutes", "desc"), 
-            limit(10)
-          );
+          
+          let q;
+          if (leaderboardMode === "weekly") {
+            const currentWeekId = getCalendarWeekId();
+            q = query(
+              usersRef,
+              where("lastFocusWeek", "==", currentWeekId),
+              where("weeklyFocusMinutes", ">", 0),
+              orderBy("weeklyFocusMinutes", "desc"),
+              limit(10)
+            );
+          } else {
+            q = query(
+              usersRef, 
+              where("totalFocusMinutes", ">", 0), 
+              orderBy("totalFocusMinutes", "desc"), 
+              limit(10)
+            );
+          }
+
           const querySnapshot = await getDocs(q);
           const data = querySnapshot.docs.map(doc => ({
             id: doc.id,
@@ -154,7 +169,7 @@ export default function FocusRoomPage() {
       };
       fetchLeaderboard();
     }
-  }, [showLeaderboard]);
+  }, [showLeaderboard, leaderboardMode]);
 
 
 
@@ -824,7 +839,7 @@ export default function FocusRoomPage() {
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-blue-500 to-cyan-400" />
 
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-400/30">
                     <Trophy size={24} className="text-amber-400" />
@@ -834,15 +849,36 @@ export default function FocusRoomPage() {
                     <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Focus Hall of Fame</p>
                   </div>
                 </div>
-                <div className="bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-500/20">
-                  <span className="text-[10px] font-black text-blue-300 uppercase tracking-widest">All Time</span>
-                </div>
+              </div>
+
+              {/* Mode Toggle */}
+              <div className="flex bg-black/40 p-1.5 rounded-2xl border border-blue-500/10 mb-6 shadow-inner">
+                <button
+                  onClick={() => setLeaderboardMode("weekly")}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${leaderboardMode === "weekly" ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-400/50 hover:text-blue-300'}`}
+                >
+                  Weekly
+                </button>
+                <button
+                  onClick={() => setLeaderboardMode("allTime")}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${leaderboardMode === "allTime" ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-400/50 hover:text-blue-300'}`}
+                >
+                  All Time
+                </button>
               </div>
 
               <div className="flex items-center gap-3 mb-6 px-4 py-2.5 rounded-2xl bg-blue-500/5 border border-blue-500/10">
                 <Info size={14} className="text-blue-400 shrink-0" />
                 <p className="text-[10px] text-blue-300/70 font-bold uppercase tracking-wider leading-relaxed">
-                  อันดับคำนวณจากเวลาโฟกัสรวมทั้งหมด (Solo & Lounge)
+                  {leaderboardMode === 'weekly' 
+                    ? `อันดับประจำสัปดาห์ (${(() => {
+                        const start = getStartOfMonday(new Date());
+                        const end = new Date(start);
+                        end.setDate(start.getDate() + 6);
+                        const options = { month: 'short', day: 'numeric' } as const;
+                        return `${start.toLocaleDateString('th-TH', options)} - ${end.toLocaleDateString('th-TH', options)}`;
+                      })()})` 
+                    : "อันดับคำนวณจากเวลาโฟกัสรวมทั้งหมดตั้งแต่เริ่มต้น"}
                 </p>
               </div>
 
@@ -856,8 +892,9 @@ export default function FocusRoomPage() {
                   leaderboardData.map((item, idx) => {
                     const rank = idx + 1;
                     const tier = getTierFromXP(item.totalXP || 0);
-                    const hours = Math.floor((item.totalFocusMinutes || 0) / 60);
-                    const mins = (item.totalFocusMinutes || 0) % 60;
+                    const focusValue = leaderboardMode === 'weekly' ? (item.weeklyFocusMinutes || 0) : (item.totalFocusMinutes || 0);
+                    const hours = Math.floor(focusValue / 60);
+                    const mins = focusValue % 60;
                     
                     return (
                       <div key={item.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${rank === 1 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-blue-900/10 border-blue-500/10'}`}>
