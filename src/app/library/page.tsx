@@ -293,8 +293,8 @@ export default function PremiumLibraryPage() {
 
         {/* --- Footer --- */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-24 text-center py-12 border-t border-white/5">
-          <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-[0_20px_40px_rgba(255,255,255,0.05)] uppercase tracking-widest">
-            <LayoutGrid size={18} /> กลับสู่ DASHBOARD
+          <Link href={user ? "/dashboard" : "/"} className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-[0_20px_40px_rgba(255,255,255,0.05)] uppercase tracking-widest">
+            <LayoutGrid size={18} /> {user ? "กลับสู่ DASHBOARD" : "กลับหน้าแรก"}
           </Link>
         </motion.footer>
 

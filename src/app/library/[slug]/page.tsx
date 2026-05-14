@@ -301,8 +301,8 @@ export default function ArticleDetail() {
 
         {/* Footer */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-28 text-center pt-16 border-t border-white/5">
-          <Link href="/dashboard" className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-xl uppercase tracking-widest">
-            <LayoutGrid size={18} /> กลับสู่ DASHBOARD
+          <Link href={user ? "/dashboard" : "/"} className="group relative inline-flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-black text-sm transition-all hover:bg-amber-400 hover:scale-105 shadow-xl uppercase tracking-widest">
+            <LayoutGrid size={18} /> {user ? "กลับสู่ DASHBOARD" : "กลับหน้าแรก"}
           </Link>
           <div className="mt-12">
             <Link href="/library" className="text-slate-600 hover:text-slate-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">

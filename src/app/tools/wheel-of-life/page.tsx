@@ -378,9 +378,15 @@ const handleGenerateResult = async () => {
 
           // ✅ 2. Logic แจก 50 XP (ถ้าเป็นการทำครั้งแรกจริงๆ)
           if (!userData.hasWheelXP) {
+            const oldXP = userData.totalXP || 0;
+            const newXP = oldXP + 50;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor(newXP / 100) + 1;
             updateData.totalXP = increment(50);
             updateData.hasWheelXP = true;
-            console.log("🎉 ยินดีด้วย! คุณได้รับ 50 XP สำหรับการประเมินครั้งแรก");
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
           }
 
           // ยิงคำสั่งอัปเดต Profile ครั้งเดียวจบ

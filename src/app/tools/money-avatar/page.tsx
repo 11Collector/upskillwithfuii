@@ -476,7 +476,14 @@ export default function Home() {
             if (userSnap.exists()) {
               const userData = userSnap.data();
               if (!userData.hasMoneyXP) {
+                const oldXP = userData.totalXP || 0;
+                const newXP = oldXP + 50;
+                const oldLevel = Math.floor(oldXP / 100) + 1;
+                const newLevel = Math.floor(newXP / 100) + 1;
                 await setDoc(userRef, { totalXP: increment(50), hasMoneyXP: true }, { merge: true });
+                if (newLevel > oldLevel) {
+                  sessionStorage.setItem('pendingLevelUp', String(newLevel));
+                }
               }
             }
           }

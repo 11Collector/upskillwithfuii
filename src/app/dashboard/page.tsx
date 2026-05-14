@@ -44,6 +44,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const pendingLevel = sessionStorage.getItem('pendingLevelUp');
+    if (pendingLevel) {
+      sessionStorage.removeItem('pendingLevelUp');
+      const newLevel = parseInt(pendingLevel);
+      setTimeout(() => {
+        setShowLevelUp({ isOpen: true, newLevel });
+        setTimeout(() => setShowLevelUp(null), 4000);
+      }, 1000);
+    }
   }, []);
 
   // 1. ฟังก์ชันสำหรับอัปเดตวันของแผน (ใช้ตอน "ใช้แผนเดิมต่อ")
@@ -638,7 +647,8 @@ export default function DashboardPage() {
         hasWheelXP: false,
         hasDiscXP: false,
         hasMoneyXP: false,
-        hasLibrarySoulXP: false, // 🌟 รีเซ็ต XP Library Soul
+        hasLibrarySoulXP: false,
+        hasSoulGuide: false,
         hasReadXP: false,  // 🌟 ปลดล็อกรีเซ็ต XP การอ่าน
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
         dailyChatCount: 0,  // 🤖 รีเซ็ตพลังงาน AI Mentor
@@ -668,6 +678,7 @@ export default function DashboardPage() {
       setIsFirstWeek(true);
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
       setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
+      setHasSoulGuide(false);
       localStorage.removeItem('hasSeenDashboardTutorial');
       setShowTutorial(true);
       setTutorialStep(1);
@@ -1883,7 +1894,7 @@ export default function DashboardPage() {
                       <span className="shrink-0 text-[10px] font-black text-amber-400 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full">+{next.xp} XP</span>
                     )}
                   </div>
-                  <p className="text-slate-400 text-[11px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำแบบประเมินเพื่อให้ AI Mentor รู้จักคุณ" : next.desc}</p>
+                  <p className="text-slate-400 text-[11px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 relative z-10">
                   <span className="text-[11px] font-black text-slate-500 hidden sm:block">{doneCount}/5</span>
@@ -2695,8 +2706,8 @@ export default function DashboardPage() {
               })}
 
               {/* ✨ Special Quest Section (Personalized Mission) */}
-              {currentLevel >= 5 && (
-                currentLevel < 10 ? (
+              {(
+                currentLevel < 5 ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -2719,7 +2730,7 @@ export default function DashboardPage() {
                     <div className="shrink-0 text-right relative z-10">
                       <div className="flex flex-col items-end gap-1">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Required</span>
-                        <span className="text-[11px] font-black px-3 py-1.5 rounded-xl bg-slate-200 text-slate-500 border border-slate-300 shadow-inner">LEVEL 10</span>
+                        <span className="text-[11px] font-black px-3 py-1.5 rounded-xl bg-slate-200 text-slate-500 border border-slate-300 shadow-inner">LEVEL 5</span>
                       </div>
                     </div>
                   </motion.div>
@@ -3516,81 +3527,55 @@ export default function DashboardPage() {
 
                 {/* 🌟 6. BRAIN (Upskill Library) - Premium Gold & Black Style */}
                 <Link
-                  href={currentLevel >= 5 ? "/library" : "#"}
-                  onClick={(e) => { if (currentLevel < 5) e.preventDefault(); }}
-                  className={`group block h-full relative ${currentLevel >= 5 ? 'cursor-pointer' : 'cursor-default'}`}
+                  href="/library"
+                  className="group block h-full relative cursor-pointer"
                 >
                   <motion.div
-                    whileHover={currentLevel >= 5 ? { y: -6 } : {}}
-                    className={`h-full p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center
-      ${currentLevel >= 5
-                        ? 'bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-amber-500/50'
-                        : 'bg-white border-slate-100 opacity-90'}`}
+                    whileHover={{ y: -6 }}
+                    className="h-full p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-amber-500/50"
                   >
 
                     {/* 🏷️ Status Badge */}
                     <div className="absolute top-8 right-8 z-30">
-                      {currentLevel >= 5 ? (
-                        <motion.div
-                          initial={{ scale: 0 }} animate={{ scale: 1 }}
-                          className="bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-900/20 flex items-center gap-1.5 uppercase tracking-wider"
-                        >
-                          <Unlock size={10} className="fill-current" /> Unlocked
-                        </motion.div>
-                      ) : (
-                        <div className="bg-slate-100 text-slate-400 text-[10px] font-black px-3 py-1 rounded-full border border-slate-200 flex items-center gap-1.5 uppercase tracking-wider">
-                          <Lock size={10} /> LV.5 Required
-                        </div>
-                      )}
+                      <motion.div
+                        initial={{ scale: 0 }} animate={{ scale: 1 }}
+                        className="bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-900/20 flex items-center gap-1.5 uppercase tracking-wider"
+                      >
+                        <Unlock size={10} className="fill-current" /> OPEN
+                      </motion.div>
                     </div>
 
                     {/* ✨ Ambient Light & Top Bar */}
-                    <div className={`absolute top-0 right-0 w-72 h-72 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none transition-colors duration-700 
-      ${currentLevel >= 5 ? 'bg-amber-500/10 group-hover:bg-amber-500/20' : 'bg-slate-200/5'}`}
-                    />
-                    <div className={`absolute top-0 left-0 w-full h-1.5 opacity-80 transition-all duration-500 
-      ${currentLevel >= 5 ? 'bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300' : 'bg-slate-200'}`}
-                    />
+                    <div className="absolute top-0 right-0 w-72 h-72 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none transition-colors duration-700 bg-amber-500/10 group-hover:bg-amber-500/20" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 opacity-80 transition-all duration-500 bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300" />
 
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
 
                       {/* 🧠 Logo Container */}
                       <div className="relative mb-6 mt-2">
-                        <div className={`absolute inset-0 blur-3xl opacity-20 ${currentLevel >= 5 ? 'bg-amber-400/30' : 'bg-slate-200'}`} />
-                        <div className={`relative w-24 h-24 rounded-full border flex items-center justify-center text-6xl transition-transform duration-500 shadow-2xl
-          ${currentLevel >= 5
-                            ? 'bg-slate-900 border-amber-500/30 group-hover:scale-110 group-hover:border-amber-400 group-hover:shadow-amber-500/20'
-                            : 'bg-white border-slate-50 grayscale'}`}>
-                          {currentLevel >= 5 ? "🧠" : "🔒"}
+                        <div className="absolute inset-0 blur-3xl opacity-20 bg-amber-400/30" />
+                        <div className="relative w-24 h-24 rounded-full border flex items-center justify-center text-6xl transition-transform duration-500 shadow-2xl bg-slate-900 border-amber-500/30 group-hover:scale-110 group-hover:border-amber-400 group-hover:shadow-amber-500/20">
+                          🧠
                         </div>
                       </div>
 
-                      <h3 className={`font-bold text-[10px] uppercase tracking-[0.3em] mb-2.5 ${currentLevel >= 5 ? 'text-amber-500/60' : 'text-slate-400'}`}>
+                      <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-2.5 text-amber-500/60">
                         UPSKILL BRAIN
                       </h3>
-                      <h2 className={`text-3xl font-black mb-3 leading-tight tracking-tight transition-colors 
-        ${currentLevel >= 5 ? 'text-white group-hover:text-amber-400' : 'text-slate-400'}`}>
-                        {currentLevel >= 5 ? 'คลังสมองอัพสกิล' : 'คลังสมองอัพสกิล'}
+                      <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight transition-colors text-white group-hover:text-amber-400">
+                        คลังสมองอัพสกิล
                       </h2>
 
-                      <p className={`text-[14px] font-medium mb-8 px-6 leading-relaxed max-w-[280px] transition-colors
-        ${currentLevel >= 5 ? 'text-slate-400' : 'text-slate-500 opacity-80'}`}>
+                      <p className="text-[14px] font-medium mb-8 px-6 leading-relaxed max-w-[280px] transition-colors text-slate-400">
                         สรุปหนังสือและบทความเด็ดๆ <br /> ที่คัดมาเพื่อคุณโดยเฉพาะ
                       </p>
 
                       <div className="w-full px-4 mt-auto">
                         <div className="group/btn-library relative">
-                          {currentLevel >= 5 ? (
-                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-library:scale-[1.02] group-hover/btn-library:shadow-amber-500/50 active:scale-95">
-                              <Sparkles size={16} className="text-slate-950/80" />
-                              <span>เปิดอ่านคลังสมอง</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-slate-100 text-slate-400 text-[13px] font-black uppercase tracking-widest border border-slate-200 cursor-not-allowed">
-                              <Lock size={16} />
-                              <span>ปลดล็อกที่ LV.5</span>
-                            </div>
-                          )}
+                          <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-library:scale-[1.02] group-hover/btn-library:shadow-amber-500/50 active:scale-95">
+                            <Sparkles size={16} className="text-slate-950/80" />
+                            <span>เปิดอ่านคลังสมอง</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -4694,7 +4679,7 @@ export default function DashboardPage() {
                   <div className="bg-purple-50/80 border border-purple-100 p-4 rounded-2xl w-full">
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
                       แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span> ด้านล่าง<br />
-                      เพื่อใช้งานโหมด <strong>ทำสมาธิ (Deep Work)</strong> เพิ่มโฟกัส<br />
+                      เพื่อใช้งานโหมด <strong>ทำสมาธิ</strong> เพิ่มโฟกัส และอ่านบทความดีๆ<br />
                       <span className="text-[11px] text-slate-500 mt-1 block">และพูดคุยกับ <strong>AI Mentor ส่วนตัว</strong> ที่เข้าใจคุณที่สุด!</span>
                     </p>
                   </div>
