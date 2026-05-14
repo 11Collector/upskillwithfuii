@@ -539,7 +539,7 @@ export default function DashboardPage() {
               setHasClaimedQuoteToday(false);
               // ✨ [NEW] เด้ง Popup ชวนเจนคำคมถ้ายังไม่ได้ทำ (เด้งแค่ครั้งเดียวต่อการเข้า Dashboard ในเซสชันนั้น)
               const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
-              if (!hasShownThisSession) {
+              if (!hasShownThisSession && (userData.totalXP || 0) > 0) {
                 setShowWelcomeQuotePopup(true);
                 sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
               }
