@@ -18,6 +18,7 @@ export default function BottomNavigation() {
     pathname.startsWith('/dashboard') || 
     pathname.startsWith('/library') || 
     pathname === '/tools/soul-guide' ||
+    pathname === '/tools/deep-work' ||
     pathname === '/report-review';
 
   if (isDashboardFlow) {
@@ -36,7 +37,7 @@ export default function BottomNavigation() {
           // Identify active state. In the Chat context (/tools/soul-guide), NO buttons should be active as requested.
           const isChatPage = pathname === '/tools/soul-guide';
           const isActive = !isChatPage && (
-                           (item.id === 'home' && pathname === '/dashboard' && (!searchParams.get('tab') || searchParams.get('tab') === 'home')) || 
+                           (item.id === 'home' && (pathname === '/dashboard' || pathname === '/dashboard/') && (!searchParams.get('tab') || searchParams.get('tab') === 'home')) || 
                            (item.id === 'overview' && pathname === '/dashboard' && searchParams.get('tab') === 'overview') ||
                            (item.id === 'quests' && pathname === '/dashboard' && currentTab === 'quests') ||
                            (item.id === 'identity' && currentTab === 'identity') ||

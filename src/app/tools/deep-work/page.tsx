@@ -393,11 +393,18 @@ export default function DeepWorkPage() {
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute inset-0 flex items-center justify-center z-10"
               >
-                <img 
-                  src={getAvatarPath()} 
-                  alt="Meditation Avatar" 
-                  className={`w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 object-contain transition-all duration-1000 ${isActive ? 'opacity-100 scale-110' : 'opacity-20 grayscale'}`}
-                />
+                {!isCheckingStatus ? (
+                  <img 
+                    key={getAvatarPath()}
+                    src={getAvatarPath()} 
+                    alt="Meditation Avatar" 
+                    className={`w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 object-contain transition-all duration-1000 ${isActive ? 'opacity-100 scale-110' : 'opacity-20 grayscale'}`}
+                  />
+                ) : (
+                  <div className="w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-zinc-200 border-t-zinc-800 rounded-full animate-spin" />
+                  </div>
+                )}
               </motion.div>
 
               <svg className="absolute inset-0 w-full h-full transform -rotate-90 z-20 pointer-events-none">

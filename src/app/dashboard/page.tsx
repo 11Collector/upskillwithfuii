@@ -772,7 +772,11 @@ export default function DashboardPage() {
     const tab = searchParams.get('tab');
     if (tab && ["home", "overview", "quests", "identity", "resources"].includes(tab)) {
       setActiveTab(tab as any);
+    } else if (!tab) {
+      setActiveTab("home");
     }
+    // 🚀 Scroll to top when tab changes
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [searchParams]);
 
   useEffect(() => {
