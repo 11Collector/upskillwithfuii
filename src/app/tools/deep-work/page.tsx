@@ -49,7 +49,7 @@ export default function DeepWorkPage() {
   const [gender, setGender] = useState<"male" | "female">("male");
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
-  const [xpReward, setXpReward] = useState(20);
+  const [xpReward, setXpReward] = useState(10);
   const isSoundEnabledRef = useRef(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -148,9 +148,9 @@ export default function DeepWorkPage() {
         // Load mode for XP reward
         const mode = localStorage.getItem("deepWork_mode");
         if (mode === "lounge") {
-          setXpReward(25);
+          setXpReward(15);
         } else {
-          setXpReward(20);
+          setXpReward(10);
         }
         
         // เช็คเวลาที่ท้ามาทันทีเพื่อลดการกะพริบ (Flicker)
@@ -382,9 +382,6 @@ export default function DeepWorkPage() {
     setIsSaving(true);
     try {
       let finalXpReward = xpReward;
-
-      // ให้โบนัส Lounge เต็มจำนวนตราบใดที่เข้ามาจากห้องรวม
-      // เอาเงื่อนไขริบโบนัสออก เพื่อป้องกันความสับสนกรณีที่ตั้งเวลาไม่เท่ากันแล้วคนนึงเสร็จก่อน
 
       const payload: any = {
         totalFocusMinutes: increment(selectedTime),
