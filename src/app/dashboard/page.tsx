@@ -1881,23 +1881,23 @@ export default function DashboardPage() {
               className="mb-6 rounded-[2rem] p-[1px] relative"
               style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa, #34d399, #fbbf24, #f472b6, #a78bfa)" }}
             >
-              <div className="relative rounded-[2rem] bg-slate-950 px-5 py-4 flex items-center gap-3 overflow-hidden">
-                <div className={`shrink-0 w-10 h-10 rounded-xl ${next.iconBg} flex items-center justify-center ${next.iconColor} relative z-10`}>
-                  {next.icon}
+              <div className="relative rounded-[2rem] bg-slate-950 px-4 py-3 flex items-center gap-2.5 overflow-hidden">
+                <div className={`shrink-0 w-8 h-8 rounded-lg ${next.iconBg} flex items-center justify-center ${next.iconColor} relative z-10`}>
+                  {next.icon && <span className="scale-75">{next.icon}</span>}
                 </div>
                 <div className="flex-1 min-w-0 relative z-10">
-                  <div className="flex items-center gap-2 flex-nowrap">
-                    <p className="text-white text-[13px] font-bold whitespace-nowrap truncate">
+                  <div className="flex items-center gap-1.5 flex-nowrap">
+                    <p className="text-white text-[11px] font-bold whitespace-nowrap truncate">
                       {doneCount === 0 ? "ยินดีต้อนรับสู่ Upskill Everyday" : `ต่อไป: ${next.label}`}
                     </p>
                     {next.xp > 0 && (
-                      <span className="shrink-0 text-[10px] font-black text-amber-400 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full">+{next.xp} XP</span>
+                      <span className="shrink-0 text-[9px] font-black text-amber-400 bg-amber-400/15 border border-amber-400/30 px-1.5 py-0.5 rounded-full">+{next.xp} XP</span>
                     )}
                   </div>
-                  <p className="text-slate-400 text-[11px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
+                  <p className="text-slate-400 text-[10px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 relative z-10">
-                  <span className="text-[11px] font-black text-slate-500 hidden sm:block">{doneCount}/5</span>
+                <div className="flex items-center gap-1.5 shrink-0 relative z-10">
+                  <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/5</span>
                   <Link
                     href={next.path}
                     onClick={() => {
@@ -1906,10 +1906,10 @@ export default function DashboardPage() {
                         setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
                       }
                     }}
-                    className="flex items-center gap-1.5 text-white text-[12px] font-bold px-4 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap"
+                    className="flex items-center gap-1 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap"
                     style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}
                   >
-                    {doneCount === 0 ? "เริ่มเลย" : doneCount === 5 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={13} />
+                    {doneCount === 0 ? "เริ่มเลย" : doneCount === 5 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={11} />
                   </Link>
                 </div>
               </div>
