@@ -69,7 +69,7 @@ export default function BottomNavigation() {
     { id: 'life', label: 'ชีวิต', icon: PieChart, path: '/tools/wheel-of-life', color: 'text-red-600' },
     { id: 'work', label: 'ทำงาน', icon: Users, path: '/tools/disc', color: 'text-blue-600' },
     { id: 'money', label: 'การเงิน', icon: Wallet, path: '/tools/money-avatar', color: 'text-amber-600' },
-    { id: 'identity', label: 'ตัวตน', icon: BookOpen, path: '/tools/library-of-souls', color: 'text-emerald-600' },
+    { id: 'library', label: 'คลังสมอง', icon: BookOpen, path: '/library', color: 'text-emerald-600' },
   ];
 
   return (
