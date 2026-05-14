@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, BookOpen, ChevronRight, LogIn, LogOut, Loader2, LayoutDashboard, Star, Lock,Flame,BrainCircuit,Sparkles } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, BookOpen, ChevronRight, LogIn, LogOut, Loader2, LayoutDashboard, Star, Lock,Flame,BrainCircuit,Sparkles,Info } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
@@ -166,35 +166,43 @@ const handleLogin = async () => {
               );
             }
 
-            return (
-              <Link key={tool.name} href={tool.path}>
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 group flex items-start gap-4 cursor-pointer hover:-translate-y-1 h-full relative overflow-hidden">
-                  
-                  {/* ไอคอนหลัก */}
-                  <div className={`p-4 rounded-2xl border ${tool.color} group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 shrink-0`}>
-                    {tool.icon}
-                  </div>
-                  
-                  {/* เนื้อหาข้อความ */}
-                  <div className="flex-1 flex flex-col h-full justify-center">
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-lg group-hover:text-red-600 transition-colors">{tool.name}</h3>
-                      <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">{tool.desc}</p>
-                    </div>
-                    
-                    {/* ป้าย Gimmick */}
-                    {gimmick && (
-                      <div className="mt-auto pt-2">
-                        {gimmick}
-                      </div>
-                    )}
-                  </div>
-
-                  <ChevronRight size={20} className="text-slate-200 group-hover:text-red-500 self-center shrink-0 transition-transform group-hover:translate-x-1" />
+          return (
+            // 💡 1. ให้ทั้งการ์ดกดลิงก์ไปที่หน้า /info ก่อนเสมอ
+            <Link key={tool.name} href={`${tool.path}/info`} className="block h-full group">
+              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 flex items-center gap-4 cursor-pointer hover:-translate-y-1 h-full relative overflow-hidden">
+                
+                {/* ไอคอนหลัก */}
+                <div className={`p-4 rounded-2xl border ${tool.color} group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 shrink-0 self-start`}>
+                  {tool.icon}
                 </div>
-              </Link>
-            );
-          })}
+                
+                {/* เนื้อหาข้อความ (เอา pr-8 ออก เพราะไม่มีปุ่ม i แล้ว) */}
+                <div className="flex-1 flex flex-col h-full justify-center">
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg group-hover:text-red-600 transition-colors">{tool.name}</h3>
+                    <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">{tool.desc}</p>
+                  </div>
+                  
+                  {/* ป้าย Gimmick */}
+                  {gimmick && (
+                    <div className="mt-auto pt-3">
+                      {gimmick}
+                    </div>
+                  )}
+                </div>
+
+                {/* 💡 2. ส่วนชี้เป้าด้านขวา (อัปเดตใหม่ให้มีคำว่า "รายละเอียด") */}
+                <div className="flex flex-col sm:flex-row items-center gap-1 text-slate-300 group-hover:text-red-500 transition-colors shrink-0">
+                  <span className="text-[10px] sm:text-[12px] font-bold group-hover:-translate-x-1 transition-transform duration-300">
+                    รายละเอียด
+                  </span>
+                  <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+                </div>
+
+              </div>
+            </Link>
+          );
+        })}
         </div>
       </section>
 
