@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download } from "lucide-react";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
@@ -28,9 +28,10 @@ const t = {
   pitchTitle1: "ปลดล็อก Dashboard",
   pitchTitle2: "เพื่อเก็บสถิติส่วนตัว",
   pitchList: [
-    "บันทึกผลทดสอบของทุก App ในที่เดียว",
-    "สะสม XP พัฒนา Level การเรียนรู้ของคุณ",
-    "Personalized Insight วิเคราะห์จุดอัพสกิล"
+    "Hub รวมทุกผลทดสอบตัวตนในที่เดียว",
+    "สะสม XP อัพ Level ให้ตัวเอง",
+    "Smart Insight เจาะลึกจุดอัพสกิล",
+    "AI Mentor ช่วยวางแผนระดับโปร"
   ],
   loginGoogle: "เข้าสู่ระบบด้วย Google",
   loginRemark: "* เข้าร่วมฟรีในช่วง Beta พร้อมใช้ Dashboard สุด Exclusive",
@@ -189,6 +190,17 @@ export default function Home() {
         </div>
       )
     },
+    {
+      id: "ai-mentor", name: "AI MENTOR", desc: "ที่ปรึกษาพัฒนาตัวเองส่วนตัวระดับโปร", gimmick: "Personalized วิเคราะห์ตัวคุณ",
+      icon: <MessageSquareMore size={28} className="text-slate-600" />, path: "/tools/ai-mentor", color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
+      gimmickUI: (
+        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-200 via-zinc-100 to-slate-200 text-slate-700 rounded-full text-[10px] font-black tracking-widest border border-slate-300 shadow-sm group-hover:from-slate-300 group-hover:to-zinc-200 group-hover:text-slate-900 transition-all duration-300">
+          <Zap size={12} className="text-slate-500 group-hover:text-slate-900 transition-colors animate-pulse" />
+          <span>PRO MENTORSHIP</span>
+        </div>
+      )
+    },
+
   ];
 
   if (loading) {
