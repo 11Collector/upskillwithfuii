@@ -43,6 +43,9 @@ export default function WheelOfLifeInfoPage() {
               <Sparkles size={20} /> เริ่มทำแบบประเมินฟรี
             </button>
           </Link>
+          <p className="text-slate-400 text-[12px] mt-3 font-medium">
+            เพื่อเก็บข้อมูล แนะนำให้ Login ผ่าน Gmail ที่หน้าแรกก่อน
+          </p>
         </header>
 
         {/* Content Section 1: หัวข้ออัปเดตตามรูปหน้าจอของคุณ */}

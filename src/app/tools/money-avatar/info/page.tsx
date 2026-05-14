@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Wallet, CheckCircle2, TrendingUp, ShieldAlert, Sparkles, ArrowRight, BookOpen } from "lucide-react";
+import { ArrowLeft, Wallet, TrendingUp, ShieldAlert, Sparkles, ArrowRight, BookOpen } from "lucide-react";
 
 // 💡 1. Metadata เจาะกลุ่มคนลงทุน/บริหารเงิน
 export const metadata: Metadata = {
@@ -35,7 +35,7 @@ export default function MoneyAvatarInfoPage() {
           </h1>
           <p className="text-lg text-stone-500 mb-8 max-w-2xl mx-auto leading-relaxed">
             หาเงินได้เยอะ แต่ทำไมไม่มีเงินเก็บ? ชอบลงทุนแต่ทำไมถึงติดดอยซ้ำซาก? <br className="hidden md:block"/>
-            ใช้เวลาเพียง 3 นาที ค้นหา "ตัวตนทางการเงิน" ของคุณ เพื่ออุดรอยรั่วและสร้างแผนมั่งคั่งที่เข้ากับนิสัยคุณที่สุด
+            ใช้เวลาเพียง 3 นาที ค้นหา &quot;ตัวตนทางการเงิน&quot; ของคุณ เพื่ออุดรอยรั่วและสร้างแผนมั่งคั่งที่เข้ากับนิสัยคุณที่สุด
           </p>
           
           {/* 💡 CTA หลัก ดึงคนเข้าแอป */}
@@ -44,13 +44,16 @@ export default function MoneyAvatarInfoPage() {
               <Sparkles size={20} /> เริ่มค้นหาตัวตนการเงิน ฟรี
             </button>
           </Link>
+          <p className="text-stone-400 text-[12px] mt-3 font-medium">
+            เพื่อเก็บข้อมูล แนะนำให้ Login ผ่าน Gmail ที่หน้าแรกก่อน
+          </p>
         </header>
 
         {/* Content Section 1 */}
         <article className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-stone-100 mb-8">
           <h2 className="text-2xl font-black text-stone-800 mb-4 border-l-4 border-amber-500 pl-4">Money Avatar คืออะไร?</h2>
           <p className="text-stone-600 leading-relaxed mb-6">
-            <strong>Money Avatar</strong> คือเครื่องมือวิเคราะห์จิตวิทยาการเงิน ที่ประเมินจาก 2 แกนหลัก คือ <strong>"ระดับความเสี่ยงที่รับได้ (Risk)"</strong> และ <strong>"ระเบียบวินัยในการใช้เงิน (Discipline)"</strong> เพราะวิธีการสร้างความมั่งคั่งของแต่ละคนไม่เหมือนกัน สูตรสำเร็จของคนอื่น อาจกลายเป็นหายนะของคุณ หากมันไม่ตรงกับจริตและสไตล์ของคุณเอง
+            <strong>Money Avatar</strong> คือเครื่องมือวิเคราะห์จิตวิทยาการเงิน ที่ประเมินจาก 2 แกนหลัก คือ <strong>&quot;ระดับความเสี่ยงที่รับได้ (Risk)&quot;</strong> และ <strong>&quot;ระเบียบวินัยในการใช้เงิน (Discipline)&quot;</strong> เพราะวิธีการสร้างความมั่งคั่งของแต่ละคนไม่เหมือนกัน สูตรสำเร็จของคนอื่น อาจกลายเป็นหายนะของคุณ หากมันไม่ตรงกับจริตและสไตล์ของคุณเอง
           </p>
 
           <h3 className="text-xl font-bold text-stone-800 mt-8 mb-4">9 ทรงการเงิน คุณเป็นแบบไหนในตารางนี้?</h3>
@@ -94,7 +97,7 @@ export default function MoneyAvatarInfoPage() {
                 <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0"><ShieldAlert className="text-red-400" size={24}/></div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">วิเคราะห์หลุมพราง (Kryptonite)</h3>
-                  <p className="text-stone-400 text-sm leading-relaxed">ค้นหา "จุดอ่อน" ที่ทำให้คุณเสียเงินโดยไม่จำเป็น หรือพลาดโอกาสทำกำไร เพื่อตั้งรับได้อย่างถูกจุด</p>
+                  <p className="text-stone-400 text-sm leading-relaxed">ค้นหา &quot;จุดอ่อน&quot; ที่ทำให้คุณเสียเงินโดยไม่จำเป็น หรือพลาดโอกาสทำกำไร เพื่อตั้งรับได้อย่างถูกจุด</p>
                 </div>
               </div>
               <div className="flex gap-4">

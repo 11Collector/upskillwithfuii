@@ -290,10 +290,10 @@ const saveResultToFirebase = async () => {
   ];
 
 return (
-    <div className={`h-full w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
+    <div className={`min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
       
       {/* 💡 กรอบนอกสุด ใส่ overflow-hidden ให้มุมโค้งสวยงาม และ h-full ให้พอดีจอ */}
-      <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-full sm:h-[850px] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
+      <div className={`w-full max-w-md md:max-w-2xl lg:max-w-4xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] lg:h-[900px] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
@@ -311,7 +311,7 @@ return (
                 <div>
                   <p className="font-bold text-slate-800 text-sm mb-1">กติกาการเอาตัวรอด</p>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
-                    กดเลือก <span className="font-bold bg-blue-100 text-blue-800 px-1 rounded">"คำตอบแรกที่แวบขึ้นมาในหัว"</span> ทันทีโดยไม่ต้องคิดเยอะ เพื่อหาธาตุแท้ของคุณ!
+                    กดเลือก <span className="font-bold bg-blue-100 text-blue-800 px-1 rounded">&quot;คำตอบแรกที่แวบขึ้นมาในหัว&quot;</span> ทันทีโดยไม่ต้องคิดเยอะ เพื่อหาธาตุแท้ของคุณ!
                   </p>
                 </div>
               </div>
