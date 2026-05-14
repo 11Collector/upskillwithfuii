@@ -420,7 +420,7 @@ export default function DeepWorkPage() {
       
       const payload: any = {
         totalFocusMinutes: increment(selectedTime),
-        totalXP: increment(finalXpReward),
+        totalXP: increment(xpReward),
         lastFocusDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         lastFocusWeek: currentWeekId,
         focusReflections: arrayUnion({
