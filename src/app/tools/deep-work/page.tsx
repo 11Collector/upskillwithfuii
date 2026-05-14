@@ -87,8 +87,8 @@ export default function DeepWorkPage() {
             const level = Math.floor(xp / 100) + 1;
             let tier = "rookie";
             if (level >= 30) tier = "legacy";
-            else if (level >= 15) tier = "architect";
-            else if (level >= 7) tier = "master";
+            else if (level >= 20) tier = "architect";
+            else if (level >= 10) tier = "master";
             setCharacterTier(tier);
           }
         } catch (error) {

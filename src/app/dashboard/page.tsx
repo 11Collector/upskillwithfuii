@@ -1162,8 +1162,12 @@ export default function DashboardPage() {
               setHasClaimedQuoteToday(true);
             } else {
               setHasClaimedQuoteToday(false);
-              // ✨ [NEW] เด้ง Popup ชวนเจนคำคมถ้ายังไม่ได้ทำ
-              setShowWelcomeQuotePopup(true);
+              // ✨ [NEW] เด้ง Popup ชวนเจนคำคมถ้ายังไม่ได้ทำ (เด้งแค่ครั้งเดียวต่อการเข้า Dashboard ในเซสชันนั้น)
+              const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
+              if (!hasShownThisSession) {
+                setShowWelcomeQuotePopup(true);
+                sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
+              }
             }
           }
 
@@ -1819,9 +1823,9 @@ export default function DashboardPage() {
 
   const getLevelTitle = (level: number) => {
     if (level < 10) return "Rookie Upskiller (ผู้เริ่มต้น)";
-    if (level < 20) return "Habit Master (เซียนสร้างนิสัย)";
+    if (level < 20) return "Master (เซียนระบบ)";
     if (level < 30) return "Life Architect (สถาปนิกออกแบบชีวิต)";
-    return "Legacy Shaper (ผู้จารึกตำนานชีวิต)";
+    return "Legacy (ผู้จารึกตำนานชีวิต)";
   };
 
   const handleRerollQuests = async () => {
@@ -2556,7 +2560,7 @@ export default function DashboardPage() {
                                 </li>
                                 <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-yellow-500 transition-all">
                                   <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
-                                  <span>LV 10-19 : Habit Master</span>
+                                  <span>LV 10-19 : Master</span>
                                 </li>
                                 <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
                                   <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
@@ -2564,7 +2568,7 @@ export default function DashboardPage() {
                                 </li>
                                 <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-red-500 transition-all">
                                   <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                                  <span>LV 30+ : Legacy Shaper</span>
+                                  <span>LV 30+ : Legacy</span>
                                 </li>
                               </ul>
 
@@ -4611,9 +4615,9 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 gap-3 mb-8">
                   {[
                     { lv: "1-9", title: "Rookie Upskiller", color: "bg-slate-500", desc: "ผู้เริ่มต้น" },
-                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "เซียนสร้างนิสัย" },
+                    { lv: "10-19", title: "Master", color: "bg-yellow-500", desc: "เซียนระบบ" },
                     { lv: "20-29", title: "Life Architect", color: "bg-orange-500", desc: "สถาปนิกออกแบบชีวิต" },
-                    { lv: "30+", title: "Legacy Shaper", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
+                    { lv: "30+", title: "Legacy", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
                   ].map((item, i) => (
                     <div key={i} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
                       <div className="flex items-center gap-4">

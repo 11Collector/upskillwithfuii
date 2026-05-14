@@ -301,8 +301,8 @@ export default function SoulGuidePage() {
   const getCharacterTier = (xp: number) => {
     const level = Math.floor(xp / 100) + 1;
     if (level >= 30) return "Legacy";
-    if (level >= 15) return "Architect";
-    if (level >= 7) return "Master";
+    if (level >= 20) return "Architect";
+    if (level >= 10) return "Master";
     return "Rookie";
   };
 
