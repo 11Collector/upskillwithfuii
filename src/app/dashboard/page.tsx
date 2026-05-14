@@ -2887,28 +2887,12 @@ export default function DashboardPage() {
                   {/* ➡️ ฝั่งขวา: Avatar + Pet + Badge (รวมร่างกันสมบูรณ์!) */}
                   <div className="flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center mt-4 lg:mt-0 lg:ml-8">
                     {/* 🏗️ Container หลัก: เพิ่ม -translate-x-8 (หรือตามใจชอบ) เพื่อดึงทั้งกลุ่มไปทางซ้าย */}
-                    <div className="relative mb-6 flex flex-col items-center justify-center scale-95 sm:scale-100 origin-bottom -translate-x-2 sm:-translate-x-10">
+                    <div className="relative mb-6 flex justify-center items-end scale-95 sm:scale-100 origin-bottom -translate-x-2 sm:-translate-x-10">
 
                       {/* 1. รูป Avatar หลัก */}
                       <div className="relative z-10 translate-y-[2px]">
                         <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} />
                       </div>
-
-                      {/* 🧪 ปุ่ม Test Aura (เฉพาะช่วงทดสอบ) */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setStreakCount(prev => {
-                            if (prev < 7) return 7;
-                            if (prev < 14) return 14;
-                            if (prev < 30) return 30;
-                            return 0;
-                          });
-                        }}
-                        className="mt-20 px-4 py-1.5 bg-slate-900/10 hover:bg-slate-900/20 text-slate-500 text-[10px] font-black rounded-full transition-all active:scale-95 border border-slate-200 z-30"
-                      >
-                        ✨ TEST AURA: {streakCount} DAYS
-                      </button>
 
                       {/* 🐾 สัตว์เลี้ยง (หน้า Dashboard) - โชว์ทันที ไม่มี Fade-in */}
                       {lastMoney?.resultKey && (
