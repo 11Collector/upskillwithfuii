@@ -2645,7 +2645,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>Personalized Mission</span>
                       </div>
-                      <p className={`text-[13px] sm:text-[15px] font-bold leading-tight truncate ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>{customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}</p>
+                      <p className={`text-[13px] sm:text-[15px] font-bold leading-snug ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>{customQuestTitle || "แตะเพื่อออกแบบภารกิจของคุณ..."}</p>
                     </div>
                     <div className="shrink-0 text-right relative z-10">
                       <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl border shadow-sm transition-all ${completedQuests.includes('special-01') ? 'bg-stone-100 border-stone-200 text-stone-400' : 'bg-white border-amber-200 text-amber-700 group-hover/card:bg-gradient-to-r group-hover/card:from-amber-400 group-hover/card:to-yellow-600 group-hover/card:text-white group-hover/card:border-transparent'}`}>+20 XP</span>
