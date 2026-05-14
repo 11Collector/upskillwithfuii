@@ -779,14 +779,14 @@ export default function Home() {
           <div className="flex-1 flex flex-col bg-[#FCFBF8] relative overflow-hidden">
             <div className="flex-1 overflow-y-auto pb-60 custom-scrollbar">
               <div ref={printRef} className="flex flex-col bg-[#FCFBF8] w-full relative">
-                <div className={`${currentResult.color} text-white p-6 pb-24 text-center flex flex-col items-center relative shadow-lg shrink-0 rounded-b-[2rem]`}>
+                <div className={`${currentResult.color} text-white p-6 min-h-[200px] pb-24 text-center flex flex-col items-center relative shadow-lg shrink-0 rounded-b-[2rem]`}>
                   <button onClick={() => setShowJargon(true)} className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 text-white rounded-full transition-all active:scale-90 backdrop-blur-sm border border-white/20 flex items-center justify-center z-20 shadow-sm">
                     <BookOpen size={18} />
                     {activeJargons.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-red-500 w-2.5 h-2.5 rounded-full border border-stone-900 animate-pulse shadow-sm"></span>}
                   </button>
                   <Trophy size={28} className="text-white/80 mb-2 mt-2 drop-shadow-md" />
                   <p className="text-white/90 text-[10px] font-semibold tracking-widest uppercase mb-3 opacity-80">Money Avatar</p>
-                  <p className="text-white/95 text-[11px] bg-black/25 px-4 py-1.5 rounded-full font-medium tracking-wide border border-white/10 backdrop-blur-sm">{currentResult.subtitle}</p>
+                  <p className="relative z-20 text-white/95 text-[11px] bg-black/50 px-4 py-1.5 rounded-full font-medium tracking-wide border border-white/10">{currentResult.subtitle}</p>
                 </div>
 
              <div className="p-5 pt-10 flex flex-col relative">
