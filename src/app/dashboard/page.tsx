@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { db, auth } from "@/lib/firebase";
-// แก้ไขบรรทัด Import นี้ให้มี writeBatch ด้วย
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion"; 
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen ,RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X,Zap} from "lucide-react"; 
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Flame, Info, Lock, Unlock, X, Zap } from "lucide-react"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -78,7 +77,7 @@ export const MONEY_DATA: Record<string, any> = {
   }
 };
 
-// 💡 เพิ่มข้อมูล DISC ใหม่ที่นี่
+// 💡 ข้อมูล DISC
 export const DISC_DATA: Record<string, any> = {
   D: {
     rpgTitle: "เดอะแบกสายบวก", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀", titleColor: "text-red-600",
@@ -423,7 +422,6 @@ export const QUEST_POOL = {
   ]
 };
 
-
 // 💡 ฟังก์ชันแปลงข้อความ AI ให้สวยงาม (ไฮไลต์คำ, ใส่กรอบ, จัดบรรทัด)
 const formatAnalysisText = (text: string) => {
   if (!text) return null;
@@ -506,9 +504,34 @@ export default function DashboardPage() {
   const [infoModal, setInfoModal] = useState<{isOpen: boolean, title: string, content: string | React.ReactNode} | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{isOpen: boolean, newLevel: number} | null>(null);
 
-  const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false); // 💡 เพิ่มบรรทัดนี้
-    const [isGoalExpanded, setIsGoalExpanded] = useState(false);
-    const [showLimitModal, setShowLimitModal] = useState(false);
+  const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false);
+  const [isGoalExpanded, setIsGoalExpanded] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // 🕒 1. State สำหรับเช็กวันที่ปัจจุบัน (เพื่ออัพเดตรายวันและตอนเที่ยงคืน)
+  const [todayDateStr, setTodayDateStr] = useState<string>("");
+
+  // 🕒 2. Effect สำหรับเช็กเที่ยงคืนแบบสดๆ
+  useEffect(() => {
+    // เซ็ตวันที่ครั้งแรก
+    setTodayDateStr(new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'}));
+
+    // สร้าง Interval เช็กทุกๆ 1 นาที เผื่อผู้ใช้เปิดทิ้งไว้ข้ามเที่ยงคืน
+    const interval = setInterval(() => {
+        const nowStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Bangkok'});
+        setTodayDateStr((prev) => {
+            if (prev && prev !== nowStr) {
+                // ขึ้นวันใหม่แล้ว! รีเซ็ต Progress สดๆ เลย
+                setCompletedQuests([]);
+                setHasClaimedQuoteToday(false);
+                return nowStr;
+            }
+            return prev || nowStr;
+        });
+    }, 60000); 
+
+    return () => clearInterval(interval);
+  }, []);
 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -582,7 +605,7 @@ useEffect(() => {
             setTotalXP(userData.totalXP || 0);
           }
 
-          // จัดการ Daily Quest สถานะ
+          // จัดการ Daily Quest สถานะ (อิงกับฐานข้อมูล)
           if (userData.lastQuestDate === todayStr) {
             setCompletedQuests(userData.completedQuestIds || []);
           } else {
@@ -849,21 +872,29 @@ const openDiscInfo = (e: React.MouseEvent) => {
     return areas;
   }, [lastWheel, lastDisc, lastMoney]);
 
-const dailyQuests = useMemo(() => {
-    const dayIndex = new Date().getDate();
-    
-    // ฟังก์ชันช่วยดึงคำถามแบบไม่ซ้ำ
-    const getUniqueQuest = (pool: string[], existingTitles: string[], startIndex: number) => {
-      let currentIndex = startIndex;
-      let selectedQuest = pool[currentIndex % pool.length];
-      while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 5)))) {
-        currentIndex++;
-        selectedQuest = pool[currentIndex % pool.length];
-      }
-      return selectedQuest;
-    };
+  // 💡 3. ฟังก์ชันสร้าง Daily Quests แบบ Seeded Random (เพื่อความเสถียรรายวัน)
+  const dailyQuests = useMemo(() => {
+    // ถ้ายังไม่ได้ค่า Date ให้รีเทิร์นอาเรย์ว่างๆ ไปก่อน ป้องกัน Hydration Error
+    if (!todayDateStr) {
+       return [
+         { id: 1, type: "WHEEL", title: "กำลังโหลดภารกิจ...", xp: 15 },
+         { id: 2, type: "DISC", title: "กำลังโหลดภารกิจ...", xp: 15 },
+         { id: 3, type: "MONEY", title: "กำลังโหลดภารกิจ...", xp: 20 },
+         { id: 4, type: "WILDCARD", title: "กำลังโหลดภารกิจ...", xp: 10 },
+         { id: 5, type: "CHALLENGE", title: "กำลังโหลดภารกิจ...", xp: 25 },
+       ];
+    }
 
-    // ล้างค่า Default ออก ปล่อยว่างไว้ก่อน
+    // สร้าง Seed ตัวเลขจากวันที่ เช่น "2026-04-01" -> 20260401
+    const seedStr = todayDateStr.replace(/-/g, '');
+    const seed = parseInt(seedStr, 10) || 1;
+
+    // ฟังก์ชันสุ่มตัวเลขแบบคงที่สำหรับวันนั้นๆ
+    const pseudoRandom = (max: number, salt: number) => {
+      const x = Math.sin(seed + salt) * 10000;
+      return Math.floor((x - Math.floor(x)) * max);
+    };
+    
     const qList = [
       { id: 1, type: "WHEEL", title: "", xp: 15 },
       { id: 2, type: "DISC", title: "", xp: 15 },
@@ -872,34 +903,45 @@ const dailyQuests = useMemo(() => {
       { id: 5, type: "CHALLENGE", title: "", xp: 25 },
     ];
 
-    // ✅ 1. ดึงจาก Wheel (ถ้ายังไม่เคยทำ ให้ดึงจากหมวด "การงาน" มาก่อน)
+    // ✅ 1. ดึงจาก Wheel
     const wheelArea = lastWheel?.currentScores 
       ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] 
       : "การงาน";
-    qList[0].title = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL][dayIndex % QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL].length];
+    const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
+    qList[0].title = wheelPool[pseudoRandom(wheelPool.length, 1)];
 
-    // ✅ 2. ดึงจาก DISC (ถ้ายังไม่เคยทำ ให้ใช้สไตล์ "C" เป็นเควสให้ทำไปก่อน)
+    // ✅ 2. ดึงจาก DISC
     const discMainChar = lastDisc 
       ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) 
       : "C";
-    qList[1].title = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC][dayIndex % QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC].length];
+    const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
+    qList[1].title = discPool[pseudoRandom(discPool.length, 2)];
 
-// ✅ 3. ดึงจาก Money (ปรับให้รองรับ 9 Roles และแก้ TypeScript Error)
-const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
+    // ✅ 3. ดึงจาก Money
+    const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
+    const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
+    qList[2].title = moneyPool[pseudoRandom(moneyPool.length, 3)];
 
-// ป้องกันกรณี Key ใน DB ไม่ตรงกับใน QUEST_POOL (Safety Fallback)
-const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
+    // 4. สุ่ม Wildcard & Challenge แบบไม่ซ้ำและคงที่ในวันนั้น
+    const getUniqueQuest = (pool: string[], existingTitles: string[], salt: number) => {
+      let index = pseudoRandom(pool.length, salt);
+      let selectedQuest = pool[index];
+      let attempts = 0;
+      while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 5))) && attempts < 10) {
+        index = (index + 1) % pool.length;
+        selectedQuest = pool[index];
+        attempts++;
+      }
+      return selectedQuest;
+    };
 
-qList[2].title = moneyPool[dayIndex % moneyPool.length];
-
-    // 4. สุ่ม Wildcard & Challenge แบบไม่ซ้ำ
     const currentTitles = [qList[0].title, qList[1].title, qList[2].title];
-    qList[3].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, dayIndex + 2);
+    qList[3].title = getUniqueQuest(QUEST_POOL.WILDCARD, currentTitles, 4);
     currentTitles.push(qList[3].title);
-    qList[4].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, dayIndex + 3);
+    qList[4].title = getUniqueQuest(QUEST_POOL.CHALLENGE, currentTitles, 5);
 
     return qList;
-  }, [lastWheel, lastDisc, lastMoney]);
+  }, [lastWheel, lastDisc, lastMoney, todayDateStr]);
 
   const dailyXPGained = completedQuests.reduce((sum, id) => {
     const quest = dailyQuests.find(q => q.id === id);
@@ -921,7 +963,9 @@ const toggleQuest = async (id: number, xp: number) => {
     
     // ✅ ล็อกโควตา 3 ข้อ
  if (!isDone && completedQuests.length >= 3) {
-  setShowLimitModal(true); // เปลี่ยนจาก alert เป็นตัวนี้
+  setShowLimitModal(true); 
+  // แนะนำให้เพิ่มแจ้งเตือนแบบ Alert เป็น Fallback เผื่อ Modal ยังไม่พร้อมแสดงผล
+  alert("ทำภารกิจครบ 3 ข้อแล้วในวันนี้! ยอดเยี่ยมมากครับ พรุ่งนี้มาลุยกันใหม่นะ 🚀");
   return;
 }
 
