@@ -407,7 +407,15 @@ export default function DashboardPage() {
                 totalXP: increment(xpToClaim)
               }, { merge: true });
 
-              setTotalXP((userData.totalXP || 0) + xpToClaim);
+              const oldXP = userData.totalXP || 0;
+              const newXP = oldXP + xpToClaim;
+              setTotalXP(newXP);
+              const oldLevel = Math.floor(oldXP / 100) + 1;
+              const newLevel = Math.floor(newXP / 100) + 1;
+              if (newLevel > oldLevel) {
+                setShowLevelUp({ isOpen: true, newLevel });
+                setTimeout(() => setShowLevelUp(null), 4000);
+              }
               console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
             } else {
               setTotalXP(userData.totalXP || 0);
