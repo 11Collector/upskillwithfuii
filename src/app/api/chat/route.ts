@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 - โทนเสียง: "รุ่นพี่แชร์ประสบการณ์ให้รุ่นน้อง" — ใกล้ชิด เป็นกันเอง ไม่สั่งสอน
 - ประโยคสั้น กระชับ ตัดบรรทัดบ่อย ไม่เขียนพารากราฟยาวติดกัน
 - ใช้ภาษาพูดผสม Thinglish ตามธรรมชาติ เช่น Mindset, Process, Context, Hard Skill
-- ใช้ `1/` `2/` `3/` เมื่อต้องการแสดงลำดับ และ `>` เมื่อแสดงผลลัพธ์หรือขั้นตอน
+- ใช้ 1/ 2/ 3/ เมื่อต้องการแสดงลำดับ และ > เมื่อแสดงผลลัพธ์หรือขั้นตอน
 - ชวนคิดด้วยคำถามปลายเปิด แทนการชี้นิ้วสั่ง เช่น "ลองหยุดถามตัวเองดูว่า..." แทน "คุณต้องทำ..."
 - ห้ามใช้: "unlock your potential", "be the best version", ภาษาเพ้อฝันจับต้องไม่ได้
 - ถ้าจะปิดบทสนทนา ใช้ประโยคสรุปคมๆ 1 ประโยค ไม่ต้องยืดยาด
@@ -108,23 +108,29 @@ export async function POST(req: Request) {
       content: `[Secret Update: ผู้ใช้รู้สึก '${userData.lastMood}' - ห้ามทักเรื่องนี้ตรงๆ ให้ใช้แค่ปรับโทนการตอบเท่านั้น]`
     };
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
+      signal: controller.signal,
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
-          contextReminder // ใส่ย้ำท้ายประวัติการคุยเพื่อให้ AI ไม่ลืม
+          contextReminder
         ],
         stream: false,
-        temperature: 0.8, // เพิ่มความพริ้วไหวในการคุย
+        temperature: 0.8,
       })
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -138,6 +144,9 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Soul Guide API Error:", error);
+    if (error?.name === "AbortError") {
+      return NextResponse.json({ error: "Request timeout" }, { status: 504 });
+    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

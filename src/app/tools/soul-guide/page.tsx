@@ -270,8 +270,13 @@ export default function SoulGuidePage() {
     setTimeout(() => scrollToBottom("auto"), 10);
     setTimeout(() => scrollToBottom("auto"), 50);
 
+    if (!user) {
+      setIsLoading(false);
+      setIsTyping(false);
+      return;
+    }
+
     try {
-      if (!user) return;
       const chatHistoryRef = collection(db, "users", user.uid, "chat_history");
 
       // 1. Save User Message
@@ -282,9 +287,14 @@ export default function SoulGuidePage() {
       });
 
       const idToken = await user.getIdToken();
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: [...messages, userMessage],
           userData: {
@@ -303,6 +313,8 @@ export default function SoulGuidePage() {
         })
       });
 
+      clearTimeout(timeout);
+
       const data = await response.json();
       if (data.success) {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
@@ -315,10 +327,14 @@ export default function SoulGuidePage() {
         });
 
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบเชื่อมต่อขัดข้องนิดหน่อย ลองใหม่อีกครั้งนะครับ" }]);
+        setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat Error:", error);
+      const msg = error?.name === "AbortError"
+        ? "ใช้เวลานานเกินไปครับ ลองส่งใหม่อีกครั้งนะครับ 🙏"
+        : "ขออภัยครับ เชื่อมต่อไม่ได้ตอนนี้ ลองใหม่อีกครั้งนะครับ 🙏";
+      setMessages(prev => [...prev, { role: "assistant", content: msg }]);
     } finally {
       setIsLoading(false);
       setIsTyping(false);
