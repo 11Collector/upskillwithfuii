@@ -9,9 +9,11 @@ const QuoteSchema = z.object({
 
 export async function POST(req: Request) {
   const authResult = await verifyAuthToken(req);
-  if (isAuthError(authResult)) return authResult;
+  const uid = isAuthError(authResult)
+    ? (req.headers.get("x-forwarded-for") ?? "guest")
+    : authResult.uid;
 
-  const rl = checkRateLimit(`quote:${authResult.uid}`, 10, 60_000);
+  const rl = checkRateLimit(`quote:${uid}`, 10, 60_000);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
   }
