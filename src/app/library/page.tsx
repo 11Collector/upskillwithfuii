@@ -179,13 +179,13 @@ export default function PremiumLibraryPage() {
         </div>
 
         {/* --- 🏷️ Minimal Status Filters --- */}
-        <div className="flex items-center gap-3 mb-10 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full border border-white/5">
+        <div className="flex items-center gap-2 mb-10 overflow-x-auto no-scrollbar pb-1">
+          <div className="flex items-center gap-1.5 px-3 py-2.5 bg-white/5 rounded-full border border-white/5 shrink-0">
             <LayoutGrid size={12} className="text-slate-500" />
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Filter</span>
           </div>
-          
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 shrink-0">
             {[
               { id: "ทั้งหมด", label: "ทั้งหมด" },
               { id: "อ่านแล้ว", label: "อ่านแล้ว" },
@@ -194,7 +194,7 @@ export default function PremiumLibraryPage() {
               <button
                 key={status.id}
                 onClick={() => setStatusFilter(status.id)}
-                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${
+                className={`px-4 py-2.5 rounded-full text-[11px] font-bold tracking-wide transition-all duration-300 border shrink-0 min-h-[40px] ${
                   statusFilter === status.id
                     ? "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.05)]"
                     : "bg-transparent text-slate-500 border-white/5 hover:border-white/10 hover:text-slate-300"
