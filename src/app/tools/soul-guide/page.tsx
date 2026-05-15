@@ -108,25 +108,21 @@ export default function SoulGuidePage() {
         });
         unsubs.push(unsubQuote);
 
-        // 7. Listen to Chat History
-        const unsubChat = onSnapshot(query(collection(db, "users", currentUser.uid, "chat_history"), orderBy("createdAt", "desc"), limit(50)), (snapshot) => {
-          const history = snapshot.docs.map(doc => ({
-            role: doc.data().role as "user" | "assistant",
-            content: doc.data().content,
-            createdAt: doc.data().createdAt
-          })).filter(msg => msg.content).reverse();
+        // 7. Load Chat History once (no real-time listener to avoid race conditions)
+        const historySnap = await getDocs(query(collection(db, "users", currentUser.uid, "chat_history"), orderBy("createdAt", "desc"), limit(50)));
+        const history = historySnap.docs.map(doc => ({
+          role: doc.data().role as "user" | "assistant",
+          content: doc.data().content,
+        })).filter(msg => msg.content).reverse();
 
-          if (history.length > 0) {
-            setMessages(history);
-          } else {
-            const name = userName;
-            setMessages([{
-              role: "assistant",
-              content: `ยินดีที่ได้พบกันครับคุณ **${name}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
-            }]);
-          }
-        });
-        unsubs.push(unsubChat);
+        if (history.length > 0) {
+          setMessages(history);
+        } else {
+          setMessages([{
+            role: "assistant",
+            content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
+          }]);
+        }
 
       } else {
         router.push("/");
