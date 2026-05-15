@@ -176,12 +176,14 @@ Each agent below has a defined domain. When working on a task, identify which ag
 | Day | Pillar | Theme |
 |-----|--------|-------|
 | Mon | 🧠 Mindset | Growth mindset, resilience, limiting beliefs |
-| Tue | 💼 Career | Skills, productivity, deep work, career pivot |
+| Tue | 🤖 AI | AI tools, prompt engineering, working with AI, future of work |
 | Wed | 💰 Money | Financial habits, money mindset, wealth building |
 | Thu | 🧬 Self-awareness | DISC, personality, emotional intelligence |
 | Fri | 🎯 Focus | Deep work, focus room habits, elimination |
 | Sat | 📚 Learning | Reading, Library of Souls insight, knowledge systems |
 | Sun | 🌱 Reflection | Weekly review, Wheel of Life check-in, intention setting |
+
+> 💼 Career สลับกับ 🤖 AI ทุกสองสัปดาห์ในวันอังคาร
 
 **Content Format per post:**
 
@@ -209,13 +211,18 @@ REFLECTION PROMPT (1 question — open-ended, personal)
 
 ```
 Mon: Short post (IG/Facebook) — Mindset insight
-Tue: Short post — Career/productivity tip
+Tue: Short post — AI tool / working with AI (สลับกับ Career ทุกสองสัปดาห์)
 Wed: Short post — Money habit
 Thu: Long article — Self-awareness deep dive (links to DISC/Wheel assessment)
 Fri: Short post — Focus technique
 Sat: Long article — Book/learning system (links to Library of Souls)
 Sun: Short post — Weekly reflection prompt
 ```
+
+**AI Pillar — แนวทางเขียน:**
+- เน้น practical: "ใช้ AI ทำอะไรได้จริงในชีวิตประจำวัน" ไม่ใช่ hype
+- ตัวอย่างหัวข้อ: วิธี prompt ที่ได้ผลจริง / AI ช่วย self-reflection ได้ยังไง / งานไหนที่ AI ทำแทนไม่ได้
+- Tone: พี่ที่ลองมาก่อนแล้วมาเล่าให้ฟัง ไม่ใช่ expert บรรยาย
 
 **To generate a daily post, provide:**
 1. Today's pillar (or let agent pick by day of week)
