@@ -84,19 +84,19 @@ const abstractWords = {
     "คลาน", "สะสม", "ตึงเครียด", "สุดทาง", "นาฬิกาปลุก", "แบตเตอรี่", "หมดไฟ", "ฝืนทน", "ปิดสวิตช์", "หยาดเหงื่อ"
   ]
 };
-// 💡 วงกว้าง 90px ครึ่งนึงคือ 45px (calc(50% - 45px) จะทำให้อยู่ตรงกลางพอดีเป๊ะ)
+// bubble 85px on mobile (half=42px), 110px on sm+ (half=55px); using 42px for calc keeps center bubbles safely inside on all screens
 const safePositions = [
   // --- โซนบน 5 วง (เกาะขอบบน) ---
   "top-[6%] left-[5%]",
   "top-[4%] right-[8%]",
-  "top-[16%] left-[calc(50%-45px)]",        // 💡 แก้เป็น 45px
+  "top-[16%] left-[calc(50%-42px)]",
   "top-[28%] left-[8%]",
   "top-[26%] right-[5%]",
 
   // --- โซนล่าง 5 วง ---
   "bottom-[34%] left-[6%]",
   "bottom-[32%] right-[8%]",
-  "bottom-[22%] left-[calc(50%-45px)]",     // 💡 แก้เป็น 45px
+  "bottom-[22%] left-[calc(50%-42px)]",
   "bottom-[8%] left-[10%]",
   "bottom-[10%] right-[7%]"
 ];
@@ -144,18 +144,14 @@ const Circle = ({ mood, pos, delay, index, onStart }: any) => {
     <motion.button
       animate={floatingAnimation(delay, duration)}
       onClick={() => onStart(mood)}
-      // 💡 คืนค่าขนาดเดิม w-[110px] h-[110px]
-      className={`absolute ${pos} w-[110px] h-[110px] rounded-full border-[2.5px] flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all bg-white/90 backdrop-blur-sm shrink-0 z-20 hover:scale-105`}
+      className={`absolute ${pos} w-[85px] h-[85px] sm:w-[110px] sm:h-[110px] rounded-full border-[2.5px] flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all bg-white/90 backdrop-blur-sm shrink-0 z-20 hover:scale-105`}
       style={{
         borderColor: theme.border,
         boxShadow: `0 10px 25px -5px ${theme.shadow}, 0 8px 10px -6px ${theme.shadow}`
       }}
     >
-      {/* 💡 คืนขนาด Emoji เป็น 5xl */}
-      <span className="text-5xl mb-0.5 drop-shadow-sm">{mood.icon}</span>
-
-      {/* 💡 คืนขนาด Text เป็น 13px */}
-      <span className="font-extrabold text-[13px] text-stone-700 tracking-tight text-center px-1 leading-none">{mood.title}</span>
+      <span className="text-3xl sm:text-5xl mb-0.5 drop-shadow-sm">{mood.icon}</span>
+      <span className="font-extrabold text-[10px] sm:text-[13px] text-stone-700 tracking-tight text-center px-1 leading-none">{mood.title}</span>
     </motion.button>
   );
 };
@@ -189,6 +185,7 @@ export default function SwipeQuoteApp() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     const shuffled = [...moodOptions].sort(() => Math.random() - 0.5);
@@ -301,6 +298,7 @@ export default function SwipeQuoteApp() {
 
   const processAIGeneration = async (wordsToUse: string[]) => {
     setGameState("generating");
+    setApiError(null);
 
     const promptText = `
     คุณคือนักคิดและนักเขียนแนวปรัชญาการใช้ชีวิต สไตล์การตกผลึกความคิดแบบ "Naval Ravikant" (Minimalist Wisdom) ถนัดการเขียนประโยคที่สั้น กระชับ คมคาย เป็นเหตุเป็นผล และเปลี่ยนมุมมองชีวิตให้ผู้อ่านตื่นรู้ (Paradoxical Truth) โดยไม่มีความน้ำเน่าหรือเพ้อฝัน
@@ -401,9 +399,11 @@ export default function SwipeQuoteApp() {
 
     } catch (error: any) {
       console.error("🚨 API Error:", error);
-      // Fallback: กรณีล่มจริงๆ ให้สร้างคำคมจากคำที่เลือกแบบ Manual ให้เลย
-      const fallback = `ในวันที่หัวใจมีแต่ ${wordsToUse[0]}\nจงใช้ ${wordsToUse[1]} เป็นเข็มทิศ\nเพื่อพบความหมายของ ${wordsToUse[2]}\nที่รอคุณอยู่ในวันพรุ่งนี้`;
-      setFinalQuote(fallback);
+      const isTimeout = error?.name === "AbortError";
+      setApiError(isTimeout
+        ? "AI ตอบช้าไปหน่อย (timeout) ลองใหม่ได้เลย"
+        : "เชื่อมต่อไม่ได้ในตอนนี้ ลองใหม่สักครั้งนะ"
+      );
       setGameState("result");
     }
   };
@@ -411,6 +411,7 @@ export default function SwipeQuoteApp() {
   const resetApp = () => {
     setGameState("start"); setPlayerMood(null);
     setCurrentCardIndex(0); setCollectedWords([]);
+    setApiError(null); setFinalQuote("");
     setRandomizedMoods([...moodOptions].sort(() => Math.random() - 0.5));
   };
 
@@ -743,7 +744,29 @@ export default function SwipeQuoteApp() {
         {gameState === "result" && (
           <div className="flex-1 flex flex-col bg-slate-950 relative h-full overflow-hidden">
 
-            {/* 💡 ส่วนที่ 1: พื้นที่แสดงการ์ด (Scrollable Area) */}
+            {/* Error state — show retry instead of quote */}
+            {apiError && (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-6">
+                <div className="text-5xl">😵</div>
+                <div>
+                  <p className="text-white font-bold text-lg mb-1">อุ๊ปส์!</p>
+                  <p className="text-slate-400 text-sm">{apiError}</p>
+                </div>
+                <button
+                  onClick={() => processAIGeneration(collectedWords)}
+                  className="flex items-center gap-2 bg-white text-black font-black px-8 py-3.5 rounded-full text-sm hover:bg-amber-400 active:scale-95 transition-all shadow-lg"
+                >
+                  <RefreshCcw size={16} /> ลองใหม่อีกครั้ง
+                </button>
+                <button onClick={resetApp} className="text-slate-500 text-xs font-bold hover:text-slate-300 transition-colors">
+                  เริ่มใหม่ตั้งแต่ต้น
+                </button>
+              </div>
+            )}
+
+            {/* Normal result — only show when no error */}
+            {!apiError && (
+            <>{/* 💡 ส่วนที่ 1: พื้นที่แสดงการ์ด (Scrollable Area) */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-4 custom-scrollbar">
               <div
                 ref={quoteCardRef}
@@ -915,6 +938,7 @@ export default function SwipeQuoteApp() {
                 </div>
               </a>
             </div>
+            </>)}
           </div>
         )}
       </div>
