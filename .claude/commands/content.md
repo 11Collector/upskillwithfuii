@@ -63,3 +63,9 @@ This builds a running log so future content doesn't repeat the same ideas and ca
 - The external source must be real and verifiable — never fabricate citations
 - If no strong external source found, rely on second-brain only and note it
 - Avoid: "unlock your potential", "be the best version", "hustle"
+
+## Fact-checking Rules (STRICT)
+- **ตัวเลขและสถิติ**: ต้อง verify จากแหล่งจริงเท่านั้น — ระบุชื่อ source, ปีที่เผยแพร่, และลิงก์ถ้ามี ห้ามประมาณหรือแต่งตัวเลขขึ้นมาเอง
+- **งานวิจัย**: ต้องระบุชื่อ study, สำนักพิมพ์/journal, และปี — ถ้าหาไม่ได้ให้ตัดออก ไม่ใช่แต่งขึ้น
+- **ความคิดเห็น**: ถ้าเป็น insight หรือมุมมองที่ไม่มีงานวิจัยรองรับ ให้ระบุชัดเจนว่า "มุมมองส่วนตัว" หรือ "จากประสบการณ์" แทนที่จะเขียนราวกับว่าเป็นข้อเท็จจริง
+- **ถ้า verify ไม่ได้**: ให้ตัดข้อมูลนั้นออก หรือเปลี่ยนเป็นความคิดเห็นที่ label ชัดเจน — ดีกว่าใส่ข้อมูลที่ไม่แน่ใจ
