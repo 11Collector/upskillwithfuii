@@ -82,6 +82,24 @@
 
 ---
 
+## AI & Technology — Topics ที่เขียนไปแล้ว (อย่าซ้ำ)
+
+| หัวข้อ | Core Idea |
+|--------|-----------|
+| MD File อาวุธลับยุค AI | ใช้ .md เป็น Second Brain ให้ AI เข้าใจ context ยาวขึ้น ตอบแม่นขึ้น |
+| สร้าง Web App ด้วย AI คนเดียว | ประสบการณ์สร้าง upskilleveryday.com ใน 1 เดือน ด้วย AI ช่วย |
+| 10 เหตุผลที่ควรใช้ Claude | ข้อดี Claude สำหรับผู้ประกอบการ: context window, empathy writing, code analysis |
+| ศิลปะแห่งการ Prompt | ตั้งคำถามโดยเน้น "เป้าหมาย" ไม่ใช่แค่คำสั่ง |
+
+**AI Pillar — มุมที่ยังไม่เขียน (ใช้เป็นไอเดียต่อไป):**
+- AI กับ self-awareness: ใช้ AI ช่วย reflect ตัวเองได้แค่ไหน
+- งานที่ AI ทำแทนไม่ได้จริงๆ (ไม่ใช่แค่ creativity)
+- วิธีทดสอบว่า AI เข้าใจคุณจริงหรือแค่เดา
+- ความเสี่ยงของการพึ่ง AI มากเกินไปสำหรับการตัดสินใจ
+- AI workflow จริงที่ใช้ทุกวัน (ไม่ใช่ demo)
+
+---
+
 ## Content Log
 
 ### 2026-05-14 | Money | Social
@@ -110,4 +128,22 @@
 **Hook:** โฟกัสไม่ได้แปลว่าสมาธิดี — มันแปลว่าคุณ "ปกป้อง" เวลาเป็น
 **Core idea:** Attention Residue (Sophie Leroy) — สมองไม่ได้ switch task ได้เต็ม 100% มีความสนใจค้างอยู่กับงานเดิมเสมอ ทำให้ task ใหม่ด้อยประสิทธิภาพ วิธีแก้คือตัดสินใจ "ก่อน" ว่าอะไรสำคัญ ไม่ใช่พยายามโฟกัสกลางทาง เชื่อมกับ The One Thing และ Essentialism
 **Source used:** Sophie Leroy, Organizational Behavior and Human Decision Processes (2009); Gary Keller, The One Thing; Greg McKeown, Essentialism
+**Published:** article
+
+### 2026-05-15 — Self-awareness — Article
+**Hook:** ตัวตนที่แท้จริงไม่ได้อยู่ในวันดีๆ — มันอยู่ในวันที่กดดันที่สุด
+**Core idea:** แต่ละคนมี "stress pattern" ที่คาดเดาได้จาก DISC style — D ยิ่งกดดันยิ่งควบคุม, I ต้องการการยืนยัน, S เงียบและอั้น, C วิเคราะห์ไม่สิ้นสุด การรู้จัก "stress self" คือ self-awareness ระดับที่ใช้งานได้จริง เชื่อมกับ กล้าที่จะถูกเกลียด เรื่องความหมายที่เราให้กับสถานการณ์
+**Source used:** DISC Profile / discprofile.com, Jason W. Phillips (jasonwphillips.com), กล้าที่จะถูกเกลียด
+**Published:** article
+
+### 2026-05-15 — Mindset — Article
+**Hook:** สมองของคนสำเร็จและล้มเหลวต่างกันตรงจุดเดียว — ตอนที่เจอความผิดพลาด
+**Core idea:** งานวิจัย Carol Dweck พบว่า Fixed Mindset สมองหยุดทำงานเมื่อเห็นข้อผิดพลาด Growth Mindset สมองลุกโชนประมวลผล — นำไปสู่ผลลัพธ์ต่างกันชัดเจนใน 2 ปี เชื่อมกับ formula ทัศนคติ × ความพยายาม × ความสามารถ และ 4 อุปสรรค (ความกลัว, ความโลภ, อีโก้, ความขี้เกียจ)
+**Source used:** Carol Dweck, *Mindset* (Stanford); PMC/MDPI (2025), Neural Correlates of Growth Mindset
+**Published:** article
+
+### 2026-05-15 — Money — Article
+**Hook:** ถ้าปัญหาการเงินแก้ด้วยความรู้ได้จริง นักเศรษฐศาสตร์ทุกคนต้องรวยหมดแล้ว
+**Core idea:** Brad Klontz ระบุ 4 กลุ่ม money scripts (ความเชื่อทางการเงินจากวัยเด็ก) ที่เป็น autopilot ของพฤติกรรมการเงิน — เชื่อมกับ WEF (2025) ที่ชี้ว่า psychological barrier คืออุปสรรคหลักที่ financial literacy มองข้าม และ ช้าให้ชนะ เรื่องรากฐานภายใน
+**Source used:** Brad Klontz & Ted Klontz, Klontz Money Script Inventory (Journal of Financial Therapy, 2011); World Economic Forum (2025)
 **Published:** article
