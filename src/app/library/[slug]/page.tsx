@@ -205,7 +205,7 @@ export default function ArticleDetail() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-4 pb-6 sm:pb-0"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowLoginPopup(false); }}
         >
           <motion.div
