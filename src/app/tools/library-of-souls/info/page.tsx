@@ -88,6 +88,10 @@ function ResultView({ resultType }: { resultType: string }) {
               </span>
             </div>
 
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">
+              {data.type} · {data.vibe}
+            </p>
+
             <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-8 leading-tight">
               {data.title}
             </h1>
