@@ -115,13 +115,16 @@ export default function SoulGuidePage() {
           content: doc.data().content,
         })).filter(msg => msg.content).reverse();
 
-        if (history.length > 0) {
-          setMessages(history);
-        } else {
-          setMessages([{
-            role: "assistant",
-            content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
-          }]);
+        if (!messagesInitialized.current) {
+          messagesInitialized.current = true;
+          if (history.length > 0) {
+            setMessages(history);
+          } else {
+            setMessages([{
+              role: "assistant",
+              content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
+            }]);
+          }
         }
 
       } else {
@@ -162,6 +165,7 @@ export default function SoulGuidePage() {
     return () => document.body.classList.remove('hide-bottom-nav');
   }, [showResetConfirm]);
 
+  const messagesInitialized = useRef(false);
   const isFirstScroll = useRef(true);
 
   // 🔄 Persistent Scroll Logic
@@ -241,9 +245,14 @@ export default function SoulGuidePage() {
       const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
 
+      const userName = user.displayName || 'นักเดินทาง';
+      setMessages([{
+        role: "assistant",
+        content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
+      }]);
+
       setTimeout(() => {
         mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
     } catch (error) {
       console.error("Error resetting chat:", error);
