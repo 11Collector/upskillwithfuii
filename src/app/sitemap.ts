@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/tools/disc`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/tools/money-avatar`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/tools/library-of-souls`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE_URL}/tools/khomsatsat`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
   ];
 
   const articlePages: MetadataRoute.Sitemap = mockArticles.map((article) => ({
