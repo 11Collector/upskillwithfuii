@@ -762,9 +762,9 @@ export default function Home() {
               {/* Floating Icon Container */}
               <motion.div
                 key={`icon-${guideStep}`}
-                initial={{ scale: 0, rotate: -45 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", bounce: 0.6, duration: 0.8 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
                 className="relative z-20"
               >
                 {guideStep === 1 ? (
@@ -870,7 +870,7 @@ export default function Home() {
                   className="w-full"
                 >
                   <h3 className="text-[22px] font-black text-white mb-2.5 leading-tight tracking-tight">
-                    {guideStep === 1 && "เว็บประเมินตัวตนเฉพาะคุณ"}
+                    {guideStep === 1 && "แพลตฟอร์มวิเคราะห์ตัวตนที่ เข้าใจคุณ"}
                     {guideStep === 2 && "แบบประเมินของเรา"}
                     {guideStep === 3 && "ให้ AI รู้จักคุณมากที่สุด"}
                     {guideStep === 4 && "พร้อมเริ่มต้นแล้ว?"}
@@ -878,8 +878,6 @@ export default function Home() {
 
                   {guideStep === 1 && (
                     <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
-                      แพลตฟอร์มวิเคราะห์ตัวตนที่{" "}
-                      <span className="text-white font-semibold">เข้าใจคุณในแบบที่ไม่มีใครทำได้</span>{" "}
                       ผ่านแบบประเมินที่ออกแบบมาเพื่อคุณโดยเฉพาะ
                     </p>
                   )}
