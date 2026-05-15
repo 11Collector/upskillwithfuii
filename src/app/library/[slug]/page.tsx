@@ -158,8 +158,24 @@ export default function ArticleDetail() {
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
     try {
-      await signInWithPopup(auth, googleProvider);
-      router.push("/dashboard");
+      const result = await signInWithPopup(auth, googleProvider);
+      const loggedInUser = result.user;
+      setUser(loggedInUser);
+      setShowLoginPopup(false);
+
+      // auto-claim XP ทันทีหลัง login
+      const userRef = doc(db, "users", loggedInUser.uid);
+      const userSnap = await getDoc(userRef);
+      const alreadyClaimed = userSnap.exists() && userSnap.data().readArticles?.includes(articleSlug);
+      if (!alreadyClaimed) {
+        setIsClaiming(true);
+        await setDoc(userRef, { totalXP: increment(5), readArticles: arrayUnion(articleSlug) }, { merge: true });
+        setIsClaimedSuccess(true);
+        setXpClaimed(true);
+        setIsClaiming(false);
+      } else {
+        setXpClaimed(true);
+      }
     } catch (error) {
       console.error("Sign in error:", error);
       setIsSigningIn(false);
