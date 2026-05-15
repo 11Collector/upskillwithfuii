@@ -168,44 +168,29 @@ export default function SoulGuidePage() {
   const messagesInitialized = useRef(false);
   const isFirstScroll = useRef(true);
 
-  // 🔄 Persistent Scroll Logic
+  // 🔄 Persistent Scroll Logic — uses rAF so scroll runs after layout is fully painted
   const scrollToBottom = (behavior: "smooth" | "auto" = "smooth") => {
     const container = mainRef.current;
     if (!container) return;
-
-    // Use a more aggressive approach for the 'bottom'
-    // 10000 is safe to ensure we hit the real end of the scrollHeight
-    container.scrollTo({
-      top: container.scrollHeight + 10000,
-      behavior
+    requestAnimationFrame(() => {
+      container.scrollTo({ top: container.scrollHeight, behavior });
     });
-    
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior, block: "end" });
-    }
   };
 
   useEffect(() => {
-    const scrollWithBehavior = (isInitial: boolean) => {
-      const behavior = isInitial ? "auto" : "smooth";
-      scrollToBottom(behavior);
-    };
+    if (messages.length === 0) return;
 
-    if (messages.length > 0) {
-      if (isFirstScroll.current) {
-        // Snap immediately on first load
-        scrollWithBehavior(true);
-        isFirstScroll.current = false;
-        
-        // Short delay snap to catch late-rendering elements (Markdown/Images)
-        setTimeout(() => scrollToBottom("auto"), 50);
-        setTimeout(() => scrollToBottom("auto"), 150);
-      } else {
-        // Smooth scroll for new messages
-        scrollWithBehavior(false);
-        const timers = [150, 300, 600].map(ms => setTimeout(() => scrollWithBehavior(false), ms));
-        return () => timers.forEach(clearTimeout);
-      }
+    if (isFirstScroll.current) {
+      isFirstScroll.current = false;
+      scrollToBottom("auto");
+      // ReactMarkdown may change height after first paint
+      const t = setTimeout(() => scrollToBottom("auto"), 200);
+      return () => clearTimeout(t);
+    } else {
+      scrollToBottom("smooth");
+      // Extra pass for late-rendering markdown content
+      const t = setTimeout(() => scrollToBottom("smooth"), 400);
+      return () => clearTimeout(t);
     }
   }, [messages, isTyping]);
 
@@ -429,7 +414,8 @@ export default function SoulGuidePage() {
         ref={mainRef} 
         className="flex-1 w-full overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-3xl mx-auto flex flex-col gap-6 p-6">
+        {/* min-h-full + justify-end anchors messages to the bottom when they don't fill the viewport */}
+        <div className="max-w-3xl mx-auto flex flex-col gap-6 p-6 min-h-full justify-end">
           <AnimatePresence mode="popLayout">
             {messages.map((msg, idx) => (
               <motion.div
@@ -463,7 +449,7 @@ export default function SoulGuidePage() {
               </motion.div>
             )}
           </AnimatePresence>
-          <div ref={chatEndRef} className="h-4" />
+          <div ref={chatEndRef} className="h-10" />
         </div>
       </div>
 
