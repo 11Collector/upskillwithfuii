@@ -307,21 +307,6 @@ export default function Home() {
                 />
               </div>
 
-              {/* Login Remark under Avatar */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="relative z-20 mt-1 md:mt-0 px-4 md:px-0 md:pr-10 lg:pr-20 xl:pr-24 text-center md:text-right w-full flex justify-center md:justify-end"
-              >
-                <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm text-left relative z-30">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></div>
-                  <span className="text-[10px] sm:text-xs text-slate-500 font-semibold tracking-tight leading-snug">
-                    เพื่อเก็บข้อมูลและสร้าง Avatar ของคุณ <br className="md:hidden" />
-                    กรุณา <b>Login ด้วย Google</b> ก่อนเข้าใช้งาน
-                  </span>
-                </div>
-              </motion.div>
             </div>
 
           </div>

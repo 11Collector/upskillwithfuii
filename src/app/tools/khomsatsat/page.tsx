@@ -932,23 +932,29 @@ export default function SwipeQuoteApp() {
             {/* เพิ่ม pb-24 เพื่อดันปุ่มขึ้นมาเหนือเมนูของเว็บ และใส่ Backdrop Blur ให้ดูพรีเมียม */}
             <div className="px-6 pt-5 pb-24 sm:pb-10 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-3 shrink-0 relative z-20 shadow-[0_-15px_30px_rgba(0,0,0,0.6)]">
 
-              <button
-                onClick={handleSaveImage}
-                disabled={isSaving}
-                className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-[0_8px_25px_-5px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 text-[16px] hover:bg-blue-500 hover:scale-[1.02] active:scale-[0.97] transition-all disabled:opacity-50"
-              >
-                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                {isSaving ? "กำลังจัดเก็บความทรงจำ..." : "เซฟคำคมลงเครื่อง"}
-              </button>
-
-              <button
-                onClick={resetApp}
-                className="w-full py-3.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-[13px] flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700"
-              >
-                <RefreshCcw size={15} /> สร้างคำคมใหม่
-              </button>
-
-              <AssessmentResultCTA currentUser={currentUser} xpAmount={10} variant="dark" />
+              <AssessmentResultCTA
+                currentUser={currentUser}
+                xpAmount={10}
+                variant="dark"
+                secondaryActions={
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      onClick={handleSaveImage}
+                      disabled={isSaving}
+                      className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-800 text-slate-300 rounded-2xl font-bold text-[13px] hover:bg-slate-700 active:scale-95 transition-all border border-slate-700 disabled:opacity-50"
+                    >
+                      {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                      {isSaving ? "กำลังบันทึก..." : "เซฟคำคม"}
+                    </button>
+                    <button
+                      onClick={resetApp}
+                      className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-800 text-slate-300 rounded-2xl font-bold text-[13px] hover:bg-slate-700 active:scale-95 transition-all border border-slate-700"
+                    >
+                      <RefreshCcw size={14} /> สร้างใหม่
+                    </button>
+                  </div>
+                }
+              />
             </div>
             </>)}
           </div>

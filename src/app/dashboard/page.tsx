@@ -1947,6 +1947,20 @@ export default function DashboardPage() {
           );
         })()}
 
+        {/* --- 👤 Overview Tab Header --- */}
+        {activeTab === "overview" && (
+          <div className="mt-2 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
+                <span>👤</span>
+                อวาตาร์ & สถิติรายสัปดาห์
+              </h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            </div>
+          </div>
+        )}
+
         {/* --- 🧭 1. Top Section --- */}
         {(activeTab === "home" || activeTab === "overview") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -2490,6 +2504,20 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* --- 🎯 Quests Tab Header --- */}
+        {activeTab === "quests" && (
+          <div className="mt-2 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
+                <span>🎯</span>
+                ภารกิจประจำวัน
+              </h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            </div>
+          </div>
+        )}
+
         {/* --- 🎮 2. Daily Quests Section --- */}
         {(activeTab === "home" || activeTab === "quests") && (
           <div className="mb-8 bg-white border border-slate-100 hover:border-orange-100 rounded-[2.5rem] p-6 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(249,115,22,0.08)] relative overflow-hidden group transition-all duration-500">
@@ -2826,13 +2854,13 @@ export default function DashboardPage() {
         {/* --- 📦 3. Bento Grid --- */}
 
         {/* 🎯 Section Header: เครื่องมือเฉพาะสำหรับคุณ */}
-        {(activeTab === "home" || activeTab === "identity" || activeTab === "resources") && (
-          <div className={`col-span-1 md:col-span-2 lg:col-span-3 ${activeTab === 'home' ? 'mt-12' : 'mt-2'} mb-4`}>
+        {(activeTab === "identity" || activeTab === "resources") && (
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-2 mb-4">
             <div className="flex items-center gap-4">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
-                <Sparkles className="text-amber-500 animate-pulse" size={20} />
-                {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'เครื่องมือเฉพาะสำหรับคุณ'}
+                <span>{activeTab === 'resources' ? '🧠' : '🧬'}</span>
+                {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'ตัวตนของคุณ'}
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
             </div>

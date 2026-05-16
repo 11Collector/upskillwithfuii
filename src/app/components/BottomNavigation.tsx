@@ -11,6 +11,9 @@ function BottomNavigationInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null | undefined>(undefined);
+  const [enteredDashboard, setEnteredDashboard] = useState(() =>
+    typeof window !== 'undefined' ? sessionStorage.getItem('enteredDashboard') === '1' : false
+  );
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
@@ -21,12 +24,12 @@ function BottomNavigationInner() {
   useEffect(() => {
     if (pathname.startsWith('/dashboard')) {
       sessionStorage.setItem('enteredDashboard', '1');
+      setEnteredDashboard(true);
     } else if (pathname === '/') {
       sessionStorage.removeItem('enteredDashboard');
+      setEnteredDashboard(false);
     }
   }, [pathname]);
-
-  const enteredDashboard = typeof window !== 'undefined' && sessionStorage.getItem('enteredDashboard') === '1';
 
   // Dashboard flow only when logged in
   const isDashboardFlow =
@@ -34,8 +37,7 @@ function BottomNavigationInner() {
       pathname.startsWith('/dashboard') ||
       (pathname.startsWith('/library') && enteredDashboard) ||
       pathname === '/tools/deep-work' ||
-      pathname === '/tools/focus-room' ||
-      pathname === '/report-review'
+      pathname === '/tools/focus-room'
     );
 
   if (pathname === '/tools/soul-guide' || pathname === '/tools/ai-mentor') return null;
