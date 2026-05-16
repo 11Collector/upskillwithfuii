@@ -58,7 +58,7 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-[4.5rem] md:pb-0"
             onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
           >
             <motion.div
@@ -99,16 +99,14 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
       </AnimatePresence>
 
       {/* CTA Buttons */}
-      <div className="flex flex-col items-center gap-3 w-full mt-2">
+      <div className="flex flex-col gap-3 w-full mt-2">
 
-        {/* Primary: Login หรือ Dashboard */}
+        {/* Row 1 — Primary: Login หรือ Dashboard (full width) */}
         {currentUser ? (
           <Link
             href="/dashboard"
             className={`w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl font-black text-[15px] active:scale-95 transition-all shadow-lg ${
-              isDark
-                ? 'bg-white text-slate-900 hover:bg-slate-100'
-                : 'bg-slate-900 text-white hover:bg-black'
+              isDark ? 'bg-white text-slate-900 hover:bg-slate-100' : 'bg-slate-900 text-white hover:bg-black'
             }`}
           >
             <LayoutDashboard size={18} />
@@ -118,9 +116,7 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
           <button
             onClick={handleLoginClick}
             className={`w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl font-black text-[15px] active:scale-95 transition-all shadow-lg ${
-              isDark
-                ? 'bg-white text-slate-900 hover:bg-slate-100'
-                : 'bg-slate-900 text-white hover:bg-black'
+              isDark ? 'bg-white text-slate-900 hover:bg-slate-100' : 'bg-slate-900 text-white hover:bg-black'
             }`}
           >
             <GoogleSVG />
@@ -133,28 +129,31 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
           </button>
         )}
 
-        {/* Secondary: Line OA */}
-        <a
-          href="https://lin.ee/rQawKUM"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 bg-[#00B900] text-white rounded-2xl font-bold text-[14px] hover:bg-[#00a000] active:scale-95 transition-all shadow-md"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-            <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.65L5.5 22l3.58-1.87C10.17 20.67 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z"/>
-          </svg>
-          ติดตามเคล็ดลับจากฟุ้ย
-        </a>
+        {/* Row 2 — Secondary แถวเดียวกัน: Line OA + กลับหน้าแรก */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <a
+            href="https://lin.ee/rQawKUM"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 py-3.5 px-4 bg-[#00B900] text-white rounded-2xl font-bold text-[13px] hover:bg-[#00a000] active:scale-95 transition-all shadow-md"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" className="shrink-0">
+              <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.65L5.5 22l3.58-1.87C10.17 20.67 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z"/>
+            </svg>
+            ติดตามฟุ้ย
+          </a>
 
-        {/* Tertiary: กลับหน้าแรก */}
-        <Link
-          href="/"
-          className={`flex items-center gap-1.5 text-[12px] font-bold transition-colors mt-1 ${
-            isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <ArrowLeft size={13} /> กลับหน้าแรก
-        </Link>
+          <Link
+            href="/"
+            className={`flex items-center justify-center gap-1.5 py-3.5 px-4 rounded-2xl font-bold text-[13px] active:scale-95 transition-all ${
+              isDark
+                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <ArrowLeft size={14} /> หน้าแรก
+          </Link>
+        </div>
 
       </div>
     </>

@@ -17,10 +17,22 @@ function BottomNavigationInner() {
     return () => unsub();
   }, []);
 
+  // เมื่อเข้า dashboard ให้ mark session, กลับหน้าแรกค่อย clear
+  useEffect(() => {
+    if (pathname.startsWith('/dashboard')) {
+      sessionStorage.setItem('enteredDashboard', '1');
+    } else if (pathname === '/') {
+      sessionStorage.removeItem('enteredDashboard');
+    }
+  }, [pathname]);
+
+  const enteredDashboard = typeof window !== 'undefined' && sessionStorage.getItem('enteredDashboard') === '1';
+
   // Dashboard flow only when logged in
   const isDashboardFlow =
     !!user && (
       pathname.startsWith('/dashboard') ||
+      (pathname.startsWith('/library') && enteredDashboard) ||
       pathname === '/tools/deep-work' ||
       pathname === '/tools/focus-room' ||
       pathname === '/report-review'

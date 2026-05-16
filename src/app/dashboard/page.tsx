@@ -1836,8 +1836,8 @@ export default function DashboardPage() {
 
       <div className="max-w-6xl mx-auto">
 
-        {/* --- 🧭 Desktop Tabs Navigation (Head) --- */}
-        <div className="hidden sm:flex items-center justify-center gap-2 mb-8 w-full">
+        {/* --- 🧭 Tabs Navigation — ซ่อนทุก size เพราะ Header (desktop) และ BottomNav (mobile) รับหน้าที่แทนแล้ว --- */}
+        <div className="hidden items-center justify-center gap-2 mb-8 w-full">
           <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-sm border border-slate-200 flex gap-1 items-center">
             <button onClick={() => handleTabChange('home')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'home' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>หน้าหลัก</button>
             <button onClick={() => handleTabChange('overview')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>อวาตาร์ & รายสัปดาห์</button>

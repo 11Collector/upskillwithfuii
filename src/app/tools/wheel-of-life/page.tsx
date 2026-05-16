@@ -476,10 +476,6 @@ const analyzeWithAI = async () => {
       return; 
     }
     
-    if (!currentUser) {
-        alert("💡 ทิปส์: ตอนนี้คุณยังไม่ได้เข้าสู่ระบบ ผลลัพธ์นี้จะไม่ถูกบันทึกใน Dashboard ของคุณนะครับ");
-    }
-
     setIsAnalyzing(true);
     
     const currentText = categoriesData.map((item, i) => `${item.label}: ${currentScores[i]}/10`).join(", ");
