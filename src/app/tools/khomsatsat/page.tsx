@@ -197,7 +197,7 @@ export default function SwipeQuoteApp() {
     const saveOnLogin = async () => {
       try {
         const { db } = await import('@/lib/firebase');
-        const { doc, getDoc, setDoc, increment, serverTimestamp } = await import('firebase/firestore');
+        const { collection, addDoc, doc, getDoc, setDoc, increment, serverTimestamp } = await import('firebase/firestore');
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
@@ -205,14 +205,22 @@ export default function SwipeQuoteApp() {
         let shouldGiveXP = true;
         if (userSnap.exists() && userSnap.data().lastQuoteDate === todayStr) shouldGiveXP = false;
 
-        const updateData: any = {
-          quoteData: { quote: finalQuote, mood: playerMood?.title, createdAt: serverTimestamp() }
-        };
+        // เพิ่มลง quotes collection เพื่อให้ dashboardService อ่านได้
+        await addDoc(collection(db, "quotes"), {
+          userId: currentUser.uid,
+          mood: playerMood?.title,
+          quote: finalQuote,
+          createdAt: serverTimestamp(),
+        });
+
+        const updateData: any = {};
         if (shouldGiveXP) {
           updateData.totalXP = increment(10);
           updateData.lastQuoteDate = todayStr;
         }
-        await setDoc(userRef, updateData, { merge: true });
+        if (Object.keys(updateData).length > 0) {
+          await setDoc(userRef, updateData, { merge: true });
+        }
       } catch (e) {
         console.error("Post-login quote save:", e);
         hasSavedQuote.current = false;
@@ -409,6 +417,7 @@ export default function SwipeQuoteApp() {
 
         // ข. บันทึก quoteData + แจก XP (ถ้า Login)
         if (currentUser) {
+          hasSavedQuote.current = true; // ป้องกัน post-login useEffect save ซ้ำ
           const userRef = doc(db, "users", currentUser.uid);
           const userSnap = await getDoc(userRef);
           const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
