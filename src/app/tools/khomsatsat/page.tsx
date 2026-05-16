@@ -184,9 +184,42 @@ export default function SwipeQuoteApp() {
 
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const hasSavedQuote = useRef(false);
 
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // บันทึก quoteData + XP ย้อนหลังเมื่อ user login ตอนอยู่หน้า result
+  useEffect(() => {
+    if (!currentUser || gameState !== "result" || !finalQuote || hasSavedQuote.current) return;
+    hasSavedQuote.current = true;
+
+    const saveOnLogin = async () => {
+      try {
+        const { db } = await import('@/lib/firebase');
+        const { doc, getDoc, setDoc, increment, serverTimestamp } = await import('firebase/firestore');
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+        let shouldGiveXP = true;
+        if (userSnap.exists() && userSnap.data().lastQuoteDate === todayStr) shouldGiveXP = false;
+
+        const updateData: any = {
+          quoteData: { quote: finalQuote, mood: playerMood?.title, createdAt: serverTimestamp() }
+        };
+        if (shouldGiveXP) {
+          updateData.totalXP = increment(10);
+          updateData.lastQuoteDate = todayStr;
+        }
+        await setDoc(userRef, updateData, { merge: true });
+      } catch (e) {
+        console.error("Post-login quote save:", e);
+        hasSavedQuote.current = false;
+      }
+    };
+    saveOnLogin();
+  }, [currentUser]);
 
   useEffect(() => {
     const shuffled = [...moodOptions].sort(() => Math.random() - 0.5);

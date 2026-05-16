@@ -21,11 +21,13 @@ export default function Header() {
   });
 
   const isAssessmentPage = pathname.startsWith("/tools/");
-  // แสดงบน mobile เฉพาะหน้าแรกที่ยังไม่ login (user===null = ยืนยันแล้วว่าไม่ login)
+  // หน้า in-app ที่มี bottom nav เอง — ไม่ต้องการ header บน mobile ทุกขนาด
+  const isAppPage = pathname.startsWith("/dashboard") || pathname.startsWith("/library") || pathname.startsWith("/gallery") || pathname === "/report-review";
+  // แสดงบน mobile เฉพาะหน้าแรกที่ยังไม่ login
   const showOnMobile = pathname === "/" && user === null;
 
   return (
-    <nav suppressHydrationWarning className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] h-[72px] ${isAssessmentPage ? "hidden" : showOnMobile ? "flex" : "hidden md:flex"}`}>
+    <nav suppressHydrationWarning className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] h-[72px] ${(isAssessmentPage || isAppPage) ? "hidden" : showOnMobile ? "flex" : "hidden md:flex"}`}>
       <div className="max-w-5xl mx-auto px-6 h-full flex items-center justify-center md:justify-between gap-8 w-full">
 
         <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">

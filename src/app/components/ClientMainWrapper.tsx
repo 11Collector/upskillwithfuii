@@ -7,6 +7,7 @@ import { auth } from '@/lib/firebase';
 export default function ClientMainWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isTools = pathname.startsWith('/tools/');
+  const isAppPage = pathname.startsWith('/dashboard') || pathname.startsWith('/library') || pathname.startsWith('/gallery') || pathname === '/report-review';
   const [user, setUser] = useState<any>(undefined);
 
   useEffect(() => {
@@ -22,8 +23,8 @@ export default function ClientMainWrapper({ children }: { children: React.ReactN
       id="main-scroll-container"
       suppressHydrationWarning
       className={`w-full relative min-h-screen flex flex-col pb-[4.5rem] md:pb-0 ${
-        isTools
-          ? 'pt-0'
+        isTools || isAppPage
+          ? 'pt-0'             // tools + app pages: ไม่มี header บน mobile
           : hasHeaderOnMobile
             ? 'pt-16'          // homepage ไม่ login: header โชว์ทุก size
             : 'pt-0 md:pt-16' // หน้าอื่น: header โชว์แค่ desktop
