@@ -1840,7 +1840,7 @@ export default function DashboardPage() {
         <div className="hidden items-center justify-center gap-2 mb-8 w-full">
           <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-sm border border-slate-200 flex gap-1 items-center">
             <button onClick={() => handleTabChange('home')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'home' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>หน้าหลัก</button>
-            <button onClick={() => handleTabChange('overview')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>อวาตาร์ & รายสัปดาห์</button>
+            <button onClick={() => handleTabChange('overview')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>ตัวละครของคุณ</button>
             <button onClick={() => handleTabChange('quests')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'quests' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>ภารกิจประจำวัน</button>
             <button onClick={() => handleTabChange('identity')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'identity' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>สำรวจตัวตน</button>
             <button onClick={() => handleTabChange('resources')} className={`px-5 py-2.5 rounded-full text-[13px] font-black transition-all duration-300 ${activeTab === 'resources' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>คลังเพิ่มเติม</button>
@@ -1954,7 +1954,7 @@ export default function DashboardPage() {
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
                 <span>👤</span>
-                อวาตาร์ & สถิติรายสัปดาห์
+                ตัวละครของคุณ
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
             </div>
@@ -2529,37 +2529,34 @@ export default function DashboardPage() {
             {/* เส้นขอบสีด้านบน */}
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-400 to-red-500 opacity-90 group-hover:h-3 transition-all duration-300" />
 
-            {/* 🎲 Reroll Button - มุมขวาบนสุดของการ์ด */}
-            <div className="absolute top-6 right-6 sm:top-10 sm:right-10 z-20">
-              <button
-                onClick={handleOpenRerollConfirm}
-                disabled={isToggling}
-                className={`flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border transition-all duration-300 group/reroll ${isToggling
-                  ? 'opacity-40 bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-                  : 'bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-orange-500 hover:border-orange-200 hover:shadow-[0_8px_20px_-5px_rgba(249,115,22,0.15)] hover:scale-105 active:scale-95'
-                  }`}
-                title="สุ่มใหม่ (ใช้ 5 XP)"
-              >
-                <RotateCcw size={14} className={`transition-transform duration-500 ${isToggling ? 'animate-spin' : 'group-hover/reroll:rotate-180'}`} />
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight">
-                  {isToggling ? "Rerolling..." : "Reroll"}
-                </span>
-              </button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
+            <div className="flex items-center justify-between gap-4 mb-8 relative z-10">
               <div className="flex items-center gap-4">
                 <div className="p-3 sm:p-3.5 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)] group-hover:scale-110 transition-transform duration-300">
                   <Flame size={26} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
-
                   <p className="text-[10px] sm:text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
                     <Sparkles size={12} className="text-orange-400" /> ทำเพื่ออัพสกิลสัปดาห์นี้ของคุณ
                   </p>
                 </div>
               </div>
+
+              {/* 🎲 Reroll Button */}
+              <button
+                onClick={handleOpenRerollConfirm}
+                disabled={isToggling}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 group/reroll ${isToggling
+                  ? 'opacity-40 bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                  : 'bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-orange-500 hover:border-orange-200 hover:shadow-[0_8px_20px_-5px_rgba(249,115,22,0.15)] hover:scale-105 active:scale-95'
+                  }`}
+                title="สุ่มใหม่ (ใช้ 5 XP)"
+              >
+                <RotateCcw size={13} className={`transition-transform duration-500 ${isToggling ? 'animate-spin' : 'group-hover/reroll:rotate-180'}`} />
+                <span className="text-[10px] font-black uppercase tracking-tight">
+                  {isToggling ? "..." : "Reroll"}
+                </span>
+              </button>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md mb-6">
