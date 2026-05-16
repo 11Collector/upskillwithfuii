@@ -898,7 +898,7 @@ export default function SwipeQuoteApp() {
                 <RefreshCcw size={15} /> สร้างคำคมใหม่
               </button>
 
-              <AssessmentResultCTA currentUser={currentUser} showXpModal={false} />
+              <AssessmentResultCTA currentUser={currentUser} xpAmount={10} />
             </div>
             </>)}
           </div>

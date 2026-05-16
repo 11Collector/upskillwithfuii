@@ -9,8 +9,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
   currentUser: any;
-  /** แสดง +50 XP modal ก่อน login — false สำหรับ Khomsatsat ที่ไม่ให้ XP */
+  /** แสดง XP modal ก่อน login (default: true) */
   showXpModal?: boolean;
+  /** จำนวน XP ที่ได้รับครั้งแรก (default: 50) */
+  xpAmount?: number;
 }
 
 const GoogleSVG = ({ size = 18 }: { size?: number }) => (
@@ -22,7 +24,7 @@ const GoogleSVG = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
-export default function AssessmentResultCTA({ currentUser, showXpModal = true }: Props) {
+export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -73,7 +75,7 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true }:
               <div className="text-center">
                 <p className="text-[11px] font-black text-violet-400 uppercase tracking-[0.25em] mb-2">บันทึกผลลัพธ์</p>
                 <h3 className="text-slate-900 font-black text-xl mb-3 leading-tight">
-                  รับ <span className="text-violet-600">+50 XP</span> ทันที
+                  รับ <span className="text-violet-600">+{xpAmount} XP</span> ทันที
                 </h3>
                 <p className="text-slate-500 text-[13px] leading-relaxed">
                   เข้าสู่ระบบเพื่อบันทึกผลการประเมินและติดตาม<br />ความก้าวหน้าของตัวเองใน Dashboard
@@ -127,7 +129,7 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true }:
             บันทึกผลลัพธ์ด้วย Google
             {showXpModal && (
               <span className="ml-auto bg-violet-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
-                +50 XP
+                +{xpAmount} XP
               </span>
             )}
           </button>
