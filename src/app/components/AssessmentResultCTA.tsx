@@ -75,7 +75,7 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
               <div className="text-center">
                 <p className="text-[11px] font-black text-violet-400 uppercase tracking-[0.25em] mb-2">บันทึกผลลัพธ์</p>
                 <h3 className="text-slate-900 font-black text-xl mb-3 leading-tight">
-                  รับ <span className="text-violet-600">+{xpAmount} XP</span> ทันที
+                  ครั้งแรก รับ <span className="text-violet-600">+{xpAmount} XP</span>
                 </h3>
                 <p className="text-slate-500 text-[13px] leading-relaxed">
                   เข้าสู่ระบบเพื่อบันทึกผลการประเมินและติดตาม<br />ความก้าวหน้าของตัวเองใน Dashboard
