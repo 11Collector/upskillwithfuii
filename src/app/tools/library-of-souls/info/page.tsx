@@ -194,25 +194,25 @@ function ResultView({ resultType }: { resultType: string }) {
 
       </div>
 
-      {/* Actions (Outside Printable Area) */}
-      <div className="flex flex-col sm:flex-row gap-4 mt-8 mb-12 px-2 md:px-6">
-        <Link href="/tools/library-of-souls" className="flex-1">
-          <button className="w-full bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-95">
-            <RefreshCwIcon size={18} /> ประเมินใหม่อีกครั้ง
-          </button>
-        </Link>
-        <button
-          onClick={handleSaveImage}
-          disabled={isCapturing}
-          className="flex-1 bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-50 transition-all active:scale-95 shadow-sm disabled:opacity-50"
-        >
-          {isCapturing ? <Loader2Icon size={18} className="animate-spin" /> : <CameraIcon size={18} />}
-          {isCapturing ? "กำลังสร้างภาพ..." : "เซฟภาพสรุปผล"}
-        </button>
-      </div>
-
-      <div className="pb-10 px-2 md:px-6">
-        <AssessmentResultCTA currentUser={user} />
+      <div className="pb-10 px-2 md:px-6 mt-8">
+        <AssessmentResultCTA
+          currentUser={user}
+          secondaryActions={
+            <div className="grid grid-cols-2 gap-2.5">
+              <Link href="/tools/library-of-souls" className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[13px] hover:bg-slate-200 active:scale-95 transition-all">
+                <RefreshCwIcon size={14} /> ประเมินใหม่
+              </Link>
+              <button
+                onClick={handleSaveImage}
+                disabled={isCapturing}
+                className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[13px] hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isCapturing ? <Loader2Icon size={14} className="animate-spin" /> : <CameraIcon size={14} />}
+                {isCapturing ? "กำลังสร้าง..." : "เซฟภาพ"}
+              </button>
+            </div>
+          }
+        />
       </div>
     </div>
   );

@@ -15,6 +15,8 @@ interface Props {
   xpAmount?: number;
   /** "light" = bg ขาว/สว่าง (default) | "dark" = bg มืด เช่น khomsatsat */
   variant?: 'light' | 'dark';
+  /** ปุ่ม secondary ที่แสดงระหว่าง primary CTA กับ tertiary row (Line OA + หน้าแรก) */
+  secondaryActions?: React.ReactNode;
 }
 
 const GoogleSVG = ({ size = 18 }: { size?: number }) => (
@@ -26,7 +28,7 @@ const GoogleSVG = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
-export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50, variant = 'light' }: Props) {
+export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50, variant = 'light', secondaryActions }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -129,7 +131,10 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
           </button>
         )}
 
-        {/* Row 2 — Secondary แถวเดียวกัน: Line OA + กลับหน้าแรก */}
+        {/* Row 2 — Secondary actions (page-specific) */}
+        {secondaryActions}
+
+        {/* Row 3 — Tertiary: Line OA + กลับหน้าแรก */}
         <div className="grid grid-cols-2 gap-2.5">
           <a
             href="https://lin.ee/rQawKUM"
