@@ -374,7 +374,7 @@ export default function SwipeQuoteApp() {
           createdAt: serverTimestamp()
         });
 
-        // ข. แจก XP (ถ้า Login)
+        // ข. บันทึก quoteData + แจก XP (ถ้า Login)
         if (currentUser) {
           const userRef = doc(db, "users", currentUser.uid);
           const userSnap = await getDoc(userRef);
@@ -386,13 +386,21 @@ export default function SwipeQuoteApp() {
             if (userData.lastQuoteDate === todayStr) shouldGiveXP = false;
           }
 
+          const updateData: any = {
+            quoteData: {
+              quote: generatedQuote,
+              mood: playerMood?.title,
+              createdAt: serverTimestamp()
+            }
+          };
+
           if (shouldGiveXP) {
-            await setDoc(userRef, {
-              totalXP: increment(10),
-              lastQuoteDate: todayStr
-            }, { merge: true });
+            updateData.totalXP = increment(10);
+            updateData.lastQuoteDate = todayStr;
             console.log("🎉 +10 XP Success!");
           }
+
+          await setDoc(userRef, updateData, { merge: true });
         }
       } catch (dbError) {
         console.error("❌ Firebase Error:", dbError);
@@ -898,7 +906,7 @@ export default function SwipeQuoteApp() {
                 <RefreshCcw size={15} /> สร้างคำคมใหม่
               </button>
 
-              <AssessmentResultCTA currentUser={currentUser} xpAmount={10} />
+              <AssessmentResultCTA currentUser={currentUser} xpAmount={10} variant="dark" />
             </div>
             </>)}
           </div>

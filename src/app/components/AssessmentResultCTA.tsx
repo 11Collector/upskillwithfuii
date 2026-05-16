@@ -13,6 +13,8 @@ interface Props {
   showXpModal?: boolean;
   /** จำนวน XP ที่ได้รับครั้งแรก (default: 50) */
   xpAmount?: number;
+  /** "light" = bg ขาว/สว่าง (default) | "dark" = bg มืด เช่น khomsatsat */
+  variant?: 'light' | 'dark';
 }
 
 const GoogleSVG = ({ size = 18 }: { size?: number }) => (
@@ -24,16 +26,17 @@ const GoogleSVG = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
-export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50 }: Props) {
+export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50, variant = 'light' }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const isDark = variant === 'dark';
 
   const doSignIn = async () => {
     setIsSigningIn(true);
     try {
       await signInWithPopup(auth, googleProvider);
       setShowModal(false);
-      // onAuthStateChanged ใน parent จะ update currentUser เอง — ไม่ redirect
     } catch (e: any) {
       if (e?.code !== 'auth/popup-closed-by-user') console.error(e);
     } finally {
@@ -42,16 +45,13 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
   };
 
   const handleLoginClick = () => {
-    if (showXpModal) {
-      setShowModal(true);
-    } else {
-      doSignIn();
-    }
+    if (showXpModal) setShowModal(true);
+    else doSignIn();
   };
 
   return (
     <>
-      {/* XP Modal */}
+      {/* XP Modal — always light (modal is always on white card) */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -87,20 +87,10 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
                 disabled={isSigningIn}
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-slate-900 text-white font-black text-[14px] rounded-2xl hover:bg-black active:scale-95 transition-all disabled:opacity-50 shadow-lg"
               >
-                {isSigningIn ? (
-                  <Loader2 className="animate-spin" size={18} />
-                ) : (
-                  <>
-                    <GoogleSVG />
-                    เข้าสู่ระบบด้วย Google
-                  </>
-                )}
+                {isSigningIn ? <Loader2 className="animate-spin" size={18} /> : <><GoogleSVG /> เข้าสู่ระบบด้วย Google</>}
               </button>
 
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-[11px] font-bold uppercase tracking-widest transition-colors"
-              >
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-[11px] font-bold uppercase tracking-widest transition-colors">
                 ไว้ทีหลัง
               </button>
             </motion.div>
@@ -115,7 +105,11 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
         {currentUser ? (
           <Link
             href="/dashboard"
-            className="w-full flex items-center justify-center gap-2.5 py-4 px-6 bg-slate-900 text-white rounded-2xl font-black text-[15px] hover:bg-black active:scale-95 transition-all shadow-lg"
+            className={`w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl font-black text-[15px] active:scale-95 transition-all shadow-lg ${
+              isDark
+                ? 'bg-white text-slate-900 hover:bg-slate-100'
+                : 'bg-slate-900 text-white hover:bg-black'
+            }`}
           >
             <LayoutDashboard size={18} />
             ไปที่ Dashboard
@@ -123,7 +117,11 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
         ) : (
           <button
             onClick={handleLoginClick}
-            className="w-full flex items-center justify-center gap-2.5 py-4 px-6 bg-slate-900 text-white rounded-2xl font-black text-[15px] hover:bg-black active:scale-95 transition-all shadow-lg"
+            className={`w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl font-black text-[15px] active:scale-95 transition-all shadow-lg ${
+              isDark
+                ? 'bg-white text-slate-900 hover:bg-slate-100'
+                : 'bg-slate-900 text-white hover:bg-black'
+            }`}
           >
             <GoogleSVG />
             บันทึกผลลัพธ์ด้วย Google
@@ -151,7 +149,9 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
         {/* Tertiary: กลับหน้าแรก */}
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-slate-400 text-[12px] font-bold hover:text-slate-600 transition-colors mt-1"
+          className={`flex items-center gap-1.5 text-[12px] font-bold transition-colors mt-1 ${
+            isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+          }`}
         >
           <ArrowLeft size={13} /> กลับหน้าแรก
         </Link>
