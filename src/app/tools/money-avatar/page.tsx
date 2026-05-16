@@ -357,6 +357,7 @@ export default function Home() {
   const [matrixRotation, setMatrixRotation] = useState(0);
 
   const printRef = useRef<HTMLDivElement>(null);
+  const hasMemberSaved = useRef(false);
   const TOTAL_QUESTIONS = 10;
 
   // --- Auth Effect ---
@@ -455,6 +456,9 @@ export default function Home() {
       // สั่งบันทึกลง Firebase (Fire-and-forget เพื่อไม่ให้ UI ต้องรอโหลด หากเน็ตช้า)
       const saveMoneyResult = async () => {
         try {
+          if (currentUser) {
+            hasMemberSaved.current = true;
+          }
           await addDoc(collection(db, "quiz_results"), {
             userId: currentUser?.uid || "guest",
             nickname: nickname || "นักล่าความมั่งคั่ง",
@@ -507,6 +511,50 @@ export default function Home() {
   const handleBack = () => { if (currentIndex > 0 && !isTransitioning) setCurrentIndex((prev) => prev - 1); };
   const handleMatrixClick = () => setMatrixRotation(prev => prev + 360);
 
+  // Grant XP retroactively when user logs in on the result screen
+  useEffect(() => {
+    if (!currentUser || gameState !== "result" || hasMemberSaved.current) return;
+    if (!matchStats) return;
+
+    const grantXPOnLogin = async () => {
+      hasMemberSaved.current = true;
+      try {
+        await addDoc(collection(db, "quiz_results"), {
+          userId: currentUser.uid,
+          nickname: nickname || "นักล่าความมั่งคั่ง",
+          persona: resultData[matchStats.primary.id as keyof typeof resultData]?.title || "นักลงทุน",
+          resultKey: matchStats.primary.id,
+          primaryMatch: matchStats.primary.matchPercentage,
+          secondaryPersona: resultData[matchStats.secondary.id as keyof typeof resultData]?.title || "นักลงทุน",
+          secondaryKey: matchStats.secondary.id,
+          secondaryMatch: matchStats.secondary.matchPercentage,
+          createdAt: serverTimestamp(),
+        });
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (!userData.hasMoneyXP) {
+            const oldXP = userData.totalXP || 0;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor((oldXP + 50) / 100) + 1;
+            await setDoc(userRef, { totalXP: increment(50), hasMoneyXP: true }, { merge: true });
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ บันทึกล้มเหลว (login grant):", error);
+        hasMemberSaved.current = false;
+      }
+    };
+
+    grantXPOnLogin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
     setIsCapturing(true);
@@ -526,6 +574,7 @@ export default function Home() {
 
   const resetGame = () => {
     setPersona(null); setAnswers([]); setGameState("start"); setMatrixRotation(0); setIsTransitioning(false);
+    hasMemberSaved.current = false;
   };
 
   const getMatrixClass = (key: string) => {

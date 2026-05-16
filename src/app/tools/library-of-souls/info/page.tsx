@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { results as resultsData } from "@/data/librarySoulsResults";
 import { toPng } from "html-to-image";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { collection, addDoc, doc, getDoc, setDoc, increment, serverTimestamp } from "firebase/firestore";
 import AssessmentResultCTA from "@/app/components/AssessmentResultCTA";
 
 // Correcting the import path for icons
@@ -30,6 +31,7 @@ import {
 function ResultView({ resultType }: { resultType: string }) {
   const data = resultsData[resultType];
   const printRef = useRef<HTMLDivElement>(null);
+  const hasMemberSaved = useRef(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [user, setUser] = React.useState<User | null>(null);
 
@@ -37,6 +39,49 @@ function ResultView({ resultType }: { resultType: string }) {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsubscribe();
   }, []);
+
+  // Grant XP retroactively when user logs in on the result screen
+  React.useEffect(() => {
+    if (!user || !data || hasMemberSaved.current) return;
+
+    const grantXPOnLogin = async () => {
+      hasMemberSaved.current = true;
+      try {
+        await addDoc(collection(db, "users", user.uid, "library_souls"), {
+          userId: user.uid,
+          result: resultType,
+          type: data.type,
+          title: data.title,
+          createdAt: serverTimestamp()
+        });
+
+        await setDoc(doc(db, "users", user.uid), {
+          librarySoulData: { type: resultType, title: data.title, timestamp: serverTimestamp() }
+        }, { merge: true });
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (!userData.hasLibrarySoulXP) {
+            const oldXP = userData.totalXP || 0;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor((oldXP + 50) / 100) + 1;
+            await setDoc(userRef, { totalXP: increment(50), hasLibrarySoulXP: true }, { merge: true });
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Firebase Error (login grant):", error);
+        hasMemberSaved.current = false;
+      }
+    };
+
+    grantXPOnLogin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSaveImage = async () => {
     if (!printRef.current) return;

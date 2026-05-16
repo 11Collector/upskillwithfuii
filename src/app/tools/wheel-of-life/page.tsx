@@ -288,8 +288,9 @@ function CarSimulation({ scores, isMobile }: any) {
 
 export default function WheelOfLifeApp() {
   const chartRef = useRef<any>(null);
-  const aiResultRef = useRef<HTMLDivElement>(null); 
-  
+  const aiResultRef = useRef<HTMLDivElement>(null);
+  const hasMemberSaved = useRef(false);
+
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [step, setStep] = useState('home'); 
   const [currentScores, setCurrentScores] = useState(Array(8).fill(5));
@@ -347,8 +348,9 @@ const handleGenerateResult = async () => {
       let docRef;
       
       if (currentUser) {
+        hasMemberSaved.current = true;
         // ✅ 1. เซฟข้อมูลประเมินลงแฟ้มส่วนตัว
-        docRef = await addDoc(collection(db, "users", currentUser.uid, "assessments"), { 
+        docRef = await addDoc(collection(db, "users", currentUser.uid, "assessments"), {
           type: 'wheel_of_life',
           currentScores, 
           targetScores, 
@@ -416,6 +418,57 @@ const handleGenerateResult = async () => {
       alert("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้งครับ");
     }
   };
+
+  // Grant XP retroactively when user logs in on the result screen
+  useEffect(() => {
+    if (!currentUser || step !== 'result' || hasMemberSaved.current) return;
+
+    const grantXPOnLogin = async () => {
+      hasMemberSaved.current = true;
+      try {
+        await addDoc(collection(db, "users", currentUser.uid, "assessments"), {
+          type: 'wheel_of_life',
+          currentScores,
+          targetScores,
+          selectedFocusAreas,
+          analysis: "",
+          goal: futureGoal,
+          createdAt: serverTimestamp(),
+          platform: 'upskillhub_member'
+        });
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          let updateData: any = {
+            wheelPlanDay: 1,
+            lastActiveDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+            lastQuestDate: null,
+            completedQuestIds: [],
+            wheelCompletions: 0,
+          };
+          if (!userData.hasWheelXP) {
+            const oldXP = userData.totalXP || 0;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor((oldXP + 50) / 100) + 1;
+            updateData.totalXP = increment(50);
+            updateData.hasWheelXP = true;
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
+          }
+          await setDoc(userRef, updateData, { merge: true });
+        }
+      } catch (error) {
+        console.error("❌ เกิดข้อผิดพลาด (login grant):", error);
+        hasMemberSaved.current = false;
+      }
+    };
+
+    grantXPOnLogin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
 const analyzeWithAI = async () => {
     if (!futureGoal.trim()) { 

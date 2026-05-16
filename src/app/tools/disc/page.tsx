@@ -103,6 +103,7 @@ export default function Home() {
   const [hasSavedData, setHasSavedData] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
+  const hasMemberSaved = useRef(false);
   const TOTAL_QUESTIONS = 15;
 
   const handleStart = () => {
@@ -118,6 +119,7 @@ export default function Home() {
     setAnswers([]);
     setCurrentIndex(0);
     setHasSavedData(false);
+    hasMemberSaved.current = false;
     setGameState("playing");
   };
 
@@ -192,7 +194,6 @@ export default function Home() {
   const saveResultToFirebase = async () => {
     if (hasSavedData) return;
     try {
-      setHasSavedData(true);
       const finalResult = getFinalResult();
       const percentages = getPercentages();
 
@@ -214,12 +215,10 @@ export default function Home() {
       };
 
       if (currentUser) {
+        hasMemberSaved.current = true;
+        setHasSavedData(true);
         await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
-      } else {
-        await addDoc(collection(db, "discResults"), resultPayload);
-      }
 
-      if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
 
@@ -239,6 +238,9 @@ export default function Home() {
             }
           }
         }
+      } else {
+        setHasSavedData(true);
+        await addDoc(collection(db, "discResults"), resultPayload);
       }
 
     } catch (error) {
@@ -246,6 +248,7 @@ export default function Home() {
       setHasSavedData(false);
     }
   };
+
   useEffect(() => {
     if (gameState === "result") {
       saveResultToFirebase();
@@ -253,12 +256,61 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState]);
 
+  // Grant XP retroactively when user logs in on the result screen
+  useEffect(() => {
+    if (!currentUser || gameState !== "result" || hasMemberSaved.current) return;
+
+    const grantXPOnLogin = async () => {
+      hasMemberSaved.current = true;
+      try {
+        const finalResult = getFinalResult();
+        const percentages = getPercentages();
+        const resultPayload = {
+          userId: currentUser.uid,
+          userName: currentUser.displayName,
+          result: finalResult,
+          nickname: nickname,
+          gender: gender,
+          finalResult: finalResult,
+          percentages: percentages,
+          title: getDynamicTitle(),
+          answers: answers,
+          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp()
+        };
+        await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (!userData.hasDiscXP) {
+            const oldXP = userData.totalXP || 0;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor((oldXP + 50) / 100) + 1;
+            await setDoc(userRef, { totalXP: increment(50), hasDiscXP: true }, { merge: true });
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Firebase Error (login grant): ", error);
+        hasMemberSaved.current = false;
+      }
+    };
+
+    grantXPOnLogin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
   const restartGame = () => {
     setAnswers([]);
     setCurrentIndex(0);
     setGender(null);
     setNickname("");
     setHasSavedData(false);
+    hasMemberSaved.current = false;
     setGameState("start");
   };
 
