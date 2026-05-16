@@ -20,6 +20,7 @@ export default function ClientMainWrapper({ children }: { children: React.ReactN
   return (
     <main
       id="main-scroll-container"
+      suppressHydrationWarning
       className={`w-full relative min-h-screen flex flex-col pb-[4.5rem] md:pb-0 ${
         isTools
           ? 'pt-0'
