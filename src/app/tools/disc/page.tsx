@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { Kanit } from "next/font/google";
+import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 import { scenarios, ChatScenario } from "@/data/discScenarios"; // ปรับ Path กลับเป็นแบบเดิมของคุณ
 
 import { db, auth } from "@/lib/firebase";
@@ -581,83 +582,8 @@ export default function Home() {
                   <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
                   <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
-                  {/* ✨ ส่วนเครื่องมืออื่นๆ (Dashboard, etc.) ของคุณ ยังคงอยู่ภายในพื้นที่ Scroll */}
                   <div className="mb-6 mt-4">
-                    <div className="flex items-center justify-center gap-3 mb-4">
-                      <div className="h-[1px] bg-slate-100 flex-1"></div>
-                      <p className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">เครื่องมืออัปสกิลอื่นๆ</p>
-                      <div className="h-[1px] bg-slate-100 flex-1"></div>
-                    </div>
-
-                    <div className="flex flex-col gap-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <a
-                          href="/tools/wheel-of-life"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                            <PieChart size={18} className="text-orange-500" />
-                          </div>
-                          <span className="text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
-                        </a>
-
-                        <a
-                          href="/tools/money-avatar"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex flex-col items-center justify-center gap-2 bg-white border border-slate-200 py-4 rounded-2xl shadow-sm hover:border-amber-200 hover:bg-amber-50/50 transition-all active:scale-95 group"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                            <Wallet size={18} className="text-amber-500" />
-                          </div>
-                          <span className="text-[13px] font-bold text-slate-700">สไตล์การเงิน</span>
-                        </a>
-                      </div>
-
-                      {/* ปุ่ม Dashboard เดิมของคุณ */}
-                      <a
-                        href={currentUser ? "/dashboard" : "/"}
-                        className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden"
-                      >
-                        <div className="flex items-center gap-3 pl-4 py-3">
-                          {currentUser ? (
-                            <>
-                              <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
-                                <LayoutDashboard size={20} className="text-blue-400" />
-                              </div>
-                              <div className="flex flex-col items-start text-left">
-                                <span className="text-[14px] font-black text-white tracking-wide">ไปที่ Dashboard หลัก</span>
-                                <span className="text-[10px] text-slate-400 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
-                                <ArrowLeft size={20} className="text-slate-300" />
-                              </div>
-                              <div className="flex flex-col items-start text-left">
-                                <span className="text-[14px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
-                                <span className="text-[10px] text-slate-400 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        <div className="pr-4">
-                          {currentUser ? (
-                            <ArrowRight size={18} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                          ) : (
-                            <RefreshCcw size={16} className="text-slate-500 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />
-                          )}
-                        </div>
-
-                        {currentUser && (
-                          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl rounded-full"></div>
-                        )}
-                      </a>
-                    </div>
+                    <AssessmentResultCTA currentUser={currentUser} />
                   </div>
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">
@@ -722,15 +648,6 @@ export default function Home() {
                 <Camera size={18} /> {isCapturing ? "รอแป๊บ..." : "เซฟรูปขิงใน Story"}
               </button>
 
-              {/* ปุ่ม LINE OA ของคุณ */}
-              <a
-                href="https://lin.ee/rQawKUM"
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 bg-[#00c300] text-white font-bold py-3.5 rounded-xl text-center text-[12px] sm:text-[14px] flex items-center justify-center gap-1.5 hover:bg-[#00aa00] transition-all shadow-sm active:scale-95"
-              >
-                <MessageSquare size={16} /> ติดตาม LINE OA
-              </a>
             </div>
 
           </div>

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { ChevronLeft, ChevronRight, X, Check, RefreshCcw, Quote, Download, Loader2, Heart, ArrowLeft, LayoutDashboard, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Check, RefreshCcw, Quote, Download, Loader2 } from "lucide-react";
 import { Kanit } from "next/font/google";
 import { domToPng } from 'modern-screenshot';
 import { db } from '@/lib/firebase';
@@ -10,6 +10,7 @@ import { db } from '@/lib/firebase';
 // 💡 1. อย่าลืม Import (ถ้ายังไม่มี)
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 
 
 const kanit = Kanit({
@@ -890,53 +891,14 @@ export default function SwipeQuoteApp() {
                 {isSaving ? "กำลังจัดเก็บความทรงจำ..." : "เซฟคำคมลงเครื่อง"}
               </button>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={resetApp}
-                  className="py-3.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-[13px] flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700"
-                >
-                  <RefreshCcw size={15} /> สร้างคำคมใหม่
-                </button>
-
-                <a
-                  href="https://lin.ee/rQawKUM"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-3.5 bg-black text-white font-bold rounded-xl text-[13px] flex items-center justify-center gap-2 active:scale-95 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg shadow-black/50 border border-zinc-800 transition-all"
-                >
-                  <Heart size={15} className="fill-current text-pink-500" />
-                  ติดตามฟุ้ย
-                </a>
-              </div>
-
-              <a
-                href={currentUser ? "/dashboard" : "/"}
-                className="flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-md hover:bg-black transition-all active:scale-[0.98] group overflow-hidden border border-slate-800 mt-1"
+              <button
+                onClick={resetApp}
+                className="w-full py-3.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-[13px] flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700"
               >
-                <div className="flex items-center gap-3 pl-4 py-3">
-                  {currentUser ? (
-                    <>
-                      <div className="bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/30 transition-colors">
-                        <LayoutDashboard size={18} className="text-blue-400" />
-                      </div>
-                      <div className="flex flex-col items-start text-left">
-                        <span className="text-[13px] font-black text-white tracking-wide">ไปที่ Dashboard</span>
-                        <span className="text-[9px] text-slate-500 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="bg-slate-700 p-2 rounded-xl group-hover:bg-slate-600 transition-colors">
-                        <ArrowLeft size={18} className="text-slate-300" />
-                      </div>
-                      <div className="flex flex-col items-start text-left">
-                        <span className="text-[13px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
-                        <span className="text-[9px] text-slate-500 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </a>
+                <RefreshCcw size={15} /> สร้างคำคมใหม่
+              </button>
+
+              <AssessmentResultCTA currentUser={currentUser} />
             </div>
             </>)}
           </div>

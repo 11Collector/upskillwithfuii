@@ -7,6 +7,7 @@ import { results as resultsData } from "@/data/librarySoulsResults";
 import { toPng } from "html-to-image";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
+import AssessmentResultCTA from "@/app/components/AssessmentResultCTA";
 
 // Correcting the import path for icons
 import {
@@ -165,10 +166,8 @@ function ResultView({ resultType }: { resultType: string }) {
         </button>
       </div>
 
-      <div className="text-center pb-10">
-        <Link href={user ? "/dashboard" : "/"} className="text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors underline underline-offset-8 decoration-slate-200">
-          {user ? "กลับ Dashboard" : "กลับสู่หน้าหลัก"}
-        </Link>
+      <div className="pb-10 px-2 md:px-6">
+        <AssessmentResultCTA currentUser={user} />
       </div>
     </div>
   );

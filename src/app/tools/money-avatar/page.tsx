@@ -10,6 +10,7 @@ import Image from "next/image";
 import { Prompt } from "next/font/google";
 
 import { scenarios } from "@/data/moneyScenarios";
+import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 import { resultData } from "@/data/moneyResult";
 import DisclaimerFooter from '@/app/components/DisclaimerFooter';
 import { auth, db } from "@/lib/firebase";
@@ -937,60 +938,8 @@ export default function Home() {
                   </div>
 
                   {/* 6️⃣ เครื่องมืออัปสกิลอื่นๆ */}
-                  <div className="flex flex-col items-center justify-center gap-2 mb-6 mt-4">
-                    <div className="flex items-center justify-center gap-3 mb-2 w-full">
-                      <div className="h-[1px] bg-stone-200 flex-1"></div>
-                      <p className="text-[10px] font-bold text-stone-400 tracking-[0.1em] uppercase whitespace-nowrap">เครื่องมืออัปสกิลอื่นๆ</p>
-                      <div className="h-[1px] bg-stone-200 flex-1"></div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 w-full">
-                      <div className="grid grid-cols-2 gap-3">
-                        <a href="/tools/wheel-of-life" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white border border-stone-200 py-4 rounded-2xl shadow-sm hover:border-orange-200 hover:bg-orange-50/50 transition-all active:scale-95 group">
-                          <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                            <PieChart size={18} className="text-orange-500" />
-                          </div>
-                          <span className="text-[12px] font-bold text-stone-700">เช็กสมดุลชีวิต</span>
-                        </a>
-
-                        <a href="/tools/disc" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white border border-stone-200 py-4 rounded-2xl shadow-sm hover:border-sky-200 hover:bg-sky-50/50 transition-all active:scale-95 group">
-                          <div className="w-8 h-8 rounded-full bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
-                            <Users size={18} className="text-sky-500" />
-                          </div>
-                          <span className="text-[12px] font-bold text-stone-700">ค้นหาจุดแข็ง</span>
-                        </a>
-                      </div>
-
-                      <a href={currentUser ? "/dashboard" : "/"} className="relative flex w-full items-center justify-between bg-slate-900 p-1 rounded-2xl shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-[0.98] group overflow-hidden">
-                        <div className="flex items-center gap-3 pl-4 py-3">
-                          {currentUser ? (
-                            <>
-                              <div className="bg-amber-500/20 p-2 rounded-xl group-hover:bg-amber-500/30 transition-colors">
-                                <LayoutDashboard size={20} className="text-amber-400" />
-                              </div>
-                              <div className="flex flex-col items-start text-left">
-                                <span className="text-[14px] font-black text-white tracking-wide">ไปที่ Dashboard หลัก</span>
-                                <span className="text-[10px] text-stone-400 font-medium">รวมทุกสกิลของคุณไว้ที่เดียว</span>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="bg-stone-700 p-2 rounded-xl group-hover:bg-stone-600 transition-colors">
-                                <ArrowLeft size={20} className="text-stone-300" />
-                              </div>
-                              <div className="flex flex-col items-start text-left">
-                                <span className="text-[14px] font-black text-white tracking-wide">กลับสู่หน้าแรก</span>
-                                <span className="text-[10px] text-stone-400 font-medium">ไปทำความรู้จักกันก่อนนะ</span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        <div className="pr-4">
-                          {currentUser ? <ArrowRight size={18} className="text-stone-500 group-hover:text-white group-hover:translate-x-1 transition-all" /> : <RefreshCcw size={16} className="text-stone-500 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />}
-                        </div>
-                        {currentUser && <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/10 blur-2xl rounded-full"></div>}
-                      </a>
-                    </div>
+                  <div className="mb-6 mt-4">
+                    <AssessmentResultCTA currentUser={currentUser} />
                   </div>
 
                   <div className="mt-2 text-center text-stone-400 text-[9px] uppercase tracking-widest font-semibold pb-4">Created by อัพสกิลกับฟุ้ย</div>
@@ -1000,10 +949,7 @@ export default function Home() {
 
             <div className="absolute bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl p-4 border-t border-stone-200 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] flex flex-col gap-2.5 z-30">
               <button onClick={handleDownloadImage} disabled={isCapturing} className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 font-bold py-3.5 rounded-xl hover:from-amber-400 hover:to-yellow-400 transition-all text-[14px] shadow-lg disabled:opacity-50"><Camera size={18} /> {isCapturing ? "กำลังประมวลผลรูปภาพ..." : "เซฟรูปอวดเพื่อนลง Story"}</button>
-              <div className="flex gap-2">
-                <a href="https://lin.ee/rQawKUM" target="_blank" rel="noopener noreferrer" className="flex-1 bg-stone-900 text-amber-400 font-bold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-black transition-colors shadow-lg border border-stone-700"><MessageCircle size={16} className="fill-amber-400 text-amber-400" /> อัปสกิลหารายได้เพิ่ม</a>
-                <button onClick={resetGame} className="flex-1 bg-stone-100 text-stone-600 font-semibold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-stone-200 transition-colors"><RefreshCcw size={14} /> สแกน AVATAR อีกครั้ง</button>
-              </div>
+              <button onClick={resetGame} className="w-full bg-stone-100 text-stone-600 font-semibold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-stone-200 transition-colors"><RefreshCcw size={14} /> สแกน AVATAR อีกครั้ง</button>
             </div>
           </div>
         )}

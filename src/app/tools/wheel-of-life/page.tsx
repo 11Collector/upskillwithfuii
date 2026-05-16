@@ -7,6 +7,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 
 import {
   Chart as ChartJS,
@@ -806,47 +807,7 @@ const analyzeWithAI = async () => {
               })()}
 
                 <div style={{ maxWidth: '450px', margin: '25px auto 0', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ width: '100%', textAlign: 'center' }}>
-                  <p style={{ fontSize: '13.5px', color: '#555', marginBottom: '12px', lineHeight: '1.5' }}>
-                    ถ้าคุณไม่อยากอยู่จุดเดิมอีก 3 เดือนข้างหน้า?<br/>
-                  </p>
-                  <a href="https://lin.ee/rQawKUM" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                    <button style={{ width: '100%', padding: '12px', backgroundColor: '#00B900', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(0, 185, 0, 0.2)' }}>
-                      💬 วางแผนต่อเฉพาะคุณ
-                    </button>
-                  </a>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '4px' }}>
-                  <Link href="/tools/disc" style={{ textDecoration: 'none', flex: 1 }}>
-                    <button style={{ width: '100%', padding: '10px', backgroundColor: '#fff', color: '#800000', border: '1px solid #800000', borderRadius: '8px', fontSize: '13.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', boxShadow: '0 2px 5px rgba(128, 0, 0, 0.05)' }}>
-                      🧩 เช็กตัวตน
-                    </button>
-                  </Link>
-                  <Link href="/tools/money-avatar" style={{ textDecoration: 'none', flex: 1 }}>
-                    <button style={{ width: '100%', padding: '10px', backgroundColor: '#fff', color: '#E65100', border: '1px solid #E65100', borderRadius: '8px', fontSize: '13.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', boxShadow: '0 2px 5px rgba(230, 81, 0, 0.05)' }}>
-                      💰 ถอดสไตล์การเงิน
-                    </button>
-                  </Link>
-                </div>
-
-               {/* 💡 แยกทางเดิน: ล็อกอินไป Dashboard / ไม่ล็อกอินไปหน้าแรกของเว็บ */}
-<Link 
-  href={currentUser ? "/dashboard" : "/"} 
-  // ปรับ bg-[#5D0000] เป็นสีแดงเข้ม, text-white, และเพิ่ม shadow ให้ดูมีมิติ
-  className="inline-flex items-center justify-center gap-2 px-6 py-4 text-lg font-bold text-white bg-[#5D0000] border-none rounded-2xl shadow-xl hover:bg-[#7D0000] hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 group w-full max-w-md mx-auto"
-  title={currentUser ? "กลับไปหน้า Dashboard" : "กลับไปหน้าแรก"}
->
-  <div className="flex items-center justify-center w-6 h-6">
-    {currentUser ? (
-      <LayoutDashboard size={20} className="group-hover:rotate-3 transition-transform" />
-    ) : (
-      <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-    )}
-  </div>
-  
-  <span>{currentUser ? "กลับสู่ Dashboard" : "หน้าแรก"}</span>
-</Link>
+                <AssessmentResultCTA currentUser={currentUser} />
               </div>
             </div>
    
