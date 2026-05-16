@@ -79,3 +79,13 @@
 > "ทัศนคติที่ติดลบ ยิ่งเก่งยิ่งขยันยิ่งพัง"
 > "ความสนุกเติมไม่เต็ม ความสุขสร้างจากข้างใน"
 > "ตัดใจจากความสนุกชั่วคราว เพื่อมุ่งหน้าสู่เป้าหมายที่ชัดเจน"
+
+---
+
+## Content Log
+
+### 2026-05-16 — Learning — Social
+**Hook:** อ่านซ้ำคืนเดียวไม่เคยเวิร์ก — นี่คือเหตุผลจากวิทยาศาสตร์
+**Core idea:** Spaced Repetition (การทบทวนแบบเว้นช่วง) ให้ผลดีกว่า Massed Learning (ท่องยัดครั้งเดียว) อย่างมีนัยสำคัญ
+**Source used:** ScienceDirect, 2025 — Benefits of spaced learning are predicted by the re-encoding of past experience in ventromedial prefrontal cortex
+**Published:** social

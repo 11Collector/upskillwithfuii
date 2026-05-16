@@ -59,6 +59,7 @@ This builds a running log so future content doesn't repeat the same ideas and ca
 
 ## Rules
 - Thai only. Peer tone — not teacher, not motivational speaker
+- ศัพท์อังกฤษเทคนิคทุกคำ ต้องวงเล็บแปลไทยง่ายๆ ต่อท้ายทันที เช่น Spaced Repetition (การทบทวนแบบเว้นช่วง), Massed Learning (ท่องยัดครั้งเดียว)
 - Every post must have one specific idea, not generic encouragement
 - The external source must be real and verifiable — never fabricate citations
 - If no strong external source found, rely on second-brain only and note it
