@@ -20,9 +20,11 @@ export default function Header() {
     if (e?.code !== 'auth/popup-closed-by-user') console.error(e);
   });
 
+  const isAssessmentPage = pathname.startsWith("/tools/");
+
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] h-[72px]">
-      <div className="max-w-5xl mx-auto px-6 h-full flex items-center justify-center md:justify-between gap-8">
+    <nav className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] h-[72px] ${isAssessmentPage ? "hidden md:flex" : "flex"}`}>
+      <div className="max-w-5xl mx-auto px-6 h-full flex items-center justify-center md:justify-between gap-8 w-full">
 
         <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
           <img src="/logo-upskill.png" alt="Upskill Everyday" className="h-14 md:h-16 object-contain" fetchPriority="high" decoding="async" />

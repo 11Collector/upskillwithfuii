@@ -6,6 +6,7 @@ import { Home, PieChart, Users, Wallet, Quote, BookOpen } from "lucide-react";
 import PWALogic from "./components/PWALogic";
 import BottomNavigation from "./components/BottomNavigation";
 import Header from "./components/Header";
+import ClientMainWrapper from "./components/ClientMainWrapper";
 import { Suspense } from "react";
 import { PreloadAssets } from "./components/PreloadAssets";
 
@@ -34,12 +35,11 @@ export default function RootLayout({
 
         <Header />
 
-
-        <main id="main-scroll-container" className="w-full relative min-h-screen flex flex-col pt-16 pb-[4.5rem] md:pb-0">
+        <ClientMainWrapper>
           <Suspense>
             {children}
           </Suspense>
-        </main>
+        </ClientMainWrapper>
 
         <Suspense fallback={<div className="h-[5.5rem]" />}>
           <BottomNavigation />
