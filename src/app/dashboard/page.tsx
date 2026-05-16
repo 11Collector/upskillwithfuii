@@ -2535,7 +2535,7 @@ export default function DashboardPage() {
                   <Flame size={26} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests 🎯</h2>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests</h2>
                   <p className="text-[10px] sm:text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
                     <Sparkles size={12} className="text-orange-400" /> ทำเพื่ออัพสกิลสัปดาห์นี้ของคุณ
                   </p>
