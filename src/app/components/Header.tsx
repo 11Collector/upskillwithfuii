@@ -45,7 +45,7 @@ function HeaderInner() {
   if (isMobile) return null;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] h-[72px] flex`}>
+    <nav className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] h-[72px] hidden md:flex`}>
       <div className="max-w-5xl mx-auto px-6 h-full flex items-center justify-center md:justify-between gap-8 w-full">
 
         <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
