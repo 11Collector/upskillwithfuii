@@ -20,6 +20,7 @@ function BottomNavigationInner() {
   // Dashboard flow only when logged in
   const isDashboardFlow =
     !!user && (
+      pathname === '/' ||
       pathname.startsWith('/dashboard') ||
       pathname.startsWith('/library') ||
       pathname === '/tools/deep-work' ||
