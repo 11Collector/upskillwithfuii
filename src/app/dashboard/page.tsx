@@ -1849,6 +1849,20 @@ export default function DashboardPage() {
 
 
 
+        {/* --- 🏠 Home Tab Header --- */}
+        {activeTab === "home" && (
+          <div className="mt-2 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
+                <LayoutDashboard size={20} />
+                สรุปภาพรวม
+              </h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            </div>
+          </div>
+        )}
+
         {/* --- 🌱 Assessment Journey Banner --- */}
         {activeTab === "home" && (() => {
           const steps = [
