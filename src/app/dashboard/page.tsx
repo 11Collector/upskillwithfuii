@@ -1046,7 +1046,7 @@ export default function DashboardPage() {
     return guidedPrompts[seed % guidedPrompts.length];
   }, [todayDateStr, guidedPrompts]);
 
-  // 🤖 AI Quest Analysis — รันทุก 3 วัน เพื่อสร้าง CHALLENGE quest ที่ personalized
+  // 🤖 AI Quest Analysis — รันเมื่อมีแชทใหม่กว่า lastQuestAnalysisDate
   useEffect(() => {
     if (!user || !todayDateStr) return;
 
@@ -1054,16 +1054,12 @@ export default function DashboardPage() {
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
       const data = snap.data();
-      const lastDate = data?.lastQuestAnalysisDate || '';
+      const lastAnalysisDate = data?.lastQuestAnalysisDate || '';
+      const lastChat = data?.lastChatDate || '';
 
-      // เช็กว่าเกิน 3 วันแล้วมั้ย
-      const last = new Date(lastDate);
-      const today = new Date(todayDateStr);
-      const diffDays = lastDate
-        ? Math.round((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
-        : 999;
-
-      if (diffDays < 3) return;
+      // ข้ามถ้ายังไม่มีแชท หรือ analysis ล่าสุดทำหลังแชทครั้งล่าสุดแล้ว
+      if (!lastChat) return;
+      if (lastAnalysisDate >= lastChat) return;
 
       try {
         const idToken = await user.getIdToken();

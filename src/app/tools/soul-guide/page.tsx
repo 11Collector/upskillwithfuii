@@ -245,6 +245,14 @@ export default function SoulGuidePage() {
       const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
 
+      // ล้าง AI-generated quest เพราะไม่มีแชทให้วิเคราะห์แล้ว
+      const userRef = doc(db, "users", user.uid);
+      updateDoc(userRef, {
+        aiGeneratedQuestTitle: "",
+        lastQuestAnalysisDate: "",
+        lastChatDate: "",
+      }).catch(() => {});
+
       const userName = user.displayName || 'นักเดินทาง';
       setMessages([{
         role: "assistant",
