@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -18,6 +18,8 @@ import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA 
 import { formatAnalysisText, AvatarDisplay, calculateRelativeWeek } from "@/utils/dashboardHelpers";
 import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
 import { fetchDashboardData } from "@/services/dashboardService";
+const AI_MENTOR_QUEST_MARKER = "AI Mentor";
+
 export default function DashboardPage() {
 
   const [weeklyData, setWeeklyData] = useState({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
@@ -194,6 +196,8 @@ export default function DashboardPage() {
   const [wheelPlanSkips, setWheelPlanSkips] = useState<number>(0);
   const [perfectWeeks, setPerfectWeeks] = useState<number>(0);
   const [lastSkipDate, setLastSkipDate] = useState<string>("");
+  const [lastChatDate, setLastChatDate] = useState("");
+  const [aiGeneratedQuestTitle, setAiGeneratedQuestTitle] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showWheelRulesModal, setShowWheelRulesModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -380,6 +384,8 @@ export default function DashboardPage() {
             setWheelPlanDay(userData.wheelPlanDay || 0);
             setWheelPlanSkips(userData.wheelPlanSkips || 0);
             setLastSkipDate(userData.lastSkipDate || "");
+            setLastChatDate(userData.lastChatDate || "");
+            setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
             setPerfectWeeks(userData.perfectWeeks || 0);
             setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
             setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
@@ -1040,6 +1046,48 @@ export default function DashboardPage() {
     return guidedPrompts[seed % guidedPrompts.length];
   }, [todayDateStr, guidedPrompts]);
 
+  // 🤖 AI Quest Analysis — รันทุก 3 วัน เพื่อสร้าง CHALLENGE quest ที่ personalized
+  useEffect(() => {
+    if (!user || !todayDateStr) return;
+
+    const runAnalysis = async () => {
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      const data = snap.data();
+      const lastDate = data?.lastQuestAnalysisDate || '';
+
+      // เช็กว่าเกิน 3 วันแล้วมั้ย
+      const last = new Date(lastDate);
+      const today = new Date(todayDateStr);
+      const diffDays = lastDate
+        ? Math.round((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+
+      if (diffDays < 3) return;
+
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/quest-analysis', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (!res.ok) return;
+        const { questTitle } = await res.json();
+        if (!questTitle) return;
+
+        await updateDoc(userRef, {
+          aiGeneratedQuestTitle: questTitle,
+          lastQuestAnalysisDate: todayDateStr,
+        });
+        setAiGeneratedQuestTitle(questTitle);
+      } catch {
+        // fail silently
+      }
+    };
+
+    runAnalysis();
+  }, [user, todayDateStr]);
+
   const dailyQuests = useMemo(() => {
     if (!todayDateStr || !user?.uid) return [];
     const dateSeed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
@@ -1155,11 +1203,28 @@ export default function DashboardPage() {
     qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
     currentTitles.push(qList[4].title);
 
-    // 🛡️ ช่องที่ 6: Challenge (ใช้ Salt 6.8)
-    qList[5].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 5);
+    // 🛡️ ช่องที่ 6: Challenge (ใช้ AI-generated quest ถ้ามี, fallback ไป pool ปกติ)
+    if (aiGeneratedQuestTitle) {
+      qList[5].title = aiGeneratedQuestTitle;
+    } else {
+      qList[5].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 5);
+    }
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle]);
+
+  // 🤖 AI Mentor Quest — auto-complete เมื่อ user คุย AI แล้ววันนี้
+  const aiMentorAutoCompleted = useRef(false);
+  useEffect(() => {
+    if (aiMentorAutoCompleted.current) return;
+    if (!todayDateStr || !lastChatDate || !dailyQuests.length) return;
+    const wildcardQuest = dailyQuests.find(q => q.id === 5);
+    if (!wildcardQuest?.title.includes(AI_MENTOR_QUEST_MARKER)) return;
+    if (lastChatDate !== todayDateStr) return;
+    if (completedQuests.includes(5)) { aiMentorAutoCompleted.current = true; return; }
+    aiMentorAutoCompleted.current = true;
+    toggleQuest(5, wildcardQuest.xp);
+  }, [lastChatDate, todayDateStr, dailyQuests, completedQuests]);
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
@@ -2705,7 +2770,14 @@ export default function DashboardPage() {
                           : 'bg-white border-slate-50 hover:border-orange-200 cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.02)] hover:shadow-lg'}
       `}
                     // 🚩 ถ้าเป็น Notice ห้ามรันฟังก์ชัน toggleQuest
-                    onClick={() => !isNotice && toggleQuest(quest.id, quest.xp)}
+                    onClick={() => {
+                      if (isNotice) return;
+                      if (quest.id === 5 && quest.title.includes(AI_MENTOR_QUEST_MARKER) && !isDone) {
+                        window.location.href = '/tools/soul-guide';
+                        return;
+                      }
+                      toggleQuest(quest.id, quest.xp);
+                    }}
                   >
                     <div className="shrink-0 relative">
                       {isDone ? (
@@ -2736,9 +2808,19 @@ export default function DashboardPage() {
                             {quest.title.split('|')[0].trim()}
                           </span>
                         )}
+
+                        {quest.id === 5 && quest.title.includes(AI_MENTOR_QUEST_MARKER) && !isDone && (
+                          <span className="text-[9px] font-bold text-purple-400 flex items-center gap-0.5">
+                            → เปิด Soul Guide
+                          </span>
+                        )}
+
+                        {quest.id === 6 && aiGeneratedQuestTitle && quest.title === aiGeneratedQuestTitle && (
+                          <span className="text-[9px] font-bold text-violet-400">✨ เฉพาะคุณ</span>
+                        )}
                       </div>
 
-                      <p className={`text-[13px] sm:text-[15px] font-bold leading-snug 
+                      <p className={`text-[13px] sm:text-[15px] font-bold leading-snug
           ${isDone ? 'line-through text-slate-400' : isNotice || quest.title.includes('สรุปผล') ? 'text-amber-900' : 'text-slate-700'}`}>
                         {quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title}
                       </p>
