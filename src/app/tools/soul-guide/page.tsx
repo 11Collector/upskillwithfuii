@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp, onSnapshot, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -290,6 +290,13 @@ export default function SoulGuidePage() {
         content: userMessage.content,
         createdAt: serverTimestamp()
       });
+
+      // Write lastChatDate once per day to enable AI Mentor quest auto-complete
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+      if (userData?.lastChatDate !== todayStr) {
+        const userRef = doc(db, "users", user.uid);
+        updateDoc(userRef, { lastChatDate: todayStr }).catch(() => {});
+      }
 
       const idToken = await user.getIdToken();
 

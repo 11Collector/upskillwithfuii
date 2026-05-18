@@ -28,9 +28,7 @@ function HeaderInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
-  );
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
