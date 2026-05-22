@@ -18,8 +18,17 @@ const kanit = Kanit({
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
-  title: "อัพสกิลทุกวัน | เป็นคุณในเวอร์ชันที่ดีกว่าเดิม",
-  description: "รวมเครื่องมือวิเคราะห์การทำงาน การเงิน และสมดุลชีวิต เพื่อสร้าง Mindset ของคนที่ประสบความสำเร็จ",
+  title: { default: "อัพสกิลกับฟุ้ย | พัฒนาตัวเองทุกวัน", template: "%s | Upskill Everyday" },
+  description: "เครื่องมือประเมินตัวเอง สรุปหนังสือ และ AI Mentor ส่วนตัว ช่วยให้คุณเข้าใจตัวเองและพัฒนาได้ตรงจุด",
+  keywords: ["พัฒนาตัวเอง", "mindset", "upskill", "DISC", "wheel of life", "การเงิน", "สรุปหนังสือ", "AI mentor"],
+  metadataBase: new URL("https://www.upskilleveryday.com"),
+  openGraph: {
+    siteName: "Upskill Everyday",
+    locale: "th_TH",
+    type: "website",
+    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({
