@@ -10,6 +10,8 @@
 ทัศนคติ (-100 ถึง 100) คือปัจจัยที่สำคัญที่สุด — ถ้าติดลบ ความเก่งจะยิ่งขยายผลเสีย
 คนส่วนใหญ่ไม่ได้แพ้โลก **แพ้ตัวเองตั้งแต่ยังไม่เริ่ม**
 
+> ⚠️ **สมการนี้ใช้เป็นหลักคิดเบื้องหลังได้ แต่ห้ามเขียนลงใน content โดยตรงบ่อยๆ** — ใช้ได้ไม่เกิน 1 ครั้งต่อเดือน และต้องมีบริบทรองรับ ไม่ใช่แค่โยนสมการทิ้งไว้
+
 ---
 
 ## 6 คำถามทบทวนชีวิต (ใช้ใน Reflective content)
@@ -88,4 +90,10 @@
 **Hook:** อ่านซ้ำคืนเดียวไม่เคยเวิร์ก — นี่คือเหตุผลจากวิทยาศาสตร์
 **Core idea:** Spaced Repetition (การทบทวนแบบเว้นช่วง) ให้ผลดีกว่า Massed Learning (ท่องยัดครั้งเดียว) อย่างมีนัยสำคัญ
 **Source used:** ScienceDirect, 2025 — Benefits of spaced learning are predicted by the re-encoding of past experience in ventromedial prefrontal cortex
+**Published:** social
+
+### 2026-05-18 — Mindset — Social
+**Hook:** พูดว่า "ฉันพัฒนาได้" กับการที่สมองเชื่อเรื่องนั้นจริงๆ — คือคนละเรื่องกันเลย
+**Core idea:** ความเชื่อใต้สำนึก (ไม่ใช่ที่พูดออกมา) ต่างหากที่กำหนดพฤติกรรมหลังล้มเหลว — แนวคิดเติบโตที่ "พูดได้" ไม่เท่ากับมี
+**Source used:** Sik, Cummins & Job — Scientific Reports (Nature), 2024 — implicit vs explicit growth mindset predicts post-failure behavior
 **Published:** social

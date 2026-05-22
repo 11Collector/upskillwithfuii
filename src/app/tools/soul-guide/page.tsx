@@ -8,7 +8,7 @@ import {
   AlertCircle, Lock, Battery, Plus
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
 import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -25,6 +25,8 @@ interface Message {
 
 export default function SoulGuidePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isQuestMode = searchParams.get('quest') === '1';
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -33,7 +35,8 @@ export default function SoulGuidePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([]);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
-  const [showResetConfirm, setShowResetConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันล้างแชท
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [questSaved, setQuestSaved] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const todayDateStr = new Date().toISOString().split('T')[0];
@@ -225,6 +228,7 @@ export default function SoulGuidePage() {
 
   const generateDynamicButtons = (data: any) => {
     const buttons = [];
+    if (isQuestMode) buttons.push("อยากปรับ Quest พรุ่งนี้ครับ 🎯");
     if (data.lastMood) buttons.push(`คุยเรื่องความรู้สึกตอนนี้`);
     if (data.lastWheel?.goal) buttons.push(`สรุปเป้าหมาย`);
     const discType = data.lastDisc?.finalResult || data.lastDisc?.result || "";
@@ -337,12 +341,28 @@ export default function SoulGuidePage() {
 
       const data = await response.json();
       if (data.success) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        // ตรวจหา [QUEST_PREFS:{...}] ใน AI response
+        const questPrefsMatch = data.reply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
+        let cleanReply = data.reply;
+        if (questPrefsMatch) {
+          try {
+            const prefs = JSON.parse(questPrefsMatch[1]);
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, {
+              questPreferences: { ...prefs, savedAt: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) },
+              lastQuestAnalysisDate: '', // force re-analysis ครั้งถัดไป
+            });
+            setQuestSaved(true);
+          } catch {}
+          cleanReply = data.reply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
+        }
+
+        setMessages(prev => [...prev, { role: "assistant", content: cleanReply }]);
 
         // 2. Save Assistant Reply
         await addDoc(chatHistoryRef, {
           role: "assistant",
-          content: data.reply,
+          content: cleanReply,
           createdAt: serverTimestamp()
         });
 
@@ -481,6 +501,20 @@ export default function SoulGuidePage() {
           <div ref={chatEndRef} className="h-4" />
         </div>
       </div>
+
+      {/* ✅ Quest Saved Banner */}
+      <AnimatePresence>
+        {questSaved && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="w-full px-6 py-2 bg-violet-500/10 border-t border-violet-500/20 flex items-center justify-center gap-2 z-40"
+          >
+            <span className="text-[11px] font-black text-violet-400 tracking-wide">✨ Quest พรุ่งนี้ถูกบันทึกแล้ว — จะอัปเดตในวันถัดไปครับ</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input Area (Pinned to bottom) */}
       <footer className="w-full bg-zinc-950/95 backdrop-blur-md border-t border-white/5 px-6 pt-4 pb-14 z-50">

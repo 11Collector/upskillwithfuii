@@ -2617,21 +2617,15 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* 🎲 Reroll Button */}
-              <button
-                onClick={handleOpenRerollConfirm}
-                disabled={isToggling}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 group/reroll ${isToggling
-                  ? 'opacity-40 bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-                  : 'bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-orange-500 hover:border-orange-200 hover:shadow-[0_8px_20px_-5px_rgba(249,115,22,0.15)] hover:scale-105 active:scale-95'
-                  }`}
-                title="สุ่มใหม่ (ใช้ 5 XP)"
+              {/* ✨ ปรับ Quest พรุ่งนี้ */}
+              <Link
+                href="/tools/soul-guide?quest=1"
+                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
+                title="คุยกับ AI Mentor เพื่อปรับ quest พรุ่งนี้"
               >
-                <RotateCcw size={13} className={`transition-transform duration-500 ${isToggling ? 'animate-spin' : 'group-hover/reroll:rotate-180'}`} />
-                <span className="text-[10px] font-black uppercase tracking-tight">
-                  {isToggling ? "..." : "Reroll"}
-                </span>
-              </button>
+                <Sparkles size={13} />
+                <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
+              </Link>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md mb-6">
