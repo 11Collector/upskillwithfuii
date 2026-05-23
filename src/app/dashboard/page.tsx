@@ -2320,9 +2320,9 @@ export default function DashboardPage() {
                       <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full">
                         {/* Streak Badge */}
                         <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                          <Flame size={12} className="text-orange-500 fill-current shrink-0" />
+                          <Flame size={12} className={`fill-current shrink-0 ${streakCount === 0 ? 'text-white/30' : 'text-orange-500'}`} />
                           <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
-                            {streakCount} Days
+                            {streakCount === 0 ? 'เริ่ม Streak วันนี้!' : `${streakCount} Days`}
                           </span>
                         </div>
 
