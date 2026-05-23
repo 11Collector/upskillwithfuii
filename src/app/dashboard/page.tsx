@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -189,13 +189,256 @@ export default function DashboardPage() {
     type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
   });
 
-  // --- ภายใน DashboardPage Component ---
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
   const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
   const [wheelPlanSkips, setWheelPlanSkips] = useState<number>(0);
   const [perfectWeeks, setPerfectWeeks] = useState<number>(0);
   const [lastSkipDate, setLastSkipDate] = useState<string>("");
+
+  const loadDashboardData = useCallback(async (currentUser: User) => {
+    try {
+      const data = await fetchDashboardData(currentUser.uid, currentUser.email);
+
+      setChatQuota(data.chatQuota);
+      setRelativeWeekInfo(data.currentWeekInfo);
+
+      if (data.wheelData) setLastWheel(data.wheelData);
+      if (data.discData) setLastDisc(data.discData);
+      if (data.moneyData) setLastMoney(data.moneyData);
+      if (data.librarySoulData) setLastLibrarySoul(data.librarySoulData);
+      if (data.quoteData) setLastQuote(data.quoteData);
+      setHasSoulGuide(data.hasSoulGuide);
+
+      let thisWeekTotal = 0;
+      let prevWeekTotal = 0;
+
+      if (data.thisWeekData) {
+        setWeeklyData({
+          wheel: Math.min(7, data.thisWeekData.wheel || 0),
+          disc: Math.min(7, data.thisWeekData.disc || 0),
+          money: Math.min(7, data.thisWeekData.money || 0),
+          library: Math.min(7, data.thisWeekData.library || 0),
+          wildcard: Math.min(7, data.thisWeekData.wildcard || 0),
+          challenge: Math.min(7, data.thisWeekData.challenge || 0),
+          momentum_count: data.thisWeekData.momentum_count || 0
+        });
+        thisWeekTotal = Math.min(42, (data.thisWeekData.wheel || 0) + (data.thisWeekData.disc || 0) + (data.thisWeekData.money || 0) + (data.thisWeekData.library || 0) + (data.thisWeekData.wildcard || 0) + (data.thisWeekData.challenge || 0));
+      } else {
+        setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
+      }
+
+      if (data.prevWeekData) {
+        prevWeekTotal = (data.prevWeekData.wheel || 0) + (data.prevWeekData.disc || 0) + (data.prevWeekData.money || 0) + (data.prevWeekData.library || 0) + (data.prevWeekData.wildcard || 0) + (data.prevWeekData.challenge || 0);
+      }
+
+      const currentWeekInfo = data.currentWeekInfo;
+      const userData = data.userData;
+
+      if (currentWeekInfo.id === "week-1") {
+        setIsFirstWeek(true);
+        setImprovement(0);
+      } else {
+        setIsFirstWeek(false);
+        if (prevWeekTotal > 0) {
+          const diff = ((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100;
+          setImprovement(Math.round(diff));
+        } else {
+          setImprovement(thisWeekTotal > 0 ? 100 : 0);
+        }
+      }
+      if (userData) {
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+        setGender(userData.gender || "male");
+
+        let currentStreak = userData.streakCount || 0;
+
+        if (userData.lastQuestDate) {
+          const lastDate = new Date(userData.lastQuestDate);
+          const todayDate = new Date(todayStr);
+          const diffDays = Math.round((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          if (diffDays > 1 && currentStreak > 0) {
+            currentStreak = 0;
+            setDoc(doc(db, "users", currentUser.uid), { streakCount: 0 }, { merge: true });
+          }
+        }
+
+        setStreakCount(currentStreak);
+        setWheelPlanDay(userData.wheelPlanDay || 0);
+        setWheelPlanSkips(userData.wheelPlanSkips || 0);
+        setLastSkipDate(userData.lastSkipDate || "");
+        setLastChatDate(userData.lastChatDate || "");
+        setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
+        setPerfectWeeks(userData.perfectWeeks || 0);
+        setIsRandomMode(userData.isRandomMode || false);
+        setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]);
+        setLastRerollDate(userData.lastRerollDate || "");
+        setWheelCompletions(userData.wheelCompletions || 0);
+
+        let xpToClaim = 0;
+        let xpUpdates: any = {};
+
+        if (data.wheelData && !userData.hasWheelXP) {
+          xpToClaim += 50;
+          xpUpdates.hasWheelXP = true;
+        }
+        if (data.discData && !userData.hasDiscXP) {
+          xpToClaim += 50;
+          xpUpdates.hasDiscXP = true;
+        }
+        if (data.moneyData && !userData.hasMoneyXP) {
+          xpToClaim += 50;
+          xpUpdates.hasMoneyXP = true;
+        }
+        if (data.librarySoulData && !userData.hasLibrarySoulXP) {
+          xpToClaim += 50;
+          xpUpdates.hasLibrarySoulXP = true;
+        }
+
+        if (xpToClaim > 0) {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          await setDoc(userDocRef, {
+            ...xpUpdates,
+            totalXP: increment(xpToClaim)
+          }, { merge: true });
+
+          const oldXP = userData.totalXP || 0;
+          const newXP = oldXP + xpToClaim;
+          setTotalXP(newXP);
+          const oldLevel = Math.floor(oldXP / 100) + 1;
+          const newLevel = Math.floor(newXP / 100) + 1;
+          if (newLevel > oldLevel) {
+            setShowLevelUp({ isOpen: true, newLevel });
+            setTimeout(() => setShowLevelUp(null), 4000);
+          }
+          console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
+        } else {
+          setTotalXP(userData.totalXP || 0);
+        }
+
+        const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
+
+        if (activeDateToCheck === todayStr) {
+          setCompletedQuests(userData.completedQuestIds || []);
+          setCustomQuestTitle(userData.customQuestTitle || "");
+        } else {
+          setCompletedQuests([]);
+          setCustomQuestTitle("");
+          setAiGeneratedQuestTitle("");
+          
+          const userRef = doc(db, "users", currentUser.uid);
+          updateDoc(userRef, { 
+            customQuestTitle: "",
+            aiGeneratedQuestTitle: "",
+            lastQuestAnalysisDate: ""
+          }).catch(e => console.error(e));
+
+          let currentPlanDay = userData.wheelPlanDay || 0;
+          let nextPlanDay = currentPlanDay;
+
+          if (currentPlanDay >= 7) {
+            nextPlanDay = 1;
+
+            if (currentPlanDay === 7) {
+              const completions = userData.wheelCompletions || 0;
+              let bonusXP = 0;
+              let milestoneName = "";
+              let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
+
+              if (completions >= 7) {
+                bonusXP = 100;
+                milestoneName = "PERFECT RUN!";
+                modalType = "PERFECT";
+              } else if (completions >= 5) {
+                bonusXP = 50;
+                milestoneName = "GREAT RUN!";
+                modalType = "GREAT";
+              } else {
+                bonusXP = 20;
+                milestoneName = "GOOD RUN!";
+                modalType = "GOOD";
+              }
+
+              setRewardModalData({
+                title: milestoneName,
+                bonusXP: bonusXP,
+                message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
+                type: modalType
+              });
+
+              let xpToAdd = bonusXP;
+              let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
+
+              updateDoc(userRef, {
+                wheelPlanDay: nextPlanDay,
+                lastActiveDate: todayStr,
+                completedQuestIds: [],
+                customQuestTitle: "",
+                wheelCompletions: 0,
+                totalXP: increment(xpToAdd),
+                perfectWeeks: increment(perfectWeekInc)
+              }).catch(e => console.error("Auto-progression error:", e));
+
+              const currentXP = (userData.totalXP || 0) + xpToClaim;
+              const newXP = currentXP + xpToAdd;
+              const oldLevel = Math.floor(currentXP / 100) + 1;
+              const newLevel = Math.floor(newXP / 100) + 1;
+
+              if (newLevel > oldLevel) {
+                setShowLevelUp({ isOpen: true, newLevel });
+                setTimeout(() => setShowLevelUp(null), 4000);
+              }
+
+              setTotalXP(newXP);
+              setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
+              setShowPerfectWeekModal(true);
+
+            } else {
+              updateDoc(userRef, {
+                wheelPlanDay: nextPlanDay,
+                lastActiveDate: todayStr,
+                completedQuestIds: [],
+                customQuestTitle: "",
+                wheelCompletions: 0
+              }).catch(e => console.error("Auto-reset error:", e));
+            }
+
+            setWheelCompletions(0);
+
+          } else {
+            nextPlanDay = currentPlanDay + 1;
+            updateDoc(userRef, {
+              wheelPlanDay: nextPlanDay,
+              lastActiveDate: todayStr,
+              completedQuestIds: [],
+              customQuestTitle: ""
+            }).catch(e => console.error("Day progression error:", e));
+          }
+
+          setWheelPlanDay(nextPlanDay);
+        }
+
+        if (userData.lastQuoteDate === todayStr) {
+          setHasClaimedQuoteToday(true);
+        } else {
+          setHasClaimedQuoteToday(false);
+          const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
+          if (!hasShownThisSession && (userData.totalXP || 0) > 0) {
+            setShowWelcomeQuotePopup(true);
+            sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error("Error fetching Dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
   const [lastChatDate, setLastChatDate] = useState("");
   const [aiGeneratedQuestTitle, setAiGeneratedQuestTitle] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
@@ -228,7 +471,6 @@ export default function DashboardPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showLineModal, setShowLineModal] = useState(false);
 
-  // เพิ่มฟังก์ชันสำหรับเปลี่ยนเพศและ Save ลง Firebase
   const handleGenderChange = async (newGender: "male" | "female") => {
     if (!user) return;
     setGender(newGender);
@@ -240,28 +482,20 @@ export default function DashboardPage() {
     }
   };
 
-  // 🕒 2. Effect สำหรับเช็กเที่ยงคืนแบบสดๆ
   useEffect(() => {
-    // เซ็ตวันที่ครั้งแรก
     setTodayDateStr(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }));
 
     const interval = setInterval(() => {
       const nowStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       setTodayDateStr((prev) => {
         if (prev && prev !== nowStr) {
-          // ขึ้นวันใหม่แล้ว! รีเซ็ต Progress สดๆ เลย
           setCompletedQuests([]);
           setHasClaimedQuoteToday(false);
           setCustomQuestTitle("");
+          setAiGeneratedQuestTitle("");
           
-          // 🧹 ล้างค่าใน Firestore ทันที (กรณีเปิดแอปทิ้งไว้ข้ามคืน)
           if (user) {
-            const userRef = doc(db, "users", user.uid);
-            updateDoc(userRef, { 
-              customQuestTitle: "",
-              completedQuestIds: [],
-              lastActiveDate: nowStr 
-            }).catch(e => console.error("Midnight reset error:", e));
+            loadDashboardData(user);
           }
           return nowStr;
         }
@@ -270,12 +504,10 @@ export default function DashboardPage() {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user, loadDashboardData]);
 
-  // 🛡️ [Modal Queueing]: ป้องกัน Modal เด้งซ้อนกัน (Level Up มาก่อน Daily Success เสมอ)
   useEffect(() => {
     if (!showLevelUp && pendingDailySuccess) {
-      // ให้เวลา Level Up หายไปจากจอแป๊บนึงค่อยโชว์ตัวถัดไป
       const timer = setTimeout(() => {
         setShowDailySuccess(true);
         setPendingDailySuccess(false);
@@ -284,7 +516,6 @@ export default function DashboardPage() {
     }
   }, [showLevelUp, pendingDailySuccess]);
 
-  // 🛡️ ซ่อน Bottom Nav เมื่อเปิด Modal ฉลอง
   useEffect(() => {
     if (showPerfectWeekModal) {
       document.body.classList.add('hide-bottom-nav');
@@ -298,272 +529,13 @@ export default function DashboardPage() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        setNewName(currentUser.displayName || ""); // 👈 เพิ่มบรรทัดนี้ครับ!
+        setNewName(currentUser.displayName || "");
         
-        // ✅ อัปเดต Last Login ใน DB ทุกครั้งที่เปิดหน้า Dashboard (เพื่อให้ Admin เห็น Active Users)
         updateDoc(doc(db, "users", currentUser.uid), {
           lastLoginAt: serverTimestamp()
         }).catch(e => console.error("Failed to update lastLoginAt:", e));
 
-        try {
-          const data = await fetchDashboardData(currentUser.uid, currentUser.email);
-
-          setChatQuota(data.chatQuota);
-          setRelativeWeekInfo(data.currentWeekInfo);
-
-          if (data.wheelData) setLastWheel(data.wheelData);
-          if (data.discData) setLastDisc(data.discData);
-          if (data.moneyData) setLastMoney(data.moneyData);
-          if (data.librarySoulData) setLastLibrarySoul(data.librarySoulData);
-          if (data.quoteData) setLastQuote(data.quoteData);
-          setHasSoulGuide(data.hasSoulGuide);
-
-          let thisWeekTotal = 0;
-          let prevWeekTotal = 0;
-
-          if (data.thisWeekData) {
-            setWeeklyData({
-              wheel: Math.min(7, data.thisWeekData.wheel || 0),
-              disc: Math.min(7, data.thisWeekData.disc || 0),
-              money: Math.min(7, data.thisWeekData.money || 0),
-              library: Math.min(7, data.thisWeekData.library || 0),
-              wildcard: Math.min(7, data.thisWeekData.wildcard || 0),
-              challenge: Math.min(7, data.thisWeekData.challenge || 0),
-              momentum_count: data.thisWeekData.momentum_count || 0
-            });
-            thisWeekTotal = Math.min(42, (data.thisWeekData.wheel || 0) + (data.thisWeekData.disc || 0) + (data.thisWeekData.money || 0) + (data.thisWeekData.library || 0) + (data.thisWeekData.wildcard || 0) + (data.thisWeekData.challenge || 0));
-          } else {
-            setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
-          }
-
-          if (data.prevWeekData) {
-            prevWeekTotal = (data.prevWeekData.wheel || 0) + (data.prevWeekData.disc || 0) + (data.prevWeekData.money || 0) + (data.prevWeekData.library || 0) + (data.prevWeekData.wildcard || 0) + (data.prevWeekData.challenge || 0);
-          }
-
-          const currentWeekInfo = data.currentWeekInfo;
-          const userData = data.userData;
-
-          // 🌟 [FIX LOGIC] เช็ก FIRST WEEK จากเลขสัปดาห์โดยตรง ชัวร์ที่สุด!
-          if (currentWeekInfo.id === "week-1") {
-            setIsFirstWeek(true);
-            setImprovement(0);
-          } else {
-            setIsFirstWeek(false);
-            if (prevWeekTotal > 0) {
-              // มีคะแนนสัปดาห์ก่อนหน้า ก็เทียบ % ปกติ
-              const diff = ((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100;
-              setImprovement(Math.round(diff));
-            } else {
-              // ถ้าสัปดาห์ก่อนเป็น 0 แต่สัปดาห์นี้เริ่มทำแล้ว ให้ถือว่าพัฒนาขึ้น 100%
-              setImprovement(thisWeekTotal > 0 ? 100 : 0);
-            }
-          }
-          // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
-          if (userData) {
-            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-
-            setGender(userData.gender || "male");
-
-            // 🛠️ [FIX BUG 3]: ดึง Streak มา แล้วเช็กก่อนว่าขาดไปหรือยังตั้งแต่วินาทีแรกที่โหลด!
-            let currentStreak = userData.streakCount || 0;
-
-            if (userData.lastQuestDate) {
-              const lastDate = new Date(userData.lastQuestDate);
-              const todayDate = new Date(todayStr);
-              const diffDays = Math.round((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-
-              // ถ้าทิ้งช่วงเกิน 1 วัน แปลว่า Streak พังไปแล้ว
-              if (diffDays > 1 && currentStreak > 0) {
-                currentStreak = 0;
-                // อัปเดตลง DB ไปเลยเงียบๆ เพื่อคลีนข้อมูล
-                setDoc(doc(db, "users", currentUser.uid), { streakCount: 0 }, { merge: true });
-              }
-            }
-
-            setStreakCount(currentStreak);
-            setWheelPlanDay(userData.wheelPlanDay || 0);
-            setWheelPlanSkips(userData.wheelPlanSkips || 0);
-            setLastSkipDate(userData.lastSkipDate || "");
-            setLastChatDate(userData.lastChatDate || "");
-            setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
-            setPerfectWeeks(userData.perfectWeeks || 0);
-            setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
-            setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
-            setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
-            setWheelCompletions(userData.wheelCompletions || 0); // 👈 สำคัญ! โหลดจำนวนวันที่ทำสำเร็จ
-
-            let xpToClaim = 0;
-            // ... (โค้ดดึงตัวแปร xpToClaim และอื่นๆ ด้านล่างปล่อยไว้เหมือนเดิมครับ)
-            let xpUpdates: any = {};
-
-            // เช็ก XP ที่ยังไม่เคยกดรับ
-            if (data.wheelData && !userData.hasWheelXP) {
-              xpToClaim += 50;
-              xpUpdates.hasWheelXP = true;
-            }
-            if (data.discData && !userData.hasDiscXP) {
-              xpToClaim += 50;
-              xpUpdates.hasDiscXP = true;
-            }
-            if (data.moneyData && !userData.hasMoneyXP) {
-              xpToClaim += 50;
-              xpUpdates.hasMoneyXP = true;
-            }
-            if (data.librarySoulData && !userData.hasLibrarySoulXP) {
-              xpToClaim += 50;
-              xpUpdates.hasLibrarySoulXP = true;
-            }
-
-            // ถ้ามี XP ที่ยังไม่ได้กดรับ ให้บวกเข้า DB ทันที
-            if (xpToClaim > 0) {
-              const userDocRef = doc(db, "users", currentUser.uid);
-              await setDoc(userDocRef, {
-                ...xpUpdates,
-                totalXP: increment(xpToClaim)
-              }, { merge: true });
-
-              const oldXP = userData.totalXP || 0;
-              const newXP = oldXP + xpToClaim;
-              setTotalXP(newXP);
-              const oldLevel = Math.floor(oldXP / 100) + 1;
-              const newLevel = Math.floor(newXP / 100) + 1;
-              if (newLevel > oldLevel) {
-                setShowLevelUp({ isOpen: true, newLevel });
-                setTimeout(() => setShowLevelUp(null), 4000);
-              }
-              console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
-            } else {
-              setTotalXP(userData.totalXP || 0);
-            }
-
-            // --- 3. จัดการ Daily Quest และชื่อเควส (เช็กวันใหม่) ---
-            // 🌟 THE FIX: ใช้ตัวแปรใหม่ lastActiveDate เป็นหลัก ถ้าไม่มีค่อยใช้ของเก่า
-            const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
-
-            if (activeDateToCheck === todayStr) {
-              setCompletedQuests(userData.completedQuestIds || []);
-              setCustomQuestTitle(userData.customQuestTitle || "");
-            } else {
-              // 🆕 [AUTOMATED PROGRESSION] วันเปลี่ยนไปแล้ว! ขยับแผนอัตโนมัติ
-              setCompletedQuests([]);
-              setCustomQuestTitle("");
-              setAiGeneratedQuestTitle("");
-              
-              // 🧹 [CRITICAL FIX] ล้างค่าใน Database ด้วย เพื่อไม่ให้ดึงค่าวันเก่ามาแสดง และล้างเควส AI เพื่อเริ่มวันใหม่
-              if (currentUser) {
-                const userRef = doc(db, "users", currentUser.uid);
-                updateDoc(userRef, { 
-                  customQuestTitle: "",
-                  aiGeneratedQuestTitle: "",
-                  lastQuestAnalysisDate: ""
-                }).catch(e => console.error(e));
-              }
-
-              let currentPlanDay = userData.wheelPlanDay || 0;
-              let nextPlanDay = currentPlanDay;
-
-              // 🎯 [NEW LOGIC] การเปลี่ยนวันเมื่อครบ 7 วัน
-              if (currentPlanDay >= 7) {
-                // ให้วนลูปกลับไปเป็น Day 1 อัตโนมัติ
-                nextPlanDay = 1;
-
-                // 1. ถ้าค้างอยู่ที่ Day 7 แสดงว่าเมื่อวานไม่ได้กด Check box วันสุดท้าย ให้ทำการสรุปผลและแจก XP ย้อนหลังให้
-                if (currentPlanDay === 7) {
-                  const completions = userData.wheelCompletions || 0;
-                  let bonusXP = 0;
-                  let milestoneName = "";
-                  let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
-
-                  if (completions >= 7) {
-                    bonusXP = 100;
-                    milestoneName = "PERFECT RUN!";
-                    modalType = "PERFECT";
-                  } else if (completions >= 5) {
-                    bonusXP = 50;
-                    milestoneName = "GREAT RUN!";
-                    modalType = "GREAT";
-                  } else {
-                    bonusXP = 20;
-                    milestoneName = "GOOD RUN!";
-                    modalType = "GOOD";
-                  }
-
-                  setRewardModalData({
-                    title: milestoneName,
-                    bonusXP: bonusXP,
-                    message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
-                    type: modalType
-                  });
-
-                  let xpToAdd = bonusXP;
-                  let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
-
-                  const userRef = doc(db, "users", currentUser.uid);
-                  // 🚀 ทำการอัปเดตแบบ Non-blocking เพื่อให้หน้า Dashboard โหลดเร็วขึ้น
-                  updateDoc(userRef, {
-                    wheelPlanDay: nextPlanDay,
-                    lastActiveDate: todayStr,
-                    completedQuestIds: [],
-                    customQuestTitle: "",
-                    wheelCompletions: 0,
-                    totalXP: increment(xpToAdd),
-                    perfectWeeks: increment(perfectWeekInc)
-                  }).catch(e => console.error("Auto-progression error:", e));
-
-                  setTotalXP((userData.totalXP || 0) + xpToAdd);
-                  setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
-                  setShowPerfectWeekModal(true);
-
-                } else {
-                  // 2. ถ้าเป็น Day 8 อยู่แล้ว แสดงว่าเมื่อวานกด Check box และรับรางวัลไปแล้ว วันนี้ก็แค่รีเซ็ตเป็น Day 1 เงียบๆ
-                  const userRef = doc(db, "users", currentUser.uid);
-                  updateDoc(userRef, {
-                    wheelPlanDay: nextPlanDay,
-                    lastActiveDate: todayStr,
-                    completedQuestIds: [],
-                    customQuestTitle: "",
-                    wheelCompletions: 0
-                  }).catch(e => console.error("Auto-reset error:", e));
-                }
-
-                setWheelCompletions(0);
-
-              } else {
-                // ถ้ายังไม่ครบ 7 วัน ให้ขยับวันขึ้น (0->1, 1->2, ..., 6->7)
-                nextPlanDay = currentPlanDay + 1;
-                const userRef = doc(db, "users", currentUser.uid);
-                updateDoc(userRef, {
-                  wheelPlanDay: nextPlanDay,
-                  lastActiveDate: todayStr,
-                  completedQuestIds: [],
-                  customQuestTitle: ""
-                }).catch(e => console.error("Day progression error:", e));
-              }
-
-              setWheelPlanDay(nextPlanDay);
-            }
-
-            // --- 4. จัดการสถานะคำคม ---
-            if (userData.lastQuoteDate === todayStr) {
-              setHasClaimedQuoteToday(true);
-            } else {
-              setHasClaimedQuoteToday(false);
-              // ✨ [NEW] เด้ง Popup ชวนเจนคำคมถ้ายังไม่ได้ทำ (เด้งแค่ครั้งเดียวต่อการเข้า Dashboard ในเซสชันนั้น)
-              const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
-              if (!hasShownThisSession && (userData.totalXP || 0) > 0) {
-                setShowWelcomeQuotePopup(true);
-                sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
-              }
-            }
-          }
-
-        } catch (error) {
-          console.error("Error fetching Dashboard data:", error);
-        } finally {
-          // ✅ ปิด Loading ให้เร็วที่สุดเพื่อให้ผู้ใช้เห็นหน้าจอทันที
-          setLoading(false);
-        }
-
+        await loadDashboardData(currentUser);
       } else {
         router.push("/");
         setLoading(false);
@@ -571,7 +543,7 @@ export default function DashboardPage() {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, loadDashboardData]);
 
   // 🛡️ [UI Control]: ซ่อน Header และ Bottom Navigation และ Lock Scroll เมื่อมี Modal สำคัญเด้งขึ้นมา
   useEffect(() => {
@@ -1361,6 +1333,15 @@ export default function DashboardPage() {
 
     await updateDoc(userRef, finalUpdates);
     setWheelPlanDay(8);
+
+    const oldLevel = Math.floor(totalXP / 100) + 1;
+    const newLevel = Math.floor((totalXP + bonusXP) / 100) + 1;
+
+    if (newLevel > oldLevel) {
+      setShowLevelUp({ isOpen: true, newLevel });
+      setTimeout(() => setShowLevelUp(null), 4000);
+    }
+
     setTotalXP(prev => prev + bonusXP);
     setShowPerfectWeekModal(true);
   };
@@ -2919,10 +2900,10 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0 relative z-10">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>Personalized Mission</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>{customQuestTitle ? 'My Quest' : '✏️ สร้าง Quest เอง'}</span>
                       </div>
                       <p className={`text-[13px] sm:text-[15px] font-bold leading-snug ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>
-                        {customQuestTitle || "ออกแบบภารกิจเฉพาะคุณ"}
+                        {customQuestTitle || "+ กดเพื่อเพิ่ม Quest ของวันนี้"}
                       </p>
                     </div>
                     <div className="shrink-0 text-right relative z-10">
@@ -3885,7 +3866,7 @@ export default function DashboardPage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
                   <BrainCircuit size={32} />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 leading-tight mb-2">ออกแบบภารกิจเฉพาะคุณ</h3>
+                <h3 className="text-xl font-black text-slate-800 leading-tight mb-2">วันนี้อยากทำอะไร?</h3>
 
                 {/* ✨ ส่วนของ Guided Prompt ที่เปลี่ยนทุกวัน */}
                 <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 mt-4">
