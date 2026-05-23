@@ -447,11 +447,16 @@ export default function DashboardPage() {
               // 🆕 [AUTOMATED PROGRESSION] วันเปลี่ยนไปแล้ว! ขยับแผนอัตโนมัติ
               setCompletedQuests([]);
               setCustomQuestTitle("");
+              setAiGeneratedQuestTitle("");
               
-              // 🧹 [CRITICAL FIX] ล้างค่าใน Database ด้วย เพื่อไม่ให้ดึงค่าวันเก่ามาแสดง
+              // 🧹 [CRITICAL FIX] ล้างค่าใน Database ด้วย เพื่อไม่ให้ดึงค่าวันเก่ามาแสดง และล้างเควส AI เพื่อเริ่มวันใหม่
               if (currentUser) {
                 const userRef = doc(db, "users", currentUser.uid);
-                updateDoc(userRef, { customQuestTitle: "" }).catch(e => console.error(e));
+                updateDoc(userRef, { 
+                  customQuestTitle: "",
+                  aiGeneratedQuestTitle: "",
+                  lastQuestAnalysisDate: ""
+                }).catch(e => console.error(e));
               }
 
               let currentPlanDay = userData.wheelPlanDay || 0;
@@ -1054,6 +1059,12 @@ export default function DashboardPage() {
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
       const data = snap.data();
+      
+      // ข้ามถ้าวันนี้ทำเควส Challenge (ID 6) สำเร็จไปแล้ว เพื่อไม่ให้เควสโดนเปลี่ยนทับกลางคัน
+      const completedIds: (string | number)[] = data?.completedQuestIds || [];
+      const isChallengeDoneToday = completedIds.some(id => String(id) === '6');
+      if (isChallengeDoneToday) return;
+
       const lastAnalysisDate = data?.lastQuestAnalysisDate || '';
       const lastChat = data?.lastChatDate || '';
 
