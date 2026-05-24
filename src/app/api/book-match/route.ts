@@ -71,7 +71,7 @@ ${soulDescription ? `\nรายละเอียด Soul: ${soulDescription}` 
 
 ${distributionNote}
 - เป็นหนังสือจริงที่มีอยู่ (ชื่อและผู้แต่งต้องถูกต้อง 100%)
-- Nonfiction หรือ Fiction ก็ได้ — เลือกแบบที่ match จริงๆ ไม่ใช่แค่หนังสือดังทั่วไป
+- Nonfiction หรือ Fiction ก็ได้ — เลือกหนังสือที่มีคนอ่านและรีวิวพอสมควร (proven quality) แต่ไม่ใช่ bestseller ที่ทุกคนรู้จักอยู่แล้ว เช่น หลีกเลี่ยง Atomic Habits, 7 Habits, Think and Grow Rich, Rich Dad Poor Dad เว้นแต่ไม่มีตัวเลือกอื่นที่ดีกว่าจริงๆ
 - ถ้าเป้าหมายชีวิตมี keyword ชัดเจน (เช่น "one person business", "เปลี่ยนงาน", "ลงทุน") ให้มีอย่างน้อย 1 เล่มที่ตรงกับ keyword นั้นโดยตรง — priority สูงกว่า personality match
 - เหตุผลต้องระบุว่า match กับมิติไหนของผู้ใช้ (1-2 ประโยค ภาษาไทย)
 - ห้ามซ้ำหมวดเกิน 2 เล่มต่อหมวด
