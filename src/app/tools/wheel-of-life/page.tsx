@@ -860,13 +860,6 @@ const analyzeWithAI = async () => {
               </div>
             </div>
    
-            <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '20px' }}>
-              <a href="https://linktr.ee/upskillwithfuii" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                <button style={{ backgroundColor: '#fff', border: '1px solid #ddd', color: '#666', padding: '8px 18px', borderRadius: '25px', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                  📲 ติดตามอัพสกิลกับฟุ้ย
-                </button>
-              </a>
-            </div>
 
           </div>
         )}
