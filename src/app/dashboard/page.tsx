@@ -923,7 +923,13 @@ export default function DashboardPage() {
       });
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
-      if (data.books?.length) setBookMatchBooks(data.books);
+      if (data.books?.length) {
+        setBookMatchBooks(data.books);
+        // บันทึกลง Firestore พร้อม soul type — invalidate อัตโนมัติถ้า type เปลี่ยน
+        updateDoc(doc(db, 'users', user.uid), {
+          bookMatchCache: { books: data.books, soulType: lastLibrarySoul.type },
+        }).catch(() => {});
+      }
     } catch {
       // fail silently
     } finally {
@@ -936,7 +942,18 @@ export default function DashboardPage() {
     if (!user || !lastLibrarySoul) return;
     setBookMatchModal(true);
     loadSavedBooks();
-    if (bookMatchBooks.length > 0) return; // ใช้ cache ถ้ามีแล้ว
+    if (bookMatchBooks.length > 0) return; // session cache
+
+    // โหลด Firestore cache ก่อน — ถ้า soul type ตรงกัน ใช้เลยไม่ fetch ใหม่
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      const cache = snap.data()?.bookMatchCache;
+      if (cache?.soulType === lastLibrarySoul.type && cache?.books?.length) {
+        setBookMatchBooks(cache.books);
+        return;
+      }
+    } catch {}
+
     fetchBooks();
   };
 
