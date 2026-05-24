@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -151,6 +151,10 @@ export default function DashboardPage() {
   const [showFloatingXP, setShowFloatingXP] = useState(false);
 
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean, title: string, content: string | React.ReactNode } | null>(null);
+  const [bookMatchModal, setBookMatchModal] = useState(false);
+  const [bookMatchBooks, setBookMatchBooks] = useState<{ title: string; author: string; reason: string; category: string }[]>([]);
+  const [bookMatchLoading, setBookMatchLoading] = useState(false);
+  const [savedBooks, setSavedBooks] = useState<Set<string>>(new Set());
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDailySuccess, setShowDailySuccess] = useState(false);
@@ -865,6 +869,75 @@ export default function DashboardPage() {
       </div>
     );
     setInfoModal({ isOpen: true, title: "DISC STYLE", content });
+  };
+
+  const handleSaveBook = async (book: { title: string; author: string; reason: string; category: string }) => {
+    if (!user) return;
+    const key = book.title;
+    const isSaved = savedBooks.has(key);
+    // Optimistic update
+    setSavedBooks(prev => {
+      const next = new Set(prev);
+      isSaved ? next.delete(key) : next.add(key);
+      return next;
+    });
+    const playlistRef = collection(db, 'users', user.uid, 'book_playlist');
+    if (isSaved) {
+      // ลบออก — หา doc ที่ title ตรงแล้วลบ
+      const { getDocs, query, where, deleteDoc } = await import('firebase/firestore');
+      const q = query(playlistRef, where('title', '==', book.title));
+      const snap = await getDocs(q);
+      snap.forEach(d => deleteDoc(d.ref));
+    } else {
+      const { addDoc } = await import('firebase/firestore');
+      await addDoc(playlistRef, { ...book, savedAt: new Date().toISOString() });
+    }
+  };
+
+  // โหลด saved books เมื่อ modal เปิด
+  const loadSavedBooks = async () => {
+    if (!user) return;
+    const { getDocs } = await import('firebase/firestore');
+    const snap = await getDocs(collection(db, 'users', user.uid, 'book_playlist'));
+    setSavedBooks(new Set(snap.docs.map(d => d.data().title as string)));
+  };
+
+  const fetchBooks = async () => {
+    if (!user || !lastLibrarySoul) return;
+    setBookMatchLoading(true);
+    setBookMatchBooks([]);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/book-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({
+          soulType: lastLibrarySoul.type,
+          soulTitle: LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || null,
+          soulDescription: LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.description || null,
+          soulVibe: LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.vibe || null,
+          discType: lastDisc?.finalResult?.charAt(0) || lastDisc?.result?.charAt(0) || null,
+          moneyType: lastMoney?.resultKey || null,
+          wheelGoal: (lastWheel as any)?.goal || null,
+        }),
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      if (data.books?.length) setBookMatchBooks(data.books);
+    } catch {
+      // fail silently
+    } finally {
+      setBookMatchLoading(false);
+    }
+  };
+
+  const handleBookMatch = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!user || !lastLibrarySoul) return;
+    setBookMatchModal(true);
+    loadSavedBooks();
+    if (bookMatchBooks.length > 0) return; // ใช้ cache ถ้ามีแล้ว
+    fetchBooks();
   };
 
   const openLibrarySoulInfo = (e: React.MouseEvent) => {
@@ -2322,7 +2395,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
                           <Flame size={12} className={`fill-current shrink-0 ${streakCount === 0 ? 'text-white/30' : 'text-orange-500'}`} />
                           <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
-                            {streakCount === 0 ? 'เริ่ม Streak วันนี้!' : `${streakCount} Days`}
+                            {streakCount === 0 ? 'เริ่ม Streak วันนี้' : `${streakCount} Days`}
                           </span>
                         </div>
 
@@ -3499,10 +3572,17 @@ export default function DashboardPage() {
                             </p>
                           </div>
 
-                          <div className="w-full px-4 mt-auto">
+                          <div className="w-full px-4 mt-auto flex flex-col gap-2">
+                            <button
+                              onClick={handleBookMatch}
+                              className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-95"
+                            >
+                              <BookOpen size={16} className="text-white/80" />
+                              <span>หนังสือแนะนำ</span>
+                            </button>
                             <div className="group/btn-start relative">
-                              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-emerald-300 active:scale-95">
-                                <RefreshCw size={16} className="text-white/80" />
+                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-slate-200 text-slate-400 text-[12px] font-black uppercase tracking-widest transition-all duration-300 hover:border-slate-300 hover:text-slate-600 active:scale-95">
+                                <RefreshCw size={14} />
                                 <span>ประเมินใหม่</span>
                               </div>
                             </div>
@@ -3787,6 +3867,144 @@ export default function DashboardPage() {
                 >
                   เข้าใจแล้ว
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* 📚 Book Match Modal */}
+        {bookMatchModal && (
+          <motion.div
+            key="book-match-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
+            onClick={() => setBookMatchModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.92, y: 20, opacity: 0 }}
+              transition={{ type: "spring", damping: 20, stiffness: 260 }}
+              className="relative w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden rounded-[2.5rem]"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Holo border glow */}
+              <div className="absolute inset-0 rounded-[2.5rem] p-[1.5px] z-0"
+                style={{ background: "linear-gradient(135deg, #a78bfa, #67e8f9, #34d399, #fbbf24, #f472b6, #a78bfa)" }}>
+                <div className="w-full h-full rounded-[2.4rem] bg-white" />
+              </div>
+
+              {/* Holo shimmer overlay */}
+              <div className="absolute inset-0 rounded-[2.5rem] z-0 pointer-events-none overflow-hidden">
+                <motion.div
+                  animate={{ x: ["−100%", "200%"] }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                  className="absolute inset-y-0 w-1/3 opacity-10"
+                  style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)", transform: "skewX(-20deg)" }}
+                />
+              </div>
+
+              {/* Modal content */}
+              <div className="relative z-10 flex flex-col max-h-[85vh] overflow-hidden rounded-[2.5rem] bg-white/95 backdrop-blur-sm">
+
+                {/* Header — holo gradient */}
+                <div className="relative rounded-t-[2.5rem] px-6 pt-5 pb-7"
+                  style={{ background: "linear-gradient(135deg, #f0fdf4, #ecfdf5, #f5f3ff)" }}>
+                  <div className="absolute inset-0 opacity-30"
+                    style={{ background: "linear-gradient(135deg, #a7f3d0, #c4b5fd, #67e8f9, #a7f3d0)", backgroundSize: "200% 200%", animation: "gradientShift 6s ease infinite" }} />
+                  <div className="relative z-10 flex justify-between items-center">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <BookOpen size={16} className="text-emerald-600" />
+                        <h3 className="text-lg font-black text-slate-800">หนังสือแนะนำ</h3>
+                      </div>
+                      {lastLibrarySoul && (
+                        <p className="text-[11px] font-black uppercase tracking-widest pb-1 leading-normal"
+                          style={{ background: "linear-gradient(90deg, #059669, #7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>
+                          {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || lastLibrarySoul.type} · {lastLibrarySoul.type}
+                        </p>
+                      )}
+                    </div>
+                    <button onClick={() => setBookMatchModal(false)}
+                      className="text-slate-400 hover:text-red-500 bg-white/70 hover:bg-red-50 p-2.5 rounded-full transition-all shadow-sm border border-white/50">
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="overflow-y-auto flex-1 p-5 space-y-3">
+                  {bookMatchLoading ? (
+                    <div className="flex flex-col items-center justify-center py-14 gap-4">
+                      <div className="relative w-12 h-12">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                          className="w-12 h-12 rounded-full border-2 border-t-transparent"
+                          style={{ borderColor: "transparent", borderTopColor: "transparent", background: "conic-gradient(from 0deg, #a78bfa, #34d399, #67e8f9, #fbbf24, #f472b6, #a78bfa)", borderRadius: "9999px", padding: "2px" }}
+                        />
+                        <div className="absolute inset-[2px] bg-white rounded-full" />
+                      </div>
+                      <p className="text-slate-500 text-sm font-medium">กำลังเลือกหนังสือที่เหมาะกับคุณ</p>
+                    </div>
+                  ) : bookMatchBooks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-14 gap-3">
+                      <BookOpen size={40} className="text-slate-200" />
+                      <p className="text-slate-400 text-sm">โหลดไม่ได้ ลองอีกครั้งนะ</p>
+                      <button onClick={fetchBooks} className="text-emerald-600 text-sm font-black hover:underline">
+                        ลองใหม่
+                      </button>
+                    </div>
+                  ) : (
+                    bookMatchBooks.map((book, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.07 }}
+                        className="p-4 rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white hover:border-emerald-200 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white"
+                            style={{ background: ["linear-gradient(135deg,#a78bfa,#7c3aed)", "linear-gradient(135deg,#34d399,#059669)", "linear-gradient(135deg,#67e8f9,#0284c7)", "linear-gradient(135deg,#fbbf24,#d97706)"][i % 4] }}>
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-black text-slate-800 text-[14px] leading-tight flex-1">{book.title}</p>
+                              <button
+                                onClick={() => handleSaveBook(book)}
+                                className={`shrink-0 p-1.5 rounded-full transition-all active:scale-90 ${savedBooks.has(book.title) ? 'text-emerald-500 bg-emerald-50' : 'text-slate-300 hover:text-emerald-400 hover:bg-emerald-50'}`}
+                              >
+                                <Bookmark size={15} className={savedBooks.has(book.title) ? 'fill-emerald-500' : ''} />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">{book.author}</p>
+                            <span className="inline-block mt-1.5 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide"
+                              style={{ background: "linear-gradient(135deg,#f0fdf4,#ecfdf5)", color: "#059669", border: "1px solid #d1fae5" }}>
+                              {book.category}
+                            </span>
+                            <p className="text-[12px] text-slate-500 mt-2 leading-relaxed">{book.reason}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer */}
+                {!bookMatchLoading && (
+                  <div className="p-4 border-t border-slate-100">
+                    <button
+                      onClick={fetchBooks}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 text-slate-500 text-[12px] font-black hover:border-violet-300 hover:text-violet-600 transition-all active:scale-95"
+                    >
+                      <RefreshCw size={13} /> สุ่มใหม่
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
