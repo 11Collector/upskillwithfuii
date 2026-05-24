@@ -76,7 +76,7 @@ ${distributionNote}
 - เหตุผลต้องระบุว่า match กับมิติไหนของผู้ใช้ (1-2 ประโยค ภาษาไทย)
 - ห้ามซ้ำหมวดเกิน 2 เล่มต่อหมวด
 
-ตอบเป็น JSON array เท่านั้น ไม่มีข้อความอื่น:
+ตอบเป็น JSON array เท่านั้น ไม่มีข้อความอื่น (แนะนำมา 7 เล่มเผื่อคัดออก):
 [
   {"title":"ชื่อหนังสือ","author":"ผู้แต่ง","category":"หมวด","reason":"เหตุผล"},
   ...
@@ -93,7 +93,7 @@ ${distributionNote}
         model: 'deepseek-chat',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
-        max_tokens: 700,
+        max_tokens: 1000,
       }),
     });
 
@@ -102,13 +102,34 @@ ${distributionNote}
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content?.trim() || '';
 
-    // strip markdown code fences if present
     const jsonStr = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const candidates = JSON.parse(jsonStr);
+    if (!Array.isArray(candidates)) return NextResponse.json({ books: [] });
 
-    const books = JSON.parse(jsonStr);
-    if (!Array.isArray(books)) return NextResponse.json({ books: [] });
+    // Verify each book against Google Books API (parallel)
+    const verified = await Promise.all(
+      candidates.slice(0, 7).map(async (book: { title: string; author: string; reason: string; category: string }) => {
+        try {
+          const q = encodeURIComponent(`intitle:${book.title} inauthor:${book.author}`);
+          const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1&fields=totalItems`, {
+            signal: AbortSignal.timeout(3000),
+          });
+          const gbData = await res.json();
+          return gbData.totalItems > 0 ? book : null;
+        } catch {
+          return book; // ถ้า verify ไม่ได้ ให้ผ่านไปก่อน
+        }
+      })
+    );
 
-    return NextResponse.json({ books: books.slice(0, 4) });
+    const validBooks = verified.filter(Boolean).slice(0, 4);
+    // ถ้า verify แล้วได้น้อยกว่า 4 ให้เอา unverified มาเสริม
+    if (validBooks.length < 4) {
+      const unverified = candidates.filter((b: { title: string }) => !validBooks.some((v: { title: string } | null) => v?.title === b.title));
+      validBooks.push(...unverified.slice(0, 4 - validBooks.length));
+    }
+
+    return NextResponse.json({ books: validBooks.slice(0, 4) });
   } catch {
     return NextResponse.json({ books: [] });
   }
