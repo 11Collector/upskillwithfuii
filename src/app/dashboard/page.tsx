@@ -1700,14 +1700,18 @@ export default function DashboardPage() {
       await setDoc(userRef, finalUpdates, { merge: true });
 
       // 📓 Quest log — บันทึกเมื่อ complete เท่านั้น (ไม่บันทึกตอน uncheck)
-      if (!isDone && quest?.title) {
+      if (!isDone) {
         const logRef = collection(db, 'users', user.uid, 'quest_log');
-        addDoc(logRef, {
-          title: quest.title,
-          type: quest.type,
-          xp: quest.xp,
-          completedAt: todayStr,
-        }).catch(() => {});
+        const logTitle = quest?.title || (id === 'special-01' ? customQuestTitle : '');
+        const logType = questType;
+        if (logTitle) {
+          addDoc(logRef, {
+            title: logTitle,
+            type: logType,
+            xp: xp,
+            completedAt: todayStr,
+          }).catch(() => {});
+        }
       }
 
     } catch (error) {
@@ -4211,7 +4215,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
                             ✅ Quest ที่เคยทำ
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{Object.values(grouped).reduce((sum, qs) => sum + new Set(qs.map(q => q.title)).size, 0) + (customQuestTitle ? 1 : 0)}</span>
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{Object.values(grouped).reduce((sum, qs) => sum + new Set(qs.map(q => q.title)).size, 0) + (customQuestTitle && completedQuests.includes('special-01') ? 1 : 0)}</span>
                           </h3>
                           <div className="flex items-center gap-2">
                             <button
@@ -4233,7 +4237,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-slate-400 py-2">ไม่มี Quest วันนี้ — เริ่มทำเลย!</p>
                         ) : (
                           <div className="space-y-2">
-                            {selDate === today && customQuestTitle && (
+                            {selDate === today && customQuestTitle && completedQuests.includes('special-01') && (
                               <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
                                 <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 shrink-0 mt-0.5">MY QUEST</span>
                                 <p className="text-sm text-slate-700 leading-snug">{customQuestTitle}</p>
