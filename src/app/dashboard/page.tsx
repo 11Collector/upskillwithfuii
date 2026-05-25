@@ -4135,36 +4135,58 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     {/* ✅ Quest ที่เคยทำ */}
-                    <div>
-                      <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
-                        ✅ Quest ที่เคยทำ
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length}</span>
-                      </h3>
-                      {collectionQuests.length === 0 ? (
-                        <p className="text-xs text-slate-400 py-2">ยังไม่มีประวัติ — เริ่มทำ Quest วันนี้เลย!</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {collectionQuests.map((q, i) => (
-                            <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
-                              <div className="shrink-0 mt-0.5">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                  q.type === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
-                                  q.type === 'WILDCARD' ? 'bg-emerald-100 text-emerald-700' :
-                                  q.type === 'DISC' ? 'bg-blue-100 text-blue-700' :
-                                  q.type === 'MONEY' ? 'bg-yellow-100 text-yellow-700' :
-                                  q.type === 'WHEEL' ? 'bg-purple-100 text-purple-700' :
-                                  'bg-slate-100 text-slate-600'
-                                }`}>{q.type}</span>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
-                                <p className="text-[10px] text-slate-400 mt-0.5">{q.completedAt}</p>
-                              </div>
+                    {(() => {
+                      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+                      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+                      const formatDateLabel = (d: string) => {
+                        if (d === today) return 'วันนี้';
+                        if (d === yesterday) return 'เมื่อวาน';
+                        const [y, m, day] = d.split('-');
+                        return `${parseInt(day)} ${['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][parseInt(m)]} ${parseInt(y) + 543}`;
+                      };
+                      const grouped = collectionQuests.reduce((acc, q) => {
+                        (acc[q.completedAt] = acc[q.completedAt] || []).push(q);
+                        return acc;
+                      }, {} as Record<string, typeof collectionQuests>);
+                      const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+                      return (
+                        <div>
+                          <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                            ✅ Quest ที่เคยทำ
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length}</span>
+                          </h3>
+                          {collectionQuests.length === 0 ? (
+                            <p className="text-xs text-slate-400 py-2">ยังไม่มีประวัติ — เริ่มทำ Quest วันนี้เลย!</p>
+                          ) : (
+                            <div className="space-y-4">
+                              {dates.map(date => (
+                                <div key={date}>
+                                  <p className="text-xs font-black text-slate-400 uppercase tracking-wide mb-2">📅 {formatDateLabel(date)}</p>
+                                  <div className="space-y-2">
+                                    {grouped[date].map((q, i) => (
+                                      <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                        <div className="shrink-0 mt-0.5">
+                                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                            q.type === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
+                                            q.type === 'WILDCARD' ? 'bg-emerald-100 text-emerald-700' :
+                                            q.type === 'DISC' ? 'bg-blue-100 text-blue-700' :
+                                            q.type === 'MONEY' ? 'bg-yellow-100 text-yellow-700' :
+                                            q.type === 'WHEEL' ? 'bg-purple-100 text-purple-700' :
+                                            'bg-slate-100 text-slate-600'
+                                          }`}>{q.type}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
 
                     {/* 📚 หนังสือที่สนใจ */}
                     <div>
