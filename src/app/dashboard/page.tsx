@@ -275,6 +275,7 @@ export default function DashboardPage() {
         setLastSkipDate(userData.lastSkipDate || "");
         setLastChatDate(userData.lastChatDate || "");
         setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
+        setAiGeneratedWildcardTitle(userData.aiGeneratedWildcardTitle || "");
         setPerfectWeeks(userData.perfectWeeks || 0);
         setIsRandomMode(userData.isRandomMode || false);
         setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]);
@@ -445,6 +446,7 @@ export default function DashboardPage() {
 
   const [lastChatDate, setLastChatDate] = useState("");
   const [aiGeneratedQuestTitle, setAiGeneratedQuestTitle] = useState("");
+  const [aiGeneratedWildcardTitle, setAiGeneratedWildcardTitle] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showWheelRulesModal, setShowWheelRulesModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -1136,19 +1138,25 @@ export default function DashboardPage() {
 
       try {
         const idToken = await user.getIdToken();
+        const currentLevel = Math.floor((data?.totalXP || 0) / 100) + 1;
         const res = await fetch('/api/quest-analysis', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${idToken}` },
+          headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ level: currentLevel }),
         });
         if (!res.ok) return;
-        const { questTitle } = await res.json();
+        const { questTitle, wildcardTitle } = await res.json();
         if (!questTitle) return;
 
-        await updateDoc(userRef, {
+        const updates: Record<string, string> = {
           aiGeneratedQuestTitle: questTitle,
           lastQuestAnalysisDate: todayDateStr,
-        });
+        };
+        if (wildcardTitle) updates.aiGeneratedWildcardTitle = wildcardTitle;
+
+        await updateDoc(userRef, updates);
         setAiGeneratedQuestTitle(questTitle);
+        if (wildcardTitle) setAiGeneratedWildcardTitle(wildcardTitle);
       } catch {
         // fail silently
       }
@@ -1268,8 +1276,13 @@ export default function DashboardPage() {
     // เตรียม Array สำหรับเช็คค่าซ้ำในวันเดียวกัน
     const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
 
-    // 🛡️ ช่องที่ 5: Wildcard (ใช้ Salt 5.5)
-    qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
+    // 🛡️ ช่องที่ 5: Wildcard — level 11+ ใช้ AI awareness quest
+    const questLevel = Math.floor(totalXP / 100) + 1;
+    if (aiGeneratedWildcardTitle && questLevel >= 11) {
+      qList[4].title = aiGeneratedWildcardTitle;
+    } else {
+      qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
+    }
     currentTitles.push(qList[4].title);
 
     // 🛡️ ช่องที่ 6: Challenge (ใช้ AI-generated quest ถ้ามี, fallback ไป pool ปกติ)
@@ -1280,7 +1293,7 @@ export default function DashboardPage() {
     }
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedWildcardTitle, totalXP]);
 
   // 🤖 AI Mentor Quest — auto-complete เมื่อ user คุย AI แล้ววันนี้
   const aiMentorAutoCompleted = useRef(false);
