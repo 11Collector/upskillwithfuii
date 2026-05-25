@@ -4139,7 +4139,7 @@ export default function DashboardPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-              onClick={() => setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav')}
+              onClick={() => { setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav'); }}
             >
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
               <motion.div
@@ -4157,7 +4157,7 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
                     <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
                   </div>
-                  <button onClick={() => setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav')} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
+                  <button onClick={() => { setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav'); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
                 </div>
 
                 {/* Content */}
