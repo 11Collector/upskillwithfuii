@@ -4186,8 +4186,12 @@ export default function DashboardPage() {
                       onClick={async () => {
                         if (!user || !window.confirm('ล้างประวัติ Quest ทั้งหมด?')) return;
                         const snap = await getDocs(collection(db, 'users', user.uid, 'quest_log'));
-                        await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                        await Promise.all([
+                          ...snap.docs.map(d => deleteDoc(d.ref)),
+                          updateDoc(doc(db, 'users', user.uid), { customQuestTitle: '' }),
+                        ]);
                         setCollectionQuests([]);
+                        setCustomQuestTitle('');
                       }}
                       className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1 rounded-full hover:bg-red-50"
                     >ล้าง</button>
