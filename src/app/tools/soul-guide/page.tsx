@@ -348,9 +348,11 @@ export default function SoulGuidePage() {
           try {
             const prefs = JSON.parse(questPrefsMatch[1]);
             const userRef = doc(db, "users", user.uid);
+            const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
             await updateDoc(userRef, {
-              questPreferences: { ...prefs, savedAt: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) },
-              lastQuestAnalysisDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }), // block วันนี้ → analysis วิ่งได้พรุ่งนี้
+              questPreferences: { ...prefs, savedAt: todayCA },
+              questPrefsBlockDate: todayCA,  // block same-day analysis เท่านั้น
+              lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
             });
             setQuestSaved(true);
           } catch {}

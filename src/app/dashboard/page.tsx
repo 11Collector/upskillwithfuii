@@ -1131,14 +1131,21 @@ export default function DashboardPage() {
 
       const lastAnalysisDate = data?.lastQuestAnalysisDate || '';
       const lastChat = data?.lastChatDate || '';
+      const currentLevel = Math.floor((data?.totalXP || 0) / 100) + 1;
+      const lastWildcardDate = data?.lastWildcardGeneratedDate || '';
+      const questPrefsBlockDate = data?.questPrefsBlockDate || '';
 
-      // ข้ามถ้ายังไม่มีแชท หรือ analysis ล่าสุดทำหลังแชทครั้งล่าสุดแล้ว
-      if (!lastChat) return;
-      if (lastAnalysisDate >= lastChat) return;
+      const needsWildcard = currentLevel >= 11 && lastWildcardDate !== todayDateStr;
+      // prefs ถูก save เมื่อวานหรือก่อนหน้า → analysis ยังไม่ได้ใช้ prefs ใหม่
+      const hasFreshPrefs = questPrefsBlockDate && questPrefsBlockDate !== todayDateStr && questPrefsBlockDate > lastAnalysisDate;
+      const hasFreshChat = lastChat > lastAnalysisDate;
+
+      if (!hasFreshChat && !hasFreshPrefs && !needsWildcard) return;
+      // block same-day เมื่อ prefs เพิ่ง save วันนี้ (ยังไม่มีแชทใหม่)
+      if (questPrefsBlockDate === todayDateStr && !hasFreshChat && !needsWildcard) return;
 
       try {
         const idToken = await user.getIdToken();
-        const currentLevel = Math.floor((data?.totalXP || 0) / 100) + 1;
         const res = await fetch('/api/quest-analysis', {
           method: 'POST',
           headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
@@ -1146,16 +1153,21 @@ export default function DashboardPage() {
         });
         if (!res.ok) return;
         const { questTitle, wildcardTitle } = await res.json();
-        if (!questTitle) return;
+        // wildcard-only path: questTitle อาจเป็น null (ถ้าไม่มีแชทเลย)
+        if (!questTitle && !wildcardTitle) return;
 
-        const updates: Record<string, string> = {
-          aiGeneratedQuestTitle: questTitle,
-          lastQuestAnalysisDate: todayDateStr,
-        };
-        if (wildcardTitle) updates.aiGeneratedWildcardTitle = wildcardTitle;
+        const updates: Record<string, string> = {};
+        if (questTitle) {
+          updates.aiGeneratedQuestTitle = questTitle;
+          updates.lastQuestAnalysisDate = todayDateStr;
+        }
+        if (wildcardTitle) {
+          updates.aiGeneratedWildcardTitle = wildcardTitle;
+          updates.lastWildcardGeneratedDate = todayDateStr;
+        }
 
-        await updateDoc(userRef, updates);
-        setAiGeneratedQuestTitle(questTitle);
+        if (Object.keys(updates).length > 0) await updateDoc(userRef, updates);
+        if (questTitle) setAiGeneratedQuestTitle(questTitle);
         if (wildcardTitle) setAiGeneratedWildcardTitle(wildcardTitle);
       } catch {
         // fail silently
