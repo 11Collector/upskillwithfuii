@@ -350,7 +350,7 @@ export default function SoulGuidePage() {
             const userRef = doc(db, "users", user.uid);
             await updateDoc(userRef, {
               questPreferences: { ...prefs, savedAt: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) },
-              lastQuestAnalysisDate: '', // force re-analysis ครั้งถัดไป
+              lastQuestAnalysisDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }), // block วันนี้ → analysis วิ่งได้พรุ่งนี้
             });
             setQuestSaved(true);
           } catch {}
