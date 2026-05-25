@@ -908,6 +908,7 @@ export default function DashboardPage() {
     setShowCollectionModal(true);
     setCollectionSelectedDate(todayStr);
     setCollectionLoading(true);
+    document.body.classList.add('hide-bottom-nav');
     try {
       const [booksSnap, questsSnap] = await Promise.all([
         getDocs(collection(db, 'users', user.uid, 'book_playlist')),
@@ -4137,8 +4138,8 @@ export default function DashboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-24 sm:pb-4"
-              onClick={() => setShowCollectionModal(false)}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+              onClick={() => setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav')}
             >
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
               <motion.div
@@ -4156,7 +4157,7 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
                     <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
                   </div>
-                  <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
+                  <button onClick={() => setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav')} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
                 </div>
 
                 {/* Content */}
@@ -4171,7 +4172,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
                             ✅ Quest ที่เคยทำ
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length}</span>
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length + (customQuestTitle ? 1 : 0)}</span>
                           </h3>
                           <div className="flex items-center gap-2">
                             <button
