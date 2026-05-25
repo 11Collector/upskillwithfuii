@@ -159,6 +159,7 @@ export default function DashboardPage() {
   const [collectionBooks, setCollectionBooks] = useState<{ title: string; author: string; category: string }[]>([]);
   const [collectionQuests, setCollectionQuests] = useState<{ title: string; type: string; completedAt: string }[]>([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionSelectedDate, setCollectionSelectedDate] = useState("");
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDailySuccess, setShowDailySuccess] = useState(false);
@@ -903,7 +904,9 @@ export default function DashboardPage() {
   // โหลด saved books เมื่อ modal เปิด
   const openCollectionModal = async () => {
     if (!user) return;
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     setShowCollectionModal(true);
+    setCollectionSelectedDate(todayStr);
     setCollectionLoading(true);
     try {
       const [booksSnap, questsSnap] = await Promise.all([
@@ -4099,133 +4102,143 @@ export default function DashboardPage() {
         )}
 
         {/* 🗂️ กล่องสะสม Modal */}
-        {showCollectionModal && (
-          <motion.div
-            key="collection-modal"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowCollectionModal(false)}
-          >
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        {showCollectionModal && (() => {
+          const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          const MONTHS = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+          const formatDateLabel = (d: string) => {
+            if (d === today) return 'วันนี้';
+            if (d === yesterday) return 'เมื่อวาน';
+            const [y, m, day] = d.split('-');
+            return `${parseInt(day)} ${MONTHS[parseInt(m)]} ${parseInt(y) + 543}`;
+          };
+          const grouped = collectionQuests.reduce((acc, q) => {
+            (acc[q.completedAt] = acc[q.completedAt] || []).push(q);
+            return acc;
+          }, {} as Record<string, typeof collectionQuests>);
+          // รวม today เข้าไปใน dates เสมอ (สำหรับ MY QUEST)
+          const allDates = Array.from(new Set([today, ...Object.keys(grouped)])).sort((a, b) => b.localeCompare(a));
+          const selDate = collectionSelectedDate || today;
+          const selIndex = allDates.indexOf(selDate);
+          const canPrev = selIndex < allDates.length - 1;
+          const canNext = selIndex > 0;
+          const questsForDay = grouped[selDate] || [];
+          const typeColor = (t: string) =>
+            t === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
+            t === 'WILDCARD'  ? 'bg-emerald-100 text-emerald-700' :
+            t === 'DISC'      ? 'bg-blue-100 text-blue-700' :
+            t === 'MONEY'     ? 'bg-yellow-100 text-yellow-700' :
+            t === 'WHEEL'     ? 'bg-purple-100 text-purple-700' :
+            'bg-slate-100 text-slate-600';
+
+          return (
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              onClick={e => e.stopPropagation()}
-              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+              key="collection-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+              onClick={() => setShowCollectionModal(false)}
             >
-              {/* Header */}
-              <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-                <div>
-                  <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">หนังสือที่สนใจ & Quest ที่เคยทำ</p>
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                onClick={e => e.stopPropagation()}
+                className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
+                style={{ maxHeight: 'min(85vh, 600px)' }}
+              >
+                {/* Header */}
+                <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
+                  </div>
+                  <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
                 </div>
-                <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">
-                  ✕
-                </button>
-              </div>
 
-              {/* Content */}
-              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
-                {collectionLoading ? (
-                  <div className="flex items-center justify-center py-12 text-slate-400 text-sm">กำลังโหลด...</div>
-                ) : (
-                  <>
-                    {/* ✅ Quest ที่เคยทำ */}
-                    {(() => {
-                      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-                      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-                      const formatDateLabel = (d: string) => {
-                        if (d === today) return 'วันนี้';
-                        if (d === yesterday) return 'เมื่อวาน';
-                        const [y, m, day] = d.split('-');
-                        return `${parseInt(day)} ${['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][parseInt(m)]} ${parseInt(y) + 543}`;
-                      };
-                      const grouped = collectionQuests.reduce((acc, q) => {
-                        (acc[q.completedAt] = acc[q.completedAt] || []).push(q);
-                        return acc;
-                      }, {} as Record<string, typeof collectionQuests>);
-                      const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-
-                      return (
-                        <div>
-                          <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                {/* Content */}
+                <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+                  {collectionLoading ? (
+                    <div className="flex items-center justify-center py-12 text-slate-400 text-sm">กำลังโหลด...</div>
+                  ) : (
+                    <>
+                      {/* ✅ Quest รายวัน */}
+                      <div>
+                        {/* Day navigation */}
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
                             ✅ Quest ที่เคยทำ
                             <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length}</span>
                           </h3>
-                          {collectionQuests.length === 0 && !customQuestTitle ? (
-                            <p className="text-xs text-slate-400 py-2">ยังไม่มีประวัติ — เริ่มทำ Quest วันนี้เลย!</p>
-                          ) : (
-                            <div className="space-y-4">
-                              {customQuestTitle && (
-                                <div>
-                                  <p className="text-xs font-black text-slate-400 uppercase tracking-wide mb-2">🔥 กำลังทำอยู่</p>
-                                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
-                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 shrink-0 mt-0.5">MY QUEST</span>
-                                    <p className="text-sm text-slate-700 leading-snug">{customQuestTitle}</p>
-                                  </div>
-                                </div>
-                              )}
-                              {dates.map(date => (
-                                <div key={date}>
-                                  <p className="text-xs font-black text-slate-400 uppercase tracking-wide mb-2">📅 {formatDateLabel(date)}</p>
-                                  <div className="space-y-2">
-                                    {grouped[date].map((q, i) => (
-                                      <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
-                                        <div className="shrink-0 mt-0.5">
-                                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                            q.type === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
-                                            q.type === 'WILDCARD' ? 'bg-emerald-100 text-emerald-700' :
-                                            q.type === 'DISC' ? 'bg-blue-100 text-blue-700' :
-                                            q.type === 'MONEY' ? 'bg-yellow-100 text-yellow-700' :
-                                            q.type === 'WHEEL' ? 'bg-purple-100 text-purple-700' :
-                                            'bg-slate-100 text-slate-600'
-                                          }`}>{q.type}</span>
-                                        </div>
-                                        <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => canPrev && setCollectionSelectedDate(allDates[selIndex + 1])}
+                              disabled={!canPrev}
+                              className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${canPrev ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'text-slate-300 cursor-default'}`}
+                            >‹</button>
+                            <span className="text-xs font-bold text-slate-600 min-w-[56px] text-center">{formatDateLabel(selDate)}</span>
+                            <button
+                              onClick={() => canNext && setCollectionSelectedDate(allDates[selIndex - 1])}
+                              disabled={!canNext}
+                              className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${canNext ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'text-slate-300 cursor-default'}`}
+                            >›</button>
+                          </div>
                         </div>
-                      );
-                    })()}
 
-                    {/* 📚 หนังสือที่สนใจ */}
-                    <div>
-                      <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
-                        📚 หนังสือที่สนใจ
-                        <span className="px-2 py-0.5 bg-violet-100 text-violet-600 rounded-full text-xs font-bold">{collectionBooks.length}</span>
-                      </h3>
-                      {collectionBooks.length === 0 ? (
-                        <p className="text-xs text-slate-400 py-2">ยังไม่มีหนังสือที่บันทึกไว้ — กด 🔖 จากหนังสือแนะนำเพื่อเพิ่ม</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {collectionBooks.map((book, i) => (
-                            <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
-                              <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center text-sm shrink-0">📖</div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-bold text-slate-800 leading-tight truncate">{book.title}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">{book.author}</p>
-                                {book.category && <span className="inline-block mt-1 px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
+                        {/* Quests for selected day */}
+                        {questsForDay.length === 0 && !(selDate === today && customQuestTitle) ? (
+                          <p className="text-xs text-slate-400 py-2">ไม่มี Quest วันนี้ — เริ่มทำเลย!</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {selDate === today && customQuestTitle && (
+                              <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 shrink-0 mt-0.5">MY QUEST</span>
+                                <p className="text-sm text-slate-700 leading-snug">{customQuestTitle}</p>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+                            )}
+                            {questsForDay.map((q, i) => (
+                              <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 mt-0.5 ${typeColor(q.type)}`}>{q.type}</span>
+                                <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 📚 หนังสือที่สนใจ */}
+                      <div>
+                        <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                          📚 หนังสือที่สนใจ
+                          <span className="px-2 py-0.5 bg-violet-100 text-violet-600 rounded-full text-xs font-bold">{collectionBooks.length}</span>
+                        </h3>
+                        {collectionBooks.length === 0 ? (
+                          <p className="text-xs text-slate-400 py-2">ยังไม่มีหนังสือที่บันทึกไว้ — กด 🔖 จากหนังสือแนะนำเพื่อเพิ่ม</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {collectionBooks.map((book, i) => (
+                              <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center text-sm shrink-0">📖</div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-slate-800 leading-tight truncate">{book.title}</p>
+                                  <p className="text-xs text-slate-500 mt-0.5">{book.author}</p>
+                                  {book.category && <span className="inline-block mt-1 px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
 
         {/* Level Up Popup */}
         {showLevelUp?.isOpen && (
