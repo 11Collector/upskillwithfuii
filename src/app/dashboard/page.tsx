@@ -4134,21 +4134,6 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-center py-12 text-slate-400 text-sm">กำลังโหลด...</div>
                 ) : (
                   <>
-                    {/* 🔥 MY QUEST */}
-                    {customQuestTitle && (
-                      <div>
-                        <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
-                          🔥 My Quest
-                        </h3>
-                        <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-                          <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-                            <Flame size={18} className="text-amber-500 fill-amber-400" />
-                          </div>
-                          <p className="text-sm font-bold text-amber-800 leading-snug">{customQuestTitle}</p>
-                        </div>
-                      </div>
-                    )}
-
                     {/* ✅ Quest ที่เคยทำ */}
                     {(() => {
                       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
@@ -4171,10 +4156,19 @@ export default function DashboardPage() {
                             ✅ Quest ที่เคยทำ
                             <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length}</span>
                           </h3>
-                          {collectionQuests.length === 0 ? (
+                          {collectionQuests.length === 0 && !customQuestTitle ? (
                             <p className="text-xs text-slate-400 py-2">ยังไม่มีประวัติ — เริ่มทำ Quest วันนี้เลย!</p>
                           ) : (
                             <div className="space-y-4">
+                              {customQuestTitle && (
+                                <div>
+                                  <p className="text-xs font-black text-amber-400 uppercase tracking-wide mb-2">🔥 กำลังทำอยู่</p>
+                                  <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl">
+                                    <Flame size={16} className="text-amber-500 fill-amber-400 shrink-0" />
+                                    <p className="text-sm font-bold text-amber-800 leading-snug">{customQuestTitle}</p>
+                                  </div>
+                                </div>
+                              )}
                               {dates.map(date => (
                                 <div key={date}>
                                   <p className="text-xs font-black text-slate-400 uppercase tracking-wide mb-2">📅 {formatDateLabel(date)}</p>
