@@ -4258,15 +4258,13 @@ export default function DashboardPage() {
                         {collectionBooks.length === 0 ? (
                           <p className="text-xs text-slate-400 py-2">ยังไม่มีหนังสือที่บันทึกไว้ — กด 🔖 จากหนังสือแนะนำเพื่อเพิ่ม</p>
                         ) : (
-                          <div className="space-y-2">
+                          <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
                             {collectionBooks.map((book, i) => (
-                              <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
-                                <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center text-sm shrink-0">📖</div>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-bold text-slate-800 leading-tight truncate">{book.title}</p>
-                                  <p className="text-xs text-slate-500 mt-0.5">{book.author}</p>
-                                  {book.category && <span className="inline-block mt-1 px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
-                                </div>
+                              <div key={i} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl shrink-0 w-36">
+                                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-lg">📖</div>
+                                <p className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">{book.title}</p>
+                                <p className="text-[10px] text-slate-400 leading-tight">{book.author}</p>
+                                {book.category && <span className="self-start px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
                               </div>
                             ))}
                           </div>
