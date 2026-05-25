@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark } from "lucide-react";
@@ -155,6 +155,10 @@ export default function DashboardPage() {
   const [bookMatchBooks, setBookMatchBooks] = useState<{ title: string; author: string; reason: string; category: string }[]>([]);
   const [bookMatchLoading, setBookMatchLoading] = useState(false);
   const [savedBooks, setSavedBooks] = useState<Set<string>>(new Set());
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [collectionBooks, setCollectionBooks] = useState<{ title: string; author: string; category: string }[]>([]);
+  const [collectionQuests, setCollectionQuests] = useState<{ title: string; type: string; completedAt: string }[]>([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDailySuccess, setShowDailySuccess] = useState(false);
@@ -897,6 +901,28 @@ export default function DashboardPage() {
   };
 
   // โหลด saved books เมื่อ modal เปิด
+  const openCollectionModal = async () => {
+    if (!user) return;
+    setShowCollectionModal(true);
+    setCollectionLoading(true);
+    try {
+      const [booksSnap, questsSnap] = await Promise.all([
+        getDocs(collection(db, 'users', user.uid, 'book_playlist')),
+        getDocs(query(
+          collection(db, 'users', user.uid, 'quest_log'),
+          orderBy('completedAt', 'desc'),
+          limit(30)
+        )),
+      ]);
+      setCollectionBooks(booksSnap.docs.map(d => d.data() as { title: string; author: string; category: string }));
+      setCollectionQuests(questsSnap.docs.map(d => d.data() as { title: string; type: string; completedAt: string }));
+    } catch {
+      // fail silently
+    } finally {
+      setCollectionLoading(false);
+    }
+  };
+
   const loadSavedBooks = async () => {
     if (!user) return;
     const { getDocs } = await import('firebase/firestore');
@@ -1644,6 +1670,17 @@ export default function DashboardPage() {
       };
 
       await setDoc(userRef, finalUpdates, { merge: true });
+
+      // 📓 Quest log — บันทึกเมื่อ complete เท่านั้น (ไม่บันทึกตอน uncheck)
+      if (!isDone && quest?.title) {
+        const logRef = collection(db, 'users', user.uid, 'quest_log');
+        addDoc(logRef, {
+          title: quest.title,
+          type: quest.type,
+          xp: quest.xp,
+          completedAt: todayStr,
+        }).catch(() => {});
+      }
 
     } catch (error) {
       console.error("Error toggling quest:", error);
@@ -3053,6 +3090,15 @@ export default function DashboardPage() {
                 {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'ตัวตนของคุณ'}
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              {activeTab === 'identity' && (
+                <button
+                  onClick={openCollectionModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold shrink-0"
+                >
+                  <span>🗂️</span>
+                  <span className="hidden sm:inline">กล่องสะสม</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -4046,6 +4092,104 @@ export default function DashboardPage() {
                       <RefreshCw size={13} /> สุ่มใหม่
                     </button>
                   </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* 🗂️ กล่องสะสม Modal */}
+        {showCollectionModal && (
+          <motion.div
+            key="collection-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCollectionModal(false)}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div>
+                  <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">หนังสือที่สนใจ & Quest ที่เคยทำ</p>
+                </div>
+                <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">
+                  ✕
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+                {collectionLoading ? (
+                  <div className="flex items-center justify-center py-12 text-slate-400 text-sm">กำลังโหลด...</div>
+                ) : (
+                  <>
+                    {/* 📚 หนังสือที่สนใจ */}
+                    <div>
+                      <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                        📚 หนังสือที่สนใจ
+                        <span className="px-2 py-0.5 bg-violet-100 text-violet-600 rounded-full text-xs font-bold">{collectionBooks.length}</span>
+                      </h3>
+                      {collectionBooks.length === 0 ? (
+                        <p className="text-xs text-slate-400 py-2">ยังไม่มีหนังสือที่บันทึกไว้ — กด 🔖 จากหนังสือแนะนำเพื่อเพิ่ม</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {collectionBooks.map((book, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                              <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center text-sm shrink-0">📖</div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-800 leading-tight truncate">{book.title}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{book.author}</p>
+                                {book.category && <span className="inline-block mt-1 px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ✅ Quest ที่เคยทำ */}
+                    <div>
+                      <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                        ✅ Quest ที่เคยทำ
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length}</span>
+                      </h3>
+                      {collectionQuests.length === 0 ? (
+                        <p className="text-xs text-slate-400 py-2">ยังไม่มีประวัติ — เริ่มทำ Quest วันนี้เลย!</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {collectionQuests.map((q, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                              <div className="shrink-0 mt-0.5">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                  q.type === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
+                                  q.type === 'WILDCARD' ? 'bg-emerald-100 text-emerald-700' :
+                                  q.type === 'DISC' ? 'bg-blue-100 text-blue-700' :
+                                  q.type === 'MONEY' ? 'bg-yellow-100 text-yellow-700' :
+                                  q.type === 'WHEEL' ? 'bg-purple-100 text-purple-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>{q.type}</span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">{q.completedAt}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </motion.div>
