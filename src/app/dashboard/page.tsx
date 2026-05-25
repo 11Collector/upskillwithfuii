@@ -4131,7 +4131,7 @@ export default function DashboardPage() {
           const selIndex = allDates.indexOf(selDate);
           const canPrev = selIndex < allDates.length - 1;
           const canNext = selIndex > 0;
-          const questsForDay = grouped[selDate] || [];
+          const questsForDay = (grouped[selDate] || []).filter((q, i, arr) => arr.findIndex(x => x.title === q.title) === i);
           const typeColor = (t: string) =>
             t === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
             t === 'WILDCARD'  ? 'bg-emerald-100 text-emerald-700' :
