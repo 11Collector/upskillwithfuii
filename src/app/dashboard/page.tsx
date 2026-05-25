@@ -4181,7 +4181,20 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
                     <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
                   </div>
-                  <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
+                  <div className="flex items-center gap-2">
+                    {collectionQuests.length > 0 && (
+                      <button
+                        onClick={async () => {
+                          if (!user || !window.confirm('ล้างประวัติ Quest ทั้งหมด?')) return;
+                          const snap = await getDocs(collection(db, 'users', user.uid, 'quest_log'));
+                          await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                          setCollectionQuests([]);
+                        }}
+                        className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1 rounded-full hover:bg-red-50"
+                      >ล้าง</button>
+                    )}
+                    <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
+                  </div>
                 </div>
 
                 {/* Content */}
@@ -4197,17 +4210,6 @@ export default function DashboardPage() {
                           <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
                             ✅ Quest ที่เคยทำ
                             <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{Object.values(grouped).reduce((sum, qs) => sum + new Set(qs.map(q => q.title)).size, 0) + (customQuestTitle ? 1 : 0)}</span>
-                            {collectionQuests.length > 0 && (
-                              <button
-                                onClick={async () => {
-                                  if (!user || !window.confirm('ล้างประวัติ Quest ทั้งหมด?')) return;
-                                  const snap = await getDocs(collection(db, 'users', user.uid, 'quest_log'));
-                                  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
-                                  setCollectionQuests([]);
-                                }}
-                                className="text-[10px] text-slate-400 hover:text-red-400 transition-colors font-normal"
-                              >ล้าง</button>
-                            )}
                           </h3>
                           <div className="flex items-center gap-2">
                             <button
