@@ -4162,10 +4162,10 @@ export default function DashboardPage() {
                             <div className="space-y-4">
                               {customQuestTitle && (
                                 <div>
-                                  <p className="text-xs font-black text-amber-400 uppercase tracking-wide mb-2">🔥 กำลังทำอยู่</p>
-                                  <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl">
-                                    <Flame size={16} className="text-amber-500 fill-amber-400 shrink-0" />
-                                    <p className="text-sm font-bold text-amber-800 leading-snug">{customQuestTitle}</p>
+                                  <p className="text-xs font-black text-slate-400 uppercase tracking-wide mb-2">🔥 กำลังทำอยู่</p>
+                                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 shrink-0 mt-0.5">MY QUEST</span>
+                                    <p className="text-sm text-slate-700 leading-snug">{customQuestTitle}</p>
                                   </div>
                                 </div>
                               )}
