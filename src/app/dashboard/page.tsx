@@ -3083,25 +3083,23 @@ export default function DashboardPage() {
         {/* 🎯 Section Header: เครื่องมือเฉพาะสำหรับคุณ */}
         {(activeTab === "identity" || activeTab === "resources") && (
           <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-2 mb-4">
-            <div className="flex items-center gap-4">
+            <div className="relative flex items-center gap-4">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
                 <span>{activeTab === 'resources' ? '🧠' : '🧬'}</span>
                 {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'ตัวตนของคุณ'}
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-            </div>
-            {activeTab === 'identity' && (
-              <div className="flex justify-center mt-3">
+              {activeTab === 'identity' && (
                 <button
                   onClick={openCollectionModal}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold"
+                  className="absolute right-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold"
                 >
                   <span>🗂️</span>
-                  <span>กล่องสะสม</span>
+                  <span className="hidden sm:inline">กล่องสะสม</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
