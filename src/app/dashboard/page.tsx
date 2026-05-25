@@ -612,7 +612,9 @@ export default function DashboardPage() {
         { name: "discResults", query: query(collection(db, "discResults"), where("userId", "==", user.uid)) },
         { name: "quiz_results", query: query(collection(db, "quiz_results"), where("userId", "==", user.uid)) },
         { name: "quotes", query: query(collection(db, "quotes"), where("userId", "==", user.uid)) },
-        { name: "chat_history", query: collection(db, "users", user.uid, "chat_history") }
+        { name: "chat_history", query: collection(db, "users", user.uid, "chat_history") },
+        { name: "quest_log", query: collection(db, "users", user.uid, "quest_log") },
+        { name: "book_playlist", query: collection(db, "users", user.uid, "book_playlist") },
       ];
 
       // ดึงเอกสารทั้งหมดจากทุกที่ที่ระบุไว้
@@ -658,7 +660,15 @@ export default function DashboardPage() {
         chatUsageDate: null,
         perfectWeeks: 0,    // 🏆 ล้างจำนวนสัปดาห์ที่สมบูรณ์
         wheelCompletions: 0, // 🎡 ล้างตัวนับความสำเร็จรายวัน
-        createdAt: resetDate // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
+        createdAt: resetDate, // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
+        aiGeneratedQuestTitle: "",
+        aiGeneratedWildcardTitle: "",
+        lastQuestAnalysisDate: "",
+        lastWildcardGeneratedDate: "",
+        questPrefsBlockDate: "",
+        questPreferences: null,
+        bookMatchCache: null,
+        lastChatDate: null,
       }, { merge: true });
 
       // 🚀 4. Execute Batch รวดเดียวจบ
@@ -682,6 +692,12 @@ export default function DashboardPage() {
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
       setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
       setHasSoulGuide(false);
+      setAiGeneratedQuestTitle("");
+      setAiGeneratedWildcardTitle("");
+      setCustomQuestTitle("");
+      setCollectionQuests([]);
+      setCollectionBooks([]);
+      setSavedBooks(new Set());
       localStorage.removeItem('hasSeenDashboardTutorial');
       setShowTutorial(true);
       setTutorialStep(1);
