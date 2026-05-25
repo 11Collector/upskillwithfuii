@@ -4180,7 +4180,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
                             ✅ Quest ที่เคยทำ
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{collectionQuests.length + (customQuestTitle ? 1 : 0)}</span>
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{Object.values(grouped).reduce((sum, qs) => sum + new Set(qs.map(q => q.title)).size, 0) + (customQuestTitle ? 1 : 0)}</span>
                           </h3>
                           <div className="flex items-center gap-2">
                             <button
