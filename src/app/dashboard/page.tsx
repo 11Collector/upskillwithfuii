@@ -3090,16 +3090,18 @@ export default function DashboardPage() {
                 {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'ตัวตนของคุณ'}
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-              {activeTab === 'identity' && (
+            </div>
+            {activeTab === 'identity' && (
+              <div className="flex justify-center mt-3">
                 <button
                   onClick={openCollectionModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold shrink-0"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold"
                 >
                   <span>🗂️</span>
-                  <span className="hidden sm:inline">กล่องสะสม</span>
+                  <span>กล่องสะสม</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
