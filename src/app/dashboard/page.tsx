@@ -159,6 +159,15 @@ export default function DashboardPage() {
   const [collectionBooks, setCollectionBooks] = useState<{ title: string; author: string; category: string }[]>([]);
   const [collectionQuests, setCollectionQuests] = useState<{ title: string; type: string; completedAt: string }[]>([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
+
+  useEffect(() => {
+    if (showCollectionModal) {
+      document.body.classList.add('hide-bottom-nav');
+    } else {
+      document.body.classList.remove('hide-bottom-nav');
+    }
+    return () => document.body.classList.remove('hide-bottom-nav');
+  }, [showCollectionModal]);
   const [collectionSelectedDate, setCollectionSelectedDate] = useState("");
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -908,7 +917,6 @@ export default function DashboardPage() {
     setShowCollectionModal(true);
     setCollectionSelectedDate(todayStr);
     setCollectionLoading(true);
-    document.body.classList.add('hide-bottom-nav');
     try {
       const [booksSnap, questsSnap] = await Promise.all([
         getDocs(collection(db, 'users', user.uid, 'book_playlist')),
@@ -4139,7 +4147,7 @@ export default function DashboardPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-              onClick={() => { setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav'); }}
+              onClick={() => setShowCollectionModal(false)}
             >
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
               <motion.div
@@ -4157,7 +4165,7 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
                     <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
                   </div>
-                  <button onClick={() => { setShowCollectionModal(false); document.body.classList.remove('hide-bottom-nav'); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
+                  <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
                 </div>
 
                 {/* Content */}
