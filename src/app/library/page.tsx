@@ -267,7 +267,12 @@ export default function PremiumLibraryPage() {
 
                       <div className="flex-1">
                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 block ${theme.color}`}>
-                          {article.category} • {/^\d+$/.test(article.readTime) ? `${article.readTime} นาที` : article.readTime}
+                          {article.category} • {(() => {
+                            const t = article.readTime?.trim() || '';
+                            const m = t.match(/^(\d+)/);
+                            if (m && !t.includes('นาที')) return `${m[1]} นาที`;
+                            return t;
+                          })()}
                         </span>
                         <h2 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-amber-400 transition-colors line-clamp-2">
                           {article.title}
