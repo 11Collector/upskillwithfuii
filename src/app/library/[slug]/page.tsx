@@ -138,11 +138,22 @@ export default function ArticleDetail() {
 
     try {
       const userRef = doc(db, "users", activeUser.uid);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() : {};
+      
+      const oldXP = userData.totalXP || 0;
+      const newXP = oldXP + 5;
+      const oldLevel = Math.floor(oldXP / 100) + 1;
+      const newLevel = Math.floor(newXP / 100) + 1;
 
       await setDoc(userRef, {
         totalXP: increment(5),
         readArticles: arrayUnion(articleSlug)
       }, { merge: true });
+
+      if (newLevel > oldLevel) {
+        sessionStorage.setItem('pendingLevelUp', String(newLevel));
+      }
 
       setIsClaimedSuccess(true);
       setXpClaimed(true);
@@ -166,10 +177,21 @@ export default function ArticleDetail() {
       // auto-claim XP ทันทีหลัง login
       const userRef = doc(db, "users", loggedInUser.uid);
       const userSnap = await getDoc(userRef);
-      const alreadyClaimed = userSnap.exists() && userSnap.data().readArticles?.includes(articleSlug);
+      const userData = userSnap.exists() ? userSnap.data() : {};
+      const alreadyClaimed = userSnap.exists() && userData.readArticles?.includes(articleSlug);
       if (!alreadyClaimed) {
         setIsClaiming(true);
+        const oldXP = userData.totalXP || 0;
+        const newXP = oldXP + 5;
+        const oldLevel = Math.floor(oldXP / 100) + 1;
+        const newLevel = Math.floor(newXP / 100) + 1;
+
         await setDoc(userRef, { totalXP: increment(5), readArticles: arrayUnion(articleSlug) }, { merge: true });
+        
+        if (newLevel > oldLevel) {
+          sessionStorage.setItem('pendingLevelUp', String(newLevel));
+        }
+
         setIsClaimedSuccess(true);
         setXpClaimed(true);
         setIsClaiming(false);
@@ -283,7 +305,7 @@ export default function ArticleDetail() {
               <Calendar size={14} className="text-amber-500/40" /> <span>{article.date}</span>
             </div>
             <div className="flex items-center gap-2.5">
-              <Clock size={14} className="text-amber-500/40" /> <span>{article.readTime}</span>
+              <Clock size={14} className="text-amber-500/40" /> <span>{(() => { const t = article.readTime?.trim() || ''; const m = t.match(/^(\d+)/); return (m && !t.includes('นาที')) ? `${m[1]} นาที` : t; })()}</span>
             </div>
             <div className="flex items-center gap-2.5 text-slate-300">
               <User size={14} className="text-amber-500/40" /> <span>By Fuii</span>
