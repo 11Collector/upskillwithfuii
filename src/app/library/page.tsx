@@ -267,7 +267,7 @@ export default function PremiumLibraryPage() {
 
                       <div className="flex-1">
                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 block ${theme.color}`}>
-                          {article.category} • {article.readTime}
+                          {article.category} • {/^\d+$/.test(article.readTime) ? `${article.readTime} นาที` : article.readTime}
                         </span>
                         <h2 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-amber-400 transition-colors line-clamp-2">
                           {article.title}
