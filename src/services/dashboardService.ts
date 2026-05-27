@@ -100,6 +100,13 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
     quoteData = quoteSnap.docs[0].data();
   }
 
+  // Ghost in You — เก็บไว้ใน users/{uid}.lastGhostResult + lastGhostResultFull
+  const _ghostFull = userDocSnap.exists() ? (userDocSnap.data() as any).lastGhostResultFull : null;
+  const _ghostPrimary = userDocSnap.exists() ? (userDocSnap.data() as any).lastGhostResult : null;
+  const ghostResultData = _ghostPrimary
+    ? { primary: _ghostPrimary, secondary: _ghostFull?.secondary ?? null }
+    : null;
+
   // --- จัดการข้อมูลสถิติรายสัปดาห์ ---
   let thisWeekData = null;
   let prevWeekData = null;
@@ -121,6 +128,7 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
     discData,
     moneyData,
     librarySoulData,
+    ghostResultData,
     quoteData,
     hasSoulGuide: !!(userData?.hasSoulGuide),
     thisWeekData,

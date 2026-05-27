@@ -11,6 +11,7 @@ const ChatSchema = z.object({
     lastMoney: z.unknown().optional(),
     lastLibrarySoul: z.unknown().optional(),
     lastWheel: z.unknown().optional(),
+    lastGhostResult: z.unknown().optional(),
     lastMood: z.string().optional(),
     lastQuote: z.string().optional(),
     lastQuoteWords: z.unknown().optional(),
@@ -90,12 +91,23 @@ export async function POST(req: Request) {
 - MID_RISK_LOW_DISC (สายเปย์ตามฟีล): ใช้จ่ายตามอารมณ์ → ชวนตั้ง system ง่ายๆ ไม่ซับซ้อน
 - LOW_RISK_LOW_DISC (สายเดือนชนเดือน): เงินตึง ไม่มีเผื่อ → ให้ความเข้าใจก่อน แล้วค่อย step เล็กๆ
 
+คู่มือ Ghost in You (ใช้เข้าใจความกลัวลึกๆ ของผู้ใช้ ห้ามพูดถึงตรงๆ ว่าเขาเป็นผีอะไร):
+- kaonashi: People-Pleaser → กลัวโดนปฏิเสธ ปฏิเสธคนอื่นไม่เป็น → ช่วยตั้ง boundary อย่างนุ่มนวล ไม่ push ให้ทำสิ่งที่ขัดใจคน
+- vampire: Perfectionist → ดองงาน กลัวไม่พร้อม ไม่กล้า start → ชวน start small ก่อน เน้นว่าไม่ต้องสมบูรณ์แบบ
+- mummy: Social Anxiety → แคร์สายตาคนอื่นมาก กลัวถูกตัดสิน → validate ความรู้สึกก่อนเสมอ ไม่ judge
+- kasa: Overthinking → คิดวนซ้ำ ติด Worst-Case Scenario → ช่วยมองสถานการณ์จริง ลด catastrophizing
+- kongkoi: FOMO → กลัวโตไม่ทัน กลัวตกขบวน → ช่วย focus ที่ progress ตัวเอง ไม่เปรียบกับคนอื่น
+- headless: Strong Mask → แบกทุกอย่างคนเดียว ไม่ยอมแสดงว่าอ่อนแอ → เปิดพื้นที่ให้ admit ว่าไม่โอเคได้
+- pixel: Imposter Syndrome → ด้อยค่าความสำเร็จตัวเอง รู้สึกไม่คู่ควร → reinforce ความสำเร็จที่ผ่านมา ให้น้ำหนักกับ evidence จริง
+- guardian: Comfort Zone → กลัวเปลี่ยนแปลง ยึดติดความปลอดภัย → ค่อยๆ normalize ความเสี่ยงเล็กๆ ไม่บีบให้เปลี่ยนเร็ว
+
 ข้อมูลประกอบการวิเคราะห์ (Secret Context - สำหรับคุณใช้ภายในเท่านั้น ห้ามพูดออกมา):
 - อารมณ์ล่าสุด: ${userData.lastMood || 'ปกติ'}
 - คำคมที่เพิ่งได้: "${userData.lastQuote || 'ไม่มี'}"
 - ข้อมูล DISC: ${JSON.stringify(userData.lastDisc || 'ไม่มี')}
 - ข้อมูลการเงิน: ${JSON.stringify(userData.lastMoney || 'ไม่มี')}
 - ข้อมูล Library Soul (Reading Soul Type): ${JSON.stringify(userData.lastLibrarySoul || 'ไม่มี')}
+- ผลแบบประเมิน Ghost in You (ความกลัวลึกๆ): ${(userData.lastGhostResult as any)?.primary || 'ไม่มี'}
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 
 คำแนะนำในการสนทนา:

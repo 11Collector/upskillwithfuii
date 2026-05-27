@@ -5,12 +5,13 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
 import React from 'react'
 import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
+import { ghostResults } from "@/data/ghostResults";
 
 import { MONEY_DATA, DISC_DATA, QUEST_POOL, categoryNames } from "@/data/quests";
 import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA } from "@/data/constants";
@@ -142,6 +143,7 @@ export default function DashboardPage() {
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
   const [lastLibrarySoul, setLastLibrarySoul] = useState<any>(null);
+  const [lastGhostResult, setLastGhostResult] = useState<any>(null);
   const [hasSoulGuide, setHasSoulGuide] = useState(false);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
 
@@ -226,6 +228,7 @@ export default function DashboardPage() {
       if (data.moneyData) setLastMoney(data.moneyData);
       if (data.librarySoulData) setLastLibrarySoul(data.librarySoulData);
       if (data.quoteData) setLastQuote(data.quoteData);
+      if ((data as any).ghostResultData) setLastGhostResult((data as any).ghostResultData);
       setHasSoulGuide(data.hasSoulGuide);
 
       let thisWeekTotal = 0;
@@ -314,6 +317,10 @@ export default function DashboardPage() {
         if (data.librarySoulData && !userData.hasLibrarySoulXP) {
           xpToClaim += 50;
           xpUpdates.hasLibrarySoulXP = true;
+        }
+        if ((data as any).ghostResultData && !userData.hasGhostXP) {
+          xpToClaim += 50;
+          xpUpdates.hasGhostXP = true;
         }
 
         if (xpToClaim > 0) {
@@ -1068,6 +1075,82 @@ export default function DashboardPage() {
       </div>
     );
     setInfoModal({ isOpen: true, title: "วิเคราะห์จิตวิญญาณนักอ่าน", content });
+  };
+
+  const openGhostInfo = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!lastGhostResult) return;
+    const ghost = ghostResults[lastGhostResult.primary as keyof typeof ghostResults];
+    if (!ghost) return;
+
+    const content = (
+      <div className="space-y-5 text-left -mt-2">
+        <div className="relative p-6 rounded-[2.5rem] bg-zinc-950 border border-red-900/40 overflow-hidden shadow-sm">
+          <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
+          <div className="absolute right-[-10px] bottom-[-20px] text-8xl opacity-10 pointer-events-none">{ghost.emoji}</div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900" />
+
+          <div className="relative z-10">
+            <div className="flex justify-between items-start gap-3 mb-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-red-900/40 bg-red-950/50 text-red-400">
+                <Ghost size={14} />
+                <span className="text-[11px] font-black uppercase tracking-widest">{ghost.fearLabel}</span>
+              </div>
+              <div className="w-16 h-16 shrink-0">
+                <img src={`/ghosts/${ghost.id}.png`} alt={ghost.name} className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(220,38,38,0.5)]" />
+              </div>
+            </div>
+
+            <h4 className="font-black text-2xl text-white mb-1">{ghost.name}</h4>
+            <p className="text-[11px] text-red-500 font-black uppercase tracking-widest mb-4">"{ghost.tagline}"</p>
+            <p className="text-[13px] text-zinc-400 leading-relaxed mb-5">{ghost.story}</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {ghost.stats.map((s) => (
+                <div key={s.label} className="bg-black/40 p-3 rounded-2xl border border-white/5">
+                  <div className="flex justify-between text-[10px] font-bold text-zinc-600 mb-1">
+                    <span>{s.label}</span><span className="text-red-700">{s.value}%</span>
+                  </div>
+                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500" style={{ width: `${s.value}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
+          const sec = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
+          return (
+            <div className="flex items-center gap-4 px-5 py-4 rounded-[2rem] bg-zinc-900 border border-zinc-800">
+              <img src={`/ghosts/${sec.id}.png`} alt={sec.name} className="w-12 h-12 object-contain opacity-80 shrink-0" />
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">ตัวตนรอง</span>
+                <span className="text-[15px] font-black text-white">{sec.name}</span>
+                <span className="text-[10px] font-bold text-red-700/70 uppercase tracking-wide">{sec.fearLabel}</span>
+              </div>
+            </div>
+          );
+        })()}
+
+        <div className="bg-red-950/30 border border-red-900/40 text-white p-6 rounded-[2rem] relative overflow-hidden">
+          <div className="flex items-center gap-2 text-red-400 font-black text-xs mb-3 uppercase tracking-widest">
+            <Sparkles size={14} /> วิธีฮีลตัวเอง
+          </div>
+          <h5 className="font-black text-base text-white mb-3">{ghost.heal.title}</h5>
+          <ul className="space-y-2">
+            {ghost.heal.steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-red-100/70 leading-relaxed">
+                <span className="text-red-500 font-black shrink-0">{i + 1}.</span> {step}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 pt-4 border-t border-red-900/30 text-[11px] text-red-400/60 italic">"{ghost.affirmation}"</div>
+        </div>
+      </div>
+    );
+    setInfoModal({ isOpen: true, title: `วิเคราะห์ผี: ${ghost.name}`, content });
   };
 
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";
@@ -1858,6 +1941,7 @@ export default function DashboardPage() {
   if (!lastDisc) missingAssessments.push("DISC");
   if (!lastMoney) missingAssessments.push("Money Avatar");
   if (!lastLibrarySoul) missingAssessments.push("Library of Souls");
+  if (!lastGhostResult) missingAssessments.push("Ghost in You");
 
   const quoteText = lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปกดสุ่ม 'คมสัดสัด' ดูสิ!";
 
@@ -2115,6 +2199,9 @@ export default function DashboardPage() {
             { done: !!lastLibrarySoul, path: "/tools/library-of-souls", label: "Library of Souls", desc: "ค้นพบสไตล์การเรียนรู้ของคุณ",        xp: 50,
               icon: <BookOpen size={22} />,
               gradient: "from-emerald-600 to-teal-500", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400" },
+            { done: !!lastGhostResult, path: "/tools/ghost-in-you",     label: "Ghost in You",     desc: "ผีอะไรสิงคุณอยู่? สำรวจความกลัวลึกๆ",  xp: 50,
+              icon: <Ghost size={22} />,
+              gradient: "from-purple-600 to-violet-600", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
             { done: !!lastQuote,       path: "/tools/khomsatsat",       label: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจด้วย AI",              xp: 10,
               icon: <Quote size={22} />,
               gradient: "from-purple-600 to-fuchsia-500", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
@@ -2151,7 +2238,7 @@ export default function DashboardPage() {
                     <p className="text-slate-400 text-[10px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/6</span>
+                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/{steps.length - 1}</span>
                     <Link
                       href={next.path}
                       onClick={() => {
@@ -2173,7 +2260,7 @@ export default function DashboardPage() {
                   {steps.map((step, i) => {
                     const isNext = step === next;
                     const isDone = step.done;
-                    const shortLabels = ["Wheel", "DISC", "Money", "Library", "คมสัด", "AI"];
+                    const shortLabels = ["Wheel", "DISC", "Money", "Library", "Ghost", "คมสัด", "AI"];
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
                         <div className={`h-1 w-full rounded-full transition-all duration-500 ${
@@ -3733,12 +3820,119 @@ export default function DashboardPage() {
                     </div>
                   </motion.div>
                 </Link>
+
+                {/* 👻 5. Ghost in You */}
+                <Link href="/tools/ghost-in-you" className="group block h-full relative">
+                  {lastGhostResult && (
+                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGhostInfo(e); }}
+                      className="absolute top-8 right-8 z-20 p-2.5 text-zinc-500 hover:text-red-400 hover:bg-red-950/60 rounded-full transition-all bg-zinc-900/80 backdrop-blur-sm border border-zinc-800">
+                      <Info size={18} />
+                    </button>
+                  )}
+                  {!lastGhostResult && (
+                    <motion.div
+                      initial={{ scale: 0, rotate: 10 }}
+                      animate={{ scale: 1, rotate: -5 }}
+                      className="absolute top-8 right-8 bg-gradient-to-r from-red-700 to-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-red-950 flex items-center gap-1 z-30"
+                    >
+                      <Zap size={10} className="fill-white" /> +50 XP
+                    </motion.div>
+                  )}
+                  <motion.div
+                    whileHover={{ y: -6 }}
+                    className="h-full bg-zinc-950 p-8 rounded-[3rem] border border-zinc-800/80 flex flex-col items-center text-center transition-all duration-500 hover:shadow-[0_20px_60px_rgba(220,38,38,0.15)] hover:border-red-900/50 relative overflow-hidden group"
+                  >
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-900 via-red-500 to-red-900 transition-all duration-500 group-hover:h-2 z-0" />
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-red-900/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:bg-red-900/20 transition-colors duration-700 z-0" />
+
+                    <div className="relative z-10 flex flex-col items-center h-full w-full">
+                      {lastGhostResult ? (() => {
+                        const ghost = ghostResults[lastGhostResult.primary as keyof typeof ghostResults];
+                        if (!ghost) return null;
+                        return (
+                          <>
+                            <div className="flex flex-col items-center mb-8">
+                              <div className="relative mb-6 mt-2">
+                                <div className="absolute inset-0 bg-red-600/20 blur-3xl" />
+                                <div className="relative w-24 h-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
+                                  <img
+                                    src={`/ghosts/${ghost.id}.png`}
+                                    alt={ghost.name}
+                                    className="w-[135%] h-[135%] object-contain drop-shadow-[0_0_16px_rgba(220,38,38,0.4)]"
+                                  />
+                                </div>
+                              </div>
+
+                              <h3 className="font-bold text-zinc-600 text-[10px] uppercase tracking-[0.3em] mb-2.5">GHOST IN YOU</h3>
+
+                              <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-white group-hover:text-red-400 transition-colors">
+                                {ghost.name}
+                              </h2>
+
+                              <p className="text-[10px] font-black text-red-600/80 uppercase tracking-wide mb-4 truncate w-full px-2">
+                                {ghost.fearLabel}
+                              </p>
+
+                              <div className="inline-flex items-center bg-red-950/50 text-red-400 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-red-900/40">
+                                {ghost.nameEn}
+                              </div>
+
+                              <p className="text-[14px] font-medium text-zinc-500 mb-5 px-2 leading-loose italic w-full">
+                                "{ghost.tagline}"
+                              </p>
+
+                              {/* ตัวตนรอง */}
+                              {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
+                                const secGhost = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
+                                return (
+                                  <div className="mb-6 py-2.5 px-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center gap-3 w-full">
+                                    <img src={`/ghosts/${secGhost.id}.png`} alt={secGhost.name} className="w-8 h-8 object-contain opacity-70 shrink-0" />
+                                    <div className="flex flex-col items-start leading-none gap-1">
+                                      <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">ตัวตนรอง</span>
+                                      <span className="text-[12px] font-bold text-zinc-400">{secGhost.name}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+
+                            <div className="w-full px-4 mt-auto">
+                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-zinc-800 text-zinc-500 text-[12px] font-black uppercase tracking-widest transition-all hover:border-red-900/60 hover:text-red-400 active:scale-95">
+                                <RefreshCw size={14} />
+                                <span>ประเมินใหม่</span>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })() : (
+                        <div className="flex flex-col items-center justify-between h-full w-full py-2">
+                          <div className="flex flex-col items-center justify-center pt-8 mb-8">
+                            <div className="relative mb-6">
+                              <div className="absolute inset-0 bg-red-900/20 blur-3xl" />
+                              <div className="relative w-24 h-24 rounded-full bg-zinc-900 text-zinc-600 flex items-center justify-center border border-zinc-800 group-hover:border-red-900/60 group-hover:text-red-500 transition-all">
+                                <Ghost size={36} />
+                              </div>
+                            </div>
+                            <h3 className="text-2xl font-black text-white mb-2">Ghost in You</h3>
+                            <p className="text-zinc-500 text-sm font-medium">ผีอะไรสิงคุณอยู่?</p>
+                          </div>
+                          <div className="w-full px-4 mt-auto">
+                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-red-800 to-red-600 text-white text-[13px] font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(220,38,38,0.35)] group-hover:scale-[1.02] transition-all active:scale-95">
+                              <Sparkles size={16} className="text-white/80" />
+                              <span>สำรวจความกลัวลึกๆ (+50 XP)</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </Link>
               </>
             )}
 
             {(activeTab === "home" || activeTab === "resources") && (
               <>
-                {/* 🌟 5. Deep Work Mode - Premium Monochrome Style */}
+                {/* 🌟 6. Deep Work Mode - Premium Monochrome Style */}
                 <Link
                   href="/tools/focus-room"
                   className="group block h-full relative cursor-pointer"
