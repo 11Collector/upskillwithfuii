@@ -11,7 +11,7 @@ import { ghostQuestions, type GhostId } from "@/data/ghostScenarios";
 import { ghostResults } from "@/data/ghostResults";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
-import { doc, setDoc, serverTimestamp, increment, getDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, increment, getDoc, updateDoc } from "firebase/firestore";
 
 // ─── calc ───
 function calcResult(answers: Record<number, number>): { primary: GhostId; secondary: GhostId; scores: Record<GhostId, number> } {
@@ -55,6 +55,7 @@ export default function GhostInYouPage() {
   const [user, setUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [googleSaving, setGoogleSaving] = useState(false);
+  const [communityStats, setCommunityStats] = useState<Record<string, number> | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,6 +78,9 @@ export default function GhostInYouPage() {
       await new Promise((r) => setTimeout(r, 2500));
       const calc = calcResult(newAnswers);
       setResult(calc);
+      // increment community counter (ทุกคนที่เล่น ไม่ว่า login หรือไม่)
+      await incrementCommunityStats(calc.primary);
+      await fetchCommunityStats();
       if (user) {
         try {
           setSaving(true);
@@ -114,7 +118,25 @@ export default function GhostInYouPage() {
     } catch (e) { console.error(e); }
   };
 
-  const restart = () => { setPhase("intro"); setCurrentIdx(0); setAnswers({}); setResult(null); };
+  const incrementCommunityStats = async (primaryId: GhostId) => {
+    try {
+      const statsRef = doc(db, "stats", "ghost_results");
+      await setDoc(statsRef, {
+        [primaryId]: increment(1),
+        total: increment(1),
+      }, { merge: true });
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchCommunityStats = async () => {
+    try {
+      const statsRef = doc(db, "stats", "ghost_results");
+      const snap = await getDoc(statsRef);
+      if (snap.exists()) setCommunityStats(snap.data() as Record<string, number>);
+    } catch (e) { console.error(e); }
+  };
+
+  const restart = () => { setPhase("intro"); setCurrentIdx(0); setAnswers({}); setResult(null); setCommunityStats(null); };
 
   const handleGoogleSave = async () => {
     if (!result) return;
@@ -349,7 +371,7 @@ export default function GhostInYouPage() {
   //  RESULT
   // ══════════════════════════════════════════════════════
   if (phase === "result" && primaryData && secondaryData && result) {
-    const maxScore = Math.max(...Object.values(result.scores));
+    const communityTotal = communityStats?.total ?? 0;
 
     return (
       <div className="min-h-screen bg-black text-white px-4 py-10 overflow-x-hidden">
@@ -475,16 +497,18 @@ export default function GhostInYouPage() {
 
           {/* ─── Score breakdown ─── */}
           <div className="bg-zinc-950 rounded-[2.5rem] border border-red-900/30 p-7 mb-5">
-            <h2 className="text-sm font-black text-white mb-5 flex items-center gap-2">
+            <h2 className="text-sm font-black text-white mb-1 flex items-center gap-2">
               <span className="text-red-500">💀</span> ผลสำรวจสมาคมผีทั้งหมด
             </h2>
+            <p className="text-[10px] text-zinc-600 mb-5">จากคนที่ลองทั้งหมด {communityTotal.toLocaleString()} คน</p>
             <div className="grid grid-cols-2 gap-3">
-              {(Object.entries(result.scores) as [GhostId, number][])
-                .sort((a, b) => b[1] - a[1])
-                .map(([id, score]) => {
+              {[...GHOST_IDS]
+                .sort((a, b) => (communityStats?.[b] ?? 0) - (communityStats?.[a] ?? 0))
+                .map((id) => {
                   const g = ghostResults[id];
                   if (!g) return null;
-                  const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+                  const count = communityStats?.[id] ?? 0;
+                  const pct = communityTotal > 0 ? Math.round((count / communityTotal) * 100) : 0;
                   const isPrimary = id === result.primary;
                   return (
                     <div
