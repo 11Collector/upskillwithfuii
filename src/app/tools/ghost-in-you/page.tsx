@@ -294,30 +294,26 @@ export default function GhostInYouPage() {
                 <p className="text-[10px] text-zinc-600 mb-5">
                   จากคนที่ลองทั้งหมด {(communityStats?.total ?? 0).toLocaleString()} คน
                 </p>
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   {[...GHOST_IDS]
                     .sort((a, b) => (communityStats?.[b] ?? 0) - (communityStats?.[a] ?? 0))
-                    .map((id) => {
+                    .map((id, i) => {
                       const g = ghostResults[id];
                       const count = communityStats?.[id] ?? 0;
                       const total = communityStats?.total ?? 0;
                       const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                       return (
-                        <div key={id} className="flex items-center gap-3">
-                          <img src={`/ghosts/${id}.png`} alt={g.name} className="w-9 h-9 object-contain shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-[11px] font-black text-zinc-300 truncate">{g.name}</span>
-                              <span className="text-[11px] font-black text-red-500 ml-2 shrink-0">{pct}%</span>
-                            </div>
-                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${pct}%` }}
-                                transition={{ duration: 0.6, delay: 0.1 }}
-                                className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500"
-                              />
-                            </div>
+                        <div key={id} className="bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col items-center text-center gap-1">
+                          <img src={`/ghosts/${id}.png`} alt={g.name} className="w-12 h-12 object-contain" />
+                          <span className="text-[10px] font-black text-zinc-300 leading-tight truncate w-full">{g.name}</span>
+                          <span className="text-lg font-black text-red-500">{pct}%</span>
+                          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 0.6, delay: i * 0.05 }}
+                              className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500"
+                            />
                           </div>
                         </div>
                       );
