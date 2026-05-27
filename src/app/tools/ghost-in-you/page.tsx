@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RefreshCcw, Share2, Sparkles, LayoutDashboard, ChevronRight, Skull } from "lucide-react";
+import { ArrowLeft, RefreshCcw, Share2, Sparkles, LayoutDashboard, ChevronRight, Skull, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
 import Image from "next/image";
@@ -45,6 +45,14 @@ function SpookyBg() {
   );
 }
 
+// ─── fetch community stats ───
+async function loadCommunityStats(): Promise<Record<string, number> | null> {
+  try {
+    const snap = await getDoc(doc(db, "stats", "ghost_results"));
+    return snap.exists() ? (snap.data() as Record<string, number>) : null;
+  } catch { return null; }
+}
+
 // ─── page ───
 export default function GhostInYouPage() {
   const router = useRouter();
@@ -56,10 +64,12 @@ export default function GhostInYouPage() {
   const [saving, setSaving] = useState(false);
   const [googleSaving, setGoogleSaving] = useState(false);
   const [communityStats, setCommunityStats] = useState<Record<string, number> | null>(null);
+  const [showStatsModal, setShowStatsModal] = useState(false);
   const resultCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    loadCommunityStats().then(setCommunityStats);
     return () => unsub();
   }, []);
 
@@ -129,11 +139,8 @@ export default function GhostInYouPage() {
   };
 
   const fetchCommunityStats = async () => {
-    try {
-      const statsRef = doc(db, "stats", "ghost_results");
-      const snap = await getDoc(statsRef);
-      if (snap.exists()) setCommunityStats(snap.data() as Record<string, number>);
-    } catch (e) { console.error(e); }
+    const data = await loadCommunityStats();
+    if (data) setCommunityStats(data);
   };
 
   const restart = () => { setPhase("intro"); setCurrentIdx(0); setAnswers({}); setResult(null); setCommunityStats(null); };
@@ -238,12 +245,84 @@ export default function GhostInYouPage() {
           </motion.button>
 
           <button
+            onClick={() => setShowStatsModal(true)}
+            className="mt-4 text-zinc-600 text-xs font-semibold hover:text-red-400 transition-colors"
+          >
+            ดูสถิติสมาคมผี →
+          </button>
+
+          <button
             onClick={() => router.push("/dashboard")}
-            className="mt-6 text-zinc-700 text-xs font-medium hover:text-zinc-400 transition-colors"
+            className="mt-3 text-zinc-700 text-xs font-medium hover:text-zinc-400 transition-colors"
           >
             ← กลับ Dashboard
           </button>
         </motion.div>
+
+        {/* ── Stats Modal ── */}
+        <AnimatePresence>
+          {showStatsModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-6 pt-16"
+              onClick={() => setShowStatsModal(false)}
+            >
+              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+              <motion.div
+                initial={{ y: 60, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 60, opacity: 0 }}
+                transition={{ type: "spring", damping: 25 }}
+                className="relative w-full max-w-md bg-zinc-950 border border-red-900/40 rounded-[2.5rem] p-7 max-h-[80vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900 rounded-t-[2.5rem]" />
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <Skull size={16} className="text-red-500" /> สถิติสมาคมผี
+                  </h3>
+                  <button onClick={() => setShowStatsModal(false)} className="text-zinc-600 hover:text-white transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+                <p className="text-[10px] text-zinc-600 mb-5">
+                  จากคนที่ลองทั้งหมด {(communityStats?.total ?? 0).toLocaleString()} คน
+                </p>
+                <div className="space-y-3">
+                  {[...GHOST_IDS]
+                    .sort((a, b) => (communityStats?.[b] ?? 0) - (communityStats?.[a] ?? 0))
+                    .map((id) => {
+                      const g = ghostResults[id];
+                      const count = communityStats?.[id] ?? 0;
+                      const total = communityStats?.total ?? 0;
+                      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                      return (
+                        <div key={id} className="flex items-center gap-3">
+                          <img src={`/ghosts/${id}.png`} alt={g.name} className="w-9 h-9 object-contain shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-[11px] font-black text-zinc-300 truncate">{g.name}</span>
+                              <span className="text-[11px] font-black text-red-500 ml-2 shrink-0">{pct}%</span>
+                            </div>
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ duration: 0.6, delay: 0.1 }}
+                                className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
