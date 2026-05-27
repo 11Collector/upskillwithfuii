@@ -266,16 +266,16 @@ export default function GhostInYouPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-6 pt-16"
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
               onClick={() => setShowStatsModal(false)}
             >
               <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
               <motion.div
-                initial={{ y: 60, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 60, opacity: 0 }}
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.92, opacity: 0 }}
                 transition={{ type: "spring", damping: 25 }}
-                className="relative w-full max-w-md bg-zinc-950 border border-red-900/40 rounded-[2.5rem] p-7 max-h-[80vh] overflow-y-auto"
+                className="relative w-full max-w-md bg-zinc-950 border border-red-900/40 rounded-[2.5rem] p-7 max-h-[75vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900 rounded-t-[2.5rem]" />
