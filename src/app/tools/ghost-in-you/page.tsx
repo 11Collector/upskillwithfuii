@@ -226,7 +226,11 @@ export default function GhostInYouPage() {
             <span className="text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.5)]">สิงคุณอยู่?</span>
           </h1>
 
-          <p className="text-zinc-400 text-sm leading-relaxed mb-2 font-medium">
+          <p className="text-zinc-300 text-sm font-bold mb-1">
+            สำรวจเงาในใจ · ค้นพบประเภทความกลัวที่ขับเคลื่อนชีวิตคุณ
+          </p>
+
+          <p className="text-zinc-500 text-xs leading-relaxed mb-2">
             จากแก๊งผี 8 ตัวนานาชาติ แต่ละตัวแทนความกลัวที่ซ่อนอยู่ในใจคนเรา<br />
             ตอบ 12 สถานการณ์จริงๆ แล้วดูว่าผีตัวไหนสิงคุณอยู่
           </p>
