@@ -223,8 +223,10 @@ export default function GhostInYouPage() {
             จากแก๊งผี 8 ตัวนานาชาติ แต่ละตัวแทนความกลัวที่ซ่อนอยู่ในใจคนเรา<br />
             ตอบ 12 สถานการณ์จริงๆ แล้วดูว่าผีตัวไหนสิงคุณอยู่
           </p>
-          <p className="text-zinc-600 text-xs font-medium mb-1">ใช้เวลาประมาณ 3-5 นาที</p>
-          <p className="text-red-500/70 text-xs font-semibold mb-10 tracking-wide">ตอบตามสัญชาตญาณแรก ไม่ต้องคิดนาน</p>
+          <div className="mb-10 space-y-1">
+            <p className="text-zinc-600 text-xs font-medium">ใช้เวลาประมาณ 3-5 นาที</p>
+            <p className="text-red-500/70 text-xs font-semibold tracking-wide">ตอบตามสัญชาตญาณแรก ไม่ต้องคิดนาน</p>
+          </div>
 
           <motion.button
             whileHover={{ scale: 1.03, boxShadow: "0 0 50px rgba(220,38,38,0.5)" }}
