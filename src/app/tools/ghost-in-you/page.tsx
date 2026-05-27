@@ -204,13 +204,11 @@ export default function GhostInYouPage() {
                 key={id}
                 animate={{ y: [0, -10, 0], opacity: [0.7, 1, 0.7] }}
                 transition={{ duration: 2.2, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
-                className="w-9 h-9 relative"
               >
-                <Image
+                <img
                   src={`/ghosts/${id}.png`}
                   alt={id}
-                  fill
-                  className="object-contain drop-shadow-[0_0_8px_rgba(220,38,38,0.7)]"
+                  style={{ width: 36, height: 36, objectFit: "contain", filter: "drop-shadow(0 0 8px rgba(220,38,38,0.7))" }}
                 />
               </motion.div>
             ))}
