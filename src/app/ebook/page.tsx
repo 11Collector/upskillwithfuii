@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Download, CheckCircle, ChevronRight } from "lucide-react";
+import { Mail, Download, CheckCircle, ChevronRight, Users } from "lucide-react";
 import Image from "next/image";
 import { Sarabun } from "next/font/google";
 
@@ -28,6 +28,14 @@ export default function EbookPage() {
   const [email, setEmail]   = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [downloadCount, setDownloadCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/ebook-lead')
+      .then(r => r.json())
+      .then(d => setDownloadCount(d.count ?? null))
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,6 +93,19 @@ export default function EbookPage() {
           <p style={{ color: "#5a5a5a" }} className="text-sm leading-relaxed">
             41 บทความพัฒนาตัวเอง จากคนธรรมดาที่เริ่มต้นแม้ยังไม่พร้อม
           </p>
+
+          {downloadCount !== null && downloadCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold"
+              style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
+            >
+              <Users size={12} />
+              {downloadCount.toLocaleString()} คนดาวน์โหลดไปแล้ว
+            </motion.div>
+          )}
         </motion.div>
       </section>
 

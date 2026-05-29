@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function GET() {
+  try {
+    const snapshot = await adminDb.collection('ebook_leads').count().get();
+    return NextResponse.json({ count: snapshot.data().count });
+  } catch (err) {
+    console.error('[ebook-lead count]', err);
+    return NextResponse.json({ count: 0 });
+  }
+}
 
 const Schema = z.object({
   email: z.string().email(),
@@ -27,6 +40,32 @@ export async function POST(req: Request) {
         createdAt: FieldValue.serverTimestamp(),
       });
     }
+
+    // Send confirmation email (fire-and-forget — don't block response)
+    resend.emails.send({
+      from: 'ฟุ้ย <fuii@upskilleveryday.com>',
+      to: normalised,
+      subject: '📖 สร้างก่อนพร้อม — ดาวน์โหลด E-Book ได้เลยครับ',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#1a1a1a;">
+          <div style="height:4px;background:#7B1818;border-radius:2px;margin-bottom:32px;"></div>
+          <h2 style="margin:0 0 8px;font-size:20px;">ขอบคุณครับ! 🙏</h2>
+          <p style="color:#5a5a5a;margin:0 0 24px;line-height:1.6;">
+            กด Download ด้านล่างได้เลยนะครับ ไม่มีเงื่อนไขอะไรทั้งนั้น
+          </p>
+          <a href="https://upskillwithfuii.com/สร้างก่อนพร้อม-A5.pdf"
+             style="display:inline-block;background:#7B1818;color:#fff;text-decoration:none;
+                    padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;">
+            ดาวน์โหลด E-Book ฟรี
+          </a>
+          <p style="color:#aaa;font-size:12px;margin-top:32px;line-height:1.6;">
+            หวังว่าจะมีอย่างน้อยหนึ่งหน้าที่ทำให้คุณ "เอะใจ" ครับ 🙂<br/>
+            — ฟุ้ย · <a href="https://upskilleveryday.com" style="color:#7B1818;">upskilleveryday.com</a>
+          </p>
+          <div style="height:4px;background:#7B1818;border-radius:2px;margin-top:32px;"></div>
+        </div>
+      `,
+    }).catch(err => console.error('[resend]', err));
 
     return NextResponse.json({ ok: true });
   } catch (err) {
