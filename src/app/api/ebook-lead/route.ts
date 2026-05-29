@@ -53,7 +53,7 @@ export async function POST(req: Request) {
           <p style="color:#5a5a5a;margin:0 0 24px;line-height:1.6;">
             กด Download ด้านล่างได้เลยนะครับ ไม่มีเงื่อนไขอะไรทั้งนั้น
           </p>
-          <a href="https://upskillwithfuii.com/สร้างก่อนพร้อม-A5.pdf"
+          <a href="https://upskillwithfuii.com/%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1-A5.pdf"
              style="display:inline-block;background:#7B1818;color:#fff;text-decoration:none;
                     padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;">
             ดาวน์โหลด E-Book ฟรี
