@@ -41,8 +41,8 @@ export async function POST(req: Request) {
       });
     }
 
-    // Send confirmation email (fire-and-forget — don't block response)
-    resend.emails.send({
+    // Await so Vercel doesn't terminate the function before email is sent
+    const emailResult = await resend.emails.send({
       from: 'ฟุ้ย <fuii@upskilleveryday.com>',
       to: normalised,
       subject: '📖 สร้างก่อนพร้อม — ดาวน์โหลด E-Book ได้เลยครับ',
@@ -65,7 +65,8 @@ export async function POST(req: Request) {
           <div style="height:4px;background:#7B1818;border-radius:2px;margin-top:32px;"></div>
         </div>
       `,
-    }).catch(err => console.error('[resend]', err));
+    });
+    if (emailResult.error) console.error('[resend]', emailResult.error);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
