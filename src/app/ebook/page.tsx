@@ -191,29 +191,6 @@ export default function EbookPage() {
                 ))}
               </div>
 
-              {/* Author — desktop only */}
-              <div
-                className="hidden lg:block mt-8 rounded-2xl p-5 text-left"
-                style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}
-              >
-                <div className="text-xs font-extrabold tracking-widest uppercase mb-3" style={{ color: "#7B1818" }}>
-                  เกี่ยวกับผู้เขียน
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: "#3a3a3a" }}>
-                  <span className="font-extrabold" style={{ color: "#1a1a1a" }}>ฟุ้ย</span>{" "}
-                  — จบวิศวกรรมคอมพิวเตอร์จากจุฬาฯ เคยแข่งโปรแกรมโอลิมปิกระดับชาติ
-                  ผ่านงานด้านการตลาด และลองผิดลองถูกจนสร้าง Web App ด้วยตัวเองได้ แม้ไม่เคยทำมาก่อน
-                </p>
-                <a
-                  href="https://upskilleveryday.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex items-center gap-1 text-xs font-bold"
-                  style={{ color: "#7B1818" }}
-                >
-                  upskilleveryday.com <ChevronRight size={11} />
-                </a>
-              </div>
             </motion.div>
           </div>
 
@@ -277,10 +254,10 @@ export default function EbookPage() {
               </div>
             </div>
 
-            {/* Author — mobile only */}
+            {/* Author — below chapters on all screen sizes */}
             <div
-              className="lg:hidden mt-8 rounded-2xl p-6"
-              style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.08)" }}
+              className="mt-6 rounded-2xl p-6"
+              style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}
             >
               <div className="text-xs font-extrabold tracking-widest uppercase mb-3" style={{ color: "#7B1818" }}>
                 เกี่ยวกับผู้เขียน
@@ -294,7 +271,7 @@ export default function EbookPage() {
                 href="https://upskilleveryday.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 flex items-center gap-1 text-xs font-bold"
+                className="mt-3 flex items-center gap-1 text-xs font-bold"
                 style={{ color: "#7B1818" }}
               >
                 upskilleveryday.com <ChevronRight size={11} />
