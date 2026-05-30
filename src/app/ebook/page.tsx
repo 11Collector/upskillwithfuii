@@ -64,7 +64,7 @@ export default function EbookPage() {
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           className="rounded-2xl p-8 text-center"
-          style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)" }}
+          style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)", boxShadow: "0 8px 32px rgba(123,24,24,0.08)" }}
         >
           <div className="text-3xl mb-3">🎉</div>
           <h2 className="text-lg font-extrabold mb-1">ขอบคุณครับ!</h2>
@@ -83,8 +83,8 @@ export default function EbookPage() {
         <motion.form
           key="form"
           onSubmit={handleSubmit}
-          className="rounded-2xl p-6 space-y-4"
-          style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)" }}
+          className="rounded-2xl p-6 lg:p-8 space-y-4"
+          style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)", boxShadow: "0 8px 32px rgba(123,24,24,0.08)" }}
         >
           <div className="text-center">
             <h2 className="text-base font-extrabold">ดาวน์โหลดฟรี</h2>
@@ -129,33 +129,33 @@ export default function EbookPage() {
       {/* Top bar */}
       <div style={{ height: 5, background: "#7B1818" }} />
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
 
         {/* ── Desktop: 2-col  Mobile: 1-col ── */}
-        <div className="lg:grid lg:grid-cols-5 lg:gap-16 lg:items-start">
+        <div className="lg:grid lg:grid-cols-5 lg:gap-20 lg:items-start">
 
           {/* ── LEFT COL (cover + info) ── */}
-          <div className="lg:col-span-2 flex flex-col items-center lg:items-start lg:sticky lg:top-12">
+          <div className="lg:col-span-2 flex flex-col items-center lg:items-center lg:sticky lg:top-16">
 
-            {/* Cover */}
+            {/* Cover with glow */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 rounded-xl overflow-hidden w-44 lg:w-56"
-              style={{ boxShadow: "0 16px 48px rgba(123,24,24,0.2)" }}
+              className="mb-8 rounded-2xl overflow-hidden w-44 lg:w-64"
+              style={{ boxShadow: "0 24px 64px rgba(123,24,24,0.25), 0 4px 16px rgba(123,24,24,0.1)" }}
             >
               <Image
                 src="/ebook-cover.png"
                 alt="สร้างก่อนพร้อม"
-                width={224}
-                height={316}
+                width={256}
+                height={362}
                 className="w-full h-auto"
               />
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="text-center lg:text-left"
+              className="text-center w-full"
             >
               <div
                 className="inline-block text-xs font-extrabold tracking-widest uppercase px-3 py-1 rounded-full mb-4"
@@ -163,11 +163,11 @@ export default function EbookPage() {
               >
                 Free E-Book
               </div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight mb-3">
+              <h1 className="text-3xl lg:text-3xl font-extrabold leading-tight mb-3">
                 สร้างก่อนพร้อม
               </h1>
               <p style={{ color: "#5a5a5a" }} className="text-sm leading-relaxed">
-                41 บทความพัฒนาตัวเอง จากคนธรรมดาที่เริ่มต้นแม้ยังไม่พร้อม
+                41 บทความพัฒนาตัวเอง<br className="hidden lg:block" /> จากคนธรรมดาที่เริ่มต้นแม้ยังไม่พร้อม
               </p>
 
               {downloadCount !== null && downloadCount > 0 && (
@@ -181,20 +181,20 @@ export default function EbookPage() {
                 </motion.div>
               )}
 
-              {/* Highlights — desktop only here */}
-              <div className="hidden lg:block mt-8 space-y-3">
+              {/* Highlights — desktop only */}
+              <div className="hidden lg:block mt-8 space-y-3 text-left">
                 {HIGHLIGHTS.map((h, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle size={15} style={{ color: "#7B1818", flexShrink: 0, marginTop: 2 }} />
+                    <CheckCircle size={14} style={{ color: "#7B1818", flexShrink: 0, marginTop: 3 }} />
                     <span className="text-sm" style={{ color: "#3a3a3a" }}>{h}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Author — desktop only here */}
+              {/* Author — desktop only */}
               <div
-                className="hidden lg:block mt-8 rounded-2xl p-5"
-                style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.08)" }}
+                className="hidden lg:block mt-8 rounded-2xl p-5 text-left"
+                style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}
               >
                 <div className="text-xs font-extrabold tracking-widest uppercase mb-3" style={{ color: "#7B1818" }}>
                   เกี่ยวกับผู้เขียน
@@ -218,7 +218,7 @@ export default function EbookPage() {
           </div>
 
           {/* ── RIGHT COL (form + chapters) ── */}
-          <div className="lg:col-span-3 mt-10 lg:mt-0">
+          <div className="lg:col-span-3 mt-10 lg:mt-2">
 
             {/* Highlights — mobile only */}
             <motion.div
@@ -261,7 +261,7 @@ export default function EbookPage() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + i * 0.06 }}
-                    className="rounded-xl px-5 py-4 flex items-center justify-between"
+                    className="rounded-xl px-5 py-4 flex items-center justify-between transition-shadow hover:shadow-md cursor-default"
                     style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.08)" }}
                   >
                     <div>
