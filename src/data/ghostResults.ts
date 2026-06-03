@@ -28,7 +28,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
   // ─── 1. คาโอนาชิ โหวต No ไม่เป็น ───
   kaonashi: {
     id: "kaonashi",
-    name: "คาโอนาชิ โหวต No ไม่เป็น",
+    name: "ไร้หน้า ไร้ขอบเขต",
     nameEn: "The No-Face Ghost",
     origin: "🇯🇵 ญี่ปุ่น",
     emoji: "👻",
@@ -65,7 +65,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
   // ─── 2. แวมไพร์ดราฟต์ไม่จบ ───
   vampire: {
     id: "vampire",
-    name: "แวมไพร์ดราฟต์ไม่จบ",
+    name: "เคาท์จอมดองงาน",
     nameEn: "The Perfectionist Vampire",
     origin: "🧛 โรมาเนีย / ฝรั่ง",
     emoji: "🧛",
@@ -102,7 +102,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
   // ─── 3. มัมมี่ขอนั่งมุม ───
   mummy: {
     id: "mummy",
-    name: "มัมมี่ขอนั่งมุม",
+    name: "มัมมี่หวั่นสายตา",
     nameEn: "The Overthinking Mummy",
     origin: "🇪🇬 อียิปต์",
     emoji: "🤍",
@@ -139,7 +139,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
   // ─── 4. คาซ่า What-If ทุกอย่าง ───
   kasa: {
     id: "kasa",
-    name: "คาซ่า What-If ทุกอย่าง",
+    name: "ร่มสามตาจอมวิตก",
     nameEn: "The Paranoiac Umbrella Ghost",
     origin: "🇯🇵 ญี่ปุ่น",
     emoji: "☂️",
@@ -170,13 +170,13 @@ export const ghostResults: Record<GhostId, GhostResult> = {
     },
     affirmation: "ความคิดไม่ใช่ความจริง สมองคุณแค่กำลังทำงานหนักเกินไป",
     pairGhost: "guardian",
-    pairDesc: "คาซ่ากับผีเฝ้าโซฟาต่างหยุดนิ่งเพราะกลัว แต่คาซ่ากลัวอนาคต ผีเฝ้าโซฟากลัวการเปลี่ยน",
+    pairDesc: "คาซ่ากับผีเฝ้าของเดิมต่างหยุดนิ่งเพราะกลัว แต่คาซ่ากลัวอนาคต ผีเฝ้าของเดิมกลัวการเปลี่ยน",
   },
 
   // ─── 5. กองกอยสกรอลล์ไม่หยุด ───
   kongkoi: {
     id: "kongkoi",
-    name: "กองกอยสกรอลล์ไม่หยุด",
+    name: "กองกอยจอม FOMO",
     nameEn: "The FOMO Jiangshi",
     origin: "🇨🇳 จีน",
     emoji: "💨",
@@ -213,7 +213,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
   // ─── 6. หัวขาดจอมโอเค ───
   headless: {
     id: "headless",
-    name: "หัวขาดจอมโอเค",
+    name: "ผีจอมโอเค",
     nameEn: "The Headless Ghost",
     origin: "🌐 สากล",
     emoji: "🫀",
@@ -250,7 +250,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
   // ─── 7. พิกเซลคิดว่าพลาดเข้ามา ───
   pixel: {
     id: "pixel",
-    name: "พิกเซลคิดว่าพลาดเข้ามา",
+    name: "พิกเซลจอมด้อยค่า",
     nameEn: "The Imposter Ghost",
     origin: "🌐 โลกดิจิทัล",
     emoji: "🔍",
@@ -284,10 +284,10 @@ export const ghostResults: Record<GhostId, GhostResult> = {
     pairDesc: "พิกเซลกับแวมไพร์ดราฟต์ไม่จบต่างกลัวถูกมองว่าห่วย แต่พิกเซลกลัวถูกจับโป๊ะ แวมไพร์กลัวไม่สมบูรณ์แบบ",
   },
 
-  // ─── 8. ผีเฝ้าโซฟา ───
+  // ─── 8. ผีเฝ้าของเดิม ───
   guardian: {
     id: "guardian",
-    name: "ผีเฝ้าโซฟา",
+    name: "ผีเฝ้าของเดิม",
     nameEn: "The Safe-Zone Ghost",
     origin: "🌐 สากล",
     emoji: "🏺",
@@ -308,7 +308,7 @@ export const ghostResults: Record<GhostId, GhostResult> = {
     ],
     thaiStat: "งานวิจัยด้าน behavioral psychology พบว่าคนส่วนใหญ่ปฏิเสธโอกาสใหม่เพราะ Loss Aversion — กลัวเสียของที่มีอยู่มากกว่าอยากได้ของใหม่",
     heal: {
-      title: "วิธี Heal ผีเฝ้าโซฟาในตัวคุณ",
+      title: "วิธี Heal ผีเฝ้าของเดิมในตัวคุณ",
       steps: [
         "ทำ 'Micro-Risk' ทุกสัปดาห์ — ลองเรื่องใหม่ที่เล็กที่สุดเท่าที่เป็นไปได้ เช่น ลองร้านอาหารใหม่ หรือเส้นทางเดินใหม่",
         "ถามตัวเองว่า '5 ปีข้างหน้า จะเสียใจกับการ ลอง หรือการ ไม่ลอง มากกว่ากัน?'",
@@ -318,6 +318,6 @@ export const ghostResults: Record<GhostId, GhostResult> = {
     },
     affirmation: "ชีวิตที่ปลอดภัยที่สุด ไม่ใช่ชีวิตที่มีความหมายที่สุดเสมอไป",
     pairGhost: "kasa",
-    pairDesc: "ผีเฝ้าโซฟากับคาซ่าต่างหยุดนิ่งเพราะกลัว แต่ผีเฝ้าโซฟากลัวการเปลี่ยน คาซ่ากลัวสิ่งที่ยังมาไม่ถึง",
+    pairDesc: "ผีเฝ้าของเดิมกับคาซ่าต่างหยุดนิ่งเพราะกลัว แต่ผีเฝ้าของเดิมกลัวการเปลี่ยน คาซ่ากลัวสิ่งที่ยังมาไม่ถึง",
   },
 };
