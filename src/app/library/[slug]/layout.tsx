@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { mockArticles } from "@/constants/article";
+import { adminDb } from "@/lib/firebase-admin";
 
 const BASE_URL = "https://www.upskilleveryday.com";
 
@@ -30,7 +31,35 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const article = mockArticles.find((a) => a.slug === slug);
+  const staticArticle = mockArticles.find((a) => a.slug === slug);
+
+  // Firestore fallback for dynamic articles not in mockArticles
+  let article = staticArticle;
+  if (!article) {
+    try {
+      const snap = await adminDb
+        .collection("articles")
+        .where("slug", "==", slug)
+        .limit(1)
+        .get();
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        article = {
+          id:       0,
+          slug:     data.slug,
+          title:    data.title    ?? "บทความ",
+          excerpt:  data.excerpt  ?? data.description ?? "",
+          summary:  data.summary  ?? "",
+          category: data.category ?? "พัฒนาตัวเอง",
+          date:     data.date     ?? "",
+          readTime: data.readTime ?? "5 นาที",
+          content:  data.content  ?? "",
+        };
+      }
+    } catch {
+      // fail silently — fallback to generic metadata below
+    }
+  }
 
   if (!article) {
     return {
