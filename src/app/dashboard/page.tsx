@@ -353,9 +353,9 @@ export default function DashboardPage() {
           setCompletedQuests([]);
           setCustomQuestTitle("");
           setAiGeneratedQuestTitle("");
-          
+
           const userRef = doc(db, "users", currentUser.uid);
-          updateDoc(userRef, { 
+          updateDoc(userRef, {
             customQuestTitle: "",
             aiGeneratedQuestTitle: "",
             lastQuestAnalysisDate: ""
@@ -381,45 +381,49 @@ export default function DashboardPage() {
                 bonusXP = 50;
                 milestoneName = "GREAT RUN!";
                 modalType = "GREAT";
-              } else {
+              } else if (completions >= 1) {
                 bonusXP = 20;
                 milestoneName = "GOOD RUN!";
                 modalType = "GOOD";
               }
 
-              setRewardModalData({
-                title: milestoneName,
-                bonusXP: bonusXP,
-                message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
-                type: modalType
-              });
+              const xpToAdd = bonusXP;
+              const perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
 
-              let xpToAdd = bonusXP;
-              let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
-
-              updateDoc(userRef, {
+              const baseUpdate: any = {
                 wheelPlanDay: nextPlanDay,
                 lastActiveDate: todayStr,
                 completedQuestIds: [],
                 customQuestTitle: "",
                 wheelCompletions: 0,
-                totalXP: increment(xpToAdd),
-                perfectWeeks: increment(perfectWeekInc)
-              }).catch(e => console.error("Auto-progression error:", e));
+              };
 
-              const currentXP = (userData.totalXP || 0) + xpToClaim;
-              const newXP = currentXP + xpToAdd;
-              const oldLevel = Math.floor(currentXP / 100) + 1;
-              const newLevel = Math.floor(newXP / 100) + 1;
-
-              if (newLevel > oldLevel) {
-                setShowLevelUp({ isOpen: true, newLevel });
-                setTimeout(() => setShowLevelUp(null), 4000);
+              if (xpToAdd > 0) {
+                setRewardModalData({
+                  title: milestoneName,
+                  bonusXP: xpToAdd,
+                  message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
+                  type: modalType
+                });
+                baseUpdate.totalXP = increment(xpToAdd);
+                baseUpdate.perfectWeeks = increment(perfectWeekInc);
               }
 
-              setTotalXP(newXP);
-              setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
-              setShowPerfectWeekModal(true);
+              updateDoc(userRef, baseUpdate).catch(e => console.error("Auto-progression error:", e));
+
+              if (xpToAdd > 0) {
+                const currentXP = (userData.totalXP || 0) + xpToClaim;
+                const newXP = currentXP + xpToAdd;
+                const oldLevel = Math.floor(currentXP / 100) + 1;
+                const newLevel = Math.floor(newXP / 100) + 1;
+                if (newLevel > oldLevel) {
+                  setShowLevelUp({ isOpen: true, newLevel });
+                  setTimeout(() => setShowLevelUp(null), 4000);
+                }
+                setTotalXP(newXP);
+                setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
+                setShowPerfectWeekModal(true);
+              }
 
             } else {
               updateDoc(userRef, {
@@ -1271,8 +1275,8 @@ export default function DashboardPage() {
       const currentLevel = Math.floor((data?.totalXP || 0) / 100) + 1;
       const lastWildcardDate = data?.lastWildcardGeneratedDate || '';
       const questPrefsBlockDate = data?.questPrefsBlockDate || '';
-
       const needsWildcard = currentLevel >= 11 && lastWildcardDate !== todayDateStr;
+
       // prefs ถูก save เมื่อวานหรือก่อนหน้า → analysis ยังไม่ได้ใช้ prefs ใหม่
       const hasFreshPrefs = questPrefsBlockDate && questPrefsBlockDate !== todayDateStr && questPrefsBlockDate > lastAnalysisDate;
       const hasFreshChat = lastChat > lastAnalysisDate;
@@ -1290,7 +1294,6 @@ export default function DashboardPage() {
         });
         if (!res.ok) return;
         const { questTitle, wildcardTitle } = await res.json();
-        // wildcard-only path: questTitle อาจเป็น null (ถ้าไม่มีแชทเลย)
         if (!questTitle && !wildcardTitle) return;
 
         const updates: Record<string, string> = {};
@@ -1391,10 +1394,12 @@ export default function DashboardPage() {
 
 
     // ✅ 2. ดึงจาก DISC
+    const questLevel = Math.floor(totalXP / 100) + 1;
     const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
     const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
     qList[1].title = discPool[pseudoRandomSlot(discPool.length, 2.7, 1)];
 
+    // ✅ 3. ดึงจาก MONEY
     const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
     const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
     qList[2].title = moneyPool[pseudoRandomSlot(moneyPool.length, 3.9, 2)];
@@ -1426,7 +1431,6 @@ export default function DashboardPage() {
     const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
 
     // 🛡️ ช่องที่ 5: Wildcard — level 11+ ใช้ AI awareness quest
-    const questLevel = Math.floor(totalXP / 100) + 1;
     if (aiGeneratedWildcardTitle && questLevel >= 11) {
       qList[4].title = aiGeneratedWildcardTitle;
     } else {
@@ -1560,7 +1564,7 @@ export default function DashboardPage() {
       bonusXP = 50;
       milestoneName = "GREAT RUN!";
       modalType = "GREAT";
-    } else {
+    } else if (completions >= 1) {
       bonusXP = 20;
       milestoneName = "GOOD RUN!";
       modalType = "GOOD";
