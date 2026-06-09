@@ -2,7 +2,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, DocumentData, QuerySnapshot, DocumentSnapshot } from "firebase/firestore";
 import { calculateRelativeWeek } from "@/utils/dashboardHelpers";
 
-export const fetchDashboardData = async (uid: string, email: string | null) => {
+export const fetchDashboardData = async (uid: string, email: string | null, displayName?: string | null) => {
   // 1. ดึงข้อมูล User Profile ก่อนเป็นอันดับแรก (สำคัญสุด)
   const userDocSnap = await getDoc(doc(db, "users", uid));
   let joinDate = new Date();
@@ -25,8 +25,19 @@ export const fetchDashboardData = async (uid: string, email: string | null) => {
     } else {
       await setDoc(doc(db, "users", uid), { createdAt: joinDate }, { merge: true });
     }
+    // backfill email/displayName ถ้ายังไม่มีใน doc
+    const needsUpdate: Record<string, string> = {};
+    if (email && !userData.email) needsUpdate.email = email;
+    if (displayName && !userData.displayName) needsUpdate.displayName = displayName;
+    if (Object.keys(needsUpdate).length > 0) {
+      await setDoc(doc(db, "users", uid), needsUpdate, { merge: true });
+    }
   } else {
-    await setDoc(doc(db, "users", uid), { createdAt: joinDate }, { merge: true });
+    await setDoc(doc(db, "users", uid), {
+      createdAt: joinDate,
+      ...(email ? { email } : {}),
+      ...(displayName ? { displayName } : {}),
+    }, { merge: true });
   }
 
   // คำนวณสัปดาห์ปัจจุบัน และ สัปดาห์ก่อนหน้า แบบ Relative

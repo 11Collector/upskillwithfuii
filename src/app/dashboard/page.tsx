@@ -218,7 +218,7 @@ export default function DashboardPage() {
 
   const loadDashboardData = useCallback(async (currentUser: User) => {
     try {
-      const data = await fetchDashboardData(currentUser.uid, currentUser.email);
+      const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
 
       setChatQuota(data.chatQuota);
       setRelativeWeekInfo(data.currentWeekInfo);

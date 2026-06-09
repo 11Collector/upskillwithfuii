@@ -1,5 +1,5 @@
 "use client";
-import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, increment } from "firebase/firestore";
+import { collection, addDoc, updateDoc, serverTimestamp, doc, setDoc, getDoc, increment } from "firebase/firestore";
 import { useState, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -358,6 +358,7 @@ export default function Home() {
 
   const printRef = useRef<HTMLDivElement>(null);
   const hasMemberSaved = useRef(false);
+  const savedDocRef = useRef<ReturnType<typeof doc> | null>(null);
   const TOTAL_QUESTIONS = 10;
 
   // --- Auth Effect ---
@@ -459,7 +460,7 @@ export default function Home() {
           if (currentUser) {
             hasMemberSaved.current = true;
           }
-          await addDoc(collection(db, "quiz_results"), {
+          const newDocRef = await addDoc(collection(db, "quiz_results"), {
             userId: currentUser?.uid || "guest",
             nickname: nickname || "นักล่าความมั่งคั่ง",
             persona: primaryName,
@@ -473,6 +474,7 @@ export default function Home() {
             history: detailedResults,
             createdAt: serverTimestamp(),
           });
+          savedDocRef.current = newDocRef;
 
           // ระบบแจก XP
           if (currentUser) {
@@ -519,17 +521,24 @@ export default function Home() {
     const grantXPOnLogin = async () => {
       hasMemberSaved.current = true;
       try {
-        await addDoc(collection(db, "quiz_results"), {
-          userId: currentUser.uid,
-          nickname: nickname || "นักล่าความมั่งคั่ง",
-          persona: resultData[matchStats.primary.id as keyof typeof resultData]?.title || "นักลงทุน",
-          resultKey: matchStats.primary.id,
-          primaryMatch: matchStats.primary.matchPercentage,
-          secondaryPersona: resultData[matchStats.secondary.id as keyof typeof resultData]?.title || "นักลงทุน",
-          secondaryKey: matchStats.secondary.id,
-          secondaryMatch: matchStats.secondary.matchPercentage,
-          createdAt: serverTimestamp(),
-        });
+        if (savedDocRef.current) {
+          // update guest doc → claim with real userId
+          await updateDoc(savedDocRef.current, { userId: currentUser.uid });
+        } else {
+          // fallback: guest doc wasn't saved yet (rare), create new
+          const newDocRef = await addDoc(collection(db, "quiz_results"), {
+            userId: currentUser.uid,
+            nickname: nickname || "นักล่าความมั่งคั่ง",
+            persona: resultData[matchStats.primary.id as keyof typeof resultData]?.title || "นักลงทุน",
+            resultKey: matchStats.primary.id,
+            primaryMatch: matchStats.primary.matchPercentage,
+            secondaryPersona: resultData[matchStats.secondary.id as keyof typeof resultData]?.title || "นักลงทุน",
+            secondaryKey: matchStats.secondary.id,
+            secondaryMatch: matchStats.secondary.matchPercentage,
+            createdAt: serverTimestamp(),
+          });
+          savedDocRef.current = newDocRef;
+        }
 
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
@@ -575,6 +584,7 @@ export default function Home() {
   const resetGame = () => {
     setPersona(null); setAnswers([]); setGameState("start"); setMatrixRotation(0); setIsTransitioning(false);
     hasMemberSaved.current = false;
+    savedDocRef.current = null;
   };
 
   const getMatrixClass = (key: string) => {

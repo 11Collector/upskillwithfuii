@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, getDocs, getCountFromServer, query, collectionGroup, where } from "firebase/firestore";
+import { collection, getDocs, getCountFromServer, query, collectionGroup, where, orderBy, limit } from "firebase/firestore";
 
 export interface UserDetail {
   id: string;
@@ -7,8 +7,16 @@ export interface UserDetail {
   email?: string;
   totalXP: number;
   createdAt: string;
+  createdAtTs: number;
   lastLoginAt: string;
   isReturning: boolean;
+}
+
+export interface EbookLead {
+  id: string;
+  email: string;
+  createdAt: string;
+  createdAtTs: number;
 }
 
 export interface AdminStats {
@@ -16,6 +24,8 @@ export interface AdminStats {
   activeUsers: number;
   returningUsers: number;
   topUsers: UserDetail[];
+  allUsers: UserDetail[];
+  ebookLeads: EbookLead[];
   toolUsages: {
     disc: number;
     moneyAvatar: number;
@@ -75,13 +85,13 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
         email: data.email || "-",
         totalXP: data.totalXP || 0,
         createdAt: createdAt.toLocaleDateString('th-TH'),
+        createdAtTs: createdAt.getTime(),
         lastLoginAt: lastLoginAt ? lastLoginAt.toLocaleDateString('th-TH') : "ไม่ระบุ",
         isReturning
       });
     });
 
-    // Sort by XP to get top users (or most active)
-    const topUsers = allUsersList.sort((a, b) => b.totalXP - a.totalXP).slice(0, 50);
+    const topUsers = [...allUsersList].sort((a, b) => b.totalXP - a.totalXP).slice(0, 50);
 
     // 3. Tool usages using count queries
     
@@ -123,11 +133,28 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
         // ignore
     }
 
+    // Ebook leads — newest first, max 200
+    const ebookSnap = await getDocs(
+      query(collection(db, "ebook_leads"), orderBy("createdAt", "desc"), limit(200))
+    );
+    const ebookLeads: EbookLead[] = ebookSnap.docs.map(d => {
+      const data = d.data();
+      const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now());
+      return {
+        id: d.id,
+        email: data.email || "-",
+        createdAt: ts.toLocaleDateString('th-TH'),
+        createdAtTs: ts.getTime(),
+      };
+    });
+
     return {
       totalUsers,
       activeUsers,
       returningUsers,
       topUsers,
+      allUsers: allUsersList,
+      ebookLeads,
       toolUsages: {
         disc: discCount.data().count,
         moneyAvatar: moneyCount.data().count,
