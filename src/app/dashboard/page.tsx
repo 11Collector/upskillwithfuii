@@ -1749,13 +1749,13 @@ export default function DashboardPage() {
 
         if (statKey) {
           try {
-            setWeeklyData((prev: any) => ({
-              ...prev,
-              [statKey]: Math.min(7, Math.max(0, (prev[statKey] || 0) + incValue))
-            }));
+            const currentVal = (weeklyData[statKey as keyof typeof weeklyData] as number) || 0;
+            const newVal = Math.min(7, Math.max(0, currentVal + incValue));
+
+            setWeeklyData((prev: any) => ({ ...prev, [statKey]: newVal }));
 
             await setDoc(weeklyRef, {
-              [statKey]: increment(incValue),
+              [statKey]: newVal,
               updatedAt: new Date()
             }, { merge: true });
           } catch (err) {
