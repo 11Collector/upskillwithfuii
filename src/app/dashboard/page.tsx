@@ -705,6 +705,7 @@ export default function DashboardPage() {
       setLastMoney(null);
       setLastLibrarySoul(null);
       setLastQuote(null);
+      setLastGhostResult(null);
       setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
       setIsFirstWeek(true);
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
