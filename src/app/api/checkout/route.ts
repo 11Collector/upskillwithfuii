@@ -4,8 +4,6 @@ import { z } from "zod";
 import { verifyAuthToken, isAuthError } from "@/lib/auth-middleware";
 
 const CheckoutSchema = z.object({
-  uid: z.string().min(1),
-  email: z.string().email().optional(),
   isSubscription: z.boolean().optional(),
   priceId: z.string().optional(),
 });
@@ -25,7 +23,10 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-  const { uid, email, isSubscription } = parsed.data;
+  // uid/email มาจาก verified token เท่านั้น — ไม่รับจาก client
+  const uid = authResult.uid;
+  const email = authResult.email;
+  const { isSubscription } = parsed.data;
 
   try {
     const origin = new URL(req.url).origin;
@@ -74,8 +75,6 @@ export async function POST(req: Request) {
     }
 
 
-    console.log(`🚀 Creating ${sessionConfig.mode} session for: ${email}`);
-    
     const session = await stripe.checkout.sessions.create(sessionConfig);
     return NextResponse.json({ url: session.url });
 

@@ -217,6 +217,7 @@ export default function DashboardPage() {
   const [lastSkipDate, setLastSkipDate] = useState<string>("");
 
   const loadDashboardData = useCallback(async (currentUser: User) => {
+    setLoading(true);
     try {
       const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
 
@@ -268,7 +269,10 @@ export default function DashboardPage() {
           setImprovement(thisWeekTotal > 0 ? 100 : 0);
         }
       }
-      if (userData) {
+      if (!userData) {
+        // Firestore returned no user doc yet — keep XP at 0, done loading
+        setTotalXP(0);
+      } else {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
         setGender(userData.gender || "male");

@@ -363,3 +363,9 @@
 **Core idea:** Hill ค้นพบ 3 หลักการที่เป็นรูปธรรมจากการสัมภาษณ์คนรวย 500+ คนใน 20 ปี: (1) Definiteness of Purpose — เป้าหมายที่ specific มากกว่าแค่ "อยากรวย"; (2) Specialized Knowledge — ความรู้เฉพาะทางที่แก้ปัญหาได้จริง ไม่ใช่การศึกษาทั่วไป; (3) Decision + Persistence — ตัดสินใจเร็ว เปลี่ยนใจช้า ยืนกับทิศทางนานพอ; ยืนยันโดย Locke & Latham (1990) ว่า specific goals ให้ผลลัพธ์ดีกว่า "do your best" อย่างมีนัยสำคัญ
 **Source used:** Napoleon Hill, Think and Grow Rich (1937); Edwin Locke & Gary Latham, A Theory of Goal Setting and Task Performance (1990)
 **Published:** article
+
+### 2026-06-09 — Mindset — Article
+**Hook:** คนตลกไม่ได้โชคดีเพราะนิสัยดี — สมองพวกเขาฝึกมาแบบอื่น
+**Core idea:** อารมณ์ขัน (humor) ต้องใช้ Cognitive Flexibility (ความยืดหยุ่นทางปัญญา) — Pattern Recognition + Incongruity Resolution — ทักษะเดียวกับที่ใช้แก้ปัญหาซับซ้อนและปรับตัว ยืนยันโดย PMC (2022) + Aaker & Bagdonas (2021) ที่พบว่า 98% ของ CEO ชอบผู้สมัครที่มีอารมณ์ขัน และผู้นำที่ใช้ humor motivating กว่า 27%
+**Source used:** Jennifer Aaker & Naomi Bagdonas, Humor, Seriously (2021); PMC9702906 (2022) — Cognitive flexibility and humor styles
+**Published:** article

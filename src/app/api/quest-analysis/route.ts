@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { adminDb } from '@/lib/firebase-admin';
+
+const QuestAnalysisSchema = z.object({
+  level: z.number().int().min(1).max(1000).optional(),
+});
 
 const emojiRegex = /^\p{Emoji}/u;
 
@@ -35,7 +40,11 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const level: number = body.level || 1;
+    const parsed = QuestAnalysisSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+    const level = parsed.data.level ?? 1;
 
     // 1. ดึง chat history 30 ข้อความล่าสุด
     const historySnap = await adminDb

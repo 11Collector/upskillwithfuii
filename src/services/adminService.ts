@@ -43,8 +43,8 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
     const totalUsers = usersSnapshot.data().count;
 
     // 2. We'll need to fetch user docs to see returning/active if we don't have specific queries
-    // Let's fetch all users since we want to calculate returning vs new
-    const usersQuery = await getDocs(usersRef);
+    // Cap ที่ 1000 docs — totalUsers ใช้ count query ด้านบนซึ่งแม่นเสมอ
+    const usersQuery = await getDocs(query(usersRef, limit(1000)));
     let returningUsers = 0;
     let activeUsers = 0; // users who logged in recently or have activity
 

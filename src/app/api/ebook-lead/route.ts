@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { Resend } from 'resend';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -21,6 +22,13 @@ const Schema = z.object({
 });
 
 export async function POST(req: Request) {
+  // route นี้เปิด public (lead capture) — กัน spam/email bombing ด้วย IP rate limit
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const rl = checkRateLimit(`ebook-lead:${ip}`, 3, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
+  }
+
   try {
     const body = await req.json();
     const { email } = Schema.parse(body);
