@@ -668,6 +668,9 @@ export default function DashboardPage() {
         hasDiscXP: false,
         hasMoneyXP: false,
         hasLibrarySoulXP: false,
+        lastGhostResult: null,      // 👻 ล้างผล Ghost in You (เก็บเป็น field บน user doc)
+        lastGhostResultFull: null,
+        hasGhostXP: false,
         hasSoulGuide: false,
         hasReadXP: false,  // 🌟 ปลดล็อกรีเซ็ต XP การอ่าน
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
@@ -2246,11 +2249,11 @@ export default function DashboardPage() {
                     <p className="text-slate-400 text-[10px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/{steps.length - 1}</span>
+                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/{steps.length}</span>
                     <Link
                       href={next.path}
                       onClick={() => {
-                        if (doneCount === 5 && user && !hasSoulGuide) {
+                        if (doneCount === 6 && user && !hasSoulGuide) {
                           setHasSoulGuide(true);
                           setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
                         }
@@ -2258,7 +2261,7 @@ export default function DashboardPage() {
                       className="flex items-center gap-1 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap"
                       style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}
                     >
-                      {doneCount === 0 ? "เริ่มเลย" : doneCount === 5 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={11} />
+                      {doneCount === 0 ? "เริ่มเลย" : doneCount === 6 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={11} />
                     </Link>
                   </div>
                 </div>
