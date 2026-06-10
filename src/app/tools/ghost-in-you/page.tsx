@@ -507,22 +507,19 @@ export default function GhostInYouPage() {
                 </p>
               </div>
 
-              {/* stats */}
-              <div className="space-y-3 mb-6">
-                {primaryData.stats.map((s) => (
-                  <div key={s.label}>
-                    <div className="flex justify-between text-[11px] font-bold text-zinc-600 mb-1">
-                      <span>{s.label}</span>
-                      <span className="text-red-700">{s.value}%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500"
-                        style={{ width: `${s.value}%`, boxShadow: "0 0 6px rgba(220,38,38,0.5)" }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              {/* dominant traits — ค่า value ต่ำคือจุดที่ขาด ไม่ใช่พฤติกรรมเด่น จึงไม่แสดง */}
+              <div className="mb-6">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-2.5">พฤติกรรมเด่นที่ผีตัวนี้สิง</div>
+                <div className="flex flex-wrap gap-2">
+                  {primaryData.stats.filter((s) => s.value >= 50).map((s) => (
+                    <span
+                      key={s.label}
+                      className="text-[11px] font-bold text-red-400 bg-red-950/40 border border-red-900/40 px-3 py-1.5 rounded-full"
+                    >
+                      {s.label}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {/* thai stat */}

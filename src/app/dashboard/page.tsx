@@ -1117,16 +1117,12 @@ export default function DashboardPage() {
             <p className="text-[11px] text-red-500 font-black uppercase tracking-widest mb-4">"{ghost.tagline}"</p>
             <p className="text-[13px] text-zinc-400 leading-relaxed mb-5">{ghost.story}</p>
 
-            <div className="grid grid-cols-2 gap-3">
-              {ghost.stats.map((s) => (
-                <div key={s.label} className="bg-black/40 p-3 rounded-2xl border border-white/5">
-                  <div className="flex justify-between text-[10px] font-bold text-zinc-600 mb-1">
-                    <span>{s.label}</span><span className="text-red-700">{s.value}%</span>
-                  </div>
-                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500" style={{ width: `${s.value}%` }} />
-                  </div>
-                </div>
+            <div className="flex flex-wrap gap-2">
+              {/* ค่า value ต่ำคือจุดที่ขาด ไม่ใช่พฤติกรรมเด่น จึงไม่แสดง */}
+              {ghost.stats.filter((s) => s.value >= 50).map((s) => (
+                <span key={s.label} className="text-[11px] font-bold text-red-400 bg-red-950/40 border border-red-900/40 px-3 py-1.5 rounded-full">
+                  {s.label}
+                </span>
               ))}
             </div>
           </div>
