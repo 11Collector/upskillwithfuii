@@ -3159,7 +3159,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider 
             ${isDone ? 'bg-green-100 text-green-600' : isNotice ? 'bg-amber-500 text-white shadow-sm' : `${styles.bg} ${styles.text}`}`}>
-                          {isNotice ? 'Action Required' : (quest.type === 'DISC' ? 'HABIT' : quest.type)}
+                          {isNotice ? 'Action Required' : (quest.type === 'WHEEL' ? '7Days Plan' : quest.type === 'DISC' ? 'HABIT' : quest.type)}
                         </span>
 
                         {quest.title.includes('|') && !isNotice && (

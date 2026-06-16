@@ -60,10 +60,16 @@ This builds a running log so future content doesn't repeat the same ideas and ca
 ## Rules
 - Thai only. Peer tone — not teacher, not motivational speaker
 - ศัพท์อังกฤษเทคนิคทุกคำ ต้องวงเล็บแปลไทยง่ายๆ ต่อท้ายทันที เช่น Spaced Repetition (การทบทวนแบบเว้นช่วง), Massed Learning (ท่องยัดครั้งเดียว)
+- **การจัดแต่ง Markdown เพื่อความสวยงามบนหน้าเว็บ (Aesthetics):**
+  - **สำหรับ Article:** ไม่ต้องใส่หัวข้อ ACTION, REFLECTION PROMPT หรือกล่อง `Note จากฟุ้ย` ด้านล่างบทความ เพื่อป้องกันความรกทางสายตา ให้เขียนจบเนื้อหาหลักแล้วใส่แหล่งอ้างอิงทันที จากนั้นปิดท้ายด้วย `ปล.` แบบข้อความธรรมดาที่สั้น กระชับ **ยาวเพียง 1 บรรทัด (1 ประโยค) เท่านั้น** (เช่น ชวนตอบคำถามเกี่ยวกับเรื่องที่เพิ่งอ่าน หรือเชิญชวนไปเล่นเครื่องมือของเว็บที่เกี่ยวข้อง)
+  - **การใช้ Bullet Points:** หากเนื้อหาในย่อหน้าหรือหัวข้อใดยาวหรือซับซ้อนเกินไป ให้ใช้รายการสัญลักษณ์ Bullet points (`-`) เพื่อแตกประเด็นย่อย ช่วยเพิ่มความอ่านง่าย (Scannability) และลดความแน่นของตัวอักษร
+  - **การใช้ Backticks:** ใส่เครื่องหมาย backticks (`` `inline code` ``) ครอบคำศัพท์เทคนิคหลักๆ เท่านั้น (เช่น `` `Cognitive Offloading` ``) หลีกเลี่ยงการใช้กับคำศัพท์ภาษาอังกฤษทั่วไป เพื่อไม่ให้เกิดป้ายคำสี่เหลี่ยมสีดำขัดตารกหน้าจอ หรือคำแตกหักแบ่งครึ่งขึ้นบรรทัดใหม่
+  - เว้นบรรทัดเปล่า 1 บรรทัดคั่นระหว่างย่อหน้าและหัวข้อ `###` เสมอ
 - Every post must have one specific idea, not generic encouragement
 - The external source must be real and verifiable — never fabricate citations
 - If no strong external source found, rely on second-brain only and note it
 - Avoid: "unlock your potential", "be the best version", "hustle"
+
 
 ## Fact-checking Rules (STRICT)
 - **ตัวเลขและสถิติ**: ต้อง verify จากแหล่งจริงเท่านั้น — ระบุชื่อ source, ปีที่เผยแพร่, และลิงก์ถ้ามี ห้ามประมาณหรือแต่งตัวเลขขึ้นมาเอง

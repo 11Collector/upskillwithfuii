@@ -69,20 +69,32 @@ async function main() {
     process.exit(1);
   }
 
-  // Get next ID
-  const snapshot = await db.collection("articles").orderBy("id", "desc").limit(1).get();
-  const lastId = snapshot.empty ? 0 : (snapshot.docs[0].data().id ?? 0);
-  const nextId = lastId + 1;
-
+  // Check if article with same slug already exists
+  const existingQuery = await db.collection("articles").where("slug", "==", slug).limit(1).get();
+  
   const thaiDate = date ?? new Date().toLocaleDateString("th-TH", {
     day: "numeric", month: "short", year: "numeric",
   });
 
-  await db.collection("articles").add({ id: nextId, title, slug, excerpt, summary, category, readTime, date: thaiDate, content });
+  if (!existingQuery.empty) {
+    const docSnap = existingQuery.docs[0];
+    const docRef = docSnap.ref;
+    const articleId = docSnap.data().id;
+    await docRef.update({ title, excerpt, summary, category, readTime, date: thaiDate, content });
+    console.log(`✅ Updated: "${title}"`);
+    console.log(`   ID: ${articleId}`);
+    console.log(`   URL: /library/${slug}`);
+  } else {
+    // Get next ID
+    const snapshot = await db.collection("articles").orderBy("id", "desc").limit(1).get();
+    const lastId = snapshot.empty ? 0 : (snapshot.docs[0].data().id ?? 0);
+    const nextId = lastId + 1;
 
-  console.log(`✅ Published: "${title}"`);
-  console.log(`   ID: ${nextId}`);
-  console.log(`   URL: /library/${slug}`);
+    await db.collection("articles").add({ id: nextId, title, slug, excerpt, summary, category, readTime, date: thaiDate, content });
+    console.log(`✅ Published: "${title}"`);
+    console.log(`   ID: ${nextId}`);
+    console.log(`   URL: /library/${slug}`);
+  }
 }
 
 main().catch((e) => {

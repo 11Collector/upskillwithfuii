@@ -377,4 +377,39 @@
 **Core idea:** อารมณ์ขัน (humor) ต้องใช้ Cognitive Flexibility (ความยืดหยุ่นทางปัญญา) — Pattern Recognition + Incongruity Resolution — ทักษะเดียวกับที่ใช้แก้ปัญหาซับซ้อนและปรับตัว ยืนยันโดย PMC (2022) + Aaker & Bagdonas (2021) ที่พบว่า 98% ของ CEO ชอบผู้สมัครที่มีอารมณ์ขัน และผู้นำที่ใช้ humor motivating กว่า 27%
 **Source used:** Jennifer Aaker & Naomi Bagdonas, Humor, Seriously (2021); PMC9702906 (2022) — Cognitive flexibility and humor styles
 **Published:** article
->>>>>>> origin/main
+### 2026-06-10 — Learning/ธุรกิจ — Article
+**Hook:** Mario เป็นตัวละครที่แทบไม่มีบุคลิก ไม่มีปูมหลัง ไม่มีบทพูดยาวๆ — แต่ทำเงินมากกว่า 60,000 ล้านดอลลาร์
+**Core idea:** Mario สำเร็จเพราะ 3 เหตุผลที่สวนสัญชาตญาณ: (1) เกิดจากข้อจำกัดของ pixel ปี 1981 — หมวก/หนวด/เอี๊ยม ทุกอย่างคือ function ไม่ใช่ fashion; (2) ความว่างเปล่าของตัวละครคือ feature — ไม่มี story หนาแน่นเลยใส่ได้ทุก context (256 เกม); (3) กล้าถอย 30 ปีหลังหนังปี 1993 ล้มเหลว แล้วกลับมาแบบคุม creative เอง ($1.36B ปี 2023 + Galaxy Movie $1B+ ปี 2026) — เชื่อม Tuition Fee + Builder Lens เรื่องข้อจำกัดบังคับให้ชัด (คนละมุมกับบทความ Withered Technology ที่เป็นเรื่อง hardware strategy)
+**Source used:** Wikipedia — Mario (franchise) sales data; Box Office Mojo / Nintendo Life — Mario movies box office; Miyamoto design-constraint origin (Donkey Kong 1981)
+**Published:** article
+
+### 2026-06-10 — Mindset — Article
+**Hook:** แมวไม่เคยนอนคิดถึงจังหวะที่กระโดดพลาด — แต่เราเอาเรื่องเมื่อวานมานอนคิดได้ทั้งคืน
+**Core idea:** สัตว์ส่วนใหญ่ "ติดอยู่ในปัจจุบัน" เพราะไม่มี Mental Time Travel (Roberts, 2002 / Suddendorf & Corballis) — มนุษย์มีความสามารถนี้เป็น superpower สำหรับวางแผน แต่จ่ายราคาด้วยใจที่ล่องลอย 46.9% ของเวลาตื่น และช่วงที่ใจลอยคือช่วงที่ความสุขต่ำสุด (Killingsworth & Gilbert, 2010) — ทางออกไม่ใช่เลิกคิดถึงอดีต/อนาคต แต่คือเลือก "เวลาเปิดใช้" ให้เป็น เชื่อม CTA ไป Focus Room
+**Source used:** Killingsworth & Gilbert, *Science* (2010); William A. Roberts, "Are Animals Stuck in Time?", *Psychological Bulletin* (2002)
+**Published:** article
+
+### 2026-06-12 — Mindset — Article
+**Hook:** ตั้งเป้าวิ่งวันละ 5 กิโล คือเหตุผลที่ไม่ได้วิ่งเลยสักวัน
+**Core idea:** สรุป Atomic Habits มุม Micro Habits — นิสัยคือดอกเบี้ยทบต้น (1% ต่อวัน = 37 เท่าต่อปี) แต่คนเลิกใน Valley of Disappointment เพราะออกแบบนิสัยใหญ่เกิน / B=MAP (BJ Fogg): แรงจูงใจผันผวนที่สุด ทางแก้คือหั่นนิสัยให้เล็กจนวันแรงจูงใจศูนย์ก็ทำได้ + Two-Minute Rule / Lally (UCL): เฉลี่ย 66 วันกว่านิสัยจะอัตโนมัติ (ช่วงจริง 18–254 วัน) และพลาดหนึ่งวันไม่ทำลายนิสัย → Never miss twice (หมายเหตุ: identity-based habits เขียนไปแล้ว 2026-05-16 — บทความนี้เลี่ยงมุมนั้น)
+**Source used:** James Clear, Atomic Habits (2018); Lally et al., European Journal of Social Psychology (2009); BJ Fogg, Tiny Habits (2019) / Stanford Behavior Design Lab
+**Published:** article
+
+### 2026-06-12 — Reflection — Article
+**Hook:** การคิดถึงความตายมีสองแบบ — แบบหนึ่งทำให้คนโลภขึ้น อีกแบบทำให้เห็นค่าสิ่งที่มีอยู่
+**Core idea:** Mortality Salience (รู้ว่าจะตายแบบลอยๆ) กระตุ้น defensive mode ทำให้คน extrinsic ยิ่งโลภ แต่ Death Reflection (จินตนาการฉากตายแบบเจาะจง + มองย้อนชีวิต) ทำให้เกิด intrinsic behavior และ gratitude — ตรงกับหลักมรณานุสติของพุทธที่ให้ระลึกแบบเจาะจงทุกวัน ไม่ใช่กลัวแบบเลือนๆ (หมายเหตุ: คนละมุมกับบทความ 2026-06-08 ที่เป็น Stoic tools — Premeditatio Malorum/Memento Mori ของ Seneca; บทความนี้เน้น "วิธีคิด" สองแบบจากงานวิจัย lab)
+**Source used:** Cozzolino et al., Personality and Social Psychology Bulletin (2004); Frias, Watkins, Webber & Froh, The Journal of Positive Psychology (2011); Bronnie Ware, The Top Five Regrets of the Dying (2011)
+**Published:** article
+
+### 2026-06-13 — AI/Learning — Article
+**Hook:** ยุคที่กดปุ่มเดียวแล้วได้คำตอบทุกอย่าง อาจไม่ใช่ยุคที่เราทำงานได้ดีที่สุด แต่เป็นยุคที่เราเสี่ยงจะมีภาวะสมองฝ่อได้ง่ายที่สุด
+**Core idea:** การพึ่งพา AI เกินไปนำไปสู่ Cognitive Offloading (การโยนภาระความคิด) และลด Dopamine Baseline จนทำให้หมดแรงพยายามกับงานที่ยากและต้องอาศัยเวลา ทางแก้คือใช้ AI เป็น Thinking Partner ในการทำ Active Learning แทนการโยนงานทั้งหมดให้ทำแทน
+**Source used:** Harvard University (2024) — cognitive effects of AI dependency; Justin Kruger (2004) — Effort Heuristic study; BJ Fogg (2019) — Tiny Habits motivation model
+**Published:** article
+
+### 2026-06-17 — Learning — Article
+**Hook:** ขนาดของความสำเร็จไม่ได้ขึ้นอยู่กับขนาดของสมอง แต่ขึ้นอยู่กับขนาดของความคิดต่างหาก
+**Core idea:** สรุปหนังสือคิดใหญ่ไม่คิดเล็ก (The Magic of Thinking Big) ชี้แนะเรื่องขนาดความสำเร็จขึ้นกับทัศนคติและการคิดใหญ่ การเอาชนะอุปสรรคข้ออ้าง 4 ประการ (โรคอ้าง) และการเอาชนะความกลัวด้วยการลงมือทำทันที
+**Source used:** David J. Schwartz, *The Magic of Thinking Big* (1959)
+**Published:** article
+
