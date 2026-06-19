@@ -215,8 +215,17 @@ export default function SwipeQuoteApp() {
 
         const updateData: any = {};
         if (shouldGiveXP) {
+          const oldXP = (userSnap.exists() ? userSnap.data()?.totalXP : 0) || 0;
+          const newXP = oldXP + 10;
+          const oldLevel = Math.floor(oldXP / 100) + 1;
+          const newLevel = Math.floor(newXP / 100) + 1;
+
           updateData.totalXP = increment(10);
           updateData.lastQuoteDate = todayStr;
+
+          if (newLevel > oldLevel) {
+            sessionStorage.setItem('pendingLevelUp', String(newLevel));
+          }
         }
         if (Object.keys(updateData).length > 0) {
           await setDoc(userRef, updateData, { merge: true });
@@ -437,8 +446,17 @@ export default function SwipeQuoteApp() {
           };
 
           if (shouldGiveXP) {
+            const oldXP = (userSnap.exists() ? userSnap.data()?.totalXP : 0) || 0;
+            const newXP = oldXP + 10;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor(newXP / 100) + 1;
+
             updateData.totalXP = increment(10);
             updateData.lastQuoteDate = todayStr;
+
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
             console.log("🎉 +10 XP Success!");
           }
 
