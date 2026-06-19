@@ -96,7 +96,15 @@ export default function SoulGuidePage() {
         });
         unsubs.push(unsubWheel);
 
-        // 6. Listen to Khomsatsat (Mood)
+        // 6. Listen to Ghost in You
+        const unsubGhost = onSnapshot(doc(db, "users", currentUser.uid), (snap) => {
+          if (snap.exists() && snap.data()?.lastGhostResult) {
+            setUserData((prev: any) => ({ ...prev, lastGhostResult: { primary: snap.data()?.lastGhostResult } }));
+          }
+        });
+        unsubs.push(unsubGhost);
+
+        // 7. Listen to Khomsatsat (Mood)
         const unsubQuote = onSnapshot(query(collection(db, "quotes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)), (snap) => {
           if (!snap.empty) {
             const q = snap.docs[0].data();
@@ -327,6 +335,7 @@ export default function SoulGuidePage() {
             lastMoney: userData?.lastMoney,
             lastLibrarySoul: userData?.lastLibrarySoul,
             lastWheel: userData?.lastWheel,
+            lastGhostResult: userData?.lastGhostResult,
             lastMood: userData?.lastMood,
             lastQuote: userData?.lastQuote,
             lastQuoteWords: userData?.lastQuoteWords,
@@ -348,9 +357,11 @@ export default function SoulGuidePage() {
           try {
             const prefs = JSON.parse(questPrefsMatch[1]);
             const userRef = doc(db, "users", user.uid);
+            const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
             await updateDoc(userRef, {
-              questPreferences: { ...prefs, savedAt: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) },
-              lastQuestAnalysisDate: '', // force re-analysis ครั้งถัดไป
+              questPreferences: { ...prefs, savedAt: todayCA },
+              questPrefsBlockDate: todayCA,  // block same-day analysis เท่านั้น
+              lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
             });
             setQuestSaved(true);
           } catch {}

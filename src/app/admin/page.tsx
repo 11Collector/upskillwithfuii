@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchAdminStats, AdminStats } from "@/services/adminService";
 import { motion } from "framer-motion";
-import { Users, UserCheck, Activity, BarChart3, PieChart, ShieldAlert } from "lucide-react";
+import { Users, UserCheck, Activity, BarChart3, PieChart, ShieldAlert, ArrowUpDown, BookOpen, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
@@ -15,6 +15,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sortBy, setSortBy] = useState<"xp" | "newest">("xp");
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -170,27 +172,49 @@ export default function AdminDashboard() {
 
         {/* Top Users Section */}
         <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-2xl p-6 md:p-8 backdrop-blur-sm mt-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <Users className="text-blue-400" size={24} />
+          <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Users className="text-blue-400" size={24} />
+              </div>
+              <h2 className="text-2xl font-semibold">
+                {sortBy === "xp" ? "Top 50 Users by XP" : "สมัครล่าสุด 50 คน"}
+              </h2>
             </div>
-            <h2 className="text-2xl font-semibold">รายชื่อผู้ใช้งานที่มีส่วนร่วมสูงสุด (Top 50 Users by XP)</h2>
+            <div className="flex items-center gap-2 bg-neutral-900/60 rounded-xl p-1">
+              <button
+                onClick={() => setSortBy("xp")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${sortBy === "xp" ? "bg-indigo-600 text-white" : "text-neutral-400 hover:text-white"}`}
+              >
+                <ArrowUpDown size={14} /> เรียงตาม XP
+              </button>
+              <button
+                onClick={() => setSortBy("newest")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${sortBy === "newest" ? "bg-indigo-600 text-white" : "text-neutral-400 hover:text-white"}`}
+              >
+                <ArrowUpDown size={14} /> สมัครล่าสุด
+              </button>
+            </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-neutral-900/80 text-neutral-400">
                 <tr>
-                  <th className="px-4 py-3 rounded-tl-lg">อันดับ</th>
+                  <th className="px-4 py-3 rounded-tl-lg">#</th>
                   <th className="px-4 py-3">ชื่อ</th>
                   <th className="px-4 py-3">อีเมล</th>
                   <th className="px-4 py-3">XP ทั้งหมด</th>
+                  <th className="px-4 py-3">วันที่สมัคร</th>
                   <th className="px-4 py-3">เข้าสู่ระบบล่าสุด</th>
-                  <th className="px-4 py-3 rounded-tr-lg">สถานะ Returning</th>
+                  <th className="px-4 py-3 rounded-tr-lg">สถานะ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800">
-                {(stats.topUsers || []).map((user, idx) => (
+                {([...(sortBy === "newest" ? (stats.allUsers || []) : (stats.topUsers || []))]
+                  .sort((a, b) => sortBy === "newest" ? b.createdAtTs - a.createdAtTs : b.totalXP - a.totalXP)
+                  .slice(0, 50)
+                  .map((user, idx) => (
                   <tr key={user.id} className="hover:bg-neutral-800/60 transition-colors">
                     <td className="px-4 py-4 font-medium text-neutral-300">#{idx + 1}</td>
                     <td className="px-4 py-4 text-white">{user.name}</td>
@@ -200,6 +224,7 @@ export default function AdminDashboard() {
                         {user.totalXP} XP
                       </span>
                     </td>
+                    <td className="px-4 py-4 text-neutral-400">{user.createdAt}</td>
                     <td className="px-4 py-4 text-neutral-400">{user.lastLoginAt}</td>
                     <td className="px-4 py-4">
                       {user.isReturning ? (
@@ -209,12 +234,64 @@ export default function AdminDashboard() {
                       )}
                     </td>
                   </tr>
-                ))}
+                )))}
                 {(!stats.topUsers || stats.topUsers.length === 0) && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+                    <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">
                       ไม่พบข้อมูลผู้ใช้งาน
                     </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Ebook Leads Section */}
+        <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-2xl p-6 md:p-8 backdrop-blur-sm mt-8">
+          <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-500/20 rounded-lg">
+                <BookOpen className="text-rose-400" size={24} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold">E-Book Leads</h2>
+                <p className="text-neutral-400 text-sm mt-0.5">{stats.ebookLeads?.length ?? 0} อีเมลทั้งหมด</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                const emails = (stats.ebookLeads || []).map(l => l.email).join('\n');
+                await navigator.clipboard.writeText(emails);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-neutral-700/60 hover:bg-neutral-700 rounded-xl text-sm font-medium text-neutral-300 transition-colors"
+            >
+              {copied ? <><Check size={14} className="text-emerald-400" /> คัดลอกแล้ว</> : <><Copy size={14} /> คัดลอกทั้งหมด</>}
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-neutral-900/80 text-neutral-400">
+                <tr>
+                  <th className="px-4 py-3 rounded-tl-lg">#</th>
+                  <th className="px-4 py-3">อีเมล</th>
+                  <th className="px-4 py-3 rounded-tr-lg">วันที่สมัคร</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-800">
+                {(stats.ebookLeads || []).map((lead, idx) => (
+                  <tr key={lead.id} className="hover:bg-neutral-800/60 transition-colors">
+                    <td className="px-4 py-3 text-neutral-500">{idx + 1}</td>
+                    <td className="px-4 py-3 text-white font-medium">{lead.email}</td>
+                    <td className="px-4 py-3 text-neutral-400">{lead.createdAt}</td>
+                  </tr>
+                ))}
+                {(!stats.ebookLeads || stats.ebookLeads.length === 0) && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-neutral-500">ยังไม่มี Lead</td>
                   </tr>
                 )}
               </tbody>

@@ -29,6 +29,7 @@ function HeaderInner() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
@@ -42,9 +43,17 @@ function HeaderInner() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  const handleLogin = () => signInWithPopup(auth, googleProvider).catch((e) => {
-    if (e?.code !== 'auth/popup-closed-by-user') console.error(e);
-  });
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setIsInAppBrowser(/FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter/i.test(ua));
+  }, []);
+
+  const handleLogin = () => {
+    if (isInAppBrowser) return;
+    signInWithPopup(auth, googleProvider).catch((e) => {
+      if (e?.code !== 'auth/popup-closed-by-user') console.error(e);
+    });
+  };
 
   const isAssessmentPage = pathname.startsWith("/tools/");
   const isDashboard = pathname.startsWith("/dashboard");
@@ -69,6 +78,9 @@ function HeaderInner() {
 
           {!user ? (
             /* ยังไม่ login: ปุ่ม Login */
+            isInAppBrowser ? (
+              <span className="text-[10px] font-black text-amber-500 px-2">⚠️ เปิดใน Chrome/Safari</span>
+            ) : (
             <button
               onClick={handleLogin}
               className="flex items-center gap-1.5 bg-slate-900 text-white text-[11px] font-black px-3 py-2 rounded-xl hover:bg-red-700 active:scale-95 transition-all"
@@ -76,6 +88,7 @@ function HeaderInner() {
               <GoogleSVG size={12} />
               เข้าสู่ระบบ
             </button>
+            )
           ) : isAppPage ? (
             /* login แล้ว อยู่ app pages (library ฯลฯ): ปุ่มกลับ Dashboard */
             <Link href="/dashboard" className="text-[11px] font-black text-slate-500 hover:text-slate-900 transition-colors px-2 py-2">
@@ -123,9 +136,13 @@ function HeaderInner() {
                     );
                   })}
                   {!user && (
+                    isInAppBrowser ? (
+                      <span className="ml-3 text-[11px] font-black text-amber-500">⚠️ เปิดใน Chrome/Safari เพื่อ Login</span>
+                    ) : (
                     <button onClick={handleLogin} className="ml-3 flex items-center gap-2 bg-slate-900 text-white text-xs font-black px-4 py-2 rounded-xl hover:bg-red-700 active:scale-95 transition-all whitespace-nowrap">
                       <GoogleSVG /> เข้าสู่ระบบ
                     </button>
+                    )
                   )}
                 </>
               )}

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 
-const PUBLISH_SECRET = "Fuii!3538";
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { secret, title, slug, excerpt, summary, category, readTime, date, content } = body;
 
-    if (secret !== PUBLISH_SECRET) {
+    // ต้องตั้ง PUBLISH_SECRET ใน env เท่านั้น — ไม่มีค่า fallback ในโค้ด
+    if (!process.env.PUBLISH_SECRET || secret !== process.env.PUBLISH_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

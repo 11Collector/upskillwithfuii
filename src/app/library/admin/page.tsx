@@ -1,21 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { 
-  collection, addDoc, getDocs, query, orderBy, 
-  doc, updateDoc, deleteDoc, writeBatch 
+import { db, app } from "@/lib/firebase";
+import {
+  collection, addDoc, getDocs, query, orderBy,
+  doc, updateDoc, deleteDoc, writeBatch
 } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import { mockArticles } from "@/constants/article";
 import { Loader2, Plus, Save, Trash2, RefreshCw, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean);
 
 export default function LibraryAdmin() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [secret, setSecret] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const router = useRouter();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -44,17 +49,21 @@ export default function LibraryAdmin() {
   };
 
   useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.email && ADMIN_EMAILS.includes(user.email)) {
+        setIsAuthorized(true);
+      } else {
+        router.push("/library");
+      }
+      setAuthChecked(true);
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
     if (isAuthorized) fetchArticles();
   }, [isAuthorized]);
-
-  const handleAuthorize = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (secret === "Fuii!3538") {
-      setIsAuthorized(true);
-    } else {
-      alert("รหัสผ่านไม่ถูกต้อง");
-    }
-  };
 
   const handleMigrate = async () => {
     if (!confirm("ยืนยันการนำเข้าบทความ Mock ทั้งหมดไปที่ Firestore?")) return;
@@ -128,27 +137,10 @@ export default function LibraryAdmin() {
     }
   };
 
-  if (!isAuthorized) {
+  if (!authChecked || !isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6 text-white font-sans">
-        <div className="w-full max-w-md bg-[#111] border border-white/10 p-8 rounded-3xl shadow-2xl">
-          <h1 className="text-2xl font-black mb-6 text-center">Library CMS Admin</h1>
-          <form onSubmit={handleAuthorize} className="space-y-4">
-            <input 
-              type="password" 
-              placeholder="Enter Admin Password" 
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-amber-500/50 transition-all"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-            />
-            <button className="w-full bg-amber-500 text-black font-black py-3 rounded-xl hover:bg-amber-400 transition-all">
-              Login to CMS
-            </button>
-            <p className="text-[10px] text-center text-slate-500 uppercase tracking-widest mt-4">
-              Authorized personnel only
-            </p>
-          </form>
-        </div>
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white font-sans">
+        <Loader2 className="animate-spin text-amber-500" size={32} />
       </div>
     );
   }

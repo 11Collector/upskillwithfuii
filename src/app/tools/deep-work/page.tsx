@@ -551,6 +551,15 @@ export default function DeepWorkPage() {
         payload.weeklyFocusMinutes = increment(selectedTime);
       }
 
+      const oldXP = userData.totalXP || 0;
+      const newXP = oldXP + xpReward;
+      const oldLevel = Math.floor(oldXP / 100) + 1;
+      const newLevel = Math.floor(newXP / 100) + 1;
+
+      if (newLevel > oldLevel) {
+        sessionStorage.setItem('pendingLevelUp', String(newLevel));
+      }
+
       // 📊 Sync to weekly_stats collection for Dashboard consistency
       const { calculateRelativeWeek } = await import("@/utils/dashboardHelpers");
       const joinDate = userData.joinDate ? new Date(userData.joinDate) : new Date();

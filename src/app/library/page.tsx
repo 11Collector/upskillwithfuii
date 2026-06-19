@@ -154,6 +154,15 @@ export default function PremiumLibraryPage() {
           <p className="text-slate-500 text-lg font-medium">สรุปหนังสือและบทความพรีเมียมคัดมาเพื่อคุณโดยเฉพาะ</p>
         </header>
 
+        {/* --- Ebook Banner --- */}
+        <Link href="/ebook" className="flex items-center justify-between gap-4 mb-8 px-5 py-3.5 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7 transition-colors group">
+          <div className="flex items-center gap-3">
+            <span className="text-lg">📖</span>
+            <span className="text-sm text-slate-400">อยากอ่านหนังสือรวมบทความเล่มแรก?</span>
+          </div>
+          <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ดาวน์โหลดฟรี →</span>
+        </Link>
+
         {/* --- 🛠️ Categories (แก้ไขจุดที่ขอบซ้ายขาด) --- */}
         <div className="relative mb-14">
           {/* เพิ่ม px-6 เพื่อให้มีที่ให้เงาและ Scale ด้านซ้ายไม่ขาด และใส่ -mx-6 เพื่อให้เลื่อนได้สุดขอบจอ */}
@@ -267,7 +276,12 @@ export default function PremiumLibraryPage() {
 
                       <div className="flex-1">
                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 block ${theme.color}`}>
-                          {article.category} • {article.readTime}
+                          {article.category} • {(() => {
+                            const t = article.readTime?.trim() || '';
+                            const m = t.match(/^(\d+)/);
+                            if (m && !t.includes('นาที')) return `${m[1]} นาที`;
+                            return t;
+                          })()}
                         </span>
                         <h2 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-amber-400 transition-colors line-clamp-2">
                           {article.title}

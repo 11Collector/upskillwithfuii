@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
 import React from 'react'
 import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
+import { ghostResults } from "@/data/ghostResults";
 
 import { MONEY_DATA, DISC_DATA, QUEST_POOL, categoryNames } from "@/data/quests";
 import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA } from "@/data/constants";
@@ -142,6 +143,7 @@ export default function DashboardPage() {
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
   const [lastLibrarySoul, setLastLibrarySoul] = useState<any>(null);
+  const [lastGhostResult, setLastGhostResult] = useState<any>(null);
   const [hasSoulGuide, setHasSoulGuide] = useState(false);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
 
@@ -151,6 +153,24 @@ export default function DashboardPage() {
   const [showFloatingXP, setShowFloatingXP] = useState(false);
 
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean, title: string, content: string | React.ReactNode } | null>(null);
+  const [bookMatchModal, setBookMatchModal] = useState(false);
+  const [bookMatchBooks, setBookMatchBooks] = useState<{ title: string; author: string; reason: string; category: string }[]>([]);
+  const [bookMatchLoading, setBookMatchLoading] = useState(false);
+  const [savedBooks, setSavedBooks] = useState<Set<string>>(new Set());
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [collectionBooks, setCollectionBooks] = useState<{ title: string; author: string; category: string }[]>([]);
+  const [collectionQuests, setCollectionQuests] = useState<{ title: string; type: string; completedAt: string }[]>([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+
+  useEffect(() => {
+    if (showCollectionModal) {
+      document.body.classList.add('hide-bottom-nav');
+    } else {
+      document.body.classList.remove('hide-bottom-nav');
+    }
+    return () => document.body.classList.remove('hide-bottom-nav');
+  }, [showCollectionModal]);
+  const [collectionSelectedDate, setCollectionSelectedDate] = useState("");
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDailySuccess, setShowDailySuccess] = useState(false);
@@ -189,15 +209,273 @@ export default function DashboardPage() {
     type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
   });
 
-  // --- ภายใน DashboardPage Component ---
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
   const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
   const [wheelPlanSkips, setWheelPlanSkips] = useState<number>(0);
   const [perfectWeeks, setPerfectWeeks] = useState<number>(0);
   const [lastSkipDate, setLastSkipDate] = useState<string>("");
+
+  const loadDashboardData = useCallback(async (currentUser: User) => {
+    setLoading(true);
+    try {
+      const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
+
+      setChatQuota(data.chatQuota);
+      setRelativeWeekInfo(data.currentWeekInfo);
+
+      if (data.wheelData) setLastWheel(data.wheelData);
+      if (data.discData) setLastDisc(data.discData);
+      if (data.moneyData) setLastMoney(data.moneyData);
+      if (data.librarySoulData) setLastLibrarySoul(data.librarySoulData);
+      if (data.quoteData) setLastQuote(data.quoteData);
+      if ((data as any).ghostResultData) setLastGhostResult((data as any).ghostResultData);
+      setHasSoulGuide(data.hasSoulGuide);
+
+      let thisWeekTotal = 0;
+      let prevWeekTotal = 0;
+
+      if (data.thisWeekData) {
+        setWeeklyData({
+          wheel: Math.min(7, data.thisWeekData.wheel || 0),
+          disc: Math.min(7, data.thisWeekData.disc || 0),
+          money: Math.min(7, data.thisWeekData.money || 0),
+          library: Math.min(7, data.thisWeekData.library || 0),
+          wildcard: Math.min(7, data.thisWeekData.wildcard || 0),
+          challenge: Math.min(7, data.thisWeekData.challenge || 0),
+          momentum_count: data.thisWeekData.momentum_count || 0
+        });
+        thisWeekTotal = Math.min(42, (data.thisWeekData.wheel || 0) + (data.thisWeekData.disc || 0) + (data.thisWeekData.money || 0) + (data.thisWeekData.library || 0) + (data.thisWeekData.wildcard || 0) + (data.thisWeekData.challenge || 0));
+      } else {
+        setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
+      }
+
+      if (data.prevWeekData) {
+        prevWeekTotal = (data.prevWeekData.wheel || 0) + (data.prevWeekData.disc || 0) + (data.prevWeekData.money || 0) + (data.prevWeekData.library || 0) + (data.prevWeekData.wildcard || 0) + (data.prevWeekData.challenge || 0);
+      }
+
+      const currentWeekInfo = data.currentWeekInfo;
+      const userData = data.userData;
+
+      if (currentWeekInfo.id === "week-1") {
+        setIsFirstWeek(true);
+        setImprovement(0);
+      } else {
+        setIsFirstWeek(false);
+        if (prevWeekTotal > 0) {
+          const diff = ((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100;
+          setImprovement(Math.round(diff));
+        } else {
+          setImprovement(thisWeekTotal > 0 ? 100 : 0);
+        }
+      }
+      if (!userData) {
+        // Firestore returned no user doc yet — keep XP at 0, done loading
+        setTotalXP(0);
+      } else {
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+        setGender(userData.gender || "male");
+
+        let currentStreak = userData.streakCount || 0;
+
+        if (userData.lastQuestDate) {
+          const lastDate = new Date(userData.lastQuestDate);
+          const todayDate = new Date(todayStr);
+          const diffDays = Math.round((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          if (diffDays > 1 && currentStreak > 0) {
+            currentStreak = 0;
+            setDoc(doc(db, "users", currentUser.uid), { streakCount: 0 }, { merge: true });
+          }
+        }
+
+        setStreakCount(currentStreak);
+        setWheelPlanDay(userData.wheelPlanDay || 0);
+        setWheelPlanSkips(userData.wheelPlanSkips || 0);
+        setLastSkipDate(userData.lastSkipDate || "");
+        setLastChatDate(userData.lastChatDate || "");
+        setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
+        setAiGeneratedWildcardTitle(userData.aiGeneratedWildcardTitle || "");
+        setPerfectWeeks(userData.perfectWeeks || 0);
+        setIsRandomMode(userData.isRandomMode || false);
+        setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]);
+        setLastRerollDate(userData.lastRerollDate || "");
+        setWheelCompletions(userData.wheelCompletions || 0);
+
+        let xpToClaim = 0;
+        let xpUpdates: any = {};
+
+        if (data.wheelData && !userData.hasWheelXP) {
+          xpToClaim += 50;
+          xpUpdates.hasWheelXP = true;
+        }
+        if (data.discData && !userData.hasDiscXP) {
+          xpToClaim += 50;
+          xpUpdates.hasDiscXP = true;
+        }
+        if (data.moneyData && !userData.hasMoneyXP) {
+          xpToClaim += 50;
+          xpUpdates.hasMoneyXP = true;
+        }
+        if (data.librarySoulData && !userData.hasLibrarySoulXP) {
+          xpToClaim += 50;
+          xpUpdates.hasLibrarySoulXP = true;
+        }
+        if ((data as any).ghostResultData && !userData.hasGhostXP) {
+          xpToClaim += 50;
+          xpUpdates.hasGhostXP = true;
+        }
+
+        if (xpToClaim > 0) {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          await setDoc(userDocRef, {
+            ...xpUpdates,
+            totalXP: increment(xpToClaim)
+          }, { merge: true });
+
+          const oldXP = userData.totalXP || 0;
+          const newXP = oldXP + xpToClaim;
+          setTotalXP(newXP);
+          const oldLevel = Math.floor(oldXP / 100) + 1;
+          const newLevel = Math.floor(newXP / 100) + 1;
+          if (newLevel > oldLevel) {
+            setShowLevelUp({ isOpen: true, newLevel });
+            setTimeout(() => setShowLevelUp(null), 4000);
+          }
+          console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
+        } else {
+          setTotalXP(userData.totalXP || 0);
+        }
+
+        const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
+
+        if (activeDateToCheck === todayStr) {
+          setCompletedQuests(userData.completedQuestIds || []);
+          setCustomQuestTitle(userData.customQuestTitle || "");
+        } else {
+          setCompletedQuests([]);
+          setCustomQuestTitle("");
+          setAiGeneratedQuestTitle("");
+
+          const userRef = doc(db, "users", currentUser.uid);
+          updateDoc(userRef, {
+            customQuestTitle: "",
+            aiGeneratedQuestTitle: "",
+            lastQuestAnalysisDate: ""
+          }).catch(e => console.error(e));
+
+          let currentPlanDay = userData.wheelPlanDay || 0;
+          let nextPlanDay = currentPlanDay;
+
+          if (currentPlanDay >= 7) {
+            nextPlanDay = 1;
+
+            if (currentPlanDay === 7) {
+              const completions = userData.wheelCompletions || 0;
+              let bonusXP = 0;
+              let milestoneName = "";
+              let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
+
+              if (completions >= 7) {
+                bonusXP = 100;
+                milestoneName = "PERFECT RUN!";
+                modalType = "PERFECT";
+              } else if (completions >= 5) {
+                bonusXP = 50;
+                milestoneName = "GREAT RUN!";
+                modalType = "GREAT";
+              } else if (completions >= 1) {
+                bonusXP = 20;
+                milestoneName = "GOOD RUN!";
+                modalType = "GOOD";
+              }
+
+              const xpToAdd = bonusXP;
+              const perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
+
+              const baseUpdate: any = {
+                wheelPlanDay: nextPlanDay,
+                lastActiveDate: todayStr,
+                completedQuestIds: [],
+                customQuestTitle: "",
+                wheelCompletions: 0,
+              };
+
+              if (xpToAdd > 0) {
+                setRewardModalData({
+                  title: milestoneName,
+                  bonusXP: xpToAdd,
+                  message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
+                  type: modalType
+                });
+                baseUpdate.totalXP = increment(xpToAdd);
+                baseUpdate.perfectWeeks = increment(perfectWeekInc);
+              }
+
+              updateDoc(userRef, baseUpdate).catch(e => console.error("Auto-progression error:", e));
+
+              if (xpToAdd > 0) {
+                const currentXP = (userData.totalXP || 0) + xpToClaim;
+                const newXP = currentXP + xpToAdd;
+                const oldLevel = Math.floor(currentXP / 100) + 1;
+                const newLevel = Math.floor(newXP / 100) + 1;
+                if (newLevel > oldLevel) {
+                  setShowLevelUp({ isOpen: true, newLevel });
+                  setTimeout(() => setShowLevelUp(null), 4000);
+                }
+                setTotalXP(newXP);
+                setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
+                setShowPerfectWeekModal(true);
+              }
+
+            } else {
+              updateDoc(userRef, {
+                wheelPlanDay: nextPlanDay,
+                lastActiveDate: todayStr,
+                completedQuestIds: [],
+                customQuestTitle: "",
+                wheelCompletions: 0
+              }).catch(e => console.error("Auto-reset error:", e));
+            }
+
+            setWheelCompletions(0);
+
+          } else {
+            nextPlanDay = currentPlanDay + 1;
+            updateDoc(userRef, {
+              wheelPlanDay: nextPlanDay,
+              lastActiveDate: todayStr,
+              completedQuestIds: [],
+              customQuestTitle: ""
+            }).catch(e => console.error("Day progression error:", e));
+          }
+
+          setWheelPlanDay(nextPlanDay);
+        }
+
+        if (userData.lastQuoteDate === todayStr) {
+          setHasClaimedQuoteToday(true);
+        } else {
+          setHasClaimedQuoteToday(false);
+          const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
+          if (!hasShownThisSession && (userData.totalXP || 0) > 0) {
+            setShowWelcomeQuotePopup(true);
+            sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error("Error fetching Dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
   const [lastChatDate, setLastChatDate] = useState("");
   const [aiGeneratedQuestTitle, setAiGeneratedQuestTitle] = useState("");
+  const [aiGeneratedWildcardTitle, setAiGeneratedWildcardTitle] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showWheelRulesModal, setShowWheelRulesModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -228,7 +506,6 @@ export default function DashboardPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showLineModal, setShowLineModal] = useState(false);
 
-  // เพิ่มฟังก์ชันสำหรับเปลี่ยนเพศและ Save ลง Firebase
   const handleGenderChange = async (newGender: "male" | "female") => {
     if (!user) return;
     setGender(newGender);
@@ -240,28 +517,20 @@ export default function DashboardPage() {
     }
   };
 
-  // 🕒 2. Effect สำหรับเช็กเที่ยงคืนแบบสดๆ
   useEffect(() => {
-    // เซ็ตวันที่ครั้งแรก
     setTodayDateStr(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }));
 
     const interval = setInterval(() => {
       const nowStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       setTodayDateStr((prev) => {
         if (prev && prev !== nowStr) {
-          // ขึ้นวันใหม่แล้ว! รีเซ็ต Progress สดๆ เลย
           setCompletedQuests([]);
           setHasClaimedQuoteToday(false);
           setCustomQuestTitle("");
+          setAiGeneratedQuestTitle("");
           
-          // 🧹 ล้างค่าใน Firestore ทันที (กรณีเปิดแอปทิ้งไว้ข้ามคืน)
           if (user) {
-            const userRef = doc(db, "users", user.uid);
-            updateDoc(userRef, { 
-              customQuestTitle: "",
-              completedQuestIds: [],
-              lastActiveDate: nowStr 
-            }).catch(e => console.error("Midnight reset error:", e));
+            loadDashboardData(user);
           }
           return nowStr;
         }
@@ -270,12 +539,10 @@ export default function DashboardPage() {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user, loadDashboardData]);
 
-  // 🛡️ [Modal Queueing]: ป้องกัน Modal เด้งซ้อนกัน (Level Up มาก่อน Daily Success เสมอ)
   useEffect(() => {
     if (!showLevelUp && pendingDailySuccess) {
-      // ให้เวลา Level Up หายไปจากจอแป๊บนึงค่อยโชว์ตัวถัดไป
       const timer = setTimeout(() => {
         setShowDailySuccess(true);
         setPendingDailySuccess(false);
@@ -284,7 +551,6 @@ export default function DashboardPage() {
     }
   }, [showLevelUp, pendingDailySuccess]);
 
-  // 🛡️ ซ่อน Bottom Nav เมื่อเปิด Modal ฉลอง
   useEffect(() => {
     if (showPerfectWeekModal) {
       document.body.classList.add('hide-bottom-nav');
@@ -298,267 +564,13 @@ export default function DashboardPage() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        setNewName(currentUser.displayName || ""); // 👈 เพิ่มบรรทัดนี้ครับ!
+        setNewName(currentUser.displayName || "");
         
-        // ✅ อัปเดต Last Login ใน DB ทุกครั้งที่เปิดหน้า Dashboard (เพื่อให้ Admin เห็น Active Users)
         updateDoc(doc(db, "users", currentUser.uid), {
           lastLoginAt: serverTimestamp()
         }).catch(e => console.error("Failed to update lastLoginAt:", e));
 
-        try {
-          const data = await fetchDashboardData(currentUser.uid, currentUser.email);
-
-          setChatQuota(data.chatQuota);
-          setRelativeWeekInfo(data.currentWeekInfo);
-
-          if (data.wheelData) setLastWheel(data.wheelData);
-          if (data.discData) setLastDisc(data.discData);
-          if (data.moneyData) setLastMoney(data.moneyData);
-          if (data.librarySoulData) setLastLibrarySoul(data.librarySoulData);
-          if (data.quoteData) setLastQuote(data.quoteData);
-          setHasSoulGuide(data.hasSoulGuide);
-
-          let thisWeekTotal = 0;
-          let prevWeekTotal = 0;
-
-          if (data.thisWeekData) {
-            setWeeklyData({
-              wheel: Math.min(7, data.thisWeekData.wheel || 0),
-              disc: Math.min(7, data.thisWeekData.disc || 0),
-              money: Math.min(7, data.thisWeekData.money || 0),
-              library: Math.min(7, data.thisWeekData.library || 0),
-              wildcard: Math.min(7, data.thisWeekData.wildcard || 0),
-              challenge: Math.min(7, data.thisWeekData.challenge || 0),
-              momentum_count: data.thisWeekData.momentum_count || 0
-            });
-            thisWeekTotal = Math.min(42, (data.thisWeekData.wheel || 0) + (data.thisWeekData.disc || 0) + (data.thisWeekData.money || 0) + (data.thisWeekData.library || 0) + (data.thisWeekData.wildcard || 0) + (data.thisWeekData.challenge || 0));
-          } else {
-            setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
-          }
-
-          if (data.prevWeekData) {
-            prevWeekTotal = (data.prevWeekData.wheel || 0) + (data.prevWeekData.disc || 0) + (data.prevWeekData.money || 0) + (data.prevWeekData.library || 0) + (data.prevWeekData.wildcard || 0) + (data.prevWeekData.challenge || 0);
-          }
-
-          const currentWeekInfo = data.currentWeekInfo;
-          const userData = data.userData;
-
-          // 🌟 [FIX LOGIC] เช็ก FIRST WEEK จากเลขสัปดาห์โดยตรง ชัวร์ที่สุด!
-          if (currentWeekInfo.id === "week-1") {
-            setIsFirstWeek(true);
-            setImprovement(0);
-          } else {
-            setIsFirstWeek(false);
-            if (prevWeekTotal > 0) {
-              // มีคะแนนสัปดาห์ก่อนหน้า ก็เทียบ % ปกติ
-              const diff = ((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100;
-              setImprovement(Math.round(diff));
-            } else {
-              // ถ้าสัปดาห์ก่อนเป็น 0 แต่สัปดาห์นี้เริ่มทำแล้ว ให้ถือว่าพัฒนาขึ้น 100%
-              setImprovement(thisWeekTotal > 0 ? 100 : 0);
-            }
-          }
-          // --- 2. ดึง User Profile และเช็ก XP เก็บตก (First-Time XP) ---
-          if (userData) {
-            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-
-            setGender(userData.gender || "male");
-
-            // 🛠️ [FIX BUG 3]: ดึง Streak มา แล้วเช็กก่อนว่าขาดไปหรือยังตั้งแต่วินาทีแรกที่โหลด!
-            let currentStreak = userData.streakCount || 0;
-
-            if (userData.lastQuestDate) {
-              const lastDate = new Date(userData.lastQuestDate);
-              const todayDate = new Date(todayStr);
-              const diffDays = Math.round((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-
-              // ถ้าทิ้งช่วงเกิน 1 วัน แปลว่า Streak พังไปแล้ว
-              if (diffDays > 1 && currentStreak > 0) {
-                currentStreak = 0;
-                // อัปเดตลง DB ไปเลยเงียบๆ เพื่อคลีนข้อมูล
-                setDoc(doc(db, "users", currentUser.uid), { streakCount: 0 }, { merge: true });
-              }
-            }
-
-            setStreakCount(currentStreak);
-            setWheelPlanDay(userData.wheelPlanDay || 0);
-            setWheelPlanSkips(userData.wheelPlanSkips || 0);
-            setLastSkipDate(userData.lastSkipDate || "");
-            setLastChatDate(userData.lastChatDate || "");
-            setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
-            setPerfectWeeks(userData.perfectWeeks || 0);
-            setIsRandomMode(userData.isRandomMode || false); // 🌟 เพิ่มบรรทัดนี้
-            setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]); // 👈 โหลดค่า Seed การสุ่ม
-            setLastRerollDate(userData.lastRerollDate || ""); // 👈 โหลดวันที่สุ่มล่าสุด
-            setWheelCompletions(userData.wheelCompletions || 0); // 👈 สำคัญ! โหลดจำนวนวันที่ทำสำเร็จ
-
-            let xpToClaim = 0;
-            // ... (โค้ดดึงตัวแปร xpToClaim และอื่นๆ ด้านล่างปล่อยไว้เหมือนเดิมครับ)
-            let xpUpdates: any = {};
-
-            // เช็ก XP ที่ยังไม่เคยกดรับ
-            if (data.wheelData && !userData.hasWheelXP) {
-              xpToClaim += 50;
-              xpUpdates.hasWheelXP = true;
-            }
-            if (data.discData && !userData.hasDiscXP) {
-              xpToClaim += 50;
-              xpUpdates.hasDiscXP = true;
-            }
-            if (data.moneyData && !userData.hasMoneyXP) {
-              xpToClaim += 50;
-              xpUpdates.hasMoneyXP = true;
-            }
-            if (data.librarySoulData && !userData.hasLibrarySoulXP) {
-              xpToClaim += 50;
-              xpUpdates.hasLibrarySoulXP = true;
-            }
-
-            // ถ้ามี XP ที่ยังไม่ได้กดรับ ให้บวกเข้า DB ทันที
-            if (xpToClaim > 0) {
-              const userDocRef = doc(db, "users", currentUser.uid);
-              await setDoc(userDocRef, {
-                ...xpUpdates,
-                totalXP: increment(xpToClaim)
-              }, { merge: true });
-
-              const oldXP = userData.totalXP || 0;
-              const newXP = oldXP + xpToClaim;
-              setTotalXP(newXP);
-              const oldLevel = Math.floor(oldXP / 100) + 1;
-              const newLevel = Math.floor(newXP / 100) + 1;
-              if (newLevel > oldLevel) {
-                setShowLevelUp({ isOpen: true, newLevel });
-                setTimeout(() => setShowLevelUp(null), 4000);
-              }
-              console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
-            } else {
-              setTotalXP(userData.totalXP || 0);
-            }
-
-            // --- 3. จัดการ Daily Quest และชื่อเควส (เช็กวันใหม่) ---
-            // 🌟 THE FIX: ใช้ตัวแปรใหม่ lastActiveDate เป็นหลัก ถ้าไม่มีค่อยใช้ของเก่า
-            const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
-
-            if (activeDateToCheck === todayStr) {
-              setCompletedQuests(userData.completedQuestIds || []);
-              setCustomQuestTitle(userData.customQuestTitle || "");
-            } else {
-              // 🆕 [AUTOMATED PROGRESSION] วันเปลี่ยนไปแล้ว! ขยับแผนอัตโนมัติ
-              setCompletedQuests([]);
-              setCustomQuestTitle("");
-              
-              // 🧹 [CRITICAL FIX] ล้างค่าใน Database ด้วย เพื่อไม่ให้ดึงค่าวันเก่ามาแสดง
-              if (currentUser) {
-                const userRef = doc(db, "users", currentUser.uid);
-                updateDoc(userRef, { customQuestTitle: "" }).catch(e => console.error(e));
-              }
-
-              let currentPlanDay = userData.wheelPlanDay || 0;
-              let nextPlanDay = currentPlanDay;
-
-              // 🎯 [NEW LOGIC] การเปลี่ยนวันเมื่อครบ 7 วัน
-              if (currentPlanDay >= 7) {
-                // ให้วนลูปกลับไปเป็น Day 1 อัตโนมัติ
-                nextPlanDay = 1;
-
-                // 1. ถ้าค้างอยู่ที่ Day 7 แสดงว่าเมื่อวานไม่ได้กด Check box วันสุดท้าย ให้ทำการสรุปผลและแจก XP ย้อนหลังให้
-                if (currentPlanDay === 7) {
-                  const completions = userData.wheelCompletions || 0;
-                  let bonusXP = 0;
-                  let milestoneName = "";
-                  let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
-
-                  if (completions >= 7) {
-                    bonusXP = 100;
-                    milestoneName = "PERFECT RUN!";
-                    modalType = "PERFECT";
-                  } else if (completions >= 5) {
-                    bonusXP = 50;
-                    milestoneName = "GREAT RUN!";
-                    modalType = "GREAT";
-                  } else {
-                    bonusXP = 20;
-                    milestoneName = "GOOD RUN!";
-                    modalType = "GOOD";
-                  }
-
-                  setRewardModalData({
-                    title: milestoneName,
-                    bonusXP: bonusXP,
-                    message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
-                    type: modalType
-                  });
-
-                  let xpToAdd = bonusXP;
-                  let perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
-
-                  const userRef = doc(db, "users", currentUser.uid);
-                  // 🚀 ทำการอัปเดตแบบ Non-blocking เพื่อให้หน้า Dashboard โหลดเร็วขึ้น
-                  updateDoc(userRef, {
-                    wheelPlanDay: nextPlanDay,
-                    lastActiveDate: todayStr,
-                    completedQuestIds: [],
-                    customQuestTitle: "",
-                    wheelCompletions: 0,
-                    totalXP: increment(xpToAdd),
-                    perfectWeeks: increment(perfectWeekInc)
-                  }).catch(e => console.error("Auto-progression error:", e));
-
-                  setTotalXP((userData.totalXP || 0) + xpToAdd);
-                  setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
-                  setShowPerfectWeekModal(true);
-
-                } else {
-                  // 2. ถ้าเป็น Day 8 อยู่แล้ว แสดงว่าเมื่อวานกด Check box และรับรางวัลไปแล้ว วันนี้ก็แค่รีเซ็ตเป็น Day 1 เงียบๆ
-                  const userRef = doc(db, "users", currentUser.uid);
-                  updateDoc(userRef, {
-                    wheelPlanDay: nextPlanDay,
-                    lastActiveDate: todayStr,
-                    completedQuestIds: [],
-                    customQuestTitle: "",
-                    wheelCompletions: 0
-                  }).catch(e => console.error("Auto-reset error:", e));
-                }
-
-                setWheelCompletions(0);
-
-              } else {
-                // ถ้ายังไม่ครบ 7 วัน ให้ขยับวันขึ้น (0->1, 1->2, ..., 6->7)
-                nextPlanDay = currentPlanDay + 1;
-                const userRef = doc(db, "users", currentUser.uid);
-                updateDoc(userRef, {
-                  wheelPlanDay: nextPlanDay,
-                  lastActiveDate: todayStr,
-                  completedQuestIds: [],
-                  customQuestTitle: ""
-                }).catch(e => console.error("Day progression error:", e));
-              }
-
-              setWheelPlanDay(nextPlanDay);
-            }
-
-            // --- 4. จัดการสถานะคำคม ---
-            if (userData.lastQuoteDate === todayStr) {
-              setHasClaimedQuoteToday(true);
-            } else {
-              setHasClaimedQuoteToday(false);
-              // ✨ [NEW] เด้ง Popup ชวนเจนคำคมถ้ายังไม่ได้ทำ (เด้งแค่ครั้งเดียวต่อการเข้า Dashboard ในเซสชันนั้น)
-              const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
-              if (!hasShownThisSession && (userData.totalXP || 0) > 0) {
-                setShowWelcomeQuotePopup(true);
-                sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
-              }
-            }
-          }
-
-        } catch (error) {
-          console.error("Error fetching Dashboard data:", error);
-        } finally {
-          // ✅ ปิด Loading ให้เร็วที่สุดเพื่อให้ผู้ใช้เห็นหน้าจอทันที
-          setLoading(false);
-        }
-
+        await loadDashboardData(currentUser);
       } else {
         router.push("/");
         setLoading(false);
@@ -566,7 +578,7 @@ export default function DashboardPage() {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, loadDashboardData]);
 
   // 🛡️ [UI Control]: ซ่อน Header และ Bottom Navigation และ Lock Scroll เมื่อมี Modal สำคัญเด้งขึ้นมา
   useEffect(() => {
@@ -615,7 +627,9 @@ export default function DashboardPage() {
         { name: "discResults", query: query(collection(db, "discResults"), where("userId", "==", user.uid)) },
         { name: "quiz_results", query: query(collection(db, "quiz_results"), where("userId", "==", user.uid)) },
         { name: "quotes", query: query(collection(db, "quotes"), where("userId", "==", user.uid)) },
-        { name: "chat_history", query: collection(db, "users", user.uid, "chat_history") }
+        { name: "chat_history", query: collection(db, "users", user.uid, "chat_history") },
+        { name: "quest_log", query: collection(db, "users", user.uid, "quest_log") },
+        { name: "book_playlist", query: collection(db, "users", user.uid, "book_playlist") },
       ];
 
       // ดึงเอกสารทั้งหมดจากทุกที่ที่ระบุไว้
@@ -654,6 +668,9 @@ export default function DashboardPage() {
         hasDiscXP: false,
         hasMoneyXP: false,
         hasLibrarySoulXP: false,
+        lastGhostResult: null,      // 👻 ล้างผล Ghost in You (เก็บเป็น field บน user doc)
+        lastGhostResultFull: null,
+        hasGhostXP: false,
         hasSoulGuide: false,
         hasReadXP: false,  // 🌟 ปลดล็อกรีเซ็ต XP การอ่าน
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
@@ -661,7 +678,15 @@ export default function DashboardPage() {
         chatUsageDate: null,
         perfectWeeks: 0,    // 🏆 ล้างจำนวนสัปดาห์ที่สมบูรณ์
         wheelCompletions: 0, // 🎡 ล้างตัวนับความสำเร็จรายวัน
-        createdAt: resetDate // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
+        createdAt: resetDate, // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
+        aiGeneratedQuestTitle: "",
+        aiGeneratedWildcardTitle: "",
+        lastQuestAnalysisDate: "",
+        lastWildcardGeneratedDate: "",
+        questPrefsBlockDate: "",
+        questPreferences: null,
+        bookMatchCache: null,
+        lastChatDate: null,
       }, { merge: true });
 
       // 🚀 4. Execute Batch รวดเดียวจบ
@@ -680,11 +705,18 @@ export default function DashboardPage() {
       setLastMoney(null);
       setLastLibrarySoul(null);
       setLastQuote(null);
+      setLastGhostResult(null);
       setWeeklyData({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
       setIsFirstWeek(true);
       setRelativeWeekInfo(calculateRelativeWeek(resetDate));
       setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
       setHasSoulGuide(false);
+      setAiGeneratedQuestTitle("");
+      setAiGeneratedWildcardTitle("");
+      setCustomQuestTitle("");
+      setCollectionQuests([]);
+      setCollectionBooks([]);
+      setSavedBooks(new Set());
       localStorage.removeItem('hasSeenDashboardTutorial');
       setShowTutorial(true);
       setTutorialStep(1);
@@ -890,6 +922,116 @@ export default function DashboardPage() {
     setInfoModal({ isOpen: true, title: "DISC STYLE", content });
   };
 
+  const handleSaveBook = async (book: { title: string; author: string; reason: string; category: string }) => {
+    if (!user) return;
+    const key = book.title;
+    const isSaved = savedBooks.has(key);
+    // Optimistic update
+    setSavedBooks(prev => {
+      const next = new Set(prev);
+      isSaved ? next.delete(key) : next.add(key);
+      return next;
+    });
+    const playlistRef = collection(db, 'users', user.uid, 'book_playlist');
+    if (isSaved) {
+      // ลบออก — หา doc ที่ title ตรงแล้วลบ
+      const { getDocs, query, where, deleteDoc } = await import('firebase/firestore');
+      const q = query(playlistRef, where('title', '==', book.title));
+      const snap = await getDocs(q);
+      snap.forEach(d => deleteDoc(d.ref));
+    } else {
+      const { addDoc } = await import('firebase/firestore');
+      await addDoc(playlistRef, { ...book, savedAt: new Date().toISOString() });
+    }
+  };
+
+  // โหลด saved books เมื่อ modal เปิด
+  const openCollectionModal = async () => {
+    if (!user) return;
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    setShowCollectionModal(true);
+    setCollectionSelectedDate(todayStr);
+    setCollectionLoading(true);
+    try {
+      const [booksSnap, questsSnap] = await Promise.all([
+        getDocs(collection(db, 'users', user.uid, 'book_playlist')),
+        getDocs(query(
+          collection(db, 'users', user.uid, 'quest_log'),
+          orderBy('completedAt', 'desc'),
+          limit(30)
+        )),
+      ]);
+      setCollectionBooks(booksSnap.docs.map(d => d.data() as { title: string; author: string; category: string }));
+      setCollectionQuests(questsSnap.docs.map(d => d.data() as { title: string; type: string; completedAt: string }));
+    } catch {
+      // fail silently
+    } finally {
+      setCollectionLoading(false);
+    }
+  };
+
+  const loadSavedBooks = async () => {
+    if (!user) return;
+    const { getDocs } = await import('firebase/firestore');
+    const snap = await getDocs(collection(db, 'users', user.uid, 'book_playlist'));
+    setSavedBooks(new Set(snap.docs.map(d => d.data().title as string)));
+  };
+
+  const fetchBooks = async () => {
+    if (!user || !lastLibrarySoul) return;
+    setBookMatchLoading(true);
+    setBookMatchBooks([]);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/book-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({
+          soulType: lastLibrarySoul.type,
+          soulTitle: LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || null,
+          soulDescription: LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.description || null,
+          soulVibe: LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.vibe || null,
+          discType: lastDisc?.finalResult?.charAt(0) || lastDisc?.result?.charAt(0) || null,
+          moneyType: lastMoney?.resultKey || null,
+          wheelGoal: (lastWheel as any)?.goal || null,
+        }),
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      if (data.books?.length) {
+        setBookMatchBooks(data.books);
+        // บันทึกลง Firestore พร้อม soul type — invalidate อัตโนมัติถ้า type เปลี่ยน
+        updateDoc(doc(db, 'users', user.uid), {
+          bookMatchCache: { books: data.books, soulType: lastLibrarySoul.type },
+        }).catch(() => {});
+      }
+    } catch {
+      // fail silently
+    } finally {
+      setBookMatchLoading(false);
+    }
+  };
+
+  const handleBookMatch = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!user || !lastLibrarySoul) return;
+    setBookMatchModal(true);
+    loadSavedBooks();
+    if (bookMatchBooks.length > 0) return; // session cache
+
+    // โหลด Firestore cache ก่อน — ถ้า soul type ตรงกัน ใช้เลยไม่ fetch ใหม่
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      const cache = snap.data()?.bookMatchCache;
+      if (cache?.soulType === lastLibrarySoul.type && cache?.books?.length) {
+        setBookMatchBooks(cache.books);
+        return;
+      }
+    } catch {}
+
+    fetchBooks();
+  };
+
   const openLibrarySoulInfo = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (!lastLibrarySoul) return;
@@ -945,6 +1087,78 @@ export default function DashboardPage() {
       </div>
     );
     setInfoModal({ isOpen: true, title: "วิเคราะห์จิตวิญญาณนักอ่าน", content });
+  };
+
+  const openGhostInfo = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!lastGhostResult) return;
+    const ghost = ghostResults[lastGhostResult.primary as keyof typeof ghostResults];
+    if (!ghost) return;
+
+    const content = (
+      <div className="space-y-5 text-left -mt-2">
+        <div className="relative p-6 rounded-[2.5rem] bg-zinc-950 border border-red-900/40 overflow-hidden shadow-sm">
+          <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
+          <div className="absolute right-[-10px] bottom-[-20px] text-8xl opacity-10 pointer-events-none">{ghost.emoji}</div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900" />
+
+          <div className="relative z-10">
+            <div className="flex justify-between items-start gap-3 mb-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-red-900/40 bg-red-950/50 text-red-400">
+                <Ghost size={14} />
+                <span className="text-[11px] font-black uppercase tracking-widest">{ghost.fearLabel}</span>
+              </div>
+              <div className="w-16 h-16 shrink-0">
+                <img src={`/ghosts/${ghost.id}.png`} alt={ghost.name} className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(220,38,38,0.5)]" />
+              </div>
+            </div>
+
+            <h4 className="font-black text-2xl text-white mb-1">{ghost.name}</h4>
+            <p className="text-[11px] text-red-500 font-black uppercase tracking-widest mb-4">"{ghost.tagline}"</p>
+            <p className="text-[13px] text-zinc-400 leading-relaxed mb-5">{ghost.story}</p>
+
+            <div className="flex flex-wrap gap-2">
+              {/* ค่า value ต่ำคือจุดที่ขาด ไม่ใช่พฤติกรรมเด่น จึงไม่แสดง */}
+              {ghost.stats.filter((s) => s.value >= 50).map((s) => (
+                <span key={s.label} className="text-[11px] font-bold text-red-400 bg-red-950/40 border border-red-900/40 px-3 py-1.5 rounded-full">
+                  {s.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
+          const sec = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
+          return (
+            <div className="flex items-center gap-4 px-5 py-4 rounded-[2rem] bg-zinc-900 border border-zinc-800">
+              <img src={`/ghosts/${sec.id}.png`} alt={sec.name} className="w-12 h-12 object-contain opacity-80 shrink-0" />
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">ตัวตนรอง</span>
+                <span className="text-[15px] font-black text-white">{sec.name}</span>
+                <span className="text-[10px] font-bold text-red-700/70 uppercase tracking-wide">{sec.fearLabel}</span>
+              </div>
+            </div>
+          );
+        })()}
+
+        <div className="bg-red-950/30 border border-red-900/40 text-white p-6 rounded-[2rem] relative overflow-hidden">
+          <div className="flex items-center gap-2 text-red-400 font-black text-xs mb-3 uppercase tracking-widest">
+            <Sparkles size={14} /> วิธีฮีลตัวเอง
+          </div>
+          <h5 className="font-black text-base text-white mb-3">{ghost.heal.title}</h5>
+          <ul className="space-y-2">
+            {ghost.heal.steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-red-100/70 leading-relaxed">
+                <span className="text-red-500 font-black shrink-0">{i + 1}.</span> {step}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 pt-4 border-t border-red-900/30 text-[11px] text-red-400/60 italic">"{ghost.affirmation}"</div>
+        </div>
+      </div>
+    );
+    setInfoModal({ isOpen: true, title: `วิเคราะห์ผี: ${ghost.name}`, content });
   };
 
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";
@@ -1054,28 +1268,51 @@ export default function DashboardPage() {
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
       const data = snap.data();
+      
+      // ข้ามถ้าวันนี้ทำเควส Challenge (ID 6) สำเร็จไปแล้ว เพื่อไม่ให้เควสโดนเปลี่ยนทับกลางคัน
+      const completedIds: (string | number)[] = data?.completedQuestIds || [];
+      const isChallengeDoneToday = completedIds.some(id => String(id) === '6');
+      if (isChallengeDoneToday) return;
+
       const lastAnalysisDate = data?.lastQuestAnalysisDate || '';
       const lastChat = data?.lastChatDate || '';
+      const currentLevel = Math.floor((data?.totalXP || 0) / 100) + 1;
+      const lastWildcardDate = data?.lastWildcardGeneratedDate || '';
+      const questPrefsBlockDate = data?.questPrefsBlockDate || '';
+      const needsWildcard = currentLevel >= 11 && lastWildcardDate !== todayDateStr;
 
-      // ข้ามถ้ายังไม่มีแชท หรือ analysis ล่าสุดทำหลังแชทครั้งล่าสุดแล้ว
-      if (!lastChat) return;
-      if (lastAnalysisDate >= lastChat) return;
+      // prefs ถูก save เมื่อวานหรือก่อนหน้า → analysis ยังไม่ได้ใช้ prefs ใหม่
+      const hasFreshPrefs = questPrefsBlockDate && questPrefsBlockDate !== todayDateStr && questPrefsBlockDate > lastAnalysisDate;
+      const hasFreshChat = lastChat > lastAnalysisDate;
+
+      if (!hasFreshChat && !hasFreshPrefs && !needsWildcard) return;
+      // block same-day เมื่อ prefs เพิ่ง save วันนี้ (ยังไม่มีแชทใหม่)
+      if (questPrefsBlockDate === todayDateStr && !hasFreshChat && !needsWildcard) return;
 
       try {
         const idToken = await user.getIdToken();
         const res = await fetch('/api/quest-analysis', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${idToken}` },
+          headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ level: currentLevel }),
         });
         if (!res.ok) return;
-        const { questTitle } = await res.json();
-        if (!questTitle) return;
+        const { questTitle, wildcardTitle } = await res.json();
+        if (!questTitle && !wildcardTitle) return;
 
-        await updateDoc(userRef, {
-          aiGeneratedQuestTitle: questTitle,
-          lastQuestAnalysisDate: todayDateStr,
-        });
-        setAiGeneratedQuestTitle(questTitle);
+        const updates: Record<string, string> = {};
+        if (questTitle) {
+          updates.aiGeneratedQuestTitle = questTitle;
+          updates.lastQuestAnalysisDate = todayDateStr;
+        }
+        if (wildcardTitle) {
+          updates.aiGeneratedWildcardTitle = wildcardTitle;
+          updates.lastWildcardGeneratedDate = todayDateStr;
+        }
+
+        if (Object.keys(updates).length > 0) await updateDoc(userRef, updates);
+        if (questTitle) setAiGeneratedQuestTitle(questTitle);
+        if (wildcardTitle) setAiGeneratedWildcardTitle(wildcardTitle);
       } catch {
         // fail silently
       }
@@ -1161,10 +1398,12 @@ export default function DashboardPage() {
 
 
     // ✅ 2. ดึงจาก DISC
+    const questLevel = Math.floor(totalXP / 100) + 1;
     const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
     const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
     qList[1].title = discPool[pseudoRandomSlot(discPool.length, 2.7, 1)];
 
+    // ✅ 3. ดึงจาก MONEY
     const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
     const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
     qList[2].title = moneyPool[pseudoRandomSlot(moneyPool.length, 3.9, 2)];
@@ -1195,8 +1434,12 @@ export default function DashboardPage() {
     // เตรียม Array สำหรับเช็คค่าซ้ำในวันเดียวกัน
     const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
 
-    // 🛡️ ช่องที่ 5: Wildcard (ใช้ Salt 5.5)
-    qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
+    // 🛡️ ช่องที่ 5: Wildcard — level 11+ ใช้ AI awareness quest
+    if (aiGeneratedWildcardTitle && questLevel >= 11) {
+      qList[4].title = aiGeneratedWildcardTitle;
+    } else {
+      qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
+    }
     currentTitles.push(qList[4].title);
 
     // 🛡️ ช่องที่ 6: Challenge (ใช้ AI-generated quest ถ้ามี, fallback ไป pool ปกติ)
@@ -1207,7 +1450,7 @@ export default function DashboardPage() {
     }
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedWildcardTitle, totalXP]);
 
   // 🤖 AI Mentor Quest — auto-complete เมื่อ user คุย AI แล้ววันนี้
   const aiMentorAutoCompleted = useRef(false);
@@ -1325,7 +1568,7 @@ export default function DashboardPage() {
       bonusXP = 50;
       milestoneName = "GREAT RUN!";
       modalType = "GREAT";
-    } else {
+    } else if (completions >= 1) {
       bonusXP = 20;
       milestoneName = "GOOD RUN!";
       modalType = "GOOD";
@@ -1350,6 +1593,15 @@ export default function DashboardPage() {
 
     await updateDoc(userRef, finalUpdates);
     setWheelPlanDay(8);
+
+    const oldLevel = Math.floor(totalXP / 100) + 1;
+    const newLevel = Math.floor((totalXP + bonusXP) / 100) + 1;
+
+    if (newLevel > oldLevel) {
+      setShowLevelUp({ isOpen: true, newLevel });
+      setTimeout(() => setShowLevelUp(null), 4000);
+    }
+
     setTotalXP(prev => prev + bonusXP);
     setShowPerfectWeekModal(true);
   };
@@ -1501,13 +1753,13 @@ export default function DashboardPage() {
 
         if (statKey) {
           try {
-            setWeeklyData((prev: any) => ({
-              ...prev,
-              [statKey]: Math.min(7, Math.max(0, (prev[statKey] || 0) + incValue))
-            }));
+            const currentVal = (weeklyData[statKey as keyof typeof weeklyData] as number) || 0;
+            const newVal = Math.min(7, Math.max(0, currentVal + incValue));
+
+            setWeeklyData((prev: any) => ({ ...prev, [statKey]: newVal }));
 
             await setDoc(weeklyRef, {
-              [statKey]: increment(incValue),
+              [statKey]: newVal,
               updatedAt: new Date()
             }, { merge: true });
           } catch (err) {
@@ -1537,6 +1789,21 @@ export default function DashboardPage() {
       };
 
       await setDoc(userRef, finalUpdates, { merge: true });
+
+      // 📓 Quest log — บันทึกเมื่อ complete เท่านั้น (ไม่บันทึกตอน uncheck)
+      if (!isDone) {
+        const logRef = collection(db, 'users', user.uid, 'quest_log');
+        const logTitle = quest?.title || (id === 'special-01' ? customQuestTitle : '');
+        const logType = questType;
+        if (logTitle) {
+          addDoc(logRef, {
+            title: logTitle,
+            type: logType,
+            xp: xp,
+            completedAt: todayStr,
+          }).catch(() => {});
+        }
+      }
 
     } catch (error) {
       console.error("Error toggling quest:", error);
@@ -1682,6 +1949,7 @@ export default function DashboardPage() {
   if (!lastDisc) missingAssessments.push("DISC");
   if (!lastMoney) missingAssessments.push("Money Avatar");
   if (!lastLibrarySoul) missingAssessments.push("Library of Souls");
+  if (!lastGhostResult) missingAssessments.push("Ghost in You");
 
   const quoteText = lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปกดสุ่ม 'คมสัดสัด' ดูสิ!";
 
@@ -1939,6 +2207,9 @@ export default function DashboardPage() {
             { done: !!lastLibrarySoul, path: "/tools/library-of-souls", label: "Library of Souls", desc: "ค้นพบสไตล์การเรียนรู้ของคุณ",        xp: 50,
               icon: <BookOpen size={22} />,
               gradient: "from-emerald-600 to-teal-500", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400" },
+            { done: !!lastGhostResult, path: "/tools/ghost-in-you",     label: "Ghost in You",     desc: "ผีอะไรสิงคุณอยู่? สำรวจความกลัวลึกๆ",  xp: 50,
+              icon: <Ghost size={22} />,
+              gradient: "from-purple-600 to-violet-600", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
             { done: !!lastQuote,       path: "/tools/khomsatsat",       label: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจด้วย AI",              xp: 10,
               icon: <Quote size={22} />,
               gradient: "from-purple-600 to-fuchsia-500", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
@@ -1975,11 +2246,11 @@ export default function DashboardPage() {
                     <p className="text-slate-400 text-[10px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/6</span>
+                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/{steps.length}</span>
                     <Link
                       href={next.path}
                       onClick={() => {
-                        if (doneCount === 5 && user && !hasSoulGuide) {
+                        if (doneCount === 6 && user && !hasSoulGuide) {
                           setHasSoulGuide(true);
                           setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
                         }
@@ -1987,7 +2258,7 @@ export default function DashboardPage() {
                       className="flex items-center gap-1 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap"
                       style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}
                     >
-                      {doneCount === 0 ? "เริ่มเลย" : doneCount === 5 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={11} />
+                      {doneCount === 0 ? "เริ่มเลย" : doneCount === 6 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={11} />
                     </Link>
                   </div>
                 </div>
@@ -1997,7 +2268,7 @@ export default function DashboardPage() {
                   {steps.map((step, i) => {
                     const isNext = step === next;
                     const isDone = step.done;
-                    const shortLabels = ["Wheel", "DISC", "Money", "Library", "คมสัด", "AI"];
+                    const shortLabels = ["Wheel", "DISC", "Money", "Library", "Ghost", "คมสัด", "AI"];
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
                         <div className={`h-1 w-full rounded-full transition-all duration-500 ${
@@ -2328,9 +2599,9 @@ export default function DashboardPage() {
                       <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full">
                         {/* Streak Badge */}
                         <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                          <Flame size={12} className="text-orange-500 fill-current shrink-0" />
+                          <Flame size={12} className={`fill-current shrink-0 ${streakCount === 0 ? 'text-white/30' : 'text-orange-500'}`} />
                           <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
-                            {streakCount} Days
+                            {streakCount === 0 ? 'เริ่ม Streak วันนี้' : `${streakCount} Days`}
                           </span>
                         </div>
 
@@ -2908,10 +3179,10 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0 relative z-10">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>Personalized Mission</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${completedQuests.includes('special-01') ? 'bg-emerald-100 text-emerald-700' : 'bg-gradient-to-r from-amber-100 to-yellow-50 text-amber-700 border border-amber-200/50'}`}>{customQuestTitle ? 'My Quest' : '✏️ สร้าง Quest เอง'}</span>
                       </div>
                       <p className={`text-[13px] sm:text-[15px] font-bold leading-snug ${completedQuests.includes('special-01') ? 'line-through text-stone-400' : 'text-stone-800'}`}>
-                        {customQuestTitle || "ออกแบบภารกิจเฉพาะคุณ"}
+                        {customQuestTitle || "+ กดเพื่อเพิ่ม Quest ของวันนี้"}
                       </p>
                     </div>
                     <div className="shrink-0 text-right relative z-10">
@@ -2939,13 +3210,22 @@ export default function DashboardPage() {
         {/* 🎯 Section Header: เครื่องมือเฉพาะสำหรับคุณ */}
         {(activeTab === "identity" || activeTab === "resources") && (
           <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-2 mb-4">
-            <div className="flex items-center gap-4">
+            <div className="relative flex items-center gap-4">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
                 <span>{activeTab === 'resources' ? '🧠' : '🧬'}</span>
                 {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'ตัวตนของคุณ'}
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              {activeTab === 'identity' && (
+                <button
+                  onClick={openCollectionModal}
+                  className="absolute right-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold"
+                >
+                  <span>🗂️</span>
+                  <span className="hidden sm:inline">กล่องสะสม</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -3507,10 +3787,17 @@ export default function DashboardPage() {
                             </p>
                           </div>
 
-                          <div className="w-full px-4 mt-auto">
+                          <div className="w-full px-4 mt-auto flex flex-col gap-2">
+                            <button
+                              onClick={handleBookMatch}
+                              className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-95"
+                            >
+                              <BookOpen size={16} className="text-white/80" />
+                              <span>หนังสือแนะนำ</span>
+                            </button>
                             <div className="group/btn-start relative">
-                              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-emerald-300 active:scale-95">
-                                <RefreshCw size={16} className="text-white/80" />
+                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-slate-200 text-slate-400 text-[12px] font-black uppercase tracking-widest transition-all duration-300 hover:border-slate-300 hover:text-slate-600 active:scale-95">
+                                <RefreshCw size={14} />
                                 <span>ประเมินใหม่</span>
                               </div>
                             </div>
@@ -3541,12 +3828,119 @@ export default function DashboardPage() {
                     </div>
                   </motion.div>
                 </Link>
+
+                {/* 👻 5. Ghost in You */}
+                <Link href="/tools/ghost-in-you" className="group block h-full relative">
+                  {lastGhostResult && (
+                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGhostInfo(e); }}
+                      className="absolute top-8 right-8 z-20 p-2.5 text-zinc-500 hover:text-red-400 hover:bg-red-950/60 rounded-full transition-all bg-zinc-900/80 backdrop-blur-sm border border-zinc-800">
+                      <Info size={18} />
+                    </button>
+                  )}
+                  {!lastGhostResult && (
+                    <motion.div
+                      initial={{ scale: 0, rotate: 10 }}
+                      animate={{ scale: 1, rotate: -5 }}
+                      className="absolute top-8 right-8 bg-gradient-to-r from-red-700 to-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-red-950 flex items-center gap-1 z-30"
+                    >
+                      <Zap size={10} className="fill-white" /> +50 XP
+                    </motion.div>
+                  )}
+                  <motion.div
+                    whileHover={{ y: -6 }}
+                    className="h-full bg-zinc-950 p-8 rounded-[3rem] border border-zinc-800/80 flex flex-col items-center text-center transition-all duration-500 hover:shadow-[0_20px_60px_rgba(220,38,38,0.15)] hover:border-red-900/50 relative overflow-hidden group"
+                  >
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-900 via-red-500 to-red-900 transition-all duration-500 group-hover:h-2 z-0" />
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-red-900/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:bg-red-900/20 transition-colors duration-700 z-0" />
+
+                    <div className="relative z-10 flex flex-col items-center h-full w-full">
+                      {lastGhostResult ? (() => {
+                        const ghost = ghostResults[lastGhostResult.primary as keyof typeof ghostResults];
+                        if (!ghost) return null;
+                        return (
+                          <>
+                            <div className="flex flex-col items-center mb-8">
+                              <div className="relative mb-6 mt-2">
+                                <div className="absolute inset-0 bg-red-600/20 blur-3xl" />
+                                <div className="relative w-24 h-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
+                                  <img
+                                    src={`/ghosts/${ghost.id}.png`}
+                                    alt={ghost.name}
+                                    className="w-[135%] h-[135%] object-contain drop-shadow-[0_0_16px_rgba(220,38,38,0.4)]"
+                                  />
+                                </div>
+                              </div>
+
+                              <h3 className="font-bold text-zinc-600 text-[10px] uppercase tracking-[0.3em] mb-2.5">GHOST IN YOU</h3>
+
+                              <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-white group-hover:text-red-400 transition-colors">
+                                {ghost.name}
+                              </h2>
+
+                              <p className="text-[10px] font-black text-red-600/80 uppercase tracking-wide mb-4 truncate w-full px-2">
+                                {ghost.fearLabel}
+                              </p>
+
+                              <div className="inline-flex items-center bg-red-950/50 text-red-400 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-red-900/40">
+                                {ghost.nameEn}
+                              </div>
+
+                              <p className="text-[14px] font-medium text-zinc-500 mb-5 px-2 leading-loose italic w-full">
+                                "{ghost.tagline}"
+                              </p>
+
+                              {/* ตัวตนรอง */}
+                              {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
+                                const secGhost = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
+                                return (
+                                  <div className="mb-6 py-2.5 px-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center gap-3 w-full">
+                                    <img src={`/ghosts/${secGhost.id}.png`} alt={secGhost.name} className="w-8 h-8 object-contain opacity-70 shrink-0" />
+                                    <div className="flex flex-col items-start leading-none gap-1">
+                                      <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">ตัวตนรอง</span>
+                                      <span className="text-[12px] font-bold text-zinc-400">{secGhost.name}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+
+                            <div className="w-full px-4 mt-auto">
+                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-zinc-800 text-zinc-500 text-[12px] font-black uppercase tracking-widest transition-all hover:border-red-900/60 hover:text-red-400 active:scale-95">
+                                <RefreshCw size={14} />
+                                <span>ประเมินใหม่</span>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })() : (
+                        <div className="flex flex-col items-center justify-between h-full w-full py-2">
+                          <div className="flex flex-col items-center justify-center pt-8 mb-8">
+                            <div className="relative mb-6">
+                              <div className="absolute inset-0 bg-red-900/20 blur-3xl" />
+                              <div className="relative w-24 h-24 rounded-full bg-zinc-900 text-zinc-600 flex items-center justify-center border border-zinc-800 group-hover:border-red-900/60 group-hover:text-red-500 transition-all">
+                                <Ghost size={36} />
+                              </div>
+                            </div>
+                            <h3 className="text-2xl font-black text-white mb-2">Ghost in You</h3>
+                            <p className="text-zinc-500 text-sm font-medium">ผีอะไรสิงคุณอยู่?</p>
+                          </div>
+                          <div className="w-full px-4 mt-auto">
+                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-red-800 to-red-600 text-white text-[13px] font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(220,38,38,0.35)] group-hover:scale-[1.02] transition-all active:scale-95">
+                              <Sparkles size={16} className="text-white/80" />
+                              <span>สำรวจความกลัวลึกๆ (+50 XP)</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </Link>
               </>
             )}
 
             {(activeTab === "home" || activeTab === "resources") && (
               <>
-                {/* 🌟 5. Deep Work Mode - Premium Monochrome Style */}
+                {/* 🌟 6. Deep Work Mode - Premium Monochrome Style */}
                 <Link
                   href="/tools/focus-room"
                   className="group block h-full relative cursor-pointer"
@@ -3800,6 +4194,296 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* 📚 Book Match Modal */}
+        {bookMatchModal && (
+          <motion.div
+            key="book-match-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
+            onClick={() => setBookMatchModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.92, y: 20, opacity: 0 }}
+              transition={{ type: "spring", damping: 20, stiffness: 260 }}
+              className="relative w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden rounded-[2.5rem]"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Holo border glow */}
+              <div className="absolute inset-0 rounded-[2.5rem] p-[1.5px] z-0"
+                style={{ background: "linear-gradient(135deg, #a78bfa, #67e8f9, #34d399, #fbbf24, #f472b6, #a78bfa)" }}>
+                <div className="w-full h-full rounded-[2.4rem] bg-white" />
+              </div>
+
+              {/* Holo shimmer overlay */}
+              <div className="absolute inset-0 rounded-[2.5rem] z-0 pointer-events-none overflow-hidden">
+                <motion.div
+                  animate={{ x: ["−100%", "200%"] }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                  className="absolute inset-y-0 w-1/3 opacity-10"
+                  style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)", transform: "skewX(-20deg)" }}
+                />
+              </div>
+
+              {/* Modal content */}
+              <div className="relative z-10 flex flex-col max-h-[85vh] overflow-hidden rounded-[2.5rem] bg-white/95 backdrop-blur-sm">
+
+                {/* Header — holo gradient */}
+                <div className="relative rounded-t-[2.5rem] px-6 pt-5 pb-7"
+                  style={{ background: "linear-gradient(135deg, #f0fdf4, #ecfdf5, #f5f3ff)" }}>
+                  <div className="absolute inset-0 opacity-30"
+                    style={{ background: "linear-gradient(135deg, #a7f3d0, #c4b5fd, #67e8f9, #a7f3d0)", backgroundSize: "200% 200%", animation: "gradientShift 6s ease infinite" }} />
+                  <div className="relative z-10 flex justify-between items-center">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <BookOpen size={16} className="text-emerald-600" />
+                        <h3 className="text-lg font-black text-slate-800">หนังสือแนะนำ</h3>
+                      </div>
+                      {lastLibrarySoul && (
+                        <p className="text-[11px] font-black uppercase tracking-widest pb-1 leading-normal"
+                          style={{ background: "linear-gradient(90deg, #059669, #7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>
+                          {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || lastLibrarySoul.type} · {lastLibrarySoul.type}
+                        </p>
+                      )}
+                    </div>
+                    <button onClick={() => setBookMatchModal(false)}
+                      className="text-slate-400 hover:text-red-500 bg-white/70 hover:bg-red-50 p-2.5 rounded-full transition-all shadow-sm border border-white/50">
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="overflow-y-auto flex-1 p-5 space-y-3">
+                  {bookMatchLoading ? (
+                    <div className="flex flex-col items-center justify-center py-14 gap-4">
+                      <div className="relative w-12 h-12">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                          className="w-12 h-12 rounded-full border-2 border-t-transparent"
+                          style={{ borderColor: "transparent", borderTopColor: "transparent", background: "conic-gradient(from 0deg, #a78bfa, #34d399, #67e8f9, #fbbf24, #f472b6, #a78bfa)", borderRadius: "9999px", padding: "2px" }}
+                        />
+                        <div className="absolute inset-[2px] bg-white rounded-full" />
+                      </div>
+                      <p className="text-slate-500 text-sm font-medium">กำลังเลือกหนังสือที่เหมาะกับคุณ</p>
+                    </div>
+                  ) : bookMatchBooks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-14 gap-3">
+                      <BookOpen size={40} className="text-slate-200" />
+                      <p className="text-slate-400 text-sm">โหลดไม่ได้ ลองอีกครั้งนะ</p>
+                      <button onClick={fetchBooks} className="text-emerald-600 text-sm font-black hover:underline">
+                        ลองใหม่
+                      </button>
+                    </div>
+                  ) : (
+                    bookMatchBooks.map((book, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.07 }}
+                        className="p-4 rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white hover:border-emerald-200 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white"
+                            style={{ background: ["linear-gradient(135deg,#a78bfa,#7c3aed)", "linear-gradient(135deg,#34d399,#059669)", "linear-gradient(135deg,#67e8f9,#0284c7)", "linear-gradient(135deg,#fbbf24,#d97706)"][i % 4] }}>
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-black text-slate-800 text-[14px] leading-tight flex-1">{book.title}</p>
+                              <button
+                                onClick={() => handleSaveBook(book)}
+                                className={`shrink-0 p-1.5 rounded-full transition-all active:scale-90 ${savedBooks.has(book.title) ? 'text-emerald-500 bg-emerald-50' : 'text-slate-300 hover:text-emerald-400 hover:bg-emerald-50'}`}
+                              >
+                                <Bookmark size={15} className={savedBooks.has(book.title) ? 'fill-emerald-500' : ''} />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">{book.author}</p>
+                            <span className="inline-block mt-1.5 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide"
+                              style={{ background: "linear-gradient(135deg,#f0fdf4,#ecfdf5)", color: "#059669", border: "1px solid #d1fae5" }}>
+                              {book.category}
+                            </span>
+                            <p className="text-[12px] text-slate-500 mt-2 leading-relaxed">{book.reason}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer */}
+                {!bookMatchLoading && (
+                  <div className="p-4 border-t border-slate-100">
+                    <button
+                      onClick={fetchBooks}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 text-slate-500 text-[12px] font-black hover:border-violet-300 hover:text-violet-600 transition-all active:scale-95"
+                    >
+                      <RefreshCw size={13} /> สุ่มใหม่
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* 🗂️ กล่องสะสม Modal */}
+        {showCollectionModal && (() => {
+          const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          const MONTHS = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+          const formatDateLabel = (d: string) => {
+            if (d === today) return 'วันนี้';
+            if (d === yesterday) return 'เมื่อวาน';
+            const [y, m, day] = d.split('-');
+            return `${parseInt(day)} ${MONTHS[parseInt(m)]} ${parseInt(y) + 543}`;
+          };
+          const grouped = collectionQuests.reduce((acc, q) => {
+            (acc[q.completedAt] = acc[q.completedAt] || []).push(q);
+            return acc;
+          }, {} as Record<string, typeof collectionQuests>);
+          // รวม today เข้าไปใน dates เสมอ (สำหรับ MY QUEST)
+          const allDates = Array.from(new Set([today, ...Object.keys(grouped)])).sort((a, b) => b.localeCompare(a));
+          const selDate = collectionSelectedDate || today;
+          const selIndex = allDates.indexOf(selDate);
+          const canPrev = selIndex < allDates.length - 1;
+          const canNext = selIndex > 0;
+          const questsForDay = (grouped[selDate] || []).filter((q, i, arr) => arr.findIndex(x => x.title === q.title) === i);
+          const typeColor = (t: string) =>
+            t === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
+            t === 'WILDCARD'  ? 'bg-emerald-100 text-emerald-700' :
+            t === 'DISC'      ? 'bg-blue-100 text-blue-700' :
+            t === 'MONEY'     ? 'bg-yellow-100 text-yellow-700' :
+            t === 'WHEEL'     ? 'bg-purple-100 text-purple-700' :
+            'bg-slate-100 text-slate-600';
+
+          return (
+            <motion.div
+              key="collection-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+              onClick={() => setShowCollectionModal(false)}
+            >
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                onClick={e => e.stopPropagation()}
+                className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
+                style={{ maxHeight: 'min(85vh, 600px)' }}
+              >
+                {/* Header */}
+                <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!user || !window.confirm('ล้างประวัติ Quest ทั้งหมด?')) return;
+                        const snap = await getDocs(collection(db, 'users', user.uid, 'quest_log'));
+                        await Promise.all([
+                          ...snap.docs.map(d => deleteDoc(d.ref)),
+                          updateDoc(doc(db, 'users', user.uid), { customQuestTitle: '' }),
+                        ]);
+                        setCollectionQuests([]);
+                        setCustomQuestTitle('');
+                      }}
+                      className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1 rounded-full hover:bg-red-50"
+                    >ล้าง</button>
+                    <button onClick={() => setShowCollectionModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">✕</button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+                  {collectionLoading ? (
+                    <div className="flex items-center justify-center py-12 text-slate-400 text-sm">กำลังโหลด...</div>
+                  ) : (
+                    <>
+                      {/* ✅ Quest รายวัน */}
+                      <div>
+                        {/* Day navigation */}
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
+                            ✅ Quest ที่เคยทำ
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">{Object.values(grouped).reduce((sum, qs) => sum + new Set(qs.map(q => q.title)).size, 0) + (customQuestTitle && completedQuests.includes('special-01') ? 1 : 0)}</span>
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => canPrev && setCollectionSelectedDate(allDates[selIndex + 1])}
+                              disabled={!canPrev}
+                              className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${canPrev ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'text-slate-300 cursor-default'}`}
+                            >‹</button>
+                            <span className="text-xs font-bold text-slate-600 min-w-[56px] text-center">{formatDateLabel(selDate)}</span>
+                            <button
+                              onClick={() => canNext && setCollectionSelectedDate(allDates[selIndex - 1])}
+                              disabled={!canNext}
+                              className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${canNext ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'text-slate-300 cursor-default'}`}
+                            >›</button>
+                          </div>
+                        </div>
+
+                        {/* Quests for selected day */}
+                        {questsForDay.length === 0 && !(selDate === today && customQuestTitle) ? (
+                          <p className="text-xs text-slate-400 py-2">ไม่มี Quest วันนี้ — เริ่มทำเลย!</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {selDate === today && customQuestTitle && completedQuests.includes('special-01') && (
+                              <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 shrink-0 mt-0.5">MY QUEST</span>
+                                <p className="text-sm text-slate-700 leading-snug">{customQuestTitle}</p>
+                              </div>
+                            )}
+                            {questsForDay.map((q, i) => (
+                              <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 mt-0.5 ${typeColor(q.type)}`}>{q.type}</span>
+                                <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 📚 หนังสือที่สนใจ */}
+                      <div>
+                        <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                          📚 หนังสือที่สนใจ
+                          <span className="px-2 py-0.5 bg-violet-100 text-violet-600 rounded-full text-xs font-bold">{collectionBooks.length}</span>
+                        </h3>
+                        {collectionBooks.length === 0 ? (
+                          <p className="text-xs text-slate-400 py-2">ยังไม่มีหนังสือที่บันทึกไว้ — กด 🔖 จากหนังสือแนะนำเพื่อเพิ่ม</p>
+                        ) : (
+                          <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+                            {collectionBooks.map((book, i) => (
+                              <div key={i} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl shrink-0 w-36">
+                                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-lg">📖</div>
+                                <p className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">{book.title}</p>
+                                <p className="text-[10px] text-slate-400 leading-tight">{book.author}</p>
+                                {book.category && <span className="self-start px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+
         {/* Level Up Popup */}
         {showLevelUp?.isOpen && (
           <motion.div
@@ -3874,7 +4558,7 @@ export default function DashboardPage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
                   <BrainCircuit size={32} />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 leading-tight mb-2">ออกแบบภารกิจเฉพาะคุณ</h3>
+                <h3 className="text-xl font-black text-slate-800 leading-tight mb-2">วันนี้อยากทำอะไร?</h3>
 
                 {/* ✨ ส่วนของ Guided Prompt ที่เปลี่ยนทุกวัน */}
                 <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 mt-4">
