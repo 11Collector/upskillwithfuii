@@ -66,7 +66,8 @@ export async function POST(req: Request) {
     // 2. ดึง user data (questPreferences + assessments)
     const userSnap = await adminDb.collection('users').doc(authResult.uid).get();
     const userData = userSnap.data() || {};
-    const questPreferences = userData.questPreferences || null;
+    const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const questPreferences = (userData.questPreferences && userData.questPreferences.savedAt === todayCA) ? userData.questPreferences : null;
     const discType = userData.lastDisc?.finalResult?.charAt(0) || userData.lastDisc?.result?.charAt(0) || null;
     const wheelGoal = userData.lastWheel?.goal || null;
     const soulType = userData.lastLibrarySoul?.type || null;

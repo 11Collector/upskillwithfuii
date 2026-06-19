@@ -440,7 +440,7 @@ export default function DashboardPage() {
             aiGeneratedQuestTitle: "",
             aiGeneratedDiscTitle: "",
             aiGeneratedMoneyTitle: "",
-            lastQuestAnalysisDate: ""
+            questPreferences: null
           }).catch(e => console.error(e));
 
           let currentPlanDay = userData.wheelPlanDay || 0;
@@ -607,6 +607,8 @@ export default function DashboardPage() {
           setHasClaimedQuoteToday(false);
           setCustomQuestTitle("");
           setAiGeneratedQuestTitle("");
+          setAiGeneratedDiscTitle("");
+          setAiGeneratedMoneyTitle("");
           
           if (user) {
             loadDashboardData(user);
