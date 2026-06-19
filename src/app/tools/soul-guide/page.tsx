@@ -236,7 +236,7 @@ export default function SoulGuidePage() {
 
   const generateDynamicButtons = (data: any) => {
     const buttons = [];
-    if (isQuestMode) buttons.push("อยากปรับ Quest พรุ่งนี้ครับ 🎯");
+    if (isQuestMode) buttons.push("อยากปรับ Quest วันนี้ครับ 🎯");
     if (data.lastMood) buttons.push(`คุยเรื่องความรู้สึกตอนนี้`);
     if (data.lastWheel?.goal) buttons.push(`สรุปเป้าหมาย`);
     const discType = data.lastDisc?.finalResult || data.lastDisc?.result || "";
@@ -360,7 +360,7 @@ export default function SoulGuidePage() {
             const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
             await updateDoc(userRef, {
               questPreferences: { ...prefs, savedAt: todayCA },
-              questPrefsBlockDate: todayCA,  // block same-day analysis เท่านั้น
+              questPrefsBlockDate: "",
               lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
             });
             setQuestSaved(true);
@@ -522,7 +522,7 @@ export default function SoulGuidePage() {
             exit={{ opacity: 0, y: 10 }}
             className="w-full px-6 py-2 bg-violet-500/10 border-t border-violet-500/20 flex items-center justify-center gap-2 z-40"
           >
-            <span className="text-[11px] font-black text-violet-400 tracking-wide">✨ Quest พรุ่งนี้ถูกบันทึกแล้ว — จะอัปเดตในวันถัดไปครับ</span>
+            <span className="text-[11px] font-black text-violet-400 tracking-wide">✨ Quest วันนี้ถูกปรับแล้ว — ดูใน Dashboard ได้เลยครับ</span>
           </motion.div>
         )}
       </AnimatePresence>
