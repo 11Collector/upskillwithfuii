@@ -21,6 +21,49 @@ import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
 import { fetchDashboardData } from "@/services/dashboardService";
 // AI Quest marker constants or unused legacy variables cleaned up
 
+const playSuccessChime = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // Exciting rising arpeggio: C5 (523.25) -> E5 (659.25) -> G5 (783.99) -> C6 (1046.50)
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    const noteDelay = 0.055; // 55ms between notes
+
+    notes.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      // Use triangle for a softer, retro-game woodwind vibe, or sine for purity
+      osc.type = index === notes.length - 1 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(freq, now + index * noteDelay);
+
+      // Pitch vibrato/slide on the final note to make it feel extra sparkly
+      if (index === notes.length - 1) {
+        osc.frequency.linearRampToValueAtTime(freq + 15, now + index * noteDelay + 0.1);
+        osc.frequency.linearRampToValueAtTime(freq, now + index * noteDelay + 0.2);
+      }
+
+      const noteStart = now + index * noteDelay;
+      const decayDuration = 0.45;
+
+      gainNode.gain.setValueAtTime(0, noteStart);
+      gainNode.gain.linearRampToValueAtTime(0.12, noteStart + 0.02); // quick attack
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, noteStart + decayDuration); // decay
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(noteStart);
+      osc.stop(noteStart + decayDuration + 0.05);
+    });
+  } catch (e) {
+    console.error("Audio Context Error: ", e);
+  }
+};
+
 export default function DashboardPage() {
 
   const [weeklyData, setWeeklyData] = useState({ wheel: 0, disc: 0, money: 0, library: 0, wildcard: 0, challenge: 0, momentum_count: 0 });
@@ -1717,6 +1760,10 @@ export default function DashboardPage() {
     setIsToggling(true);
 
     const isDone = completedQuests.includes(id);
+
+    if (!isDone) {
+      playSuccessChime();
+    }
 
     // 🌟 [COMPLIMENT]: โชว์คำชมเฉพาะเมื่อไม่ใช่ข้อที่ 3 (เพราะข้อ 3 จะโชว์หน้าฉลองใหญ่) 
     // และจะไม่โชว์ถ้ากำลังจะมี Modal ใหญ่เด้งขึ้นมา (Level Up)
