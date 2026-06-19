@@ -4228,18 +4228,22 @@ export default function DashboardPage() {
               <LogOut size={16} /> ออกจากระบบ
             </button>
 
-            {/* 🚨 ปุ่มรีเซ็ตข้อมูล (ซ่อนตัวเนียนๆ เป็นสีแดงอ่อน) */}
-            <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
-              <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)
-            </button>
-
-            {/* 🛠️ ปุ่มสำหรับนักพัฒนาเพื่อทดสอบจำลองวันถัดไป */}
-            <div className="flex flex-col items-center gap-1.5 w-full sm:w-auto mt-2 sm:mt-0">
-              <button onClick={handleDevReset} className="flex items-center justify-center gap-2 bg-violet-50 text-violet-600 font-bold text-xs py-3 px-4 rounded-full hover:bg-violet-100 transition-all active:scale-95 w-full">
-                <Sparkles size={14} /> DEV: จำลองวันถัดไป (Reset Quest)
+            {/* 🚨 ปุ่มรีเซ็ตข้อมูล (ซ่อนตัวเนียนๆ เป็นสีแดงอ่อน - แสดงเฉพาะ Dev หรือ Admin) */}
+            {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean).includes(user.email))) && (
+              <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
+                <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)
               </button>
-              <span className="text-[9px] text-slate-400 font-mono">UID: {user?.uid}</span>
-            </div>
+            )}
+
+            {/* 🛠️ ปุ่มสำหรับนักพัฒนาเพื่อทดสอบจำลองวันถัดไป (แสดงเฉพาะ Dev หรือ Admin) */}
+            {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean).includes(user.email))) && (
+              <div className="flex flex-col items-center gap-1.5 w-full sm:w-auto mt-2 sm:mt-0">
+                <button onClick={handleDevReset} className="flex items-center justify-center gap-2 bg-violet-50 text-violet-600 font-bold text-xs py-3 px-4 rounded-full hover:bg-violet-100 transition-all active:scale-95 w-full">
+                  <Sparkles size={14} /> DEV: จำลองวันถัดไป (Reset Quest)
+                </button>
+                <span className="text-[9px] text-slate-400 font-mono">UID: {user?.uid}</span>
+              </div>
+            )}
           </div>
         </div>
 
