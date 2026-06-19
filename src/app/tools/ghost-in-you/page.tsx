@@ -97,12 +97,28 @@ export default function GhostInYouPage() {
           const userRef = doc(db, "users", user.uid);
           const snap = await getDoc(userRef);
           const hasXP = snap.exists() && snap.data()?.hasGhostXP;
-          await setDoc(userRef, {
+          
+          let updateData: any = {
             lastGhostResult: calc.primary,
             lastGhostResultFull: calc,
             updatedAt: serverTimestamp(),
-            ...(hasXP ? {} : { totalXP: increment(50), hasGhostXP: true }),
-          }, { merge: true });
+          };
+
+          if (!hasXP) {
+            const oldXP = (snap.exists() ? snap.data()?.totalXP : 0) || 0;
+            const newXP = oldXP + 50;
+            const oldLevel = Math.floor(oldXP / 100) + 1;
+            const newLevel = Math.floor(newXP / 100) + 1;
+
+            updateData.totalXP = increment(50);
+            updateData.hasGhostXP = true;
+
+            if (newLevel > oldLevel) {
+              sessionStorage.setItem('pendingLevelUp', String(newLevel));
+            }
+          }
+
+          await setDoc(userRef, updateData, { merge: true });
         } catch (e) { console.error(e); }
         finally { setSaving(false); }
       }
@@ -154,12 +170,28 @@ export default function GhostInYouPage() {
       const userRef = doc(db, "users", u.uid);
       const snap = await getDoc(userRef);
       const hasXP = snap.exists() && snap.data()?.hasGhostXP;
-      await setDoc(userRef, {
+      
+      let updateData: any = {
         lastGhostResult: result.primary,
         lastGhostResultFull: result,
         updatedAt: serverTimestamp(),
-        ...(hasXP ? {} : { totalXP: increment(50), hasGhostXP: true }),
-      }, { merge: true });
+      };
+
+      if (!hasXP) {
+        const oldXP = (snap.exists() ? snap.data()?.totalXP : 0) || 0;
+        const newXP = oldXP + 50;
+        const oldLevel = Math.floor(oldXP / 100) + 1;
+        const newLevel = Math.floor(newXP / 100) + 1;
+
+        updateData.totalXP = increment(50);
+        updateData.hasGhostXP = true;
+
+        if (newLevel > oldLevel) {
+          sessionStorage.setItem('pendingLevelUp', String(newLevel));
+        }
+      }
+
+      await setDoc(userRef, updateData, { merge: true });
       setUser(u);
     } catch (e) { console.error(e); }
     finally { setGoogleSaving(false); }

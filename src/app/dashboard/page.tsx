@@ -3000,11 +3000,11 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* ✨ ปรับ Quest พรุ่งนี้ */}
+              {/* ✨ ปรับ Quest วันนี้ */}
               <Link
                 href="/tools/soul-guide?quest=1"
                 className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
-                title="คุยกับ AI Mentor เพื่อปรับ quest พรุ่งนี้"
+                title="คุยกับ AI Mentor เพื่อปรับ quest วันนี้"
               >
                 <Sparkles size={13} />
                 <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
