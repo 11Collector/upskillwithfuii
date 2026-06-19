@@ -426,16 +426,18 @@ const handleGenerateResult = async () => {
     const grantXPOnLogin = async () => {
       hasMemberSaved.current = true;
       try {
-        await addDoc(collection(db, "users", currentUser.uid, "assessments"), {
+        const newDocRef = await addDoc(collection(db, "users", currentUser.uid, "assessments"), {
           type: 'wheel_of_life',
           currentScores,
           targetScores,
           selectedFocusAreas,
-          analysis: "",
+          analysis: aiAnalysis || "",
           goal: futureGoal,
           createdAt: serverTimestamp(),
           platform: 'upskillhub_member'
         });
+
+        setReportDocId(newDocRef.id);
 
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
