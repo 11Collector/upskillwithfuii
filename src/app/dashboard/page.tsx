@@ -28,36 +28,66 @@ const playSuccessChime = () => {
     const ctx = new AudioContext();
     const now = ctx.currentTime;
 
-    // Exciting rising arpeggio: C5 (523.25) -> E5 (659.25) -> G5 (783.99) -> C6 (1046.50)
-    const notes = [523.25, 659.25, 783.99, 1046.50];
-    const noteDelay = 0.055; // 55ms between notes
+    // Exciting rising arpeggio: C5 (523.25) -> E5 (659.25) -> G5 (783.99)
+    const arpeggio = [523.25, 659.25, 783.99];
+    const noteDelay = 0.05; // 50ms between notes
 
-    notes.forEach((freq, index) => {
+    // Play the arpeggio
+    arpeggio.forEach((freq, index) => {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
       
-      // Use triangle for a softer, retro-game woodwind vibe, or sine for purity
-      osc.type = index === notes.length - 1 ? "sine" : "triangle";
+      osc.type = "sine";
       osc.frequency.setValueAtTime(freq, now + index * noteDelay);
 
-      // Pitch vibrato/slide on the final note to make it feel extra sparkly
-      if (index === notes.length - 1) {
-        osc.frequency.linearRampToValueAtTime(freq + 15, now + index * noteDelay + 0.1);
-        osc.frequency.linearRampToValueAtTime(freq, now + index * noteDelay + 0.2);
-      }
+      // Add a warm sub-octave
+      const subOsc = ctx.createOscillator();
+      subOsc.type = "triangle";
+      subOsc.frequency.setValueAtTime(freq / 2, now + index * noteDelay);
 
       const noteStart = now + index * noteDelay;
-      const decayDuration = 0.45;
+      const decayDuration = 0.35;
 
       gainNode.gain.setValueAtTime(0, noteStart);
-      gainNode.gain.linearRampToValueAtTime(0.12, noteStart + 0.02); // quick attack
+      gainNode.gain.linearRampToValueAtTime(0.08, noteStart + 0.01); // quick attack
       gainNode.gain.exponentialRampToValueAtTime(0.0001, noteStart + decayDuration); // decay
 
       osc.connect(gainNode);
+      subOsc.connect(gainNode);
       gainNode.connect(ctx.destination);
 
       osc.start(noteStart);
       osc.stop(noteStart + decayDuration + 0.05);
+      subOsc.start(noteStart);
+      subOsc.stop(noteStart + decayDuration + 0.05);
+    });
+
+    // Play a triumphant major chord at the end (C6, E6, G6, C7)
+    const chordFreqs = [1046.50, 1318.51, 1567.98, 2093.00];
+    const chordStart = now + arpeggio.length * noteDelay;
+    const chordDecay = 0.8;
+
+    chordFreqs.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      // Detuned chorus effect for a richer, shimmering sound
+      osc.type = index % 2 === 0 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(freq, chordStart);
+      
+      // Pitch slide on start for magic dust/sparkle effect
+      osc.frequency.exponentialRampToValueAtTime(freq + 12, chordStart + 0.06);
+      osc.frequency.linearRampToValueAtTime(freq, chordStart + 0.15);
+
+      gainNode.gain.setValueAtTime(0, chordStart);
+      gainNode.gain.linearRampToValueAtTime(0.06, chordStart + 0.02); // quick attack
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, chordStart + chordDecay); // long ring decay
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(chordStart);
+      osc.stop(chordStart + chordDecay + 0.05);
     });
   } catch (e) {
     console.error("Audio Context Error: ", e);
@@ -3072,20 +3102,20 @@ export default function DashboardPage() {
             <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
               <div className="flex justify-between items-center mb-3 px-1">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${completedQuests.length === 4 ? 'bg-yellow-400 animate-ping' : completedQuests.length === 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
-                  <span className={`text-[11px] font-black uppercase tracking-widest transition-colors duration-500 ${completedQuests.length === 4 ? 'text-[#bf953f]' : completedQuests.length === 3 ? 'text-green-600' : 'text-slate-500'}`}>
-                    {completedQuests.length === 4 ? '👑 Legend Upskill State!' : completedQuests.length === 3 ? '🎯 Daily Goal Reached!' : 'Mission Progress'}
+                  <div className={`w-2.5 h-2.5 rounded-full ${completedQuests.length >= 4 ? 'bg-yellow-400 animate-ping' : completedQuests.length === 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
+                  <span className={`text-[11px] font-black uppercase tracking-widest transition-colors duration-500 ${completedQuests.length >= 4 ? 'text-[#bf953f]' : completedQuests.length === 3 ? 'text-green-600' : 'text-slate-500'}`}>
+                    {completedQuests.length >= 4 ? '👑 Legend Upskill State!' : completedQuests.length === 3 ? '🎯 Daily Goal Reached!' : 'Mission Progress'}
                   </span>
                 </div>
                 {/* --- ส่วนแสดงสถานะเป้าหมาย --- */}
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-black px-3 py-1 rounded-full transition-all duration-500 shadow-sm ${completedQuests.length === 4
+                  <span className={`text-[10px] font-black px-3 py-1 rounded-full transition-all duration-500 shadow-sm ${completedQuests.length >= 4
                     ? 'bg-gradient-to-r from-[#bf953f] to-[#aa771c] text-white' // Legend Gold
                     : completedQuests.length === 3
                       ? 'bg-green-500 text-white animate-pulse' // Goal Green
                       : 'bg-orange-100 text-orange-600'
                     }`}>
-                    {completedQuests.length === 4 ? 'LEGEND' : completedQuests.length === 3 ? 'GOAL' : `${completedQuests.length} / 3`}
+                    {completedQuests.length >= 4 ? 'LEGEND' : completedQuests.length === 3 ? 'GOAL' : `${completedQuests.length} / 3`}
                   </span>
                 </div>
               </div>
@@ -3097,7 +3127,7 @@ export default function DashboardPage() {
                   animate={{
                     width: `${(Math.min(completedQuests.length, 3) / 3) * 100}%`,
                   }}
-                  className={`h-full rounded-full transition-all duration-700 relative shadow-md ${completedQuests.length === 4
+                  className={`h-full rounded-full transition-all duration-700 relative shadow-md ${completedQuests.length >= 4
                     ? 'bg-gradient-to-r from-[#8a6d3b] via-[#fcf6ba] to-[#8a6d3b]' // 4: Deep Luxury Gold
                     : completedQuests.length === 3
                       ? 'bg-gradient-to-r from-green-400 to-emerald-500' // 3: Goal Reached
@@ -3105,7 +3135,7 @@ export default function DashboardPage() {
                     }`}
                 >
                   {/* ✨ Super State Effects (No Sparkles, Just Premium Glow) */}
-                  {completedQuests.length === 4 && (
+                  {completedQuests.length >= 4 && (
                     <>
                       <motion.div
                         animate={{ opacity: [0.2, 0.5, 0.2] }}
@@ -3125,7 +3155,7 @@ export default function DashboardPage() {
                   )}
 
                   {/* Luxury Glow for Level 4 */}
-                  {completedQuests.length === 4 && (
+                  {completedQuests.length >= 4 && (
                     <div className="absolute inset-0 shadow-[0_0_20px_rgba(191,149,63,0.3)] rounded-full" />
                   )}
 
@@ -3137,7 +3167,7 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold mt-3 text-center uppercase tracking-widest transition-all duration-500">
                 {completedQuests.length < 3 ? (
                   <span className="text-slate-400">ทำอีก <span className="text-orange-500">{3 - completedQuests.length}</span> ข้อเพื่อบรรลุเป้าหมาย</span>
-                ) : completedQuests.length === 4 ? (
+                ) : completedQuests.length >= 4 ? (
                   <span className="text-[#bf953f] font-black tracking-[0.2em] drop-shadow-sm">🏆 The Legendary Upskiller 🏆</span>
                 ) : (
                   <span className="text-emerald-500">เป้าหมายสำเร็จ! <span className="text-slate-400">ทำเพิ่มอีกข้อเพื่อเข้าสู่โหมด <span className="text-amber-500">LEGEND</span> 🔥</span></span>
