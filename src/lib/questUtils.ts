@@ -94,12 +94,10 @@ export const generateQuests = (params: {
   const wheelSeed = dateSeed + userSeed;
 
   const qList = [
-    { id: 1, type: "WHEEL", title: "", xp: 20 },
-    { id: 2, type: "DISC", title: "", xp: 15 },
-    { id: 3, type: "MONEY", title: "", xp: 15 },
-    { id: 4, type: "LIBRARY", title: "", xp: 15 },
-    { id: 5, type: "WILDCARD", title: "", xp: 10 },
-    { id: 6, type: "CHALLENGE", title: "", xp: 10 },
+    { id: 1, type: "WHEEL", title: "", xp: 25 },
+    { id: 2, type: "DISC", title: "", xp: 20 },
+    { id: 3, type: "MONEY", title: "", xp: 20 },
+    { id: 4, type: "CHALLENGE", title: "", xp: 20 },
   ];
 
   let wheelQuestSet = false;
@@ -149,20 +147,8 @@ export const generateQuests = (params: {
   const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
   qList[2].title = moneyPool[pseudoRandomSlot(moneyPool.length, 3.9, 2, dateSeed, userSeed, slotSeeds)];
 
-  const soulType = lastLibrarySoul?.type || "INFP";
-  let soulGroup: "NT" | "NF" | "SJ" | "SP" = "NF";
-  if (["INTJ", "INTP", "ENTJ", "ENTP"].includes(soulType)) soulGroup = "NT";
-  else if (["INFJ", "INFP", "ENFJ", "ENFP"].includes(soulType)) soulGroup = "NF";
-  else if (["ISTJ", "ISFJ", "ESTJ", "ESFJ"].includes(soulType)) soulGroup = "SJ";
-  else if (["ISTP", "ISFP", "ESTP", "ESFP"].includes(soulType)) soulGroup = "SP";
-
-  const libraryPool = QUEST_POOL.LIBRARY[soulGroup] || QUEST_POOL.LIBRARY["NF"];
-  qList[3].title = libraryPool[pseudoRandomSlot(libraryPool.length, 4.2, 3, dateSeed, userSeed, slotSeeds)];
-
-  const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
-  qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4, dateSeed, userSeed, slotSeeds);
-  currentTitles.push(qList[4].title);
-  qList[5].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 5, dateSeed, userSeed, slotSeeds);
+  const currentTitles = [qList[0].title, qList[1].title, qList[2].title];
+  qList[3].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 3, dateSeed, userSeed, slotSeeds);
 
   return qList;
 };
