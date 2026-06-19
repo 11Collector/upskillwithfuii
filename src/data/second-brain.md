@@ -10,6 +10,8 @@
 ทัศนคติ (-100 ถึง 100) คือปัจจัยที่สำคัญที่สุด — ถ้าติดลบ ความเก่งจะยิ่งขยายผลเสีย
 คนส่วนใหญ่ไม่ได้แพ้โลก **แพ้ตัวเองตั้งแต่ยังไม่เริ่ม**
 
+> ⚠️ **สมการนี้ใช้เป็นหลักคิดเบื้องหลังได้ แต่ห้ามเขียนลงใน content โดยตรงบ่อยๆ** — ใช้ได้ไม่เกิน 1 ครั้งต่อเดือน และต้องมีบริบทรองรับ ไม่ใช่แค่โยนสมการทิ้งไว้
+
 ---
 
 ## 6 คำถามทบทวนชีวิต (ใช้ใน Reflective content)
@@ -208,6 +210,12 @@
 **Source used:** Reed Hastings & Erin Meyer, *No Rules Rules* (2020); Clayton Christensen, *The Innovator's Dilemma* (1997); HBR "Netflix's Bold Disruptive Innovation" (2011)
 **Published:** article
 
+### 2026-05-18 — Mindset — Social
+**Hook:** พูดว่า "ฉันพัฒนาได้" กับการที่สมองเชื่อเรื่องนั้นจริงๆ — คือคนละเรื่องกันเลย
+**Core idea:** ความเชื่อใต้สำนึก (ไม่ใช่ที่พูดออกมา) ต่างหากที่กำหนดพฤติกรรมหลังล้มเหลว — แนวคิดเติบโตที่ "พูดได้" ไม่เท่ากับมี
+**Source used:** Sik, Cummins & Job — Scientific Reports (Nature), 2024 — implicit vs explicit growth mindset predicts post-failure behavior
+**Published:** social
+
 ### 2026-05-19 — Mindset/Learning — Social
 **Hook:** อ่านโน้ตซ้ำ 3 รอบ แล้วยังจำไม่ได้ — ปัญหาไม่ได้อยู่ที่ความจำ แต่อยู่ที่ mindset ว่า "อ่านซ้ำ = เรียนรู้"
 **Core idea:** fluency illusion จากการอ่านซ้ำสร้างความรู้สึกว่า "คุ้นแล้ว" แต่ recognition ≠ recall — retrieval practice (ดึงข้อมูลออกมาโดยไม่ดูต้นฉบับ) สร้างความจำระยะยาวได้จริง ยืนยันโดย Frontiers in Psychology (2026)
@@ -369,3 +377,4 @@
 **Core idea:** อารมณ์ขัน (humor) ต้องใช้ Cognitive Flexibility (ความยืดหยุ่นทางปัญญา) — Pattern Recognition + Incongruity Resolution — ทักษะเดียวกับที่ใช้แก้ปัญหาซับซ้อนและปรับตัว ยืนยันโดย PMC (2022) + Aaker & Bagdonas (2021) ที่พบว่า 98% ของ CEO ชอบผู้สมัครที่มีอารมณ์ขัน และผู้นำที่ใช้ humor motivating กว่า 27%
 **Source used:** Jennifer Aaker & Naomi Bagdonas, Humor, Seriously (2021); PMC9702906 (2022) — Cognitive flexibility and humor styles
 **Published:** article
+>>>>>>> origin/main

@@ -19,7 +19,7 @@ import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA 
 import { formatAnalysisText, AvatarDisplay, calculateRelativeWeek } from "@/utils/dashboardHelpers";
 import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
 import { fetchDashboardData } from "@/services/dashboardService";
-const AI_MENTOR_QUEST_MARKER = "AI Mentor";
+// AI Quest marker constants or unused legacy variables cleaned up
 
 export default function DashboardPage() {
 
@@ -296,7 +296,8 @@ export default function DashboardPage() {
         setLastSkipDate(userData.lastSkipDate || "");
         setLastChatDate(userData.lastChatDate || "");
         setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
-        setAiGeneratedWildcardTitle(userData.aiGeneratedWildcardTitle || "");
+        setAiGeneratedDiscTitle(userData.aiGeneratedDiscTitle || "");
+        setAiGeneratedMoneyTitle(userData.aiGeneratedMoneyTitle || "");
         setPerfectWeeks(userData.perfectWeeks || 0);
         setIsRandomMode(userData.isRandomMode || false);
         setSlotSeeds(userData.slotSeeds || [0, 0, 0, 0, 0, 0]);
@@ -357,11 +358,15 @@ export default function DashboardPage() {
           setCompletedQuests([]);
           setCustomQuestTitle("");
           setAiGeneratedQuestTitle("");
+          setAiGeneratedDiscTitle("");
+          setAiGeneratedMoneyTitle("");
 
           const userRef = doc(db, "users", currentUser.uid);
           updateDoc(userRef, {
             customQuestTitle: "",
             aiGeneratedQuestTitle: "",
+            aiGeneratedDiscTitle: "",
+            aiGeneratedMoneyTitle: "",
             lastQuestAnalysisDate: ""
           }).catch(e => console.error(e));
 
@@ -475,7 +480,8 @@ export default function DashboardPage() {
 
   const [lastChatDate, setLastChatDate] = useState("");
   const [aiGeneratedQuestTitle, setAiGeneratedQuestTitle] = useState("");
-  const [aiGeneratedWildcardTitle, setAiGeneratedWildcardTitle] = useState("");
+  const [aiGeneratedDiscTitle, setAiGeneratedDiscTitle] = useState("");
+  const [aiGeneratedMoneyTitle, setAiGeneratedMoneyTitle] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showWheelRulesModal, setShowWheelRulesModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -680,9 +686,9 @@ export default function DashboardPage() {
         wheelCompletions: 0, // 🎡 ล้างตัวนับความสำเร็จรายวัน
         createdAt: resetDate, // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
         aiGeneratedQuestTitle: "",
-        aiGeneratedWildcardTitle: "",
+        aiGeneratedDiscTitle: "",
+        aiGeneratedMoneyTitle: "",
         lastQuestAnalysisDate: "",
-        lastWildcardGeneratedDate: "",
         questPrefsBlockDate: "",
         questPreferences: null,
         bookMatchCache: null,
@@ -712,7 +718,8 @@ export default function DashboardPage() {
       setChatQuota({ used: 0, total: 1 }); // 🤖 รีเซ็ตโควตา AI Mentor ทันที
       setHasSoulGuide(false);
       setAiGeneratedQuestTitle("");
-      setAiGeneratedWildcardTitle("");
+      setAiGeneratedDiscTitle("");
+      setAiGeneratedMoneyTitle("");
       setCustomQuestTitle("");
       setCollectionQuests([]);
       setCollectionBooks([]);
@@ -1168,15 +1175,15 @@ export default function DashboardPage() {
   }, [weeklyData]);
 
   const rankInfo = useMemo(() => {
-    if (totalWeeklyScore <= 10) return { name: "Survivor", emoji: "🛡️", color: "text-slate-400", bg: "bg-slate-400/20", border: "border-slate-400/30" };
-    if (totalWeeklyScore <= 20) return { name: "Warrior", emoji: "⚔️", color: "text-orange-400", bg: "bg-orange-400/20", border: "border-orange-400/30" };
-    if (totalWeeklyScore <= 32) return { name: "Elite", emoji: "💎", color: "text-blue-400", bg: "bg-blue-400/20", border: "border-blue-400/30" };
+    if (totalWeeklyScore <= 7) return { name: "Survivor", emoji: "🛡️", color: "text-slate-400", bg: "bg-slate-400/20", border: "border-slate-400/30" };
+    if (totalWeeklyScore <= 14) return { name: "Warrior", emoji: "⚔️", color: "text-orange-400", bg: "bg-orange-400/20", border: "border-orange-400/30" };
+    if (totalWeeklyScore <= 22) return { name: "Elite", emoji: "💎", color: "text-blue-400", bg: "bg-blue-400/20", border: "border-blue-400/30" };
     return { name: "Legend", emoji: "👑", color: "text-yellow-400", bg: "bg-yellow-400/20", border: "border-yellow-400/30" };
   }, [totalWeeklyScore]);
 
   const weeklyStats = useMemo(() => [
     { label: "Wheel", count: weeklyData.wheel || 0, max: 7, color: "bg-red-500", icon: <PieChart size={14} /> },
-    { label: "DISC", count: weeklyData.disc || 0, max: 7, color: "bg-blue-500", icon: <Users size={14} /> },
+    { label: "HABIT", count: weeklyData.disc || 0, max: 7, color: "bg-blue-500", icon: <Users size={14} /> },
     { label: "Money", count: weeklyData.money || 0, max: 7, color: "bg-amber-500", icon: <Wallet size={14} /> },
     { label: "Library", count: weeklyData.library || 0, max: 7, color: "bg-teal-500", icon: <BookOpen size={14} /> },
     { label: "Wild", count: weeklyData.wildcard || 0, max: 7, color: "bg-emerald-500", icon: <Zap size={14} /> },
@@ -1260,66 +1267,153 @@ export default function DashboardPage() {
     return guidedPrompts[seed % guidedPrompts.length];
   }, [todayDateStr, guidedPrompts]);
 
-  // 🤖 AI Quest Analysis — รันเมื่อมีแชทใหม่กว่า lastQuestAnalysisDate
+  // 🤖 AI Quest Analysis — รันเมื่อขึ้นวันใหม่ หรือมีแชทใหม่/ความต้องการใหม่
   useEffect(() => {
-    if (!user || !todayDateStr) return;
+    if (!user || !todayDateStr || loading) return;
 
     const runAnalysis = async () => {
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
       const data = snap.data();
       
-      // ข้ามถ้าวันนี้ทำเควส Challenge (ID 6) สำเร็จไปแล้ว เพื่อไม่ให้เควสโดนเปลี่ยนทับกลางคัน
+      // ข้ามถ้าวันนี้ทำเควส Challenge (ID 4) สำเร็จไปแล้ว เพื่อไม่ให้เควสโดนเปลี่ยนทับกลางคัน
       const completedIds: (string | number)[] = data?.completedQuestIds || [];
-      const isChallengeDoneToday = completedIds.some(id => String(id) === '6');
+      const isChallengeDoneToday = completedIds.some(id => String(id) === '4');
       if (isChallengeDoneToday) return;
 
       const lastAnalysisDate = data?.lastQuestAnalysisDate || '';
       const lastChat = data?.lastChatDate || '';
       const currentLevel = Math.floor((data?.totalXP || 0) / 100) + 1;
-      const lastWildcardDate = data?.lastWildcardGeneratedDate || '';
       const questPrefsBlockDate = data?.questPrefsBlockDate || '';
-      const needsWildcard = currentLevel >= 11 && lastWildcardDate !== todayDateStr;
 
-      // prefs ถูก save เมื่อวานหรือก่อนหน้า → analysis ยังไม่ได้ใช้ prefs ใหม่
+      const hasNoAiTitlesInDB = data?.aiGeneratedDiscTitle === undefined || data?.aiGeneratedMoneyTitle === undefined;
+      const isNewDay = lastAnalysisDate !== todayDateStr || hasNoAiTitlesInDB;
       const hasFreshPrefs = questPrefsBlockDate && questPrefsBlockDate !== todayDateStr && questPrefsBlockDate > lastAnalysisDate;
       const hasFreshChat = lastChat > lastAnalysisDate;
 
-      if (!hasFreshChat && !hasFreshPrefs && !needsWildcard) return;
-      // block same-day เมื่อ prefs เพิ่ง save วันนี้ (ยังไม่มีแชทใหม่)
-      if (questPrefsBlockDate === todayDateStr && !hasFreshChat && !needsWildcard) return;
+      const shouldRunAI = hasFreshPrefs || hasFreshChat;
+
+      // ในวันใหม่ทั่วไปที่ไม่มีการแชทหรือปรับแต่งเควสใหม่ → ให้ล้างเควส AI เพื่อกลับไปใช้ Static Pool
+      if (isNewDay && !shouldRunAI) {
+        try {
+          const updates: Record<string, string> = {
+            lastQuestAnalysisDate: todayDateStr,
+            aiGeneratedQuestTitle: "",
+            aiGeneratedDiscTitle: "",
+            aiGeneratedMoneyTitle: ""
+          };
+          await updateDoc(userRef, updates);
+          setAiGeneratedQuestTitle("");
+          setAiGeneratedDiscTitle("");
+          setAiGeneratedMoneyTitle("");
+        } catch {
+          // fail silently
+        }
+        return;
+      }
+
+      if (!isNewDay && !shouldRunAI) return;
+      if (questPrefsBlockDate === todayDateStr && !hasFreshChat && !isNewDay) return;
+
+      // Compute wheelQuestTitle
+      let computedWheelTitle = '';
+      const lastWheel = data?.lastWheel || null;
+      let computedWheelArea = "การงาน";
+      if (lastWheel?.currentScores && lastWheel?.targetScores) {
+        const gaps = lastWheel.currentScores.map((current: number, i: number) => ({
+          index: i,
+          gap: (lastWheel.targetScores[i] || 0) - current,
+          label: categoryNames[i]
+        }));
+        const top3Gaps = [...gaps]
+          .sort((a, b) => b.gap - a.gap)
+          .slice(0, 3);
+        if (todayDateStr && top3Gaps.length > 0) {
+          const seed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+          const randomIndex = seed % top3Gaps.length;
+          computedWheelArea = top3Gaps[randomIndex].label;
+        }
+      }
+
+      let wheelQuestSet = false;
+      const isRandomMode = data?.isRandomMode || false;
+      const randomWheelQuestTitle = data?.randomWheelQuestTitle || '';
+      const wheelPlanDay = data?.wheelPlanDay || 1;
+
+      if (!wheelQuestSet && isRandomMode && randomWheelQuestTitle) {
+        computedWheelTitle = randomWheelQuestTitle;
+        wheelQuestSet = true;
+      }
+      if (!wheelQuestSet && lastWheel?.analysis) {
+        const planSection = lastWheel.analysis.split('📅')[1];
+        if (planSection) {
+          const planItems = planSection.split('\n')
+            .filter((l: string) => l.match(/^[1-7]\.|^-|\bDay\s?[1-7]\b/i))
+            .map((l: string) => l.replace(/^[1-7]\.\s*|^-\s*|\*\*/g, '').trim());
+
+          if (planItems.length > 0) {
+            const isWheelDoneToday = completedIds.includes(1);
+            const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
+
+            if (displayDay > 0 && displayDay <= 7) {
+              const dayIdx = Math.min(6, displayDay - 1);
+              let currentDayPlan = planItems[dayIdx] || planItems[0];
+              computedWheelTitle = `DAY ${displayDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
+              wheelQuestSet = true;
+            } else {
+              computedWheelTitle = `🏆 จบแผน 7 วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
+              wheelQuestSet = true;
+            }
+          }
+        }
+      }
+
+      if (!wheelQuestSet) {
+        const dateSeed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+        const userSeed = user.uid.split('').slice(-5).reduce((acc, accChar) => acc + accChar.charCodeAt(0), 0);
+        const wheelSeed = dateSeed + userSeed;
+        const wheelPool = QUEST_POOL.WHEEL[computedWheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
+        const x = Math.sin(wheelSeed * 1.5 * 12.9898 + 1.5 * 78.233) * 43758.5453123;
+        const wheelIdx = Math.floor((x - Math.floor(x)) * wheelPool.length);
+        computedWheelTitle = wheelPool[wheelIdx];
+      }
 
       try {
         const idToken = await user.getIdToken();
+        console.log("🤖 [AI Quest Analysis] Triggering API call. Payload:", { level: currentLevel, wheelQuestTitle: computedWheelTitle });
         const res = await fetch('/api/quest-analysis', {
           method: 'POST',
           headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ level: currentLevel }),
+          body: JSON.stringify({ level: currentLevel, wheelQuestTitle: computedWheelTitle }),
         });
-        if (!res.ok) return;
-        const { questTitle, wildcardTitle } = await res.json();
-        if (!questTitle && !wildcardTitle) return;
+        if (!res.ok) {
+          console.log("❌ [AI Quest Analysis] API call failed with status:", res.status);
+          return;
+        }
+        const { questTitle, discTitle, moneyTitle } = await res.json();
+        console.log("✨ [AI Quest Analysis] API response parsed:", { questTitle, discTitle, moneyTitle });
+        if (!questTitle && !discTitle && !moneyTitle) {
+          console.log("⚠️ [AI Quest Analysis] AI returned empty titles (falling back to static pool).");
+          return;
+        }
 
         const updates: Record<string, string> = {};
-        if (questTitle) {
-          updates.aiGeneratedQuestTitle = questTitle;
-          updates.lastQuestAnalysisDate = todayDateStr;
-        }
-        if (wildcardTitle) {
-          updates.aiGeneratedWildcardTitle = wildcardTitle;
-          updates.lastWildcardGeneratedDate = todayDateStr;
-        }
+        updates.lastQuestAnalysisDate = todayDateStr;
+        updates.aiGeneratedQuestTitle = questTitle || "";
+        updates.aiGeneratedDiscTitle = discTitle || "";
+        updates.aiGeneratedMoneyTitle = moneyTitle || "";
 
-        if (Object.keys(updates).length > 0) await updateDoc(userRef, updates);
-        if (questTitle) setAiGeneratedQuestTitle(questTitle);
-        if (wildcardTitle) setAiGeneratedWildcardTitle(wildcardTitle);
-      } catch {
-        // fail silently
+        await updateDoc(userRef, updates);
+        setAiGeneratedQuestTitle(questTitle || "");
+        setAiGeneratedDiscTitle(discTitle || "");
+        setAiGeneratedMoneyTitle(moneyTitle || "");
+      } catch (err) {
+        console.error("❌ [AI Quest Analysis] Client error in runAnalysis:", err);
       }
     };
 
     runAnalysis();
-  }, [user, todayDateStr]);
+  }, [user, todayDateStr, loading]);
 
   const dailyQuests = useMemo(() => {
     if (!todayDateStr || !user?.uid) return [];
@@ -1344,12 +1438,10 @@ export default function DashboardPage() {
 
 
     const qList = [
-      { id: 1, type: "WHEEL", title: "", xp: 20 },
-      { id: 2, type: "DISC", title: "", xp: 15 },
-      { id: 3, type: "MONEY", title: "", xp: 15 },
-      { id: 4, type: "LIBRARY", title: "", xp: 15 }, // 👈 เพิ่มเควสหนังสือตามไทป์
-      { id: 5, type: "WILDCARD", title: "", xp: 10 },
-      { id: 6, type: "CHALLENGE", title: "", xp: 10 },
+      { id: 1, type: "WHEEL", title: "", xp: 25 },
+      { id: 2, type: "DISC", title: "", xp: 20 },
+      { id: 3, type: "MONEY", title: "", xp: 20 },
+      { id: 4, type: "CHALLENGE", title: "", xp: 20 },
     ];
 
     // 🎯 [NEW LOGIC] จัดการแผน AI: ให้เวลา 1 วันสำหรับ Audit
@@ -1395,35 +1487,49 @@ export default function DashboardPage() {
       qList[0].title = wheelPool[wheelIdx];
     }
 
+    // Function to check if two quest titles are too similar or overlapping
+    const isSimilar = (q1: string, q2: string): boolean => {
+      if (!q1 || !q2) return false;
 
+      const clean = (str: string) => {
+        return str
+          .replace(/[\p{Emoji}\u200d\uFE0F]/gu, '') // remove all emojis
+          .trim()
+          .replace(/\s+/g, '') // remove all spaces
+          .toLowerCase();
+      };
 
-    // ✅ 2. ดึงจาก DISC
-    const questLevel = Math.floor(totalXP / 100) + 1;
-    const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
-    const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
-    qList[1].title = discPool[pseudoRandomSlot(discPool.length, 2.7, 1)];
+      const c1 = clean(q1);
+      const c2 = clean(q2);
 
-    // ✅ 3. ดึงจาก MONEY
-    const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
-    const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
-    qList[2].title = moneyPool[pseudoRandomSlot(moneyPool.length, 3.9, 2)];
+      if (!c1 || !c2) return false;
+      if (c1 === c2) return true;
 
-    // ✅ 4. ดึงจาก Library of Souls (MBTI Style)
-    const soulType = lastLibrarySoul?.type || "INFP";
-    let soulGroup: "NT" | "NF" | "SJ" | "SP" = "NF";
-    if (["INTJ", "INTP", "ENTJ", "ENTP"].includes(soulType)) soulGroup = "NT";
-    else if (["INFJ", "INFP", "ENFJ", "ENFP"].includes(soulType)) soulGroup = "NF";
-    else if (["ISTJ", "ISFJ", "ESTJ", "ESFJ"].includes(soulType)) soulGroup = "SJ";
-    else if (["ISTP", "ISFP", "ESTP", "ESFP"].includes(soulType)) soulGroup = "SP";
+      // Check if one contains the other and is at least 5 characters long
+      if (c1.length >= 5 && c2.includes(c1)) return true;
+      if (c2.length >= 5 && c1.includes(c2)) return true;
 
-    const libraryPool = QUEST_POOL.LIBRARY[soulGroup] || QUEST_POOL.LIBRARY["NF"];
-    qList[3].title = libraryPool[pseudoRandomSlot(libraryPool.length, 4.2, 3)];
+      // Sliding window search for overlap of length >= 6
+      const minLen = 6;
+      if (c1.length >= minLen && c2.length >= minLen) {
+        for (let i = 0; i <= c1.length - minLen; i++) {
+          const sub = c1.substring(i, i + minLen);
+          if (c2.includes(sub)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
 
     const getUniqueQuestSlot = (pool: string[], existingTitles: string[], salt: number, slotIdx: number) => {
       let index = pseudoRandomSlot(pool.length, salt, slotIdx);
       let selectedQuest = pool[index];
       let attempts = 0;
-      while (existingTitles.some(title => title.includes(selectedQuest.substring(0, 10))) && attempts < 10) {
+      const activeExisting = existingTitles.filter(Boolean);
+
+      while (activeExisting.some(title => isSimilar(title, selectedQuest)) && attempts < 15) {
         index = (index + 1) % pool.length;
         selectedQuest = pool[index];
         attempts++;
@@ -1431,39 +1537,38 @@ export default function DashboardPage() {
       return selectedQuest;
     };
 
-    // เตรียม Array สำหรับเช็คค่าซ้ำในวันเดียวกัน
-    const currentTitles = [qList[0].title, qList[1].title, qList[2].title, qList[3].title];
+    // ✅ 2. ดึงจาก DISC + LIBRARY (ใช้ AI เจนถ้ามี หรือดึงจาก Pool เป็น fallback)
+    const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
+    const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
 
-    // 🛡️ ช่องที่ 5: Wildcard — level 11+ ใช้ AI awareness quest
-    if (aiGeneratedWildcardTitle && questLevel >= 11) {
-      qList[4].title = aiGeneratedWildcardTitle;
-    } else {
-      qList[4].title = getUniqueQuestSlot(QUEST_POOL.WILDCARD, currentTitles, 5.5, 4);
-    }
-    currentTitles.push(qList[4].title);
+    // ดึงโปรไฟล์ Library (MBTI)
+    const getMbtiQuadrant = (type: string): "NT" | "NF" | "SJ" | "SP" | null => {
+      if (!type) return null;
+      const t = type.toUpperCase();
+      if (t.includes("N") && t.includes("T")) return "NT";
+      if (t.includes("N") && t.includes("F")) return "NF";
+      if (t.includes("S") && t.includes("J")) return "SJ";
+      if (t.includes("S") && t.includes("P")) return "SP";
+      return null;
+    };
+    const mbtiType = lastLibrarySoul?.type || "";
+    const mbtiQuadrant = getMbtiQuadrant(mbtiType);
+    const libraryPool = mbtiQuadrant ? (QUEST_POOL.LIBRARY[mbtiQuadrant] || []) : [];
 
-    // 🛡️ ช่องที่ 6: Challenge (ใช้ AI-generated quest ถ้ามี, fallback ไป pool ปกติ)
-    if (aiGeneratedQuestTitle) {
-      qList[5].title = aiGeneratedQuestTitle;
-    } else {
-      qList[5].title = getUniqueQuestSlot(QUEST_POOL.CHALLENGE, currentTitles, 6.8, 5);
-    }
+    // ยุบรวมคลัง (Merge pools: DISC + LIBRARY)
+    const combinedHabitPool = [...discPool, ...libraryPool];
+    qList[1].title = aiGeneratedDiscTitle || getUniqueQuestSlot(combinedHabitPool, [qList[0].title], 2.7, 1);
+
+    // ✅ 3. ดึงจาก MONEY (ใช้ AI เจนถ้ามี หรือดึงจาก Pool เป็น fallback)
+    const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
+    const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
+    qList[2].title = aiGeneratedMoneyTitle || getUniqueQuestSlot(moneyPool, [qList[0].title, qList[1].title], 3.9, 2);
+
+    // ✅ 4. ดึงจาก CHALLENGE (ใช้ AI เจนถ้ามี หรือดึงจาก Pool เป็น fallback)
+    qList[3].title = aiGeneratedQuestTitle || getUniqueQuestSlot(QUEST_POOL.CHALLENGE, [qList[0].title, qList[1].title, qList[2].title], 6.8, 3);
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedWildcardTitle, totalXP]);
-
-  // 🤖 AI Mentor Quest — auto-complete เมื่อ user คุย AI แล้ววันนี้
-  const aiMentorAutoCompleted = useRef(false);
-  useEffect(() => {
-    if (aiMentorAutoCompleted.current) return;
-    if (!todayDateStr || !lastChatDate || !dailyQuests.length) return;
-    const wildcardQuest = dailyQuests.find(q => q.id === 5);
-    if (!wildcardQuest?.title.includes(AI_MENTOR_QUEST_MARKER)) return;
-    if (lastChatDate !== todayDateStr) return;
-    if (completedQuests.includes(5)) { aiMentorAutoCompleted.current = true; return; }
-    aiMentorAutoCompleted.current = true;
-    toggleQuest(5, wildcardQuest.xp);
-  }, [lastChatDate, todayDateStr, dailyQuests, completedQuests]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP]);
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
@@ -1482,10 +1587,10 @@ export default function DashboardPage() {
 
   const canReroll = useMemo(() => {
     if (!dailyQuests || dailyQuests.length === 0) return false;
-    // เควสที่สุ่มใหม่ได้คือ ID 2, 3, 4, 5, 6 (ไม่รวม 1 คือ Wheel)
+    // เควสที่สุ่มใหม่ได้คือ ID 2, 3, 4 (ไม่รวม 1 คือ Wheel)
     // ใช้ String() เพื่อดักทั้งกรณีที่เป็น Number และ String ใน Firebase
     const completedSet = new Set(completedQuests.map(id => String(id)));
-    return [2, 3, 4, 5, 6].some(id => !completedSet.has(String(id)));
+    return [2, 3, 4].some(id => !completedSet.has(String(id)));
   }, [dailyQuests, completedQuests]);
 
   const currentLevel = Math.floor(totalXP / 100) + 1;
@@ -1512,7 +1617,7 @@ export default function DashboardPage() {
     }
 
     // 🎯 หาเควสที่ "ยังไม่เสร็จ" และ "ไม่ใช่ Wheel"
-    const incompleteNonWheelIndices = [1, 2, 3, 4, 5].filter(idx =>
+    const incompleteNonWheelIndices = [1, 2, 3].filter(idx =>
       !completedQuests.includes(dailyQuests[idx]?.id)
     );
 
@@ -2141,13 +2246,20 @@ export default function DashboardPage() {
         wheelPlanDay: 1,
         wheelPlanSkips: 0,
         lastSkipDate: "",
-        completedQuestIds: []
+        completedQuestIds: [],
+        lastQuestAnalysisDate: "",
+        aiGeneratedQuestTitle: "",
+        aiGeneratedDiscTitle: "",
+        aiGeneratedMoneyTitle: ""
       });
       setWheelPlanDay(1);
       setWheelPlanSkips(0);
       setLastSkipDate("");
       setCompletedQuests([]);
-      alert("DEV: รีเซ็ตเป็น Day 1/7 เรียบร้อยแล้ว! พร้อมทดสอบ");
+      setAiGeneratedQuestTitle("");
+      setAiGeneratedDiscTitle("");
+      setAiGeneratedMoneyTitle("");
+      alert("DEV: รีเซ็ตข้อมูลและเตรียมสุ่ม Daily AI Quests ใหม่เรียบร้อยแล้ว!");
     } catch (e) { console.error(e); }
   };
 
@@ -2713,7 +2825,7 @@ export default function DashboardPage() {
               >
                 <div className={`px-2.5 py-1.5 rounded-xl border text-[9px] md:text-[10px] font-black shadow-lg backdrop-blur-md flex items-center gap-2 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} border-white/10`}>
                   <span className="text-white/40 font-bold tracking-tight">TOTAL</span>
-                  <span className="text-white">{totalWeeklyScore} / 42</span>
+                  <span className="text-white">{totalWeeklyScore} / 28</span>
                 </div>
                 <div className={`px-2.5 py-1.5 rounded-xl border text-[9px] md:text-[10px] font-black shadow-lg backdrop-blur-md flex items-center gap-1.5 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} border-white/10 whitespace-nowrap`}>
                   <span className="shrink-0">{rankInfo.emoji}</span>
@@ -2740,9 +2852,9 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
                   {[
                     { label: "Wheel", val: weeklyData.wheel, color: "text-red-500", icon: <PieChart size={14} /> },
-                    { label: "DISC", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
+                    { label: "HABIT", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
                     { label: "Money", val: weeklyData.money, color: "text-amber-400", icon: <Wallet size={14} /> },
-                    { label: "Library", val: weeklyData.library, color: "text-teal-400", icon: <BookOpen size={14} /> }
+                    { label: "Challenge", val: weeklyData.challenge, color: "text-purple-400", icon: <Target size={14} /> }
                   ].map((item, i) => {
                     const radius = 20;
                     const circumference = 2 * Math.PI * radius;
@@ -2771,7 +2883,7 @@ export default function DashboardPage() {
                   })}
                 </div>
 
-                {/* 3. Combined Momentum Section (หลอดพลังงานรวม Wild + Challenge) */}
+                {/* 3. Combined Momentum Section (หลอดพลังงานรวม Weekly Momentum) */}
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="bg-gradient-to-br from-white/5 to-transparent p-5 rounded-[2rem] border border-white/5 relative overflow-hidden group/momentum">
                     {/* Background Sparkle Effect */}
@@ -2781,24 +2893,24 @@ export default function DashboardPage() {
 
                     <div className="flex justify-between items-end mb-3 relative z-10">
                       <div>
-                        <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.2em] block mb-1">Daily Momentum</span>
+                        <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.2em] block mb-1">Weekly Momentum</span>
                         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                           <Sparkles size={14} className="text-yellow-400" />
-                          พลังขับเคลื่อนชีวิต
+                          พลังขับเคลื่อนชีวิตรวม
                         </h3>
                       </div>
                       <div className="text-right">
                         <span className="text-xl font-black text-white">
-                          {(Number(weeklyData.wildcard) || 0) + (Number(weeklyData.challenge) || 0)}
+                          {totalWeeklyScore}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-500 ml-1">/ 14</span>
+                        <span className="text-[10px] font-bold text-slate-500 ml-1">/ 28</span>
                       </div>
                     </div>
 
                     <div className="h-3 bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-700/50 shadow-inner relative z-10">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${((weeklyData.wildcard + weeklyData.challenge) / 14) * 100}%` }}
+                        animate={{ width: `${(totalWeeklyScore / 28) * 100}%` }}
                         transition={{ duration: 1.5, delay: 0.8, type: "spring" }}
                         className="h-full bg-gradient-to-r from-orange-500 via-yellow-500 to-emerald-500 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] relative"
                       >
@@ -2808,7 +2920,7 @@ export default function DashboardPage() {
                     </div>
 
                     <p className="text-[10px] text-slate-500 font-medium mt-3 leading-relaxed">
-                      รวมการจัดการสิ่งจุกจิก (Wildcard) และความท้าทายใหม่ (Challenge)
+                      สะสมความสำเร็จจากการพิชิตภารกิจประจำสัปดาห์ในทุกด้านเพื่อสร้าง Momentum
                     </p>
                   </div>
                 </div>
@@ -2824,10 +2936,10 @@ export default function DashboardPage() {
                     </div>
 
                     {[
-                      { score: "0 - 10", emoji: "🛡️", name: "Survivor", desc: "เน้นประคองตัวให้รอดสัปดาห์นี้" },
-                      { score: "11 - 20", emoji: "⚔️", name: "Warrior", desc: "เริ่มบุกและจัดการชีวิตได้ดีขึ้น" },
-                      { score: "21 - 32", emoji: "💎", name: "Elite", desc: "ชีวิตสมดุลและมีวินัยสูงมาก" },
-                      { score: "33 - 42", emoji: "👑", name: "Legend", desc: "ผู้จารึกตำนานวินัยที่แท้จริง" },
+                      { score: "0 - 7", emoji: "🛡️", name: "Survivor", desc: "เน้นประคองตัวให้รอดสัปดาห์นี้" },
+                      { score: "8 - 14", emoji: "⚔️", name: "Warrior", desc: "เริ่มบุกและจัดการชีวิตได้ดีขึ้น" },
+                      { score: "15 - 22", emoji: "💎", name: "Elite", desc: "ชีวิตสมดุลและมีวินัยสูงมาก" },
+                      { score: "23 - 28", emoji: "👑", name: "Legend", desc: "ผู้จารึกตำนานวินัยที่แท้จริง" },
                     ].map((rank, idx) => {
                       const isActive = totalWeeklyScore >= parseInt(rank.score.split(' - ')[0]) && totalWeeklyScore <= parseInt(rank.score.split(' - ')[1]);
 
@@ -2913,22 +3025,20 @@ export default function DashboardPage() {
             <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
               <div className="flex justify-between items-center mb-3 px-1">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${completedQuests.length > 3 ? 'bg-yellow-400 animate-ping' : completedQuests.length === 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
-                  <span className={`text-[11px] font-black uppercase tracking-widest transition-colors duration-500 ${completedQuests.length >= 6 ? 'text-[#bf953f]' : completedQuests.length >= 4 ? 'text-orange-500' : completedQuests.length === 3 ? 'text-green-600' : 'text-slate-500'}`}>
-                    {completedQuests.length >= 6 ? '👑 Legend Upskill State!' : completedQuests.length >= 4 ? '🔥 Super Upskill State!' : completedQuests.length === 3 ? '🎯 Daily Goal Reached!' : 'Mission Progress'}
+                  <div className={`w-2.5 h-2.5 rounded-full ${completedQuests.length === 4 ? 'bg-yellow-400 animate-ping' : completedQuests.length === 3 ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
+                  <span className={`text-[11px] font-black uppercase tracking-widest transition-colors duration-500 ${completedQuests.length === 4 ? 'text-[#bf953f]' : completedQuests.length === 3 ? 'text-green-600' : 'text-slate-500'}`}>
+                    {completedQuests.length === 4 ? '👑 Legend Upskill State!' : completedQuests.length === 3 ? '🎯 Daily Goal Reached!' : 'Mission Progress'}
                   </span>
                 </div>
                 {/* --- ส่วนแสดงสถานะเป้าหมาย --- */}
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-black px-3 py-1 rounded-full transition-all duration-500 shadow-sm ${completedQuests.length >= 6
+                  <span className={`text-[10px] font-black px-3 py-1 rounded-full transition-all duration-500 shadow-sm ${completedQuests.length === 4
                     ? 'bg-gradient-to-r from-[#bf953f] to-[#aa771c] text-white' // Legend Gold
-                    : completedQuests.length >= 4
-                      ? 'bg-orange-500 text-white animate-pulse' // Super Orange
-                      : completedQuests.length === 3
-                        ? 'bg-green-500 text-white' // Goal Green
-                        : 'bg-orange-100 text-orange-600'
+                    : completedQuests.length === 3
+                      ? 'bg-green-500 text-white animate-pulse' // Goal Green
+                      : 'bg-orange-100 text-orange-600'
                     }`}>
-                    {completedQuests.length >= 6 ? 'LEGEND' : completedQuests.length >= 4 ? 'SUPER' : completedQuests.length === 3 ? 'GOAL' : `${completedQuests.length} / 3`}
+                    {completedQuests.length === 4 ? 'LEGEND' : completedQuests.length === 3 ? 'GOAL' : `${completedQuests.length} / 3`}
                   </span>
                 </div>
               </div>
@@ -2940,41 +3050,35 @@ export default function DashboardPage() {
                   animate={{
                     width: `${(Math.min(completedQuests.length, 3) / 3) * 100}%`,
                   }}
-                  className={`h-full rounded-full transition-all duration-700 relative shadow-md ${completedQuests.length >= 6
-                    ? 'bg-gradient-to-r from-[#8a6d3b] via-[#fcf6ba] to-[#8a6d3b]' // 6: Deep Luxury Gold
-                    : completedQuests.length === 5
-                      ? 'bg-gradient-to-r from-[#2c3e50] via-[#bdc3c7] to-[#2c3e50]' // 5: Gunmetal Silver
-                      : completedQuests.length === 4
-                        ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500' // 4: Rainbow Start
-                        : completedQuests.length === 3
-                          ? 'bg-gradient-to-r from-green-400 to-emerald-500' // 3: Goal Reached
-                          : 'bg-gradient-to-r from-orange-400 to-red-500' // 0-2: Progressing
+                  className={`h-full rounded-full transition-all duration-700 relative shadow-md ${completedQuests.length === 4
+                    ? 'bg-gradient-to-r from-[#8a6d3b] via-[#fcf6ba] to-[#8a6d3b]' // 4: Deep Luxury Gold
+                    : completedQuests.length === 3
+                      ? 'bg-gradient-to-r from-green-400 to-emerald-500' // 3: Goal Reached
+                      : 'bg-gradient-to-r from-orange-400 to-red-500' // 0-2: Progressing
                     }`}
                 >
                   {/* ✨ Super State Effects (No Sparkles, Just Premium Glow) */}
-                  {completedQuests.length >= 4 && (
+                  {completedQuests.length === 4 && (
                     <>
                       <motion.div
-                        animate={{ opacity: completedQuests.length >= 6 ? [0.2, 0.5, 0.2] : [0.1, 0.3, 0.1] }}
+                        animate={{ opacity: [0.2, 0.5, 0.2] }}
                         transition={{ duration: 3, repeat: Infinity }}
-                        className={`absolute inset-0 mix-blend-overlay ${completedQuests.length >= 6 ? 'bg-yellow-100' : 'bg-white'
-                          }`}
+                        className="absolute inset-0 mix-blend-overlay bg-yellow-100"
                       />
                       <motion.div
                         animate={{ x: ['-100%', '200%'] }}
                         transition={{
                           repeat: Infinity,
-                          duration: completedQuests.length >= 6 ? 3 : 2,
+                          duration: 3,
                           ease: "easeInOut"
                         }}
-                        className={`absolute inset-0 bg-gradient-to-r from-transparent ${completedQuests.length >= 6 ? 'via-white/30' : 'via-white/20'
-                          } to-transparent w-40`}
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-40"
                       />
                     </>
                   )}
 
-                  {/* Luxury Glow for Level 6 */}
-                  {completedQuests.length >= 6 && (
+                  {/* Luxury Glow for Level 4 */}
+                  {completedQuests.length === 4 && (
                     <div className="absolute inset-0 shadow-[0_0_20px_rgba(191,149,63,0.3)] rounded-full" />
                   )}
 
@@ -2986,12 +3090,10 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold mt-3 text-center uppercase tracking-widest transition-all duration-500">
                 {completedQuests.length < 3 ? (
                   <span className="text-slate-400">ทำอีก <span className="text-orange-500">{3 - completedQuests.length}</span> ข้อเพื่อบรรลุเป้าหมาย</span>
-                ) : completedQuests.length >= 6 ? (
+                ) : completedQuests.length === 4 ? (
                   <span className="text-[#bf953f] font-black tracking-[0.2em] drop-shadow-sm">🏆 The Legendary Upskiller 🏆</span>
-                ) : completedQuests.length >= 4 ? (
-                  <span className="text-orange-500">SUPER MODE! <span className="text-slate-400">ทำให้ครบเพื่อเข้าสู่โหมด <span className="text-amber-500">LEGEND</span> 🔥</span></span>
                 ) : (
-                  <span className="text-emerald-500">เป้าหมายสำเร็จ! <span className="text-slate-400">ทำเพิ่มเพื่อเข้าสู่โหมด <span className="text-orange-500">SUPER</span></span></span>
+                  <span className="text-emerald-500">เป้าหมายสำเร็จ! <span className="text-slate-400">ทำเพิ่มอีกข้อเพื่อเข้าสู่โหมด <span className="text-amber-500">LEGEND</span> 🔥</span></span>
                 )}
               </p>
             </div>
@@ -3033,10 +3135,6 @@ export default function DashboardPage() {
                     // 🚩 ถ้าเป็น Notice ห้ามรันฟังก์ชัน toggleQuest
                     onClick={() => {
                       if (isNotice) return;
-                      if (quest.id === 5 && quest.title.includes(AI_MENTOR_QUEST_MARKER) && !isDone) {
-                        window.location.href = '/tools/soul-guide';
-                        return;
-                      }
                       toggleQuest(quest.id, quest.xp);
                     }}
                   >
@@ -3061,7 +3159,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider 
             ${isDone ? 'bg-green-100 text-green-600' : isNotice ? 'bg-amber-500 text-white shadow-sm' : `${styles.bg} ${styles.text}`}`}>
-                          {isNotice ? 'Action Required' : quest.type}
+                          {isNotice ? 'Action Required' : (quest.type === 'DISC' ? 'HABIT' : quest.type)}
                         </span>
 
                         {quest.title.includes('|') && !isNotice && (
@@ -3070,13 +3168,9 @@ export default function DashboardPage() {
                           </span>
                         )}
 
-                        {quest.id === 5 && quest.title.includes(AI_MENTOR_QUEST_MARKER) && !isDone && (
-                          <span className="text-[9px] font-bold text-purple-400 flex items-center gap-0.5">
-                            → เปิด Soul Guide
-                          </span>
-                        )}
-
-                        {quest.id === 6 && aiGeneratedQuestTitle && quest.title === aiGeneratedQuestTitle && (
+                        {((quest.id === 2 && aiGeneratedDiscTitle && quest.title === aiGeneratedDiscTitle) ||
+                          (quest.id === 3 && aiGeneratedMoneyTitle && quest.title === aiGeneratedMoneyTitle) ||
+                          (quest.id === 4 && aiGeneratedQuestTitle && quest.title === aiGeneratedQuestTitle)) && (
                           <span className="text-[9px] font-bold text-violet-400">✨ เฉพาะคุณ</span>
                         )}
                       </div>
@@ -3085,7 +3179,7 @@ export default function DashboardPage() {
           ${isDone ? 'line-through text-slate-400' : isNotice || quest.title.includes('สรุปผล') ? 'text-amber-900' : 'text-slate-700'}`}>
                         {quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title}
                       </p>
-                      {quest.id === 1 && !quest.title.includes('สรุปผล') && (
+                      {quest.id === 1 && lastWheel && !quest.title.includes('สรุปผล') && (
                         <div
                           className="flex items-center gap-1.5 mt-2 cursor-pointer opacity-90 hover:opacity-100 transition-opacity w-fit bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100/50"
                           onClick={(e) => { e.stopPropagation(); setShowWheelRulesModal(true); }}
@@ -4138,6 +4232,14 @@ export default function DashboardPage() {
             <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
               <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)
             </button>
+
+            {/* 🛠️ ปุ่มสำหรับนักพัฒนาเพื่อทดสอบจำลองวันถัดไป */}
+            <div className="flex flex-col items-center gap-1.5 w-full sm:w-auto mt-2 sm:mt-0">
+              <button onClick={handleDevReset} className="flex items-center justify-center gap-2 bg-violet-50 text-violet-600 font-bold text-xs py-3 px-4 rounded-full hover:bg-violet-100 transition-all active:scale-95 w-full">
+                <Sparkles size={14} /> DEV: จำลองวันถัดไป (Reset Quest)
+              </button>
+              <span className="text-[9px] text-slate-400 font-mono">UID: {user?.uid}</span>
+            </div>
           </div>
         </div>
 

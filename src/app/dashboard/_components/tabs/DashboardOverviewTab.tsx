@@ -461,7 +461,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
         >
           <div className={`px-2.5 py-1.5 rounded-xl border text-[9px] md:text-[10px] font-black shadow-lg backdrop-blur-md flex items-center gap-2 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} border-white/10`}>
             <span className="text-white/40 font-bold tracking-tight">TOTAL</span>
-            <span className="text-white">{totalWeeklyScore} / 42</span>
+            <span className="text-white">{totalWeeklyScore} / 28</span>
           </div>
           <div className={`px-2.5 py-1.5 rounded-xl border text-[9px] md:text-[10px] font-black shadow-lg backdrop-blur-md flex items-center gap-1.5 ${rankInfo.bg} ${rankInfo.border} ${rankInfo.color} border-white/10 whitespace-nowrap`}>
             <span className="shrink-0">{rankInfo.emoji}</span>
@@ -487,9 +487,9 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
             {[
               { label: "Wheel", val: weeklyData.wheel, color: "text-red-500", icon: <PieChart size={14} /> },
-              { label: "DISC", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
+              { label: "HABIT", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
               { label: "Money", val: weeklyData.money, color: "text-amber-400", icon: <Wallet size={14} /> },
-              { label: "Library", val: weeklyData.library, color: "text-teal-400", icon: <BookOpen size={14} /> }
+              { label: "Challenge", val: weeklyData.challenge, color: "text-purple-400", icon: <Target size={14} /> }
             ].map((item, i) => {
               const radius = 20;
               const circumference = 2 * Math.PI * radius;
@@ -518,7 +518,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
             })}
           </div>
 
-          {/* 3. Combined Momentum Section (หลอดพลังงานรวม Wild + Challenge) */}
+          {/* 3. Combined Momentum Section (หลอดพลังงานรวม Weekly Momentum) */}
           <div className="flex-1 flex flex-col justify-center">
             <div className="bg-gradient-to-br from-white/5 to-transparent p-5 rounded-[2rem] border border-white/5 relative overflow-hidden group/momentum">
               {/* Background Sparkle Effect */}
@@ -528,24 +528,24 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
 
               <div className="flex justify-between items-end mb-3 relative z-10">
                 <div>
-                  <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.2em] block mb-1">Daily Momentum</span>
+                  <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.2em] block mb-1">Weekly Momentum</span>
                   <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                     <Sparkles size={14} className="text-yellow-400" />
-                    พลังขับเคลื่อนชีวิต
+                    พลังขับเคลื่อนชีวิตรวม
                   </h3>
                 </div>
                 <div className="text-right">
                   <span className="text-xl font-black text-white">
-                    {(Number(weeklyData.wildcard) || 0) + (Number(weeklyData.challenge) || 0)}
+                    {totalWeeklyScore}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 ml-1">/ 14</span>
+                  <span className="text-[10px] font-bold text-slate-500 ml-1">/ 28</span>
                 </div>
               </div>
 
               <div className="h-3 bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-700/50 shadow-inner relative z-10">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${((weeklyData.wildcard + weeklyData.challenge) / 14) * 100}%` }}
+                  animate={{ width: `${(totalWeeklyScore / 28) * 100}%` }}
                   transition={{ duration: 1.5, delay: 0.8, type: "spring" }}
                   className="h-full bg-gradient-to-r from-orange-500 via-yellow-500 to-emerald-500 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] relative"
                 >
@@ -555,7 +555,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
               </div>
 
               <p className="text-[10px] text-slate-500 font-medium mt-3 leading-relaxed">
-                รวมการจัดการสิ่งจุกจิก (Wildcard) และความท้าทายใหม่ (Challenge)
+                สะสมความสำเร็จจากการพิชิตภารกิจประจำสัปดาห์ในทุกด้านเพื่อสร้าง Momentum
               </p>
             </div>
           </div>
@@ -571,10 +571,10 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
               </div>
 
               {[
-                { score: "0 - 10", emoji: "🛡️", name: "Survivor", desc: "เน้นประคองตัวให้รอดสัปดาห์นี้" },
-                { score: "11 - 20", emoji: "⚔️", name: "Warrior", desc: "เริ่มบุกและจัดการชีวิตได้ดีขึ้น" },
-                { score: "21 - 32", emoji: "💎", name: "Elite", desc: "ชีวิตสมดุลและมีวินัยสูงมาก" },
-                { score: "33 - 42", emoji: "👑", name: "Legend", desc: "ผู้จารึกตำนานวินัยที่แท้จริง" },
+                { score: "0 - 7", emoji: "🛡️", name: "Survivor", desc: "เน้นประคองตัวให้รอดสัปดาห์นี้" },
+                { score: "8 - 14", emoji: "⚔️", name: "Warrior", desc: "เริ่มบุกและจัดการชีวิตได้ดีขึ้น" },
+                { score: "15 - 22", emoji: "💎", name: "Elite", desc: "ชีวิตสมดุลและมีวินัยสูงมาก" },
+                { score: "23 - 28", emoji: "👑", name: "Legend", desc: "ผู้จารึกตำนานวินัยที่แท้จริง" },
               ].map((rank, idx) => {
                 const isActive = totalWeeklyScore >= parseInt(rank.score.split(' - ')[0]) && totalWeeklyScore <= parseInt(rank.score.split(' - ')[1]);
 

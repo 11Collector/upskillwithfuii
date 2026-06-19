@@ -4,7 +4,7 @@ import "@/app/globals.css";
 import Link from "next/link";
 import { Home, PieChart, Users, Wallet, Quote, BookOpen } from "lucide-react";
 import PWALogic from "./components/PWALogic";
-import BottomNavigation from "./components/BottomNavigation";
+import BottomNavigation from "./components/ClientBottomNavigation";
 import Header from "./components/Header";
 import ClientMainWrapper from "./components/ClientMainWrapper";
 import { Suspense } from "react";
