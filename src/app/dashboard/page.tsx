@@ -165,12 +165,14 @@ export default function DashboardPage() {
       const userRef = doc(db, "users", user.uid);
       const allWheelTasks = Object.values(QUEST_POOL.WHEEL).flat();
       const randomTask = allWheelTasks[Math.floor(Math.random() * allWheelTasks.length)] as string;
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
       await updateDoc(userRef, {
         wheelPlanDay: 1, // เริ่มที่ Day 1 ทันที
         isRandomMode: true,
         randomWheelQuestTitle: randomTask,
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่
+        lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
       });
 
       setWheelPlanDay(1);
@@ -189,12 +191,14 @@ export default function DashboardPage() {
     if (!user) return;
     try {
       const userRef = doc(db, "users", user.uid);
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
       await updateDoc(userRef, {
         wheelPlanDay: 1, // เริ่มที่ Day 1 ทันที
         isRandomMode: false,
         completedQuestIds: [],
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
+        lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
       });
 
       setWheelPlanDay(1);
@@ -435,13 +439,13 @@ export default function DashboardPage() {
           setAiGeneratedMoneyTitle("");
 
           const userRef = doc(db, "users", currentUser.uid);
-          updateDoc(userRef, {
+          const updates: any = {
             customQuestTitle: "",
             aiGeneratedQuestTitle: "",
             aiGeneratedDiscTitle: "",
             aiGeneratedMoneyTitle: "",
             questPreferences: null
-          }).catch(e => console.error(e));
+          };
 
           let currentPlanDay = userData.wheelPlanDay || 0;
           let nextPlanDay = currentPlanDay;
@@ -472,13 +476,10 @@ export default function DashboardPage() {
               const xpToAdd = bonusXP;
               const perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
 
-              const baseUpdate: any = {
-                wheelPlanDay: nextPlanDay,
-                lastActiveDate: todayStr,
-                completedQuestIds: [],
-                customQuestTitle: "",
-                wheelCompletions: 0,
-              };
+              updates.wheelPlanDay = nextPlanDay;
+              updates.lastActiveDate = todayStr;
+              updates.completedQuestIds = [];
+              updates.wheelCompletions = 0;
 
               if (xpToAdd > 0) {
                 setRewardModalData({
@@ -487,11 +488,9 @@ export default function DashboardPage() {
                   message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
                   type: modalType
                 });
-                baseUpdate.totalXP = increment(xpToAdd);
-                baseUpdate.perfectWeeks = increment(perfectWeekInc);
+                updates.totalXP = increment(xpToAdd);
+                updates.perfectWeeks = increment(perfectWeekInc);
               }
-
-              updateDoc(userRef, baseUpdate).catch(e => console.error("Auto-progression error:", e));
 
               if (xpToAdd > 0) {
                 const currentXP = (userData.totalXP || 0) + xpToClaim;
@@ -508,25 +507,25 @@ export default function DashboardPage() {
               }
 
             } else {
-              updateDoc(userRef, {
-                wheelPlanDay: nextPlanDay,
-                lastActiveDate: todayStr,
-                completedQuestIds: [],
-                customQuestTitle: "",
-                wheelCompletions: 0
-              }).catch(e => console.error("Auto-reset error:", e));
+              updates.wheelPlanDay = nextPlanDay;
+              updates.lastActiveDate = todayStr;
+              updates.completedQuestIds = [];
+              updates.wheelCompletions = 0;
             }
 
             setWheelCompletions(0);
 
           } else {
             nextPlanDay = currentPlanDay + 1;
-            updateDoc(userRef, {
-              wheelPlanDay: nextPlanDay,
-              lastActiveDate: todayStr,
-              completedQuestIds: [],
-              customQuestTitle: ""
-            }).catch(e => console.error("Day progression error:", e));
+            updates.wheelPlanDay = nextPlanDay;
+            updates.lastActiveDate = todayStr;
+            updates.completedQuestIds = [];
+          }
+
+          try {
+            await updateDoc(userRef, updates);
+          } catch (e) {
+            console.error("Failed to update user dashboard data for new day:", e);
           }
 
           setWheelPlanDay(nextPlanDay);
