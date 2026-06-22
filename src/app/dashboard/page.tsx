@@ -199,6 +199,7 @@ export default function DashboardPage() {
         completedQuestIds: [],
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
+        lastActiveAt: serverTimestamp(),
       });
 
       setWheelPlanDay(1);
@@ -286,6 +287,9 @@ export default function DashboardPage() {
     type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
   });
 
+  const [userData, setUserData] = useState<any>(null);
+  const [mementoToast, setMementoToast] = useState<{ title: string; body: string } | null>(null);
+
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
   const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
@@ -333,6 +337,7 @@ export default function DashboardPage() {
 
       const currentWeekInfo = data.currentWeekInfo;
       const userData = data.userData;
+      setUserData(userData);
 
       if (currentWeekInfo.id === "week-1") {
         setIsFirstWeek(true);
@@ -681,6 +686,109 @@ export default function DashboardPage() {
       if (nav) nav.style.display = 'flex';
     };
   }, [showRerollConfirm, showLevelUp, showDailySuccess, showShareModal, showLevelInfo, showLineModal, showSuccessToast]);
+
+  // --- 🔔 Real-time Web Notification System ---
+  useEffect(() => {
+    if (!user) return;
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
+    let timeoutIds: NodeJS.Timeout[] = [];
+
+    const scheduleNextNotifications = () => {
+      const now = new Date();
+      const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+      let state = { date: todayStr, notifiedTimes: [] as string[] };
+      try {
+        const stored = localStorage.getItem("memento_notifications_state");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.date === todayStr) {
+            state = parsed;
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing notification state:", e);
+      }
+
+      const scheduledTimes = [
+        { time: "09:00", hour: 9, min: 0, text: "🌅 \"ยินดีด้วย วันนี้คือวันสุดท้ายของคุณบนโลกใบนี้\"", emoji: "🌅" },
+        { time: "15:00", hour: 15, min: 0, text: "⏳ \"นาฬิกาทรายชีวิตคุณ ไหลผ่านไปครึ่งวันแล้วนะ... แวะมาเติมความรู้หน่อยไหม?\"", emoji: "⏳" },
+        { time: "21:00", hour: 21, min: 0, text: "🌌 \"เหลือเวลาอีก 3 ชั่วโมง... มาทำสิ่งที่คุณจะไม่เสียดายกัน\"", emoji: "🌌" }
+      ];
+
+      let stateUpdated = false;
+      scheduledTimes.forEach(item => {
+        const triggerTime = new Date(now);
+        triggerTime.setHours(item.hour, item.min, 0, 0);
+        
+        if (now.getTime() > triggerTime.getTime() && !state.notifiedTimes.includes(item.time)) {
+          state.notifiedTimes.push(item.time);
+          stateUpdated = true;
+        }
+      });
+
+      if (stateUpdated) {
+        localStorage.setItem("memento_notifications_state", JSON.stringify(state));
+      }
+
+      const upcoming = scheduledTimes.find(item => !state.notifiedTimes.includes(item.time));
+      
+      if (!upcoming) {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        
+        const delay = tomorrow.getTime() - now.getTime();
+        const tId = setTimeout(() => {
+          localStorage.setItem("memento_notifications_state", JSON.stringify({
+            date: tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+            notifiedTimes: []
+          }));
+          scheduleNextNotifications();
+        }, delay);
+        timeoutIds.push(tId);
+        return;
+      }
+
+      const triggerTime = new Date(now);
+      triggerTime.setHours(upcoming.hour, upcoming.min, 0, 0);
+      const delay = triggerTime.getTime() - now.getTime();
+
+      if (delay > 0) {
+        const tId = setTimeout(() => {
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            try {
+              new Notification("Memento Mori", {
+                body: upcoming.text.replace(/["“”]/g, ""),
+                icon: "/favicon.ico"
+              });
+            } catch (e) {
+              console.error("Browser notification failed:", e);
+            }
+          }
+          setMementoToast({ title: `${upcoming.emoji} Memento Mori`, body: upcoming.text });
+          setTimeout(() => setMementoToast(null), 6000);
+
+          state.notifiedTimes.push(upcoming.time);
+          localStorage.setItem("memento_notifications_state", JSON.stringify(state));
+          scheduleNextNotifications();
+        }, delay);
+        timeoutIds.push(tId);
+      }
+    };
+
+    scheduleNextNotifications();
+
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [user]);
 
   const handleLogout = async () => {
     try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
@@ -1967,6 +2075,7 @@ export default function DashboardPage() {
         completedQuestIds: newCompleted,
         lastQuestDate: newLastQuestDate,
         lastActiveDate: todayStr,
+        lastActiveAt: serverTimestamp(),
         streakCount: newStreak,
         wheelPlanDay: newWheelDay
       };
@@ -3602,6 +3711,7 @@ export default function DashboardPage() {
                     </div>
                   </motion.div>
                 </Link>
+
 
                 {/* 🌟 2. คมสัดสัด */}
 
@@ -5836,6 +5946,31 @@ export default function DashboardPage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+
+
+      {/* --- 🔔 Memento Mori: Floating Notification Toast --- */}
+      <AnimatePresence>
+        {mementoToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 z-[999999] w-full max-w-sm px-4 md:px-0"
+          >
+            <div className="bg-[#1A1A1A] text-white p-5 rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.3)] border border-slate-800 flex items-start gap-4">
+              <div className="text-xl">⏳</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">{mementoToast.title}</p>
+                <p className="text-xs font-bold text-slate-100 leading-relaxed">{mementoToast.body}</p>
+              </div>
+              <button onClick={() => setMementoToast(null)} className="text-slate-400 hover:text-white shrink-0 p-1">
+                <X size={16} />
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
