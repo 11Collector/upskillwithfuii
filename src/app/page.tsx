@@ -242,7 +242,7 @@ export default function Home() {
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16">
 
             {/* Left side: Typography & CTA */}
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-20 w-full mb-0">
+            <div className="flex-1 min-w-0 flex flex-col items-center md:items-start text-center md:text-left z-20 w-full mb-0">
               {/* Logo */}
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -263,7 +263,7 @@ export default function Home() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-                className="flex flex-col md:items-start items-center"
+                className="flex flex-col md:items-start items-center w-full min-w-0"
               >
                 <div className="mb-4 flex flex-col md:items-start items-center gap-3">
                   <span className="text-red-700 font-extrabold bg-red-50/80 px-4 py-2 rounded-2xl relative inline-flex items-center gap-2 border border-red-100 shadow-sm text-sm sm:text-base tracking-widest uppercase">
@@ -296,7 +296,7 @@ export default function Home() {
                 </p>
 
                 {/* 3 Value Badges (Unified responsive layout: left-aligned scrollable on mobile, left-aligned on desktop) */}
-                <div className="flex flex-row flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none] justify-start md:justify-start gap-2.5 mt-6 w-full px-6 md:px-0">
+                <div className="flex flex-row flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none] justify-start md:justify-start gap-2.5 mt-6 w-full px-4 md:px-0">
                   {/* Badge 1: Personal Growth Personalized */}
                   <div className="flex items-center gap-2 bg-indigo-50/70 border border-indigo-100/80 rounded-2xl px-2.5 py-1.5 shadow-sm shrink-0 hover:scale-[1.02] transition-transform duration-300">
                     <div className="bg-indigo-500 text-white p-1 rounded-lg shrink-0">
