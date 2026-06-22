@@ -199,6 +199,7 @@ export default function DashboardPage() {
         completedQuestIds: [],
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
+        lastActiveAt: serverTimestamp(),
       });
 
       setWheelPlanDay(1);
@@ -286,6 +287,13 @@ export default function DashboardPage() {
     type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
   });
 
+  const [userData, setUserData] = useState<any>(null);
+  const [showWillModal, setShowWillModal] = useState(false);
+  const [willMessage, setWillMessage] = useState("");
+  const [isSavingWill, setIsSavingWill] = useState(false);
+  const [mementoToast, setMementoToast] = useState<{ title: string; body: string } | null>(null);
+  const hasShownExitIntent = useRef(false);
+
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
   const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
@@ -333,6 +341,7 @@ export default function DashboardPage() {
 
       const currentWeekInfo = data.currentWeekInfo;
       const userData = data.userData;
+      setUserData(userData);
 
       if (currentWeekInfo.id === "week-1") {
         setIsFirstWeek(true);
@@ -680,10 +689,132 @@ export default function DashboardPage() {
       document.body.style.overflow = '';
       if (nav) nav.style.display = 'flex';
     };
-  }, [showRerollConfirm, showLevelUp, showDailySuccess, showShareModal, showLevelInfo, showLineModal, showSuccessToast]);
+  }, [showRerollConfirm, showLevelUp, showDailySuccess, showShareModal, showLevelInfo, showLineModal, showSuccessToast, showWillModal]);
+
+  // --- 🔔 Real-time Web Notification System ---
+  useEffect(() => {
+    if (!user) return;
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
+    let timeoutIds: NodeJS.Timeout[] = [];
+
+    const scheduleNextNotifications = () => {
+      const now = new Date();
+      const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+      let state = { date: todayStr, notifiedTimes: [] as string[] };
+      try {
+        const stored = localStorage.getItem("memento_notifications_state");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.date === todayStr) {
+            state = parsed;
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing notification state:", e);
+      }
+
+      const scheduledTimes = [
+        { time: "09:00", hour: 9, min: 0, text: "🌅 \"ยินดีด้วย วันนี้คือวันสุดท้ายของคุณบนโลกใบนี้\"", emoji: "🌅" },
+        { time: "15:00", hour: 15, min: 0, text: "⏳ \"นาฬิกาทรายชีวิตคุณ ไหลผ่านไปครึ่งวันแล้วนะ... แวะมาเติมความรู้หน่อยไหม?\"", emoji: "⏳" },
+        { time: "21:00", hour: 21, min: 0, text: "🌌 \"เหลือเวลาอีก 3 ชั่วโมง... มาทำสิ่งที่คุณจะไม่เสียดายกัน\"", emoji: "🌌" }
+      ];
+
+      let stateUpdated = false;
+      scheduledTimes.forEach(item => {
+        const triggerTime = new Date(now);
+        triggerTime.setHours(item.hour, item.min, 0, 0);
+        
+        if (now.getTime() > triggerTime.getTime() && !state.notifiedTimes.includes(item.time)) {
+          state.notifiedTimes.push(item.time);
+          stateUpdated = true;
+        }
+      });
+
+      if (stateUpdated) {
+        localStorage.setItem("memento_notifications_state", JSON.stringify(state));
+      }
+
+      const upcoming = scheduledTimes.find(item => !state.notifiedTimes.includes(item.time));
+      
+      if (!upcoming) {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        
+        const delay = tomorrow.getTime() - now.getTime();
+        const tId = setTimeout(() => {
+          localStorage.setItem("memento_notifications_state", JSON.stringify({
+            date: tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+            notifiedTimes: []
+          }));
+          scheduleNextNotifications();
+        }, delay);
+        timeoutIds.push(tId);
+        return;
+      }
+
+      const triggerTime = new Date(now);
+      triggerTime.setHours(upcoming.hour, upcoming.min, 0, 0);
+      const delay = triggerTime.getTime() - now.getTime();
+
+      if (delay > 0) {
+        const tId = setTimeout(() => {
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            try {
+              new Notification("Memento Mori", {
+                body: upcoming.text.replace(/["“”]/g, ""),
+                icon: "/favicon.ico"
+              });
+            } catch (e) {
+              console.error("Browser notification failed:", e);
+            }
+          }
+          setMementoToast({ title: `${upcoming.emoji} Memento Mori`, body: upcoming.text });
+          setTimeout(() => setMementoToast(null), 6000);
+
+          state.notifiedTimes.push(upcoming.time);
+          localStorage.setItem("memento_notifications_state", JSON.stringify(state));
+          scheduleNextNotifications();
+        }, delay);
+        timeoutIds.push(tId);
+      }
+    };
+
+    scheduleNextNotifications();
+
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [user]);
+
+  // --- 🚪 Exit Intent Pop-up Hook ---
+  useEffect(() => {
+    if (!user) return;
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY < 15 && !hasShownExitIntent.current && !showWillModal) {
+        hasShownExitIntent.current = true;
+        setShowWillModal(true);
+      }
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => {
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [user, showWillModal]);
+
+  const performActualLogout = async () => {
+    try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
+  };
 
   const handleLogout = async () => {
-    try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
+    setShowWillModal(true);
   };
 
   const handleResetAllData = async () => {
@@ -1967,6 +2098,7 @@ export default function DashboardPage() {
         completedQuestIds: newCompleted,
         lastQuestDate: newLastQuestDate,
         lastActiveDate: todayStr,
+        lastActiveAt: serverTimestamp(),
         streakCount: newStreak,
         wheelPlanDay: newWheelDay
       };
@@ -3602,6 +3734,7 @@ export default function DashboardPage() {
                     </div>
                   </motion.div>
                 </Link>
+
 
                 {/* 🌟 2. คมสัดสัด */}
 
@@ -5836,6 +5969,136 @@ export default function DashboardPage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- ✉️ Memento Mori: The Last Check-in Modal --- */}
+      <AnimatePresence>
+        {showWillModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
+            onClick={() => setShowWillModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#F7F7F7] border border-slate-200 p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.15)] text-left overflow-hidden text-[#1A1A1A]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#1A1A1A] opacity-80" />
+              
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-lg font-black text-[#1A1A1A] flex items-center gap-2">
+                    <span>⏳</span> The Last Check-in
+                  </h4>
+                  <button
+                    onClick={() => setShowWillModal(false)}
+                    className="p-2 hover:bg-slate-200/50 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <p className="text-sm font-bold text-slate-800 mb-2 leading-relaxed">
+                  คุณบันทึก Progress วันนี้เรียบร้อยแล้ว
+                </p>
+                <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                  หากพรุ่งนี้คุณไม่ได้กลับมาที่เว็บนี้อีก มีข้อความสั้นๆ อะไรที่อยากฝากไว้ให้ตัวเองไหม? (ระบบจะส่งอีเมลฉบับนี้ไปหาคุณหากไม่มีการใช้งานเกิน 30 วัน)
+                </p>
+
+                <textarea
+                  value={willMessage}
+                  onChange={(e) => setWillMessage(e.target.value.substring(0, 100))}
+                  placeholder="ฝากข้อความสั้นๆ ถึงตัวเองในวันข้างหน้า... (ไม่เกิน 100 ตัวอักษร)"
+                  className="w-full h-24 p-4 text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-2xl outline-none resize-none focus:border-[#1A1A1A] transition-colors mb-4 placeholder:text-slate-400"
+                  maxLength={100}
+                />
+                
+                <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-6">
+                  <span>{willMessage.length}/100 ตัวอักษร</span>
+                  <span>Anonymous & Secure</span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!willMessage.trim() || isSavingWill) return;
+                      setIsSavingWill(true);
+                      try {
+                        await addDoc(collection(db, "wills"), {
+                          userId: user?.uid,
+                          email: user?.email,
+                          displayName: user?.displayName || "Upskiller",
+                          message: willMessage.trim(),
+                          createdAt: serverTimestamp(),
+                          lastUserActiveAt: serverTimestamp(),
+                          emailSent: false,
+                          emailSentAt: null
+                        });
+                      } catch (e) {
+                        console.error("Error saving will:", e);
+                      }
+                      setIsSavingWill(false);
+                      setShowWillModal(false);
+                      setWillMessage("");
+                      await performActualLogout();
+                    }}
+                    disabled={!willMessage.trim() || isSavingWill}
+                    className="w-full py-3.5 bg-[#1A1A1A] text-white text-xs font-black rounded-2xl hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
+                  >
+                    {isSavingWill ? "กำลังบันทึก..." : "บันทึก & ออกจากระบบ"}
+                  </button>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <button
+                      onClick={async () => {
+                        setShowWillModal(false);
+                        await performActualLogout();
+                      }}
+                      className="py-3 bg-slate-200/50 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-black rounded-2xl transition-colors text-center"
+                    >
+                      ข้ามการฝากข้อความ
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowWillModal(false)}
+                      className="py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-700 text-xs font-black rounded-2xl transition-colors text-center"
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- 🔔 Memento Mori: Floating Notification Toast --- */}
+      <AnimatePresence>
+        {mementoToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 z-[999999] w-full max-w-sm px-4 md:px-0"
+          >
+            <div className="bg-[#1A1A1A] text-white p-5 rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.3)] border border-slate-800 flex items-start gap-4">
+              <div className="text-xl">⏳</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">{mementoToast.title}</p>
+                <p className="text-xs font-bold text-slate-100 leading-relaxed">{mementoToast.body}</p>
+              </div>
+              <button onClick={() => setMementoToast(null)} className="text-slate-400 hover:text-white shrink-0 p-1">
+                <X size={16} />
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

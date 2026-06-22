@@ -537,6 +537,8 @@ export default function DeepWorkPage() {
         totalXP: increment(xpReward),
         lastFocusDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         lastFocusWeek: currentWeekId,
+        lastActiveAt: serverTimestamp(),
+        lastActiveDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         focusReflections: arrayUnion({
           date: new Date().toISOString(),
           duration: selectedTime,
