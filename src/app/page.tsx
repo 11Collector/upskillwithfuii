@@ -460,7 +460,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
                 {/* Left Column: Slider and Metrics */}
-                <div className="md:col-span-6 space-y-6">
+                <div className="md:col-span-6 space-y-6 order-2 md:order-1">
                   {/* Interactive Slider */}
                   <div className="space-y-3 bg-slate-950/40 border border-slate-800/50 rounded-3xl p-5">
                     <div className="flex justify-between text-[10px] text-slate-500 font-black tracking-wider">
@@ -568,7 +568,7 @@ export default function Home() {
                 </div>
 
                 {/* Right Column: Custom SVG Graph */}
-                <div className="md:col-span-6 flex flex-col justify-center items-center">
+                <div className="md:col-span-6 flex flex-col justify-center items-center order-1 md:order-2">
                   <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-3xl p-4 sm:p-5 relative overflow-hidden shadow-inner">
                     {/* SVG Graph */}
                     <svg viewBox="0 0 320 220" className="w-full h-auto overflow-visible">
