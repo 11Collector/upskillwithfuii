@@ -299,8 +299,11 @@ export default function DashboardPage() {
 
   const loadDashboardData = useCallback(async (currentUser: User) => {
     setLoading(true);
-    try {
-      const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
+    let attempts = 0;
+    const maxAttempts = 3;
+    while (attempts < maxAttempts) {
+      try {
+        const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
 
       setChatQuota(data.chatQuota);
       setRelativeWeekInfo(data.currentWeekInfo);
@@ -548,11 +551,18 @@ export default function DashboardPage() {
         }
       }
 
-    } catch (error) {
-      console.error("Error fetching Dashboard data:", error);
-    } finally {
-      setLoading(false);
+        break; // Success! Break out of retry loop.
+      } catch (error) {
+        attempts++;
+        console.error(`Error fetching Dashboard data (attempt ${attempts}/${maxAttempts}):`, error);
+        if (attempts >= maxAttempts) {
+          break; // Max attempts reached, exit loop
+        }
+        // Wait 800ms before retrying to allow auth state to propagate to Firestore client
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
     }
+    setLoading(false);
   }, [router]);
 
   const [lastChatDate, setLastChatDate] = useState("");
