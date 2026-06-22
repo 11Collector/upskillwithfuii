@@ -420,7 +420,7 @@ export default function Home() {
       )}
 
       {/* --- 1.5. Interactive 1% Everyday Section --- */}
-      {(() => {
+      {!user && (() => {
         const improveVal = Math.pow(1.01, onePercentDay);
         const declineVal = Math.pow(0.99, onePercentDay);
         const generatePath = (base: number) => {
