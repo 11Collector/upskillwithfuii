@@ -428,7 +428,7 @@ export default function Home() {
           for (let d = 0; d <= 365; d += 10) {
             const val = Math.pow(base, d);
             const clampedVal = Math.min(val, 40);
-            const x = 10 + (d / 365) * 300;
+            const x = 30 + (d / 365) * 280;
             const y = 185 - (clampedVal / 40) * 165;
             points.push(`${x},${y}`);
           }
@@ -519,11 +519,13 @@ export default function Home() {
                         <span className="text-xs text-slate-400 font-bold ml-1">เท่า</span>
                       </div>
                       <p className="text-[10px] text-slate-400 leading-normal border-t border-slate-800/80 pt-2 mt-1">
-                        {onePercentDay >= 365 
-                          ? "เก่งขึ้นกว่าเดิมถึง 37.8 เท่า! 🚀" 
-                          : onePercentDay >= 180 
-                            ? "ศักยภาพงอกเงยชัดเจน" 
-                            : "เห็นพัฒนาการก้าวสั้นๆ"}
+                        {improveVal >= 37.0 
+                          ? "ศักยภาพก้าวกระโดดมหาศาล! 🚀" 
+                          : improveVal >= 5.0 
+                            ? "ศักยภาพงอกเงยอย่างเห็นได้ชัด" 
+                            : improveVal >= 1.5 
+                              ? "เริ่มเห็นพัฒนาการเป็นรูปธรรม" 
+                              : "เห็นพัฒนาการก้าวสั้นๆ"}
                       </p>
                     </div>
 
@@ -540,11 +542,13 @@ export default function Home() {
                         <span className="text-xs text-slate-400 font-bold ml-1">เท่า</span>
                       </div>
                       <p className="text-[10px] text-slate-400 leading-normal border-t border-slate-800/80 pt-2 mt-1">
-                        {onePercentDay >= 365 
+                        {declineVal <= 0.03 
                           ? "ศักยภาพดิ่งลงเกือบศูนย์ 🥀" 
-                          : onePercentDay >= 180 
-                            ? "ทักษะเดิมเริ่มจางหาย" 
-                            : "แทบไม่เห็นความแตกต่าง"}
+                          : declineVal <= 0.25 
+                            ? "ศักยภาพถดถอยอย่างมีนัยสำคัญ" 
+                            : declineVal <= 0.75 
+                              ? "ทักษะเดิมเริ่มจางหายไปเยอะ" 
+                              : "แทบไม่เห็นความแตกต่าง"}
                       </p>
                     </div>
                   </div>
@@ -570,16 +574,23 @@ export default function Home() {
                 <div className="md:col-span-6 flex flex-col justify-center items-center">
                   <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-3xl p-4 sm:p-5 relative overflow-hidden shadow-inner">
                     {/* SVG Graph */}
-                    <svg viewBox="0 0 320 200" className="w-full h-auto overflow-visible">
+                    <svg viewBox="0 0 320 220" className="w-full h-auto overflow-visible">
                       {/* Grid Lines */}
-                      <line x1="10" y1="20" x2="310" y2="20" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
-                      <line x1="10" y1="61.25" x2="310" y2="61.25" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
-                      <line x1="10" y1="102.5" x2="310" y2="102.5" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
-                      <line x1="10" y1="143.75" x2="310" y2="143.75" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="20" x2="310" y2="20" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="61.25" x2="310" y2="61.25" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="102.5" x2="310" y2="102.5" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="143.75" x2="310" y2="143.75" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      
+                      {/* Y-Axis Labels */}
+                      <text x="24" y="23" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">40</text>
+                      <text x="24" y="64" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">30</text>
+                      <text x="24" y="105" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">20</text>
+                      <text x="24" y="146" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">10</text>
+                      <text x="24" y="183" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">1</text>
                       
                       {/* Baseline (1.0) */}
                       <line 
-                        x1="10" 
+                        x1="30" 
                         y1="180.875" 
                         x2="310" 
                         y2="180.875" 
@@ -588,7 +599,6 @@ export default function Home() {
                         strokeDasharray="4 4" 
                         opacity="0.8"
                       />
-                      <text x="12" y="176" fill="#64748b" className="text-[8px] font-mono font-bold">No Change (1.00)</text>
 
                       {/* Decline Path (0.99) */}
                       <path 
@@ -610,9 +620,9 @@ export default function Home() {
 
                       {/* Time vertical indicator line */}
                       <line
-                        x1={10 + (onePercentDay / 365) * 300}
+                        x1={30 + (onePercentDay / 365) * 280}
                         y1="20"
-                        x2={10 + (onePercentDay / 365) * 300}
+                        x2={30 + (onePercentDay / 365) * 280}
                         y2="185"
                         stroke="#475569"
                         strokeWidth="1"
@@ -622,13 +632,13 @@ export default function Home() {
 
                       {/* Glow/Ping circle around current position of Improvement path */}
                       <circle
-                        cx={10 + (onePercentDay / 365) * 300}
+                        cx={30 + (onePercentDay / 365) * 280}
                         cy={185 - (Math.min(improveVal, 40) / 40) * 165}
                         r="6"
                         className="fill-emerald-400/30 stroke-emerald-400 stroke-1 animate-pulse"
                       />
                       <circle
-                        cx={10 + (onePercentDay / 365) * 300}
+                        cx={30 + (onePercentDay / 365) * 280}
                         cy={185 - (Math.min(improveVal, 40) / 40) * 165}
                         r="3"
                         className="fill-emerald-400"
@@ -636,17 +646,40 @@ export default function Home() {
 
                       {/* Circle around current position of Decline path */}
                       <circle
-                        cx={10 + (onePercentDay / 365) * 300}
+                        cx={30 + (onePercentDay / 365) * 280}
                         cy={185 - (Math.min(declineVal, 40) / 40) * 165}
                         r="5"
                         className="fill-rose-500/30 stroke-rose-500 stroke-1"
                       />
                       <circle
-                        cx={10 + (onePercentDay / 365) * 300}
+                        cx={30 + (onePercentDay / 365) * 280}
                         cy={185 - (Math.min(declineVal, 40) / 40) * 165}
                         r="2.5"
                         className="fill-rose-500"
                       />
+
+                      {/* Active Day moving label at the top of vertical line */}
+                      <text
+                        x={30 + (onePercentDay / 365) * 280}
+                        y="12"
+                        fill="#fbbf24"
+                        stroke="#020617"
+                        strokeWidth="3"
+                        paintOrder="stroke"
+                        strokeLinejoin="round"
+                        textAnchor="middle"
+                        className="text-[9px] font-black font-mono"
+                      >
+                        วันที่ {onePercentDay}
+                      </text>
+
+                      {/* Axis Ticks */}
+                      <line x1="30" y1="185" x2="30" y2="190" stroke="#475569" strokeWidth="1" />
+                      <line x1="310" y1="185" x2="310" y2="190" stroke="#475569" strokeWidth="1" />
+
+                      {/* X-Axis Labels inside SVG */}
+                      <text x="30" y="212" fill="#64748b" textAnchor="middle" className="text-[8px] font-mono font-bold">Day 0</text>
+                      <text x="310" y="212" fill="#64748b" textAnchor="middle" className="text-[8px] font-mono font-bold">Day 365</text>
 
                       {/* Gradients definitions */}
                       <defs>
@@ -661,13 +694,6 @@ export default function Home() {
                         </linearGradient>
                       </defs>
                     </svg>
-
-                    {/* Graph Labels */}
-                    <div className="flex justify-between items-center text-[9px] text-slate-500 font-mono mt-3 px-1">
-                      <span>วันแรก (Day 0)</span>
-                      <span className="text-amber-400 font-bold">วันที่ {onePercentDay}</span>
-                      <span>ครบปี (Day 365)</span>
-                    </div>
                   </div>
                 </div>
               </div>
