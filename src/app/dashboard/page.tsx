@@ -288,11 +288,7 @@ export default function DashboardPage() {
   });
 
   const [userData, setUserData] = useState<any>(null);
-  const [showWillModal, setShowWillModal] = useState(false);
-  const [willMessage, setWillMessage] = useState("");
-  const [isSavingWill, setIsSavingWill] = useState(false);
   const [mementoToast, setMementoToast] = useState<{ title: string; body: string } | null>(null);
-  const hasShownExitIntent = useRef(false);
 
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
@@ -689,7 +685,7 @@ export default function DashboardPage() {
       document.body.style.overflow = '';
       if (nav) nav.style.display = 'flex';
     };
-  }, [showRerollConfirm, showLevelUp, showDailySuccess, showShareModal, showLevelInfo, showLineModal, showSuccessToast, showWillModal]);
+  }, [showRerollConfirm, showLevelUp, showDailySuccess, showShareModal, showLevelInfo, showLineModal, showSuccessToast]);
 
   // --- 🔔 Real-time Web Notification System ---
   useEffect(() => {
@@ -794,27 +790,8 @@ export default function DashboardPage() {
     };
   }, [user]);
 
-  // --- 🚪 Exit Intent Pop-up Hook ---
-  useEffect(() => {
-    if (!user) return;
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY < 15 && !hasShownExitIntent.current && !showWillModal) {
-        hasShownExitIntent.current = true;
-        setShowWillModal(true);
-      }
-    };
-    document.addEventListener("mouseleave", handleMouseLeave);
-    return () => {
-      document.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, [user, showWillModal]);
-
-  const performActualLogout = async () => {
-    try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
-  };
-
   const handleLogout = async () => {
-    setShowWillModal(true);
+    try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
   };
 
   const handleResetAllData = async () => {
@@ -5972,112 +5949,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* --- ✉️ Memento Mori: The Last Check-in Modal --- */}
-      <AnimatePresence>
-        {showWillModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
-            onClick={() => setShowWillModal(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-[#F7F7F7] border border-slate-200 p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.15)] text-left overflow-hidden text-[#1A1A1A]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#1A1A1A] opacity-80" />
-              
-              <div className="relative z-10">
-                <div className="flex justify-between items-center mb-6">
-                  <h4 className="text-lg font-black text-[#1A1A1A] flex items-center gap-2">
-                    <span>⏳</span> The Last Check-in
-                  </h4>
-                  <button
-                    onClick={() => setShowWillModal(false)}
-                    className="p-2 hover:bg-slate-200/50 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
 
-                <p className="text-sm font-bold text-slate-800 mb-2 leading-relaxed">
-                  คุณบันทึก Progress วันนี้เรียบร้อยแล้ว
-                </p>
-                <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                  หากพรุ่งนี้คุณไม่ได้กลับมาที่เว็บนี้อีก มีข้อความสั้นๆ อะไรที่อยากฝากไว้ให้ตัวเองไหม? (ระบบจะส่งอีเมลฉบับนี้ไปหาคุณหากไม่มีการใช้งานเกิน 30 วัน)
-                </p>
-
-                <textarea
-                  value={willMessage}
-                  onChange={(e) => setWillMessage(e.target.value.substring(0, 100))}
-                  placeholder="ฝากข้อความสั้นๆ ถึงตัวเองในวันข้างหน้า... (ไม่เกิน 100 ตัวอักษร)"
-                  className="w-full h-24 p-4 text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-2xl outline-none resize-none focus:border-[#1A1A1A] transition-colors mb-4 placeholder:text-slate-400"
-                  maxLength={100}
-                />
-                
-                <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-6">
-                  <span>{willMessage.length}/100 ตัวอักษร</span>
-                  <span>Anonymous & Secure</span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={async () => {
-                      if (!willMessage.trim() || isSavingWill) return;
-                      setIsSavingWill(true);
-                      try {
-                        await addDoc(collection(db, "wills"), {
-                          userId: user?.uid,
-                          email: user?.email,
-                          displayName: user?.displayName || "Upskiller",
-                          message: willMessage.trim(),
-                          createdAt: serverTimestamp(),
-                          lastUserActiveAt: serverTimestamp(),
-                          emailSent: false,
-                          emailSentAt: null
-                        });
-                      } catch (e) {
-                        console.error("Error saving will:", e);
-                      }
-                      setIsSavingWill(false);
-                      setShowWillModal(false);
-                      setWillMessage("");
-                      await performActualLogout();
-                    }}
-                    disabled={!willMessage.trim() || isSavingWill}
-                    className="w-full py-3.5 bg-[#1A1A1A] text-white text-xs font-black rounded-2xl hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
-                  >
-                    {isSavingWill ? "กำลังบันทึก..." : "บันทึก & ออกจากระบบ"}
-                  </button>
-                  
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <button
-                      onClick={async () => {
-                        setShowWillModal(false);
-                        await performActualLogout();
-                      }}
-                      className="py-3 bg-slate-200/50 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-black rounded-2xl transition-colors text-center"
-                    >
-                      ข้ามการฝากข้อความ
-                    </button>
-                    
-                    <button
-                      onClick={() => setShowWillModal(false)}
-                      className="py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-700 text-xs font-black rounded-2xl transition-colors text-center"
-                    >
-                      ยกเลิก
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* --- 🔔 Memento Mori: Floating Notification Toast --- */}
       <AnimatePresence>
