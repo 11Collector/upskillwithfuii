@@ -237,10 +237,7 @@ export default function Home() {
 
       {/* --- 1. Hero Section --- */}
       {!user ? (
-        <section className="relative py-10 sm:py-12 md:py-16 mb-10 px-6 lg:px-12 mt-2 sm:mt-4 z-0">
-          {/* Box Background and Gradient contained via absolute inset */}
-          <div className="absolute inset-0 bg-white rounded-[2.5rem] sm:rounded-[3rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] overflow-hidden -z-10">
-          </div>
+        <section className="relative py-10 sm:py-12 md:py-16 mb-10 px-6 lg:px-12 mt-2 sm:mt-4 bg-white rounded-[2.5rem] sm:rounded-[3rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] z-0">
 
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16">
 
