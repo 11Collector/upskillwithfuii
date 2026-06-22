@@ -293,13 +293,13 @@ export default function Home() {
                   <span className="whitespace-nowrap">การพัฒนาตัวเอง</span><br />
                   สนุกกว่าที่คิด
                 </h1>
-                <p className="text-slate-500 mb-0 md:mb-8 max-w-2xl text-sm sm:text-base font-medium leading-relaxed px-2 md:px-0">
-                  Personal Growth OS แพลตฟอร์มพัฒนาตัวเอง<span className="whitespace-nowrap">เฉพาะคุณ</span><br />
+                <p className="text-slate-500 mb-0 md:mb-8 max-w-2xl text-sm sm:text-base font-medium leading-relaxed px-4 md:px-0">
+                  Personal Growth OS<br className="sm:hidden" /> แพลตฟอร์มพัฒนาตัวเอง<span className="whitespace-nowrap">เฉพาะคุณ</span><br />
                   Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
                 </p>
 
-                {/* 3 Value Badges (Unified responsive layout: centered on mobile, left-aligned on desktop) */}
-                <div className="flex flex-row flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none] justify-center md:justify-start gap-2.5 mt-6 w-full px-2 md:px-0">
+                {/* 3 Value Badges (Unified responsive layout: left-aligned scrollable on mobile, left-aligned on desktop) */}
+                <div className="flex flex-row flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none] justify-start md:justify-start gap-2.5 mt-6 w-full px-6 md:px-0">
                   {/* Badge 1: Personal Growth Personalized */}
                   <div className="flex items-center gap-2 bg-indigo-50/70 border border-indigo-100/80 rounded-2xl px-2.5 py-1.5 shadow-sm shrink-0 hover:scale-[1.02] transition-transform duration-300">
                     <div className="bg-indigo-500 text-white p-1 rounded-lg shrink-0">
@@ -337,17 +337,17 @@ export default function Home() {
             </div>
 
             {/* Right side: Avatar image */}
-            <div className="flex-1 flex flex-col justify-end items-center md:items-end relative w-full -mx-4 md:mx-0 md:-mr-6 lg:-mr-12 xl:-mr-16 -mt-10 -mb-4 sm:-mt-16 sm:-mb-6 md:-mt-8 md:-mb-2">
+            <div className="flex-1 flex flex-col justify-end items-center md:items-end relative w-full md:mx-0 md:-mr-6 lg:-mr-12 xl:-mr-16 -mt-10 -mb-4 sm:-mt-16 sm:-mb-6 md:-mt-8 md:-mb-2">
 
               <div className="relative w-full flex justify-center md:justify-end">
 
                 <motion.img
-                  initial={{ opacity: 0, scale: 0.85, x: 40 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 1, type: "spring", bounce: 0.4, delay: 0.1 }}
                   src="/avatar.png"
                   alt="Avatar Graphic"
-                  className="relative z-10 w-[115%] sm:w-[450px] md:w-[400px] lg:w-[450px] xl:w-[500px] max-w-[130%] md:max-w-[150%] lg:max-w-[150%] h-auto object-cover object-bottom hover:-translate-y-2 hover:scale-105 transition-all duration-500 origin-bottom md:origin-bottom-right pointer-events-auto"
+                  className="relative z-10 w-full max-w-[340px] sm:w-[450px] md:w-[400px] lg:w-[450px] xl:w-[500px] sm:max-w-none h-auto object-cover object-bottom hover:-translate-y-2 hover:scale-105 transition-all duration-500 origin-bottom md:origin-bottom-right pointer-events-auto"
                 />
               </div>
 
