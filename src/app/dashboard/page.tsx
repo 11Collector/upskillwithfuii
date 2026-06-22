@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -92,6 +92,83 @@ const playSuccessChime = () => {
   } catch (e) {
     console.error("Audio Context Error: ", e);
   }
+};
+
+const SHOP_ITEMS = [
+  // 🟢 ระดับที่ 1: ความสุขรายวัน (Green Tier: daily, 20-40 XP)
+  { id: 1, title: "กาแฟ Specialty / ชานมพรีเมียม 1 แก้ว", price: 20, tier: "daily", emoji: "☕" },
+  { id: 2, title: "เบเกอรี่ / เค้กจากร้านดัง 1 ชิ้น", price: 30, tier: "daily", emoji: "🍰" },
+  { id: 3, title: "มื้อพิเศษตามใจปาก ซูชิเซ็ต / หมูกรอบเบิ้ล", price: 30, tier: "daily", emoji: "🍣" },
+  { id: 4, title: "พวงกุญแจ / แผ่นสติกเกอร์ลายที่ชอบ", price: 35, tier: "daily", emoji: "🔑" },
+  { id: 5, title: "แก้วน้ำเก็บความเย็น / แก้วมัคน่ารักๆ", price: 40, tier: "daily", emoji: "🥤" },
+
+  // 🟡 ระดับที่ 2: รางวัลสุดสัปดาห์ (Yellow Tier: weekend, 50-80 XP)
+  { id: 6, title: "เซ็ตชาบู / หมูกระทะ / ปิ้งย่าง 1 มื้อ", price: 50, tier: "weekend", emoji: "🍲" },
+  { id: 7, title: "บอร์ดเกมขนาดเล็ก / การ์ดเกม", price: 50, tier: "weekend", emoji: "🎲" },
+  { id: 8, title: "ตั๋วหนังโรง VIP / โรง IMAX 1 ที่นั่ง", price: 60, tier: "weekend", emoji: "🎬" },
+  { id: 9, title: "หมอนหนุนดูดวิญญาณ / หมอนเมมโมรี่โฟม", price: 70, tier: "weekend", emoji: "🛌" },
+  { id: 10, title: "หนังสือเล่มโปรด / มังงะยกเซ็ต", price: 80, tier: "weekend", emoji: "📚" },
+
+  // 🟠 ระดับที่ 3: ของรางวัลชิ้นกลาง (Orange Tier: mid, 100-150 XP)
+  { id: 11, title: "คอร์สเข้าร้านนวดสปา / นวดแผนไทย", price: 100, tier: "mid", emoji: "💆" },
+  { id: 12, title: "กล่องสุ่ม Art Toy ยอดฮิต 1 จุ่ม", price: 120, tier: "mid", emoji: "🎁" },
+  { id: 13, title: "แผ่นเกมคอนโซล / บัตรเติมเงินเกม", price: 120, tier: "mid", emoji: "🎮" },
+  { id: 14, title: "บัตรรับประทานอาหารบุฟเฟต์โรงแรมหรู", price: 150, tier: "mid", emoji: "🍽️" },
+  { id: 15, title: "สกินแคร์ / น้ำหอมแบรนด์เนม 1 ขวด", price: 150, tier: "mid", emoji: "🧴" },
+
+  // 🔴 ระดับที่ 4: บิ๊กโบนัส/ทริปในฝัน (Red Tier: epic, 200-500 XP)
+  { id: 16, title: "รองเท้าผ้าใบ (Sneakers) คู่ใจคู่ใหม่", price: 200, tier: "epic", emoji: "👟" },
+  { id: 17, title: "บัตรคอนเสิร์ต / งานมิวสิคเฟสติวัล", price: 250, tier: "epic", emoji: "🎟️" },
+  { id: 18, title: "แกดเจ็ตแต่งโต๊ะคอม / คีย์บอร์ด Custom", price: 300, tier: "epic", emoji: "⌨️" },
+  { id: 19, title: "ทริปต่างจังหวัด 2 วัน 1 คืน โรงแรมสวย", price: 350, tier: "epic", emoji: "🏖️" },
+  { id: 20, title: "ตั๋วเครื่องบินไปเที่ยวต่างประเทศใกล้ๆ", price: 500, tier: "epic", emoji: "✈️" }
+];
+
+const ConfettiPiece = ({ color, delay }: { color: string; delay: number }) => {
+  const randomX = Math.random() * 200 - 100;
+  const randomY = Math.random() * -150 - 150;
+  const randomRotate = Math.random() * 360;
+  const targetX = randomX + (Math.random() * 100 - 50);
+
+  return (
+    <motion.div
+      initial={{ opacity: 1, scale: 0, x: 0, y: 0, rotate: 0 }}
+      animate={{
+        scale: [0, 1, 1, 0.5, 0],
+        x: [0, randomX, targetX],
+        y: [0, randomY, typeof window !== 'undefined' ? window.innerHeight + 100 : 1000],
+        rotate: [0, randomRotate, randomRotate * 2],
+      }}
+      transition={{
+        duration: 3 + Math.random() * 2,
+        ease: "easeOut",
+        delay: delay,
+      }}
+      className="absolute w-2 h-4 rounded-sm"
+      style={{
+        backgroundColor: color,
+        left: "50%",
+        top: "50%",
+      }}
+    />
+  );
+};
+
+const FramerMotionConfetti = () => {
+  const colors = ["#8B5CF6", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#EC4899"];
+  const pieces = Array.from({ length: 60 }).map((_, i) => ({
+    id: i,
+    color: colors[i % colors.length],
+    delay: Math.random() * 0.5,
+  }));
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100002] overflow-hidden">
+      {pieces.map((p) => (
+        <ConfettiPiece key={p.id} color={p.color} delay={p.delay} />
+      ))}
+    </div>
+  );
 };
 
 export default function DashboardPage() {
@@ -227,8 +304,15 @@ export default function DashboardPage() {
 
   const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
   const [totalXP, setTotalXP] = useState<number>(0);
+  const [potXP, setPotXP] = useState<number>(0);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [redeemedItem, setRedeemedItem] = useState<any>(null);
   const [showLevelInfo, setShowLevelInfo] = useState(false);
   const [showFloatingXP, setShowFloatingXP] = useState(false);
+  const [depositAmount, setDepositAmount] = useState<string>("");
+  const [depositError, setDepositError] = useState<string>("");
 
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean, title: string, content: string | React.ReactNode } | null>(null);
   const [bookMatchModal, setBookMatchModal] = useState(false);
@@ -357,6 +441,7 @@ export default function DashboardPage() {
       if (!userData) {
         // Firestore returned no user doc yet — keep XP at 0, done loading
         setTotalXP(0);
+        setPotXP(0);
       } else {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
@@ -433,6 +518,7 @@ export default function DashboardPage() {
         } else {
           setTotalXP(userData.totalXP || 0);
         }
+        setPotXP(userData.potXP || 0);
 
         const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
 
@@ -607,6 +693,59 @@ export default function DashboardPage() {
       await setDoc(userRef, { gender: newGender }, { merge: true });
     } catch (error) {
       console.error("Error updating gender:", error);
+    }
+  };
+
+  const handleDepositXP = async (amount: number) => {
+    if (!user) return;
+    const maxTransfer = totalXP % 100;
+    if (amount <= 0 || amount > maxTransfer) {
+      alert(`จำนวน XP ไม่ถูกต้อง โอนได้สูงสุด ${maxTransfer} XP`);
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        totalXP: increment(-amount),
+        potXP: increment(amount)
+      });
+
+      setTotalXP((prev) => prev - amount);
+      setPotXP((prev) => prev + amount);
+      setShowDepositModal(false);
+      
+      playSuccessChime();
+    } catch (error) {
+      console.error("Error depositing XP:", error);
+      alert("เกิดข้อผิดพลาดในการหยอดกระปุก");
+    }
+  };
+
+  const handleRedeemItem = async (item: any) => {
+    if (!user) return;
+    if (potXP < item.price) {
+      alert("แต้มในกระปุกไม่เพียงพอ");
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        potXP: increment(-item.price)
+      });
+
+      setPotXP((prev) => prev - item.price);
+      setRedeemedItem(item);
+      setShowConfetti(true);
+      setShowTicketModal(true);
+
+      playSuccessChime();
+      
+      setTimeout(() => setShowConfetti(false), 4500);
+    } catch (error) {
+      console.error("Error redeeming item:", error);
+      alert("เกิดข้อผิดพลาดในการแลกรางวัล");
     }
   };
 
@@ -850,6 +989,7 @@ export default function DashboardPage() {
       // 📝 3. อัปเดต User Profile กลับเป็นค่าเริ่มต้น (ใช้ set + merge ปลอดภัยกว่า update)
       batch.set(userRef, {
         totalXP: 0,
+        potXP: 0,
         streakCount: 0,
         wheelPlanDay: 0,
         wheelPlanSkips: 0,
@@ -892,6 +1032,7 @@ export default function DashboardPage() {
 
       // 🌈 5. เคลียร์ State ในหน้าจอ UI ทันที
       setTotalXP(0);
+      setPotXP(0);
       setStreakCount(0);
       setWheelPlanDay(0);
       setWheelPlanSkips(0);
@@ -2694,8 +2835,9 @@ export default function DashboardPage() {
                     </button>
                   </div>
 
-                  {/* 📊 1.2 Level Box (Desktop) */}
-                  <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[220px] hover:border-yellow-500/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    {/* 📊 1.2 Level Box (Desktop) */}
+                    <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[220px] hover:border-yellow-500/50 transition-colors">
                     <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.3)] shrink-0 group-hover:scale-110 transition-transform">
                       <Trophy size={14} className="fill-current" />
                     </div>
@@ -2789,7 +2931,27 @@ export default function DashboardPage() {
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* 🐷 Saving Pot Widget (Desktop) */}
+                  <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[180px] hover:border-violet-500/50 transition-colors">
+                    <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] shrink-0">
+                      <PiggyBank size={14} />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
+                      <p className="text-xs font-black text-white mt-0.5 truncate">
+                        {potXP} <span className="text-[10px] font-bold text-slate-400">XP</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowDepositModal(true)}
+                      className="px-2.5 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                    >
+                      หยอดกระปุก
+                    </button>
+                  </div>
                 </div>
+              </div>
 
                 {/* 🎯 2. Hero Section (จัดข้อความซ้าย อวตาร+Badge ขวา) */}
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between w-full gap-6 mb-6 relative z-30">
@@ -2821,57 +2983,77 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
-                    <div className="flex sm:hidden items-center justify-center gap-2 w-full mt-6 relative z-[999]">
+                    <div className="flex sm:hidden flex-col items-center justify-center gap-3 w-full mt-6 relative z-[999]">
+                      <div className="flex items-center justify-center gap-2 w-full">
+                        {/* 🎯 Mobile: Level Box & Edit Name */}
+                        <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-yellow-500/50 transition-colors">
+                          <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shrink-0">
+                            <Trophy size={14} className="fill-current" />
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
 
-                      {/* 🎯 Mobile: Level Box & Edit Name */}
-                      <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-yellow-500/50 transition-colors">
-                        <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shrink-0">
-                          <Trophy size={14} className="fill-current" />
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-
-                          {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
-                          {isEditingName ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                autoFocus
-                                defaultValue={newName}
-                                onBlur={(e) => {
-                                  // Do not update automatically on blur to avoid conflict, just close
-                                  setIsEditingName(false);
-                                }}
-                                className="bg-slate-700 border border-blue-500 rounded px-1.5 py-0.5 text-[10px] text-white outline-none w-full"
-                                onKeyDown={(e) => e.key === 'Enter' && handleUpdateName((e.target as HTMLInputElement).value)}
-                              />
-                            </div>
-                          ) : (
-                            <div className="cursor-pointer" onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}>
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-black text-white truncate flex items-center gap-1">
-                                  {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
-                                </span>
-                                {/* ปุ่ม Info สำหรับเปิด Modal กลางจอ */}
-                                <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1">
-                                  <Info size={14} />
-                                </button>
+                            {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
+                            {isEditingName ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  autoFocus
+                                  defaultValue={newName}
+                                  onBlur={(e) => {
+                                    // Do not update automatically on blur to avoid conflict, just close
+                                    setIsEditingName(false);
+                                  }}
+                                  className="bg-slate-700 border border-blue-500 rounded px-1.5 py-0.5 text-[10px] text-white outline-none w-full"
+                                  onKeyDown={(e) => e.key === 'Enter' && handleUpdateName((e.target as HTMLInputElement).value)}
+                                />
                               </div>
-                              <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5">
-                                {/* ✅ แก้ไขจุดนี้: เปลี่ยนจาก .split(' ')[0] เป็น .split(' (')[0] เพื่อให้ได้ชื่อเต็มภาษาอังกฤษ */}
-                                LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
-                              </p>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="cursor-pointer" onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-black text-white truncate flex items-center gap-1">
+                                    {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
+                                  </span>
+                                  {/* ปุ่ม Info สำหรับเปิด Modal กลางจอ */}
+                                  <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1">
+                                    <Info size={14} />
+                                  </button>
+                                </div>
+                                <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5">
+                                  {/* ✅ แก้ไขจุดนี้: เปลี่ยนจาก .split(' ')[0] เป็น .split(' (')[0] เพื่อให้ได้ชื่อเต็มภาษาอังกฤษ */}
+                                  LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
+                                </p>
+                              </div>
+                            )}
 
-                          <div className="w-full h-1 bg-slate-700 rounded-full mt-1.5 overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500" style={{ width: `${currentLevelXP}%` }} />
+                            <div className="w-full h-1 bg-slate-700 rounded-full mt-1.5 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500" style={{ width: `${currentLevelXP}%` }} />
+                            </div>
                           </div>
                         </div>
+
+                        {/* Mobile: Logout Button */}
+                        <button onClick={handleLogout} className="p-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full shadow-lg transition-all shrink-0">
+                          <LogOut size={14} />
+                        </button>
                       </div>
 
-                      {/* Mobile: Logout Button */}
-                      <button onClick={handleLogout} className="p-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full shadow-lg transition-all shrink-0">
-                        <LogOut size={14} />
-                      </button>
+                      {/* 🐷 Saving Pot Widget (Mobile) */}
+                      <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-violet-500/50 transition-colors">
+                        <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] shrink-0">
+                          <PiggyBank size={14} />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
+                          <p className="text-xs font-black text-white mt-0.5 truncate">
+                            {potXP} <span className="text-[10px] font-bold text-slate-400">XP</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowDepositModal(true)}
+                          className="px-2.5 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                        >
+                          หยอดกระปุก
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -3493,6 +3675,112 @@ export default function DashboardPage() {
                 </p>
               </motion.div>
             )}
+          </div>
+        )}
+
+        {/* --- 🛍️ 2.5 Happiness Shop Section --- */}
+        {activeTab === "home" && (
+          <div className="mb-8 bg-white border border-slate-100 hover:border-violet-100 rounded-[2.5rem] p-6 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(139,92,246,0.08)] relative overflow-hidden group transition-all duration-500">
+            {/* Background decorative glows */}
+            <div className="absolute -top-24 -left-24 w-80 h-80 bg-gradient-to-br from-violet-400/5 to-indigo-400/5 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
+            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-gradient-to-tl from-indigo-400/5 to-purple-400/5 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
+
+            {/* Top border indicator */}
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-500 to-indigo-600 opacity-90 group-hover:h-3 transition-all duration-300" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="p-3 sm:p-3.5 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-2xl shadow-[0_10px_20px_-5px_rgba(109,40,217,0.4)] group-hover:scale-110 transition-transform duration-300">
+                  <ShoppingBag size={26} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">ความสุขระหว่างทาง SHOP</h2>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
+                    <Sparkles size={12} className="text-violet-400" /> ใช้แต้ม XP ในกระปุกแลกของรางวัลจริง
+                  </p>
+                </div>
+              </div>
+
+              {/* Pot Status Indicator */}
+              <div className="flex items-center gap-3 bg-slate-900 text-white px-4 py-2 rounded-2xl border border-slate-800 shadow-sm shrink-0">
+                <PiggyBank size={18} className="text-violet-400 animate-bounce-slow" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">กระปุกของคุณ</span>
+                  <span className="text-sm font-black mt-0.5">{potXP} <span className="text-[10px] font-bold text-slate-400">XP</span></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid of Items */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 relative z-10">
+              {SHOP_ITEMS.map((item) => {
+                const canRedeem = potXP >= item.price;
+                const deficit = item.price - potXP;
+                
+                // Color configuration based on tier
+                let tierLabel = "";
+                let tierColorClass = "";
+                if (item.tier === "daily") {
+                  tierLabel = "DAILY ☕";
+                  tierColorClass = "bg-emerald-50 text-emerald-600 border-emerald-200/50";
+                } else if (item.tier === "weekend") {
+                  tierLabel = "WEEKEND 🍲";
+                  tierColorClass = "bg-amber-50 text-amber-700 border-amber-200/50";
+                } else if (item.tier === "mid") {
+                  tierLabel = "MID-TIER 🎁";
+                  tierColorClass = "bg-orange-50 text-orange-600 border-orange-200/50";
+                } else {
+                  tierLabel = "EPIC ✈️";
+                  tierColorClass = "bg-rose-50 text-rose-600 border-rose-200/50";
+                }
+
+                return (
+                  <motion.div
+                    key={item.id}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="flex flex-col justify-between bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-violet-100 transition-all duration-300 relative overflow-hidden"
+                  >
+                    <div>
+                      {/* Top tier tag & icon */}
+                      <div className="flex justify-between items-start mb-3">
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black tracking-wide border ${tierColorClass}`}>
+                          {tierLabel}
+                        </span>
+                        <span className="text-2xl">{item.emoji}</span>
+                      </div>
+
+                      {/* Title */}
+                      <h4 className="text-xs font-black text-slate-800 leading-snug mb-4 min-h-[2.5rem]">
+                        {item.title}
+                      </h4>
+                    </div>
+
+                    {/* Bottom: Price & Button */}
+                    <div className="space-y-3 pt-2 border-t border-slate-50">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-slate-400">ราคา</span>
+                        <span className="text-sm font-black text-slate-800 flex items-center gap-1">
+                          <Trophy size={12} className="text-yellow-500 fill-current" />
+                          {item.price} <span className="text-[10px] font-bold text-slate-400">XP</span>
+                        </span>
+                      </div>
+
+                      <button
+                        disabled={!canRedeem}
+                        onClick={() => handleRedeemItem(item)}
+                        className={`w-full py-2.5 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all duration-300 ${
+                          canRedeem
+                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_4px_10px_rgba(109,40,217,0.2)] hover:from-violet-500 hover:to-indigo-500 active:scale-95"
+                            : "bg-slate-50 border border-slate-100 text-slate-400 pointer-events-none"
+                        }`}
+                      >
+                        {canRedeem ? "แลกรางวัล 🚀" : `ขาดอีก ${deficit} XP`}
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -5981,6 +6269,263 @@ export default function DashboardPage() {
               </button>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Framer Motion Confetti Overlay --- */}
+      {showConfetti && <FramerMotionConfetti />}
+
+      {/* --- 🐷 Modal: หยอดกระปุกออม XP --- */}
+      <AnimatePresence>
+        {showDepositModal && (
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowDepositModal(false);
+                setDepositAmount("");
+                setDepositError("");
+              }}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-slate-900 border border-slate-700 p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] text-left overflow-hidden z-10"
+            >
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
+              
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-lg font-black text-white flex items-center gap-2">
+                    <PiggyBank size={18} className="text-violet-400" />
+                    หยอดกระปุกออม XP
+                  </h4>
+                  <button
+                    onClick={() => {
+                      setShowDepositModal(false);
+                      setDepositAmount("");
+                      setDepositError("");
+                    }}
+                    className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+                  โอนเศษ XP สะสมไปไว้ที่ Saving Pot เพื่อสะสมไว้แลกของรางวัลใน Shop โดย <span className="text-violet-400 font-bold">เลเวลปัจจุบันของคุณจะไม่ลดลง</span>
+                </p>
+
+                <div className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-3xl mb-6 flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">โอนได้สูงสุด</span>
+                    <span className="text-xs font-bold text-white">เพื่อรักษาเลเวลเดิม</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-black text-violet-400">{totalXP % 100}</span>
+                    <span className="text-[10px] font-bold text-slate-400 ml-1">XP</span>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">จำนวนที่ต้องการหยอด</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={depositAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDepositAmount(val);
+                        const num = parseInt(val);
+                        const maxTransfer = totalXP % 100;
+                        if (isNaN(num) || num <= 0) {
+                          setDepositError("กรุณากรอกจำนวนที่ถูกต้อง");
+                        } else if (num > maxTransfer) {
+                          setDepositError(`หยอดได้สูงสุด ${maxTransfer} XP เท่านั้นเพื่อไม่ให้เลเวลลด`);
+                        } else {
+                          setDepositError("");
+                        }
+                      }}
+                      placeholder="0"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-2xl py-3.5 px-4 pr-16 text-white font-bold outline-none focus:border-violet-500 transition-all text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const maxTransfer = totalXP % 100;
+                        setDepositAmount(maxTransfer.toString());
+                        setDepositError("");
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-[10px] font-black text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-xl transition-all"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  {depositError && (
+                    <p className="text-[11px] font-bold text-red-400 mt-2 flex items-center gap-1">
+                      <span>⚠️</span> {depositError}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  disabled={!!depositError || !depositAmount || parseInt(depositAmount) <= 0}
+                  onClick={() => {
+                    const amt = parseInt(depositAmount);
+                    if (!isNaN(amt)) {
+                      handleDepositXP(amt);
+                      setDepositAmount("");
+                    }
+                  }}
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  ยืนยันหยอดกระปุก 🚀
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- 🎫 Modal: Happiness Ticket Modal (ตั๋วความสุข) --- */}
+      <AnimatePresence>
+        {showTicketModal && redeemedItem && (
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTicketModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-slate-900 border border-slate-700 p-6 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] text-center overflow-hidden z-10 flex flex-col items-center"
+            >
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-yellow-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+              <div className="relative z-10 w-full flex flex-col items-center">
+                <div className="flex justify-between items-center w-full mb-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SUCCESSFULLY REDEEMED</span>
+                  <button
+                    onClick={() => setShowTicketModal(false)}
+                    className="p-1.5 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* 🎟️ Ticket Container to Export */}
+                <div
+                  id="happiness-ticket"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col items-center shadow-inner"
+                  style={{ fontFamily: 'monospace' }}
+                >
+                  {/* Background Glow */}
+                  <div className="absolute -top-20 -left-20 w-36 h-36 bg-violet-600/15 blur-[50px] rounded-full pointer-events-none" />
+                  <div className="absolute -bottom-20 -right-20 w-36 h-36 bg-indigo-600/15 blur-[50px] rounded-full pointer-events-none" />
+
+                  {/* Ticket Notches (Custom Styled Left/Right Semi-circles) */}
+                  <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-3 w-6 h-6 rounded-full bg-slate-900 border-r border-slate-800" />
+                  <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-3 w-6 h-6 rounded-full bg-slate-900 border-l border-slate-800" />
+
+                  {/* Top header */}
+                  <div className="flex flex-col items-center w-full border-b border-dashed border-slate-800 pb-4 mb-4">
+                    <span className="text-[14px] font-black text-violet-400 tracking-wider">HAPPINESS TICKET</span>
+                    <span className="text-[9px] font-semibold text-slate-500 mt-1 uppercase tracking-[0.2em]">upskilleveryday.com</span>
+                  </div>
+
+                  {/* Emoji & Main Content */}
+                  <div className="text-4xl mb-3 animate-bounce">{redeemedItem.emoji}</div>
+                  <h3 className="text-base font-black text-white px-2 mb-2 tracking-tight line-clamp-2">
+                    {redeemedItem.title}
+                  </h3>
+
+                  {/* Price tag */}
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-xs font-black mb-4">
+                    <Trophy size={12} className="fill-current" /> {redeemedItem.price} XP REDEEMED
+                  </div>
+
+                  {/* Dotted Divider for notches */}
+                  <div className="w-full border-t border-dashed border-slate-800 my-2" />
+
+                  {/* User metadata & Date */}
+                  <div className="w-full grid grid-cols-2 gap-2 text-left text-[9px] font-bold text-slate-400 py-2">
+                    <div>
+                      <span className="block text-[8px] text-slate-500 uppercase tracking-wider">REDEEMER</span>
+                      <span className="text-white truncate block">{user?.displayName?.split(' ')[0] || 'Upskiller'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-[8px] text-slate-500 uppercase tracking-wider">DATE</span>
+                      <span className="text-white block">{new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                    </div>
+                  </div>
+
+                  {/* Barcode representation */}
+                  <div className="w-full flex flex-col items-center border-t border-dashed border-slate-800 pt-4 mt-2">
+                    <div className="w-full h-8 flex justify-center items-stretch gap-[1.5px] opacity-70 mb-1">
+                      {[1, 2, 1, 3, 1, 2, 4, 1, 2, 1, 3, 2, 1, 4, 1, 2, 1, 3, 1].map((width, i) => (
+                        <div
+                          key={i}
+                          className="bg-white rounded-sm"
+                          style={{ width: `${width}px` }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[7px] text-slate-500 uppercase tracking-[0.3em]">#HPN-{redeemedItem.id}-{potXP + redeemedItem.price}</span>
+                  </div>
+
+                  {/* Stamp/Seal Badge style watermark */}
+                  <div className="absolute right-4 top-4 w-12 h-12 border-2 border-indigo-500/20 rounded-full flex items-center justify-center rotate-12 pointer-events-none">
+                    <span className="text-[6px] text-indigo-500/30 font-black uppercase text-center tracking-tighter">APPROVED<br />FUII MENTOR</span>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="w-full mt-6 space-y-2">
+                  <button
+                    onClick={async () => {
+                      const { toPng } = await import("html-to-image");
+                      const element = document.getElementById("happiness-ticket");
+                      if (!element) return;
+                      try {
+                        const dataUrl = await toPng(element, {
+                          pixelRatio: 3,
+                          backgroundColor: '#090D16', // Sleek dark ticket background
+                          cacheBust: true,
+                          style: {
+                            borderRadius: '1.5rem',
+                          }
+                        });
+                        const link = document.createElement("a");
+                        link.href = dataUrl;
+                        link.download = `happiness-ticket-${redeemedItem.title.replace(/\s+/g, '-').slice(0, 15)}.png`;
+                        link.click();
+                      } catch (err) {
+                        console.error("Error generating ticket image:", err);
+                        alert("ไม่สามารถเซฟรูปภาพได้ในขณะนี้");
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all duration-300 active:scale-95"
+                  >
+                    <Camera size={14} />
+                    Save Ticket Image 📸
+                  </button>
+                  <button
+                    onClick={() => setShowTicketModal(false)}
+                    className="w-full bg-slate-800 text-slate-300 hover:bg-slate-700 py-3 rounded-2xl font-bold text-xs transition-colors"
+                  >
+                    ปิด
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
