@@ -295,8 +295,8 @@ export default function Home() {
                   Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
                 </p>
 
-                {/* 3 Value Badges (Unified responsive layout: left-aligned scrollable on mobile, left-aligned on desktop) */}
-                <div className="flex flex-row flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none] justify-start md:justify-start gap-2.5 mt-6 w-full px-4 md:px-0">
+                {/* 3 Value Badges (Unified responsive layout: wrapped in 2 rows on mobile, row on desktop) */}
+                <div className="flex flex-row flex-wrap md:flex-nowrap justify-center md:justify-start gap-2.5 mt-6 w-full px-4 md:px-0">
                   {/* Badge 1: Personal Growth Personalized */}
                   <div className="flex items-center gap-2 bg-indigo-50/70 border border-indigo-100/80 rounded-2xl px-2.5 py-1.5 shadow-sm shrink-0 hover:scale-[1.02] transition-transform duration-300">
                     <div className="bg-indigo-500 text-white p-1 rounded-lg shrink-0">
