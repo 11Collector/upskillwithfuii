@@ -57,7 +57,7 @@ function HeaderInner() {
 
   const isAssessmentPage = pathname.startsWith("/tools/");
   const isDashboard = pathname.startsWith("/dashboard");
-  const isAppPage = isDashboard || pathname.startsWith("/library") || pathname.startsWith("/gallery") || pathname === "/report-review";
+  const isAppPage = isDashboard || pathname.startsWith("/library") || pathname.startsWith("/gallery") || pathname === "/report-review" || pathname.startsWith("/shop");
 
   // tool pages: ซ่อนทุก size
   if (isAssessmentPage) return null;
@@ -65,7 +65,7 @@ function HeaderInner() {
   // mobile thin header — แสดงบน homepage และ non-dashboard pages
   // ซ่อนบน dashboard (bottom nav จัดการ) และ desktop (desktop nav จัดการ)
   // library มี dark theme เอง + bottom nav จัดการ nav ครบแล้ว
-  const showMobileHeader = isMobile && !isDashboard && !pathname.startsWith('/library') && !pathname.startsWith('/gallery');
+  const showMobileHeader = isMobile && !isDashboard && !pathname.startsWith('/library') && !pathname.startsWith('/gallery') && !pathname.startsWith('/shop');
 
   return (
     <>

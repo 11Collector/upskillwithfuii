@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Trophy, CheckCircle2, LogOut, Info, X, Camera, Flame, Zap, Star, BookOpen, BrainCircuit, PieChart, Users, Wallet, Target } from 'lucide-react';
+import { Sparkles, Trophy, CheckCircle2, LogOut, Info, X, Camera, Flame, Zap, Star, BookOpen, BrainCircuit, PieChart, Users, Wallet, Target, PiggyBank, ShoppingBag } from 'lucide-react';
 import { AvatarDisplay } from '@/utils/dashboardHelpers';
 import { PET_DATA } from '@/data/constants';
 import { DISC_DATA, MONEY_DATA } from '@/data/quests';
@@ -31,6 +32,8 @@ interface OverviewTabProps {
   rankInfo: any;
   relativeWeekInfo: any;
   weeklyData: any;
+  potXP: number;
+  setShowDepositModal: (val: boolean) => void;
 }
 
 export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
@@ -58,7 +61,9 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
   totalWeeklyScore,
   rankInfo,
   relativeWeekInfo,
-  weeklyData
+  weeklyData,
+  potXP,
+  setShowDepositModal
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -130,8 +135,17 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
               </div>
 
               <button
+                onClick={() => setShowShareModal(true)}
+                className="p-1.5 text-slate-500 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
+                title="ดูและแชร์ Player Card"
+              >
+                <Camera size={14} className="transition-transform" />
+              </button>
+
+              <button
                 onClick={handleLogout}
                 className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
+                title="ออกจากระบบ"
               >
                 <LogOut size={14} className="group-hover/btn:-translate-x-0.5 transition-transform" />
               </button>
@@ -244,78 +258,6 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-extrabold">{user?.displayName?.split(' ')[0]} 🚀</span>
               </h1>
               <p className="text-slate-300 text-sm xl:text-base font-medium max-w-md mx-auto lg:mx-0 mb-5">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
-
-              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-3">
-                {/* Toggle เพศ */}
-                <div className="flex items-center bg-white/5 rounded-full p-0.5 backdrop-blur-md border border-white/10 shadow-inner w-fit">
-                  <button onClick={() => handleGenderChange("male")} className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wide transition-all duration-300 ${gender === "male" ? "bg-gradient-to-r from-blue-500 to-sky-400 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                    <span className="text-[10px]">👨🏻</span> ชาย
-                  </button>
-                  <button onClick={() => handleGenderChange("female")} className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wide transition-all duration-300 ${gender === "female" ? "bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                    <span className="text-[10px]">👩🏻</span> หญิง
-                  </button>
-                </div>
-
-                {/* ปุ่ม Get Player Card */}
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowShareModal(true)} className="flex items-center gap-2 px-4 py-1.5 bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-500/50 rounded-full transition-all duration-300 group/share">
-                  <Camera size={12} className="text-slate-400 group-hover/share:text-yellow-400 group-hover/share:rotate-12 transition-all" />
-                  <span className="text-[9px] font-black text-slate-500 group-hover/share:text-yellow-400 uppercase tracking-[0.2em] mt-0.5">Player Card</span>
-                </motion.button>
-              </div>
-
-              {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
-              <div className="flex sm:hidden items-center justify-center gap-2 w-full mt-6 relative z-[999]">
-
-                {/* 🎯 Mobile: Level Box & Edit Name */}
-                <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-yellow-500/50 transition-colors">
-                  <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shrink-0">
-                    <Trophy size={14} className="fill-current" />
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-
-                    {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
-                    {isEditingName ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          autoFocus
-                          defaultValue={newName}
-                          onBlur={(e) => {
-                            // Do not update automatically on blur to avoid conflict, just close
-                            setIsEditingName(false);
-                          }}
-                          className="bg-slate-700 border border-blue-500 rounded px-1.5 py-0.5 text-[10px] text-white outline-none w-full"
-                          onKeyDown={(e) => e.key === 'Enter' && handleUpdateName((e.target as HTMLInputElement).value)}
-                        />
-                      </div>
-                    ) : (
-                      <div className="cursor-pointer" onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-black text-white truncate flex items-center gap-1">
-                            {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
-                          </span>
-                          {/* ปุ่ม Info สำหรับเปิด Modal กลางจอ */}
-                          <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1">
-                            <Info size={14} />
-                          </button>
-                        </div>
-                        <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5">
-                          {/* ✅ แก้ไขจุดนี้: เปลี่ยนจาก .split(' ')[0] เป็น .split(' (')[0] เพื่อให้ได้ชื่อเต็มภาษาอังกฤษ */}
-                          LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="w-full h-1 bg-slate-700 rounded-full mt-1.5 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500" style={{ width: `${currentLevelXP}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile: Logout Button */}
-                <button onClick={handleLogout} className="p-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full shadow-lg transition-all shrink-0">
-                  <LogOut size={14} />
-                </button>
-              </div>
             </div>
 
             {/* ➡️ ฝั่งขวา: Avatar + Pet + Badge (รวมร่างกันสมบูรณ์!) */}
@@ -341,11 +283,41 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                     />
                   </div>
                 )}
+
+
+
+                {/* Floating Gender Toggle (ชาย/หญิง) */}
+                <div className="absolute top-1/2 -translate-y-1/2 -right-8 z-30 flex flex-col gap-2 bg-slate-950/80 backdrop-blur-md p-1 border border-white/10 rounded-2xl shadow-2xl">
+                  <button
+                    onClick={() => handleGenderChange("male")}
+                    className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 cursor-pointer ${
+                      gender === "male"
+                        ? "bg-gradient-to-br from-blue-500/80 to-sky-400/80 text-white shadow-[0_0_12px_rgba(59,130,246,0.5)] border border-blue-400/30"
+                        : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
+                    }`}
+                    title="เพศชาย"
+                  >
+                    <span className="text-lg leading-none">👨🏻</span>
+                    <span className="text-[8px] font-black tracking-tighter mt-0.5 leading-none">ชาย</span>
+                  </button>
+                  <button
+                    onClick={() => handleGenderChange("female")}
+                    className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 cursor-pointer ${
+                      gender === "female"
+                        ? "bg-gradient-to-br from-pink-500/80 to-rose-400/80 text-white shadow-[0_0_12px_rgba(236,72,153,0.5)] border border-pink-400/30"
+                        : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
+                    }`}
+                    title="เพศหญิง"
+                  >
+                    <span className="text-lg leading-none">👩🏻</span>
+                    <span className="text-[8px] font-black tracking-tighter mt-0.5 leading-none">หญิง</span>
+                  </button>
+                </div>
               </div>
 
               {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
               <div className="flex flex-col items-center gap-2.5 w-full px-2">
-                {/* Row 1: Streak & Perfect Week */}
+                {/* Row 1: Streak & Perfect Week (Directly below avatar) */}
                 <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full">
                   {/* Streak Badge */}
                   <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
@@ -366,9 +338,10 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                   )}
                 </div>
 
-                {/* Row 2: DISC, Money, Library of Souls, Perfect Week */}
+
+                {/* Row 3: DISC, Money, Library of Souls (Badges under buttons) */}
                 {(lastDisc || lastMoney || lastLibrarySoul || perfectWeeks > 0) && (
-                  <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap">
+                  <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap mt-2">
                     {/* DISC Badge */}
                     {lastDisc && (
                       <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
@@ -440,6 +413,121 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
             </div>
 
             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 opacity-60">Complete Daily Quest 7 days for +100 XP Bonus</p>
+          </div>
+
+          {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
+          <div className="flex sm:hidden items-center justify-center w-full mt-2 relative z-[999] gap-3">
+            {/* 🎯 Mobile: Combined Profile, Level Progress & Saving Pot Minimal Card */}
+            <div className="flex flex-col gap-3.5 bg-slate-800/90 p-4 rounded-[2rem] border border-slate-700/60 backdrop-blur-md shadow-2xl relative w-full max-w-[280px] hover:border-yellow-500/30 transition-colors">
+              
+              {/* Upper Section: Profile & Level Info */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shrink-0">
+                  <Trophy size={14} className="fill-current" />
+                </div>
+                
+                <div className="flex-1 min-w-0 text-left">
+                  {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
+                  {isEditingName ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        autoFocus
+                        defaultValue={newName}
+                        onBlur={(e) => {
+                          setIsEditingName(false);
+                        }}
+                        className="bg-slate-700 border border-blue-500 rounded px-1.5 py-0.5 text-[10px] text-white outline-none w-full"
+                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateName((e.target as HTMLInputElement).value)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="cursor-pointer" onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white truncate flex items-center gap-1">
+                          {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
+                        </span>
+                        <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1 hover:text-white transition-colors">
+                          <Info size={14} />
+                        </button>
+                      </div>
+                      <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5">
+                        LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="w-full h-1 bg-slate-700/80 rounded-full mt-1.5 overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500" style={{ width: `${currentLevelXP}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-[1px] bg-slate-700/50 w-full" />
+
+              {/* Lower Section: Saving Pot */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="p-1 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full text-white shadow-[0_0_10px_rgba(139,92,246,0.3)] shrink-0">
+                    <PiggyBank size={11} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
+                    <p className="text-xs font-black text-white mt-0.5 truncate">
+                      {potXP} <span className="text-[8px] font-bold text-slate-400">XP</span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => setShowDepositModal(true)}
+                    className="px-4 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_8px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                  >
+                    ออม XP
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 📱 Mobile Only: Player Card & Sign Out Logos next to the card */}
+            <div className="flex flex-col gap-2.5">
+              {/* Premium Shop Shortcut (Rainbow theme) */}
+              <Link href="/shop">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1.5px] cursor-pointer shadow-xl"
+                  style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
+                  title="Happiness Shop"
+                >
+                  <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                    <ShoppingBag size={18} />
+                  </div>
+                </motion.div>
+              </Link>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center justify-center w-11 h-11 bg-slate-800/90 border border-slate-700/60 hover:border-yellow-500/50 rounded-2xl text-slate-400 hover:text-yellow-400 transition-all shadow-xl active:scale-95 cursor-pointer backdrop-blur-md"
+                title="Player Card"
+              >
+                <Camera size={18} />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center justify-center w-11 h-11 bg-slate-800/90 border border-slate-700/60 hover:border-red-500/50 rounded-2xl text-slate-400 hover:text-red-400 transition-all shadow-xl active:scale-95 cursor-pointer backdrop-blur-md"
+                title="Sign Out"
+              >
+                <LogOut size={18} />
+              </motion.button>
+            </div>
           </div>
 
         </div>
