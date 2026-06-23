@@ -39,7 +39,8 @@ function BottomNavigationInner() {
       pathname.startsWith('/dashboard') ||
       (pathname.startsWith('/library') && enteredDashboard) ||
       pathname === '/tools/deep-work' ||
-      pathname === '/tools/focus-room'
+      pathname === '/tools/focus-room' ||
+      pathname === '/shop'
     );
 
   const isDark = false;

@@ -2947,7 +2947,7 @@ export default function DashboardPage() {
                       onClick={() => setShowDepositModal(true)}
                       className="px-2.5 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
                     >
-                      หยอดกระปุก
+                      ออม XP
                     </button>
                   </div>
                 </div>
@@ -2964,34 +2964,16 @@ export default function DashboardPage() {
                     </h1>
                     <p className="text-slate-300 text-sm xl:text-base font-medium max-w-md mx-auto lg:mx-0 mb-5">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
 
-                    <div className="flex flex-wrap justify-center lg:justify-start items-center gap-3">
-                      {/* Toggle เพศ */}
-                      <div className="flex items-center bg-white/5 rounded-full p-0.5 backdrop-blur-md border border-white/10 shadow-inner w-fit">
-                        <button onClick={() => handleGenderChange("male")} className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wide transition-all duration-300 ${gender === "male" ? "bg-gradient-to-r from-blue-500 to-sky-400 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                          <span className="text-[10px]">👨🏻</span> ชาย
-                        </button>
-                        <button onClick={() => handleGenderChange("female")} className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wide transition-all duration-300 ${gender === "female" ? "bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                          <span className="text-[10px]">👩🏻</span> หญิง
-                        </button>
-                      </div>
-
-                      {/* ปุ่ม Get Player Card */}
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowShareModal(true)} className="flex items-center gap-2 px-4 py-1.5 bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-500/50 rounded-full transition-all duration-300 group/share">
-                        <Camera size={12} className="text-slate-400 group-hover/share:text-yellow-400 group-hover/share:rotate-12 transition-all" />
-                        <span className="text-[9px] font-black text-slate-500 group-hover/share:text-yellow-400 uppercase tracking-[0.2em] mt-0.5">Player Card</span>
-                      </motion.button>
-                    </div>
-
                     {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
-                    <div className="flex sm:hidden flex-col items-center justify-center gap-3 w-full mt-6 relative z-[999]">
-                      <div className="flex items-center justify-center gap-2 w-full">
-                        {/* 🎯 Mobile: Level Box & Edit Name */}
-                        <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-yellow-500/50 transition-colors">
-                          <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shrink-0">
-                            <Trophy size={14} className="fill-current" />
-                          </div>
+                    <div className="flex sm:hidden items-center justify-center w-full mt-2 relative z-[999] gap-3">
+                      {/* 🎯 Mobile: Combined Profile, Level Progress & Saving Pot Minimal Card */}
+                      <div className="flex flex-col gap-4 bg-slate-900/50 p-5 rounded-[2rem] border border-white/5 backdrop-blur-md relative w-full max-w-[280px] hover:border-yellow-500/20 transition-all">
+                        
+                        {/* Upper Section: Profile & Level Info */}
+                        <div className="flex items-center gap-3">
+                          <Trophy size={16} className="text-yellow-400 shrink-0" />
+                          
                           <div className="flex-1 min-w-0 text-left">
-
                             {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
                             {isEditingName ? (
                               <div className="flex items-center gap-1">
@@ -2999,10 +2981,9 @@ export default function DashboardPage() {
                                   autoFocus
                                   defaultValue={newName}
                                   onBlur={(e) => {
-                                    // Do not update automatically on blur to avoid conflict, just close
                                     setIsEditingName(false);
                                   }}
-                                  className="bg-slate-700 border border-blue-500 rounded px-1.5 py-0.5 text-[10px] text-white outline-none w-full"
+                                  className="bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-[10px] text-white outline-none w-full"
                                   onKeyDown={(e) => e.key === 'Enter' && handleUpdateName((e.target as HTMLInputElement).value)}
                                 />
                               </div>
@@ -3012,47 +2993,77 @@ export default function DashboardPage() {
                                   <span className="text-xs font-black text-white truncate flex items-center gap-1">
                                     {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
                                   </span>
-                                  {/* ปุ่ม Info สำหรับเปิด Modal กลางจอ */}
-                                  <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1">
-                                    <Info size={14} />
-                                  </button>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1 hover:text-white transition-colors">
+                                      <Info size={14} />
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-slate-400 p-1 hover:text-red-400 transition-colors" title="ออกจากระบบ">
+                                      <LogOut size={14} />
+                                    </button>
+                                  </div>
                                 </div>
                                 <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5">
-                                  {/* ✅ แก้ไขจุดนี้: เปลี่ยนจาก .split(' ')[0] เป็น .split(' (')[0] เพื่อให้ได้ชื่อเต็มภาษาอังกฤษ */}
                                   LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
                                 </p>
                               </div>
                             )}
 
-                            <div className="w-full h-1 bg-slate-700 rounded-full mt-1.5 overflow-hidden">
+                            <div className="w-full h-1 bg-slate-950 rounded-full mt-2 overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500" style={{ width: `${currentLevelXP}%` }} />
                             </div>
                           </div>
                         </div>
 
-                        {/* Mobile: Logout Button */}
-                        <button onClick={handleLogout} className="p-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full shadow-lg transition-all shrink-0">
-                          <LogOut size={14} />
-                        </button>
+                        {/* Lower Section: Saving Pot */}
+                        <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <PiggyBank size={16} className="text-violet-400 shrink-0" />
+                            <div className="text-left min-w-0">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
+                              <p className="text-xs font-black text-white mt-0.5 truncate">
+                                {potXP} <span className="text-[8px] font-bold text-slate-400">XP</span>
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => setShowDepositModal(true)}
+                              className="px-3.5 py-1.5 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_8px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                            >
+                              ออม XP
+                            </button>
+                          </div>
+                        </div>
+
                       </div>
 
-                      {/* 🐷 Saving Pot Widget (Mobile) */}
-                      <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-full max-w-[250px] hover:border-violet-500/50 transition-colors">
-                        <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] shrink-0">
-                          <PiggyBank size={14} />
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
-                          <p className="text-xs font-black text-white mt-0.5 truncate">
-                            {potXP} <span className="text-[10px] font-bold text-slate-400">XP</span>
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setShowDepositModal(true)}
-                          className="px-2.5 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                      {/* 📱 Mobile Only: Action Buttons next to the card */}
+                      <div className="flex flex-col gap-2.5">
+                        {/* Premium Shop Shortcut (Rainbow theme) */}
+                        <Link href="/shop">
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1px] cursor-pointer shadow-md"
+                            style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
+                            title="Happiness Shop"
+                          >
+                            <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                              <ShoppingBag size={18} />
+                            </div>
+                          </motion.div>
+                        </Link>
+
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowShareModal(true)}
+                          className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                          title="Player Card"
                         >
-                          หยอดกระปุก
-                        </button>
+                          <Camera size={18} />
+                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -3078,6 +3089,36 @@ export default function DashboardPage() {
                             decoding="async"
                             className="w-full h-full object-contain object-bottom animate-bounce-slow drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
                           />
+                        </div>
+                      )}
+
+                      {/* Floating Gender Toggle (ชาย/หญิง) - แสดงเฉพาะเมื่อ activeTab === "overview" */}
+                      {activeTab === "overview" && (
+                        <div className="absolute top-1/2 -translate-y-1/2 -right-8 z-30 flex flex-col gap-2 bg-slate-950/80 backdrop-blur-md p-1 border border-white/10 rounded-2xl shadow-2xl">
+                          <button
+                            onClick={() => handleGenderChange("male")}
+                            className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 cursor-pointer ${
+                              gender === "male"
+                                ? "bg-gradient-to-br from-blue-500/80 to-sky-400/80 text-white shadow-[0_0_12px_rgba(59,130,246,0.5)] border border-blue-400/30"
+                                : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
+                            }`}
+                            title="เพศชาย"
+                          >
+                            <span className="text-lg leading-none">👨🏻</span>
+                            <span className="text-[8px] font-black tracking-tighter mt-0.5 leading-none">ชาย</span>
+                          </button>
+                          <button
+                            onClick={() => handleGenderChange("female")}
+                            className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 cursor-pointer ${
+                              gender === "female"
+                                ? "bg-gradient-to-br from-pink-500/80 to-rose-400/80 text-white shadow-[0_0_12px_rgba(236,72,153,0.5)] border border-pink-400/30"
+                                : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
+                            }`}
+                            title="เพศหญิง"
+                          >
+                            <span className="text-lg leading-none">👩🏻</span>
+                            <span className="text-[8px] font-black tracking-tighter mt-0.5 leading-none">หญิง</span>
+                          </button>
                         </div>
                       )}
                     </div>
@@ -3678,111 +3719,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* --- 🛍️ 2.5 Happiness Shop Section --- */}
-        {activeTab === "home" && (
-          <div className="mb-8 bg-white border border-slate-100 hover:border-violet-100 rounded-[2.5rem] p-6 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(139,92,246,0.08)] relative overflow-hidden group transition-all duration-500">
-            {/* Background decorative glows */}
-            <div className="absolute -top-24 -left-24 w-80 h-80 bg-gradient-to-br from-violet-400/5 to-indigo-400/5 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-gradient-to-tl from-indigo-400/5 to-purple-400/5 blur-[100px] rounded-full pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
 
-            {/* Top border indicator */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-500 to-indigo-600 opacity-90 group-hover:h-3 transition-all duration-300" />
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="p-3 sm:p-3.5 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-2xl shadow-[0_10px_20px_-5px_rgba(109,40,217,0.4)] group-hover:scale-110 transition-transform duration-300">
-                  <ShoppingBag size={26} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">ความสุขระหว่างทาง SHOP</h2>
-                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
-                    <Sparkles size={12} className="text-violet-400" /> ใช้แต้ม XP ในกระปุกแลกของรางวัลจริง
-                  </p>
-                </div>
-              </div>
-
-              {/* Pot Status Indicator */}
-              <div className="flex items-center gap-3 bg-slate-900 text-white px-4 py-2 rounded-2xl border border-slate-800 shadow-sm shrink-0">
-                <PiggyBank size={18} className="text-violet-400 animate-bounce-slow" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">กระปุกของคุณ</span>
-                  <span className="text-sm font-black mt-0.5">{potXP} <span className="text-[10px] font-bold text-slate-400">XP</span></span>
-                </div>
-              </div>
-            </div>
-
-            {/* Grid of Items */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 relative z-10">
-              {SHOP_ITEMS.map((item) => {
-                const canRedeem = potXP >= item.price;
-                const deficit = item.price - potXP;
-                
-                // Color configuration based on tier
-                let tierLabel = "";
-                let tierColorClass = "";
-                if (item.tier === "daily") {
-                  tierLabel = "DAILY ☕";
-                  tierColorClass = "bg-emerald-50 text-emerald-600 border-emerald-200/50";
-                } else if (item.tier === "weekend") {
-                  tierLabel = "WEEKEND 🍲";
-                  tierColorClass = "bg-amber-50 text-amber-700 border-amber-200/50";
-                } else if (item.tier === "mid") {
-                  tierLabel = "MID-TIER 🎁";
-                  tierColorClass = "bg-orange-50 text-orange-600 border-orange-200/50";
-                } else {
-                  tierLabel = "EPIC ✈️";
-                  tierColorClass = "bg-rose-50 text-rose-600 border-rose-200/50";
-                }
-
-                return (
-                  <motion.div
-                    key={item.id}
-                    whileHover={{ y: -4, scale: 1.02 }}
-                    className="flex flex-col justify-between bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-violet-100 transition-all duration-300 relative overflow-hidden"
-                  >
-                    <div>
-                      {/* Top tier tag & icon */}
-                      <div className="flex justify-between items-start mb-3">
-                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black tracking-wide border ${tierColorClass}`}>
-                          {tierLabel}
-                        </span>
-                        <span className="text-2xl">{item.emoji}</span>
-                      </div>
-
-                      {/* Title */}
-                      <h4 className="text-xs font-black text-slate-800 leading-snug mb-4 min-h-[2.5rem]">
-                        {item.title}
-                      </h4>
-                    </div>
-
-                    {/* Bottom: Price & Button */}
-                    <div className="space-y-3 pt-2 border-t border-slate-50">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-400">ราคา</span>
-                        <span className="text-sm font-black text-slate-800 flex items-center gap-1">
-                          <Trophy size={12} className="text-yellow-500 fill-current" />
-                          {item.price} <span className="text-[10px] font-bold text-slate-400">XP</span>
-                        </span>
-                      </div>
-
-                      <button
-                        disabled={!canRedeem}
-                        onClick={() => handleRedeemItem(item)}
-                        className={`w-full py-2.5 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all duration-300 ${
-                          canRedeem
-                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_4px_10px_rgba(109,40,217,0.2)] hover:from-violet-500 hover:to-indigo-500 active:scale-95"
-                            : "bg-slate-50 border border-slate-100 text-slate-400 pointer-events-none"
-                        }`}
-                      >
-                        {canRedeem ? "แลกรางวัล 🚀" : `ขาดอีก ${deficit} XP`}
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* --- 📦 3. Bento Grid --- */}
 
@@ -4696,6 +4633,63 @@ export default function DashboardPage() {
                     </div>
                   </motion.div>
                 </Link>
+
+                {/* 🛍️ 7. Happiness Shop - Premium Rainbow Theme Bento Card */}
+                {(activeTab === "home" || activeTab === "resources") && (
+                  <Link
+                    href="/shop"
+                    className="group block h-full relative cursor-pointer"
+                  >
+                    <motion.div
+                      whileHover={{ y: -6 }}
+                      className="h-full p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-pink-500/50"
+                    >
+                      {/* 🏷️ Status Badge */}
+                      <div className="absolute top-8 right-8 z-30">
+                        <motion.div
+                          initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          className="bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-pink-900/20 flex items-center gap-1.5 uppercase tracking-wider"
+                        >
+                          <ShoppingBag size={10} /> SHOP
+                        </motion.div>
+                      </div>
+
+                      {/* ✨ Ambient Light & Top Bar */}
+                      <div className="absolute top-0 right-0 w-72 h-72 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none transition-colors duration-700 bg-pink-500/10 group-hover:bg-pink-500/20" />
+                      <div className="absolute top-0 left-0 w-full h-1.5 opacity-80 transition-all duration-500 bg-gradient-to-r from-pink-400 via-purple-500 to-indigo-500" />
+
+                      <div className="relative z-10 flex flex-col items-center h-full w-full">
+                        {/* 🧠 Logo Container */}
+                        <div className="relative mb-6 mt-2">
+                          <div className="absolute inset-0 blur-3xl opacity-20 bg-pink-400/30" />
+                          <div className="relative w-24 h-24 rounded-full border flex items-center justify-center text-6xl transition-transform duration-500 shadow-2xl bg-slate-900 border-pink-500/30 group-hover:scale-110 group-hover:border-pink-400 group-hover:shadow-pink-500/20">
+                            🛍️
+                          </div>
+                        </div>
+
+                        <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-2.5 text-pink-500/60">
+                          HAPPINESS SHOP
+                        </h3>
+                        <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight transition-colors text-white group-hover:text-pink-400">
+                          ความสุขระหว่างทาง
+                        </h2>
+
+                        <p className="text-[14px] font-medium mb-8 px-6 leading-relaxed max-w-[280px] transition-colors text-slate-400">
+                          ใช้แต้ม XP ในกระปุกออมของคุณ <br /> แลกรับของรางวัลจริงเพื่อเติมพลังใจ
+                        </p>
+
+                        <div className="w-full px-4 mt-auto">
+                          <div className="group/btn-shop relative">
+                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(236,72,153,0.4)] group-hover/btn-shop:scale-[1.02] group-hover/btn-shop:shadow-pink-500/50 active:scale-95">
+                              <ShoppingBag size={16} className="text-white/80" />
+                              <span>เข้าสู่ร้านค้า</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </Link>
+                )}
 
               </>
             )}

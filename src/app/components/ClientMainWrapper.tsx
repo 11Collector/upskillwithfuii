@@ -5,7 +5,7 @@ export default function ClientMainWrapper({ children }: { children: React.ReactN
   const pathname = usePathname();
   const isTools = pathname.startsWith('/tools/');
   const isDashboard = pathname.startsWith('/dashboard');
-  const noMobileHeader = isDashboard || pathname.startsWith('/library') || pathname.startsWith('/gallery');
+  const noMobileHeader = isDashboard || pathname.startsWith('/library') || pathname.startsWith('/gallery') || pathname.startsWith('/shop');
 
   // tools: ไม่มี header เลย
   // dashboard/library/gallery: ไม่มี mobile header
