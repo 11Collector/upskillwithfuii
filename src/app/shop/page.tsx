@@ -486,37 +486,31 @@ export default function PremiumShopPage() {
           <div className="absolute top-0 right-0 z-40 flex items-center gap-2">
             {/* Tiny Level Circular Progress */}
             <div className="flex items-center gap-2 bg-white border border-slate-200/80 pl-2 pr-3 py-1 rounded-full shadow-sm shrink-0 h-9">
-              <div className="relative w-6 h-6 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 shadow-inner shrink-0">
+              <div className="relative w-7 h-7 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 shadow-inner shrink-0">
                 <svg className="absolute inset-0 w-full h-full -rotate-90">
                   <circle
-                    cx="12"
-                    cy="12"
-                    r="9.5"
+                    cx="14"
+                    cy="14"
+                    r="11"
                     fill="transparent"
                     stroke="#f1f5f9"
-                    strokeWidth="2"
+                    strokeWidth="2.5"
                   />
                   <motion.circle
-                    cx="12"
-                    cy="12"
-                    r="9.5"
+                    cx="14"
+                    cy="14"
+                    r="11"
                     fill="transparent"
-                    stroke="url(#orangeGradientTiny)"
-                    strokeWidth="2"
-                    strokeDasharray="59.7"
-                    initial={{ strokeDashoffset: 59.7 }}
-                    animate={{ strokeDashoffset: 59.7 - (currentLevelXP / 100) * 59.7 }}
+                    stroke="#f97316"
+                    strokeWidth="2.5"
+                    strokeDasharray="69.1"
+                    initial={{ strokeDashoffset: 69.1 }}
+                    animate={{ strokeDashoffset: 69.1 - (currentLevelXP / 100) * 69.1 }}
                     transition={{ duration: 1, ease: "easeOut" }}
                     strokeLinecap="round"
                   />
-                  <defs>
-                    <linearGradient id="orangeGradientTiny" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#f97316" />
-                      <stop offset="100%" stopColor="#ea580c" />
-                    </linearGradient>
-                  </defs>
                 </svg>
-                <div className="relative z-10 text-[9px] font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-red-650 leading-none">
+                <div className="relative z-10 text-[10px] font-black text-orange-500 leading-none">
                   {currentLevel}
                 </div>
               </div>
