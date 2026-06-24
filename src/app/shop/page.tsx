@@ -481,7 +481,7 @@ export default function PremiumShopPage() {
       <div className="max-w-5xl mx-auto relative z-10">
 
         {/* --- Header --- */}
-        <header className="mb-6 pt-0 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
+        <header className="mb-6 pt-12 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
           {/* 🌟 Top-Right Header Widgets (Level & Tickets) */}
           <div className="absolute top-0 right-0 z-40 flex items-center gap-2">
             {/* Tiny Level Circular Progress */}
