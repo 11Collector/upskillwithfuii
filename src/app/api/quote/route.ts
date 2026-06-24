@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { logAiCall } from '@/lib/ai-logger';
 
 const QuoteSchema = z.object({
   prompt: z.string().min(1).max(5000),
@@ -52,6 +53,8 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     const generatedQuote = data.choices[0].message.content.trim();
+
+    logAiCall(uid, "quote_generation").catch(() => {});
 
     return NextResponse.json({ quote: generatedQuote });
 

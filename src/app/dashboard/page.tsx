@@ -5486,7 +5486,7 @@ export default function DashboardPage() {
                   <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
 
                   {/* 👤 รูป Avatar หลัก - แก้ไขขนาดให้พอดีจอมากขึ้นบนมือถือ */}
-                  <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-[0.85] sm:scale-90 origin-bottom">
+                  <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-[0.85] origin-bottom">
                     <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
                   </div>
 

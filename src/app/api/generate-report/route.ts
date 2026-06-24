@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { logAiCall } from '@/lib/ai-logger';
 
 const ReportSchema = z.object({
   displayName: z.string().min(1).max(100),
@@ -94,6 +95,8 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     const analysis = data.choices[0].message.content.trim();
+
+    logAiCall(authResult.uid, "report_review").catch(() => {});
 
     return NextResponse.json({ success: true, analysis });
 

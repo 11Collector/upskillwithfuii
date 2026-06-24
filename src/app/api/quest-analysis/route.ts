@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { adminDb } from '@/lib/firebase-admin';
+import { logAiCall } from '@/lib/ai-logger';
 import { ghostResults } from '@/data/ghostResults';
 
 const QuestAnalysisSchema = z.object({
@@ -193,6 +194,8 @@ ${wheelAvoidRule}
     const discTitle = normalizeQuest(personalityRaw);
     const moneyTitle = normalizeQuest(moneyRaw);
     console.log("🤖 [API Quest Analysis] Normalized fields:", { questTitle, discTitle, moneyTitle });
+
+    logAiCall(authResult.uid, "quest_analysis").catch(() => {});
 
     return NextResponse.json({
       questTitle,

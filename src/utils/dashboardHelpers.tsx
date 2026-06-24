@@ -139,7 +139,7 @@ export const AvatarDisplay = ({ currentLevel, gender, streak = 0, isCompact = fa
 // 🖼️ Internal Component for handling image loading (Simplified for instant display)
 const AvatarImage = ({ src, alt, isCompact }: { src: string; alt: string; isCompact: boolean }) => {
   return (
-    <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+    <div className={`relative flex items-center justify-center ${isCompact ? "w-56 h-56" : "w-64 h-64 md:w-80 md:h-80"}`}>
       <img
         src={src}
         alt={alt}
