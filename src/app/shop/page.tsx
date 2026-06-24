@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
-  Sparkles, Trophy, X, Camera, Moon, Laptop, Ticket, Key, LayoutGrid, PiggyBank, BookOpen, SlidersHorizontal
+  Sparkles, Trophy, X, Camera, Moon, Laptop, Ticket, Key, LayoutGrid, PiggyBank, BookOpen, SlidersHorizontal, Lock
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -115,14 +115,13 @@ const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: strin
   }
 };
 
-// 🛍️ 2. Shop Items Definition (50 Items)
 const shopItems = [
   // 🟢 Tier 1: Daily Reward
   { id: 1, title: "กาแฟคราฟต์พิเศษ", desc: "เติมพลังความสดชื่นยามเช้า ช่วยให้มีสมาธิทำงานได้มีประสิทธิภาพมากขึ้น", price: 20, tier: "daily", category: "joy" },
   { id: 2, title: "เค้ก / เบเกอรี่แสนอร่อย", desc: "รางวัลชิ้นเล็ก ๆ ระหว่างวันเพื่อกระตุ้นสารโดปามีนและความสุขในการเรียนรู้", price: 25, tier: "daily", category: "joy" },
   { id: 3, title: "มื้อพิเศษตามใจปาก", desc: "ชาร์จพลังกายหลังลุยงานหนัก คลายความเครียดด้วยอาหารมื้อโปรด", price: 30, tier: "daily", category: "joy" },
-  { id: 4, title: "ตั๋ววันขี้เกียจ 1 วัน", desc: "พักผ่อนแบบไร้ความรู้สึกผิด ป้องกันภาวะหมดไฟและฟื้นฟูพลังสมอง", price: 30, tier: "daily", category: "rest" },
-  { id: 5, title: "สมาชิก AI Tools รายเดือน", desc: "ลงทุนกับเครื่องมือช่วยทุ่นแรง เพิ่ม Productivity และขีดความสามารถการทำงาน", price: 30, tier: "daily", category: "growth" },
+  { id: 4, title: "ตั๋ววันขี้เกียจ 1 วัน", desc: "พักผ่อนแบบไร้ความรู้สึกผิด ป้องกันภาวะหมดไฟและฟื้นฟูพลังสมอง", price: 30, tier: "daily", category: "rest", minLevel: 3 },
+  { id: 5, title: "สมาชิก AI Tools รายเดือน", desc: "ลงทุนกับเครื่องมือช่วยทุ่นแรง เพิ่ม Productivity และขีดความสามารถการทำงาน", price: 30, tier: "daily", category: "growth", minLevel: 4 },
   { id: 6, title: "สมุดบันทึกและปากกาคู่ใจ", desc: "เขียนเรียบเรียงความคิด ทบทวนเป้าหมายชีวิตและตกผลึกการเรียนรู้ประจำวัน", price: 35, tier: "daily", category: "growth" },
   { id: 7, title: "สติกเกอร์สร้างแรงบันดาลใจ", desc: "เตือนสติความตั้งใจด้วยข้อความเชิงบวกบนโต๊ะทำงานหรือของใช้ส่วนตัว", price: 35, tier: "daily", category: "joy" },
   { id: 8, title: "เมล็ดกาแฟคัดเกรดพิเศษ", desc: "สร้างสุนทรียภาพยามเช้าด้วยการดริปกาแฟ ฝึกสมาธิและความประณีต", price: 35, tier: "daily", category: "joy" },
@@ -130,13 +129,13 @@ const shopItems = [
   { id: 10, title: "เซตวิตามินบำรุงร่างกาย", desc: "ดูแลสุขภาพและสารอาหารที่จำเป็น ช่วยบำรุงประสาทและการทำงานของสมอง", price: 40, tier: "daily", category: "rest" },
 
   // 🟡 Tier 2: Weekend Reward
-  { id: 11, title: "ชุดนอนผ้าเกรดพรีเมียม", desc: "ยกระดับคุณภาพการนอนหลับลึก เพื่อเช้าวันใหม่ที่สดใสและตื่นตัวเต็มที่", price: 50, tier: "weekend", category: "rest" },
-  { id: 12, title: "มื้อปิ้งย่าง / ชาบูชุดใหญ่", desc: "สังสรรค์และกระชับความสัมพันธ์กับเพื่อนหรือครอบครัวในวันหยุด", price: 50, tier: "weekend", category: "joy" },
+  { id: 11, title: "ชุดนอนผ้าเกรดพรีเมียม", desc: "ยกระดับคุณภาพการนอนหลับลึก เพื่อเช้าวันใหม่ที่สดใสและตื่นตัวเต็มที่", price: 50, tier: "weekend", category: "rest", minLevel: 6 },
+  { id: 12, title: "มื้อปิ้งย่าง / ชาบูชุดใหญ่", desc: "สังสรรค์และกระชับความสัมพันธ์กับเพื่อนหรือครอบครัวในวันหยุด", price: 50, tier: "weekend", category: "joy", minLevel: 5 },
   { id: 13, title: "บอร์ดเกมพกพา / การ์ดเกม", desc: "คลายเครียด ฝึกสมอง และสร้างเสียงหัวเราะร่วมกับคนรอบข้างในปาร์ตี้", price: 50, tier: "weekend", category: "joy" },
-  { id: 14, title: "ตั๋ว Digital Detox 1 วัน", desc: "ตัดขาดจากหน้าจอและโลกออนไลน์ชั่วคราว เพื่อฟื้นฟูสมาธิและความเงียบสงบในใจ", price: 55, tier: "weekend", category: "rest" },
+  { id: 14, title: "ตั๋ว Digital Detox 1 วัน", desc: "ตัดขาดจากหน้าจอและโลกออนไลน์ชั่วคราว เพื่อฟื้นฟูสมาธิและความเงียบสงบในใจ", price: 55, tier: "weekend", category: "rest", minLevel: 7 },
   { id: 15, title: "หนังสือพัฒนาตนเองเล่มใหม่", desc: "เปิดมุมมองใหม่ อัพเดต Mindset และเติมองค์ความรู้สำหรับพัฒนาชีวิตด้านต่าง ๆ", price: 55, tier: "weekend", category: "growth" },
   { id: 16, title: "ตั๋วชมภาพยนตร์พรีเมียม", desc: "เสพสื่อศิลปะและความบันเทิงเต็มรูปแบบ เพื่อหลบหนีความวุ่นวายชั่วคราว", price: 60, tier: "weekend", category: "experience" },
-  { id: 17, title: "คอร์สอัพสกิลออนไลน์ระยะสั้น", desc: "เรียนรู้ทักษะใหม่ที่ใช้งานได้จริง เพิ่มความก้าวหน้าในสายอาชีพและการทำงาน", price: 70, tier: "weekend", category: "growth" },
+  { id: 17, title: "คอร์สอัพสกิลออนไลน์ระยะสั้น", desc: "เรียนรู้ทักษะใหม่ที่ใช้งานได้จริง เพิ่มความก้าวหน้าในสายอาชีพและการทำงาน", price: 70, tier: "weekend", category: "growth", minLevel: 8 },
   { id: 18, title: "หมอนหนุนเพื่อสุขภาพ", desc: "แก้ปัญหาออฟฟิศซินโดรมและการปวดเมื่อยเวลานอน เพื่อสุขภาพกายที่ดีขึ้น", price: 70, tier: "weekend", category: "rest" },
   { id: 19, title: "บอร์ดเกมวางแผนกลยุทธ์", desc: "ฝึกการคิดวิเคราะห์ แก้ไขปัญหาเฉพาะหน้า และวางหมากกลยุทธ์อย่างสนุกสนาน", price: 75, tier: "weekend", category: "growth" },
   { id: 20, title: "หนังสือการ์ตูนยกเซ็ต", desc: "ผ่อนคลายจิตใจ เติมเต็มจินตนาการ และความสุขจากเรื่องราววัยเด็ก", price: 80, tier: "weekend", category: "joy" },
@@ -147,7 +146,7 @@ const shopItems = [
   { id: 23, title: "แพ็กเกจนวดสปาบำบัด", desc: "ผ่อนคลายกล้ามเนื้อที่อ่อนล้าสะสมจากการทำงานหนัก ปรับสมดุลกายและจิตใจ", price: 100, tier: "mid", category: "rest" },
   { id: 24, title: "กล่องสุ่มโมเดลสุดฮิต", desc: "เติมเต็มความสุขทางสายตา แต่งแต้มโต๊ะทำงานให้น่ามองและเพลิดเพลิน", price: 120, tier: "mid", category: "joy" },
   { id: 25, title: "แผ่นเกมคอนโซลแผ่นใหม่", desc: "ให้รางวัลตัวเองด้วยการดื่มด่ำกับเกมโปรด ฝึกทักษะการตัดสินใจและจินตนาการ", price: 120, tier: "mid", category: "joy" },
-  { id: 26, title: "หูฟังตัดเสียงรบกวนไร้สาย", desc: "ตัดเสียงรบกวนเพื่อเข้าสู่สภาวะ Deep Work และทำงานได้อย่างมีสมาธิสูงสุด", price: 130, tier: "mid", category: "environment" },
+  { id: 26, title: "หูฟังตัดเสียงรบกวนไร้สาย", desc: "ตัดเสียงรบกวนเพื่อเข้าสู่สภาวะ Deep Work และทำงานได้อย่างมีสมาธิสูงสุด", price: 130, tier: "mid", category: "environment", minLevel: 12 },
   { id: 27, title: "คอร์สเรียนเร่งรัด Bootcamp", desc: "ติวเข้มทักษะสำคัญเชิงลึกกับผู้เชี่ยวชาญ เพื่อยกระดับโปรไฟล์สายอาชีพของคุณ", price: 140, tier: "mid", category: "growth" },
   { id: 28, title: "มื้อค่ำบุฟเฟต์โรงแรมหรู", desc: "สัมผัสประสบการณ์ดินเนอร์ชั้นเลิศ เติมเต็มความสุขด้านประสาทสัมผัสและบริการ", price: 150, tier: "mid", category: "experience" },
   { id: 29, title: "ผลิตภัณฑ์บำรุงผิวหรือน้ำหอม", desc: "ดูแลภาพลักษณ์ภายนอก สร้างเสน่ห์ความมั่นใจ และความน่าเชื่อถือในสังคม", price: 150, tier: "mid", category: "rest" },
@@ -157,10 +156,10 @@ const shopItems = [
   { id: 31, title: "โมเดลสะสม Limited Edition", desc: "ของสะสมที่มีเรื่องราวเฉพาะตัว ช่วยสร้างความภูมิใจและแรงผลักดันเชิงบวก", price: 200, tier: "epic", category: "joy" },
   { id: 32, title: "เครื่องประดับทองคำ / อัญมณี", desc: "สะสมสินทรัพย์มีค่าที่แสดงถึงความมั่นคง และให้รางวัลชีวิตชิ้นสำคัญ", price: 200, tier: "epic", category: "freedom" },
   { id: 33, title: "รองเท้า Sneakers คู่โปรด", desc: "ทะนุถนอมสุขภาพเท้าเพื่อการก้าวเดินในทุก ๆ วัน พร้อมดีไซน์ที่มั่นใจ", price: 250, tier: "epic", category: "environment" },
-  { id: 34, title: "ตั๋วคอนเสิร์ต / มิวสิคเฟสติวัล", desc: "ร่วมสัมผัสบรรยากาศดนตรีสดและผู้คน ปลดปล่อยพลังงานและความทรงจำสุดพิเศษ", price: 250, tier: "epic", category: "experience" },
-  { id: 35, title: "คีย์บอร์ดกลไก Custom", desc: "ปรับแต่งสัมผัสการพิมพ์และความสวยงามตามต้องการ ช่วยให้การเขียนงานเป็นเรื่องสนุก", price: 300, tier: "epic", category: "environment" },
+  { id: 34, title: "ตั๋วคอนเสิร์ต / มิวสิคเฟสติวัล", desc: "ร่วมสัมผัสบรรยากาศดนตรีสดและผู้คน ปลดปล่อยพลังงานและความทรงจำสุดพิเศษ", price: 250, tier: "epic", category: "experience", minLevel: 18 },
+  { id: 35, title: "คีย์บอร์ดกลไก Custom", desc: "ปรับแต่งสัมผัสการพิมพ์และความสวยงามตามต้องการ ช่วยให้การเขียนงานเป็นเรื่องสนุก", price: 300, tier: "epic", category: "environment", minLevel: 10 },
   { id: 36, title: "ทริปพักผ่อน 2 วัน 1 คืน", desc: "พาตัวเองออกจากสิ่งแวดล้อมเดิม ๆ ไปผ่อนคลายสมองท่ามกลางวิวธรรมชาติแสนสงบ", price: 350, tier: "epic", category: "experience" },
-  { id: 37, title: "เก้าอี้เพื่อสุขภาพ Ergonomic", desc: "ลงทุนกับสุขภาพหลังในระยะยาว ลดความเมื่อยล้าสะสมจากการนั่งทำงานหลายชั่วโมง", price: 400, tier: "epic", category: "environment" },
+  { id: 37, title: "เก้าอี้เพื่อสุขภาพ Ergonomic", desc: "ลงทุนกับสุขภาพหลังในระยะยาว ลดความเมื่อยล้าสะสมจากการนั่งทำงานหลายชั่วโมง", price: 400, tier: "epic", category: "environment", minLevel: 15 },
   { id: 38, title: "ตั๋วเที่ยวต่างประเทศโซนใกล้", desc: "เปิดโลกทัศน์เรียนรู้วัฒนธรรมใหม่ สะสมประสบการณ์การผจญภัยและเติบโตภายนอก", price: 500, tier: "epic", category: "experience" },
   { id: 39, title: "ตั๋วเครื่องบิน Business Class", desc: "สัมผัสความสะดวกสบายระดับพรีเมียม เพื่อเดินทางไกลโดยไม่เพลียล้าสะสม", price: 600, tier: "epic", category: "experience" },
   { id: 40, title: "เครื่องชงกาแฟเอสเพรสโซสตูดิโอ", desc: "ยกระดับบาร์กาแฟที่บ้าน ให้คุณควบคุมรสชาติที่โปรดปรานได้ทุกแก้วด้วยตัวเอง", price: 750, tier: "epic", category: "environment" },
@@ -169,13 +168,13 @@ const shopItems = [
   { id: 41, title: "พอร์ตสินทรัพย์การเงินแรก", desc: "เริ่มสะสมความมั่งคั่งอย่างเป็นรูปธรรม สร้างความอุ่นใจและปูพื้นฐานสู่อิสรภาพการเงิน", price: 900, tier: "legendary", category: "freedom" },
   { id: 42, title: "ปรับปรุงห้องทำงาน / ห้องสมุด", desc: "จัดสภาพแวดล้อมภายในบ้านให้เอื้อต่อการเรียนรู้ ทำงานสร้างสรรค์ และมีสมาธิ", price: 1200, tier: "legendary", category: "environment" },
   { id: 43, title: "คอมพิวเตอร์เวิร์กสเตชันสูง", desc: "เพิ่มความเร็วในการประมวลผลงาน ออกแบบ หรือตัดต่อคอนเทนต์แบบมืออาชีพ", price: 1300, tier: "legendary", category: "environment" },
-  { id: 44, title: "รีทรีตพักใจเป้าหมายชีวิต", desc: "ใช้เวลาอยู่กับตัวเองอย่างจริงจัง เพื่อทบทวนเป้าหมาย วางแผนอนาคต และตั้งหลักชีวิตใหม่", price: 1400, tier: "legendary", category: "rest" },
-  { id: 45, title: "โค้ชชิ่งปลดล็อกเป้าหมาย 1:1", desc: "รับคำแนะนำตรงจุดจากผู้เชี่ยวชาญ เพื่อเร่งการเติบโตและผ่านอุปสรรคสำคัญในชีวิต", price: 1500, tier: "legendary", category: "growth" },
-  { id: 46, title: "ทริป Workation ต่างประเทศ", desc: "สัมผัสบรรยากาศทำงานสไตล์ดิจิทัลเร่ร่อน เพื่อค้นพบแรงบันดาลใจและความคิดริเริ่มสร้างสรรค์", price: 1600, tier: "legendary", category: "experience" },
+  { id: 44, title: "รีทรีตพักใจเป้าหมายชีวิต", desc: "ใช้เวลาอยู่กับตัวเองอย่างจริงจัง เพื่อทบทวนเป้าหมาย วางแผนอนาคต และตั้งหลักชีวิตใหม่", price: 1400, tier: "legendary", category: "rest", minLevel: 25 },
+  { id: 45, title: "โค้ชชิ่งปลดล็อกเป้าหมาย 1:1", desc: "รับคำแนะนำตรงจุดจากผู้เชี่ยวชาญ เพื่อเร่งการเติบโตและผ่านอุปสรรคสำคัญในชีวิต", price: 1500, tier: "legendary", category: "growth", minLevel: 20 },
+  { id: 46, title: "ทริป Workation ต่างประเทศ", desc: "สัมผัสบรรยากาศทำงานสไตล์ดิจิทัลเร่ร่อน เพื่อค้นพบแรงบันดาลใจและความคิดริเริ่มสร้างสรรค์", price: 1600, tier: "legendary", category: "experience", minLevel: 22 },
   { id: 47, title: "เซตกล้องและอุปกรณ์สร้างสรรค์", desc: "เริ่มผลิตผลงานและสร้างแบรนด์ส่วนตัวบนออนไลน์อย่างมืออาชีพด้วยอุปกรณ์ครบชุด", price: 1700, tier: "legendary", category: "environment" },
   { id: 48, title: "แพ็กเกจตรวจสุขภาพ VIP", desc: "ตรวจเช็กสุขภาพร่างกายอย่างเจาะลึกล่วงหน้า เพื่อการป้องกันและมีอายุที่ยืนยาวแข็งแรง", price: 1800, tier: "legendary", category: "rest" },
-  { id: 49, title: "กองทุนเวลาอิสระ 1 เดือน", desc: "ให้โอกาสตัวเองได้หยุดพักและทดลองทำโปรเจกต์ในฝันอย่างเต็มที่โดยไร้กังวลเรื่องการเงิน", price: 1900, tier: "legendary", category: "freedom" },
-  { id: 50, title: "ตั๋วอัปเกรดชีวิตครั้งใหญ่", desc: "ตัดสินใจลงทุนในสินทรัพย์ที่เปลี่ยนทิศทางชีวิตได้จริง ไม่ว่าจะเป็นด้านปัญญาหรือเวลาเสรี", price: 2000, tier: "legendary", category: "freedom" }
+  { id: 49, title: "กองทุนเวลาอิสระ 1 เดือน", desc: "ให้โอกาสตัวเองได้หยุดพักและทดลองทำโปรเจกต์ในฝันอย่างเต็มที่โดยไร้กังวลเรื่องการเงิน", price: 1900, tier: "legendary", category: "freedom", minLevel: 28 },
+  { id: 50, title: "ตั๋วอัปเกรดชีวิตครั้งใหญ่", desc: "ตัดสินใจลงทุนในสินทรัพย์ที่เปลี่ยนทิศทางชีวิตได้จริง ไม่ว่าจะเป็นด้านปัญญาหรือเวลาเสรี", price: 2000, tier: "legendary", category: "freedom", minLevel: 30 }
 ];
 
 const playSuccessChime = () => {
@@ -285,6 +284,9 @@ export default function PremiumShopPage() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [depositError, setDepositError] = useState<string>("");
+  const [activePotTab, setActivePotTab] = useState<"deposit" | "withdraw">("deposit");
+  const [withdrawAmount, setWithdrawAmount] = useState<string>("");
+  const [withdrawError, setWithdrawError] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [redeemedItem, setRedeemedItem] = useState<any>(null);
@@ -292,6 +294,8 @@ export default function PremiumShopPage() {
   const [showInventoryModal, setShowInventoryModal] = useState(false);
 
   const router = useRouter();
+
+  const isAdmin = !!(user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean).includes(user.email));
 
   // Fetch User and potXP from Firestore
   useEffect(() => {
@@ -338,6 +342,10 @@ export default function PremiumShopPage() {
       setPotXP((prev) => prev + amount);
       setShowDepositModal(false);
       setDepositAmount("");
+      setWithdrawAmount("");
+      setDepositError("");
+      setWithdrawError("");
+      setActivePotTab("deposit");
       
       playSuccessChime();
     } catch (error) {
@@ -346,9 +354,57 @@ export default function PremiumShopPage() {
     }
   };
 
+  // Handle XP Withdrawal (ทุบกระปุก)
+  const handleWithdrawXP = async (amount: number) => {
+    if (!user) return;
+    if (amount <= 0 || amount > potXP) {
+      alert("จำนวน XP ไม่ถูกต้อง");
+      return;
+    }
+
+    try {
+      const fee = Math.floor(amount * 0.05);
+      const netAmount = amount - fee;
+
+      const oldLevel = Math.floor(totalXP / 100) + 1;
+      const newLevel = Math.floor((totalXP + netAmount) / 100) + 1;
+
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        totalXP: increment(netAmount),
+        potXP: increment(-amount)
+      });
+
+      setTotalXP((prev) => prev + netAmount);
+      setPotXP((prev) => prev - amount);
+
+      if (newLevel > oldLevel) {
+        sessionStorage.setItem("pendingLevelUp", newLevel.toString());
+      }
+
+      setShowDepositModal(false);
+      setDepositAmount("");
+      setWithdrawAmount("");
+      setDepositError("");
+      setWithdrawError("");
+      setActivePotTab("deposit");
+      
+      playSuccessChime();
+    } catch (error) {
+      console.error("Error withdrawing XP:", error);
+      alert("เกิดข้อผิดพลาดในการถอน XP");
+    }
+  };
+
   // Handle Item Redemption
   const handleRedeemItem = async (item: any) => {
     if (!user) return;
+    const currentLevel = Math.floor(totalXP / 100) + 1;
+    const isLevelLocked = item.minLevel ? currentLevel < item.minLevel : false;
+    if (isLevelLocked) {
+      alert(`คุณต้องมีเลเวลอย่างน้อย Level ${item.minLevel} เพื่อแลกชิ้นนี้`);
+      return;
+    }
     if (potXP < item.price) {
       alert("แต้มในกระปุกไม่เพียงพอ");
       return;
@@ -410,7 +466,9 @@ export default function PremiumShopPage() {
     }
   };
 
-  const maxTransfer = totalXP % 100;
+  const currentLevel = Math.floor(totalXP / 100) + 1;
+  const currentLevelXP = totalXP % 100;
+  const maxTransfer = currentLevelXP;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pt-4 pb-32 px-4 md:p-10 font-sans selection:bg-purple-100/50 overflow-x-hidden">
@@ -442,29 +500,81 @@ export default function PremiumShopPage() {
             <p className="text-slate-500 text-sm md:text-base font-medium">แลกเปลี่ยนเศษเสี้ยวความสำเร็จ เพื่อให้การพัฒนาตัวเองสนุกในระยะยาว</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center md:items-stretch gap-3 shrink-0">
-            <div className="flex items-center gap-4 bg-white border border-slate-200/80 p-4 rounded-3xl shadow-md shrink-0 min-w-[240px]">
-              <div className="p-3 bg-gradient-to-br from-rose-500 via-purple-500 to-blue-500 rounded-2xl text-white shadow-[0_4px_12px_rgba(168,85,247,0.25)]">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 shrink-0 w-full md:w-auto">
+            {/* 🌟 Card 1: Current Level (Minimal Style) */}
+            <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-[2rem] p-5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)] shrink-0 min-w-[280px]">
+              <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 shadow-inner shrink-0">
+                <svg className="absolute inset-0 w-full h-full -rotate-90">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="27"
+                    fill="transparent"
+                    stroke="#f1f5f9"
+                    strokeWidth="3.5"
+                  />
+                  <motion.circle
+                    cx="32"
+                    cy="32"
+                    r="27"
+                    fill="transparent"
+                    stroke="url(#orangeGradient)"
+                    strokeWidth="3.5"
+                    strokeDasharray="169.6"
+                    initial={{ strokeDashoffset: 169.6 }}
+                    animate={{ strokeDashoffset: 169.6 - (currentLevelXP / 100) * 169.6 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    strokeLinecap="round"
+                  />
+                  <defs>
+                    <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#ea580c" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+
+                <div className="relative z-10 text-center flex flex-col items-center justify-center leading-none mt-0.5">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">LV</span>
+                  <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-red-600 mt-1 block">
+                    {currentLevel}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="text-left">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-wider block leading-none">เลเวลของคุณ</span>
+                <p className="text-sm font-black text-slate-800 mt-1.5 leading-none">
+                  {currentLevelXP} <span className="text-xs font-bold text-slate-400">/ 100 XP</span>
+                </p>
+              </div>
+            </div>
+
+            {/* 🐷 Card 2: Saving Pot (Minimal Style) */}
+            <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-[2rem] p-5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)] shrink-0 min-w-[340px] flex-1 md:flex-none">
+              <div className="w-16 h-16 rounded-[1.25rem] bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/10 shrink-0">
                 <PiggyBank size={24} />
               </div>
               <div className="flex-1 text-left">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Saving Pot</span>
-                <p className="text-xl font-black text-slate-900 mt-1">
-                  {potXP} <span className="text-xs font-bold text-slate-400">XP</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">SAVING POT</span>
+                <p className="text-xl font-black text-slate-800 mt-1.5 leading-none">
+                  {potXP} <span className="text-xs font-bold text-slate-400 ml-0.5">XP</span>
                 </p>
               </div>
               <button
                 onClick={() => {
                   setDepositError("");
+                  setWithdrawError("");
+                  setDepositAmount("");
+                  setWithdrawAmount("");
+                  setActivePotTab("deposit");
                   setShowDepositModal(true);
                 }}
-                className="px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 hover:from-pink-500 hover:via-purple-500 hover:to-blue-500 rounded-2xl transition-all shadow-[0_4px_12px_rgba(168,85,247,0.15)] active:scale-95 shrink-0"
+                className="px-5 py-2.5 text-xs font-black text-white bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-400 hover:via-purple-500 hover:to-indigo-500 rounded-full transition-all shadow-[0_4px_15px_rgba(219,39,119,0.3)] active:scale-95 shrink-0 cursor-pointer"
               >
-                ออม XP
+                ออม/ถอน XP
               </button>
             </div>
-
-
           </div>
         </header>
 
@@ -543,7 +653,9 @@ export default function PremiumShopPage() {
             {filteredItems.map((item) => {
               const theme = CATEGORY_THEMES[item.category] || CATEGORY_THEMES["ทั้งหมด"];
               const tierInfo = getTierLabel(item.tier);
-              const canRedeem = potXP >= item.price;
+              const currentLevel = Math.floor(totalXP / 100) + 1;
+              const isLevelLocked = item.minLevel ? currentLevel < item.minLevel : false;
+              const canRedeem = potXP >= item.price && !isLevelLocked;
               const deficit = item.price - potXP;
 
               return (
@@ -571,6 +683,15 @@ export default function PremiumShopPage() {
                             }
                           }} 
                         />
+                        {/* Level Lock Overlay */}
+                        {isLevelLocked && (
+                          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-white p-4">
+                            <Lock className="text-yellow-400 mb-1.5 animate-bounce" size={24} />
+                            <span className="text-[9px] font-black uppercase tracking-wider bg-slate-900/90 px-2.5 py-1 rounded-full border border-white/10 shadow-lg text-yellow-400">
+                              ต้องการ LV.{item.minLevel}
+                            </span>
+                          </div>
+                        )}
                         <div className="absolute bottom-2.5 right-2.5 z-20 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 text-[10px] font-black text-purple-300 flex items-center gap-1 shadow-lg tracking-wider">
                           {item.price} XP
                         </div>
@@ -582,6 +703,11 @@ export default function PremiumShopPage() {
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border ${tierInfo.style}`}>
                           {tierInfo.label}
                         </span>
+                        {item.minLevel && (
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border flex items-center gap-1 ${isLevelLocked ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200'}`}>
+                            {isLevelLocked ? <Lock size={10} /> : "✅"} LV.{item.minLevel}
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-sm font-bold text-slate-800 mb-1 leading-snug line-clamp-1 overflow-hidden">{item.title}</h3>
                       <p className="text-[11px] text-slate-500 mb-4 leading-relaxed line-clamp-3 overflow-hidden min-h-[3rem]">{item.desc}</p>
@@ -593,7 +719,11 @@ export default function PremiumShopPage() {
                         canRedeem ? "bg-gradient-to-r from-pink-500 via-purple-600 to-blue-600 text-white shadow-lg active:scale-95" : "bg-slate-100 text-slate-400 cursor-not-allowed"
                       }`}
                     >
-                      {canRedeem ? "แลกรางวัล 🎁" : `ขาดอีก ${deficit} XP`}
+                      {isLevelLocked 
+                        ? `🔒 ต้องการ Level ${item.minLevel}` 
+                        : canRedeem 
+                          ? "แลกรางวัล 🎁" 
+                          : `ขาดอีก ${deficit} XP`}
                     </button>
                   </div>
                 </motion.div>
@@ -623,7 +753,7 @@ export default function PremiumShopPage() {
       {/* --- Confetti --- */}
       {showConfetti && <FramerMotionConfetti />}
 
-      {/* --- 🐷 Modal: Deposit XP --- */}
+      {/* --- 🐷 Modal: Deposit/Withdraw XP --- */}
       <AnimatePresence>
         {showDepositModal && (
           <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
@@ -631,7 +761,14 @@ export default function PremiumShopPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowDepositModal(false)}
+              onClick={() => {
+                setShowDepositModal(false);
+                setDepositAmount("");
+                setDepositError("");
+                setWithdrawAmount("");
+                setWithdrawError("");
+                setActivePotTab("deposit");
+              }}
               className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             />
             <motion.div
@@ -640,37 +777,149 @@ export default function PremiumShopPage() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-sm bg-white border border-slate-200 p-6 rounded-[2.5rem] shadow-2xl z-10 text-slate-800"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h4 className="text-lg font-black text-slate-900">ออม XP ไปที่ Saving Pot</h4>
-                <button onClick={() => setShowDepositModal(false)} className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400"><X size={20} /></button>
-              </div>
-              <p className="text-xs text-slate-500 mb-6">โอน XP สะสมไว้แลกของรางวัล โดยที่เลเวลของคุณจะไม่ลดลง</p>
-              <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center mb-6 border border-slate-100">
-                <div><span className="text-[9px] font-black text-slate-400 uppercase">XP ปัจจุบัน</span><p className="text-sm font-bold">{totalXP} XP</p></div>
-                <div><span className="text-[9px] font-black text-slate-400 uppercase">โอนได้สูงสุด</span><p className="text-sm font-bold text-purple-600">{maxTransfer} XP</p></div>
-              </div>
-              <div className="mb-6">
-                <input
-                  type="number"
-                  placeholder="จำนวนที่ต้องการออม"
-                  value={depositAmount}
-                  onChange={(e) => {
-                    setDepositAmount(e.target.value);
-                    const num = parseInt(e.target.value);
-                    if (num > maxTransfer) setDepositError(`ออมได้สูงสุด ${maxTransfer} XP`);
-                    else setDepositError("");
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <PiggyBank className="text-purple-600" size={20} />
+                  {activePotTab === "deposit" ? "ออม XP" : "ทุบกระปุกถอน XP"}
+                </h4>
+                <button
+                  onClick={() => {
+                    setShowDepositModal(false);
+                    setDepositAmount("");
+                    setDepositError("");
+                    setWithdrawAmount("");
+                    setWithdrawError("");
+                    setActivePotTab("deposit");
                   }}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:border-purple-500"
-                />
-                {depositError && <p className="text-red-500 text-[10px] font-bold mt-2">{depositError}</p>}
+                  className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <button
-                disabled={!!depositError || !depositAmount || parseInt(depositAmount) <= 0 || parseInt(depositAmount) > maxTransfer}
-                onClick={() => { const amt = parseInt(depositAmount); if (!isNaN(amt)) handleDepositXP(amt); }}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-black text-sm uppercase transition-all active:scale-95 disabled:opacity-50"
-              >
-                ยืนยันการออม 🚀
-              </button>
+
+              {/* Tab Header */}
+              <div className="flex border-b border-slate-100 mb-6 -mx-6 px-6">
+                <button
+                  onClick={() => {
+                    setActivePotTab("deposit");
+                    setDepositError("");
+                    setWithdrawError("");
+                  }}
+                  className={`flex-1 pb-3 text-xs font-black transition-all border-b-2 outline-none cursor-pointer ${
+                    activePotTab === "deposit"
+                      ? "border-purple-600 text-purple-600"
+                      : "border-transparent text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  หยอดกระปุก (ออม XP)
+                </button>
+                <button
+                  onClick={() => {
+                    setActivePotTab("withdraw");
+                    setDepositError("");
+                    setWithdrawError("");
+                  }}
+                  className={`flex-1 pb-3 text-xs font-black transition-all border-b-2 outline-none cursor-pointer ${
+                    activePotTab === "withdraw"
+                      ? "border-purple-600 text-purple-600"
+                      : "border-transparent text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  ทุบกระปุก (ถอน XP)
+                </button>
+              </div>
+
+              {activePotTab === "deposit" ? (
+                <>
+                  <p className="text-xs text-slate-500 mb-6">โอน XP สะสมไว้แลกของรางวัล โดยที่เลเวลของคุณจะไม่ลดลง</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center mb-6 border border-slate-100">
+                    <div><span className="text-[9px] font-black text-slate-400 uppercase">XP ปัจจุบัน</span><p className="text-sm font-bold">{totalXP} XP</p></div>
+                    <div><span className="text-[9px] font-black text-slate-400 uppercase">โอนได้สูงสุด</span><p className="text-sm font-bold text-purple-600">{maxTransfer} XP</p></div>
+                  </div>
+                  <div className="mb-6 relative">
+                    <input
+                      type="number"
+                      placeholder="จำนวนที่ต้องการออม"
+                      value={depositAmount}
+                      onChange={(e) => {
+                        setDepositAmount(e.target.value);
+                        const num = parseInt(e.target.value);
+                        if (isNaN(num) || num <= 0) setDepositError("กรุณากรอกจำนวนที่ถูกต้อง");
+                        else if (num > maxTransfer) setDepositError(`ออมได้สูงสุด ${maxTransfer} XP`);
+                        else setDepositError("");
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 pr-16 text-sm font-bold outline-none focus:border-purple-500"
+                    />
+                    <button
+                      onClick={() => {
+                        setDepositAmount(maxTransfer.toString());
+                        setDepositError("");
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-black text-purple-600 hover:text-purple-500 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  {depositError && <p className="text-red-500 text-[10px] font-bold mt-2 mb-4">{depositError}</p>}
+                  <button
+                    disabled={!!depositError || !depositAmount || parseInt(depositAmount) <= 0 || parseInt(depositAmount) > maxTransfer}
+                    onClick={() => { const amt = parseInt(depositAmount); if (!isNaN(amt)) handleDepositXP(amt); }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-black text-sm uppercase transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    ยืนยันการออม 🚀
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 mb-6">โอน XP กลับไปเติมเลเวลความคืบหน้า โดยจะโดนหักค่าธรรมเนียม 5% (เศษปัดลง)</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center mb-6 border border-slate-100">
+                    <div><span className="text-[9px] font-black text-slate-400 uppercase">XP ในกระปุก</span><p className="text-sm font-bold">{potXP} XP</p></div>
+                    <div><span className="text-[9px] font-black text-slate-400 uppercase">ค่าธรรมเนียม</span><p className="text-sm font-bold text-red-500">5%</p></div>
+                  </div>
+                  <div className="mb-6 relative">
+                    <input
+                      type="number"
+                      placeholder="จำนวนที่ต้องการถอน"
+                      value={withdrawAmount}
+                      onChange={(e) => {
+                        setWithdrawAmount(e.target.value);
+                        const num = parseInt(e.target.value);
+                        if (isNaN(num) || num <= 0) setWithdrawError("กรุณากรอกจำนวนที่ถูกต้อง");
+                        else if (num > potXP) setWithdrawError(`ในกระปุกมีเพียง ${potXP} XP`);
+                        else setWithdrawError("");
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 pr-16 text-sm font-bold outline-none focus:border-purple-500"
+                    />
+                    <button
+                      onClick={() => {
+                        setWithdrawAmount(potXP.toString());
+                        setWithdrawError("");
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-black text-purple-600 hover:text-purple-500 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  {withdrawError && <p className="text-red-500 text-[10px] font-bold mt-2 mb-4">{withdrawError}</p>}
+
+                  {withdrawAmount && !withdrawError && parseInt(withdrawAmount) > 0 && (
+                    <div className="bg-slate-50 p-4 rounded-2xl space-y-2 mb-6 border border-slate-100 text-xs font-bold text-slate-600">
+                      <div className="flex justify-between"><span>ถอนออก:</span><span className="text-slate-800">{parseInt(withdrawAmount)} XP</span></div>
+                      <div className="flex justify-between"><span>ค่าธรรมเนียม 5%:</span><span className="text-red-500">-{Math.floor(parseInt(withdrawAmount) * 0.05)} XP</span></div>
+                      <div className="w-full h-px bg-slate-200 my-1" />
+                      <div className="flex justify-between text-sm"><span>ได้รับสุทธิ:</span><span className="text-purple-600">{parseInt(withdrawAmount) - Math.floor(parseInt(withdrawAmount) * 0.05)} XP</span></div>
+                    </div>
+                  )}
+
+                  <button
+                    disabled={!!withdrawError || !withdrawAmount || parseInt(withdrawAmount) <= 0 || parseInt(withdrawAmount) > potXP}
+                    onClick={() => { const amt = parseInt(withdrawAmount); if (!isNaN(amt)) handleWithdrawXP(amt); }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-black text-sm uppercase transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    ยืนยันการถอน 🔨
+                  </button>
+                </>
+              )}
             </motion.div>
           </div>
         )}
@@ -685,7 +934,7 @@ export default function PremiumShopPage() {
               <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
                 <h4 className="text-lg font-black text-slate-900">คลังตั๋วความสุข</h4>
                 <div className="flex items-center gap-2">
-                  {redeemedHistory.length > 0 && (
+                  {redeemedHistory.length > 0 && isAdmin && (
                     <button
                       onClick={async () => {
                         if (!user) return;
@@ -786,7 +1035,14 @@ export default function PremiumShopPage() {
                   backgroundSize: "12px 12px"
                 }}
               >
-                <div id="happiness-ticket" className="relative w-full max-w-[280px] bg-slate-950 border border-slate-800/80 p-5 rounded-2xl flex flex-col items-center overflow-hidden">
+                <div 
+                  id="happiness-ticket" 
+                  className={`relative w-full max-w-[280px] p-5 rounded-2xl flex flex-col items-center overflow-hidden transition-all border ${
+                    redeemedItem.minLevel 
+                      ? "bg-gradient-to-b from-slate-950 via-amber-950/40 to-slate-950 border-amber-500/40 shadow-[0_4px_25px_rgba(245,158,11,0.25)]" 
+                      : "bg-slate-950 border-slate-800/80"
+                  }`}
+                >
                   
                   {/* Left Notch */}
                   <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-r border-slate-800/80" />
@@ -794,14 +1050,30 @@ export default function PremiumShopPage() {
                   <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-l border-slate-800/80" />
 
                   {/* Stamp/Seal Badge style watermark */}
-                  <div className="absolute right-4 top-4 w-12 h-12 border-2 border-indigo-500/20 rounded-full flex items-center justify-center rotate-12 pointer-events-none">
-                    <span className="text-[6px] text-indigo-500/30 font-black uppercase text-center tracking-tighter">APPROVED<br />FUII MENTOR</span>
+                  <div className={`absolute right-4 top-4 w-12 h-12 border-2 rounded-full flex items-center justify-center rotate-12 pointer-events-none ${
+                    redeemedItem.minLevel 
+                      ? "border-amber-500/35 text-amber-500/50" 
+                      : "border-indigo-500/20 text-indigo-500/30"
+                  }`}>
+                    <span className="text-[6px] font-black uppercase text-center tracking-tighter leading-none">
+                      {redeemedItem.minLevel ? "PREMIUM\nUNLOCK" : "APPROVED\nFUII MENTOR"}
+                    </span>
                   </div>
 
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 mb-3 flex items-center justify-center">
+                  <div className={`w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border mb-3 flex items-center justify-center ${
+                    redeemedItem.minLevel 
+                      ? "border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]" 
+                      : "border-white/10"
+                  }`}>
                     <img src={`/item/${redeemedItem.id}.png`} alt={redeemedItem.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/default-avatar.png"; }} />
                   </div>
                   
+                  {redeemedItem.minLevel && (
+                    <span className="text-[8px] font-black uppercase tracking-widest text-amber-400/90 mb-1 animate-pulse">
+                      ★ LV.{redeemedItem.minLevel} EXCLUSIVE ★
+                    </span>
+                  )}
+
                   <h3 className="text-base font-black text-white px-2 mb-1 tracking-tight text-center line-clamp-2">
                     {redeemedItem.title}
                   </h3>
@@ -813,8 +1085,12 @@ export default function PremiumShopPage() {
                   )}
 
                   {/* Price tag */}
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-black mb-4">
-                    <Trophy size={12} className="fill-current text-purple-400" /> {redeemedItem.price} XP REDEEMED
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black mb-4 border ${
+                    redeemedItem.minLevel 
+                      ? "bg-amber-500/20 border-amber-500/40 text-amber-300 shadow-[0_2px_10px_rgba(245,158,11,0.15)]" 
+                      : "bg-purple-500/10 border-purple-500/30 text-purple-300"
+                  }`}>
+                    <Trophy size={12} className={`fill-current ${redeemedItem.minLevel ? "text-amber-400" : "text-purple-400"}`} /> {redeemedItem.price} XP REDEEMED
                   </div>
 
                   {/* Dotted Divider for notches */}
