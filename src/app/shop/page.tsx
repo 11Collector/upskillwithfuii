@@ -482,14 +482,57 @@ export default function PremiumShopPage() {
 
         {/* --- Header --- */}
         <header className="mb-6 pt-0 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
-          {/* 🎫 Floating Ticket Button (Top Right) */}
-          <button
-            onClick={() => setShowInventoryModal(true)}
-            className="absolute top-0 right-0 z-40 flex items-center justify-center gap-1.5 bg-white border border-slate-200/80 px-3.5 py-2 rounded-full shadow-md text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-black text-xs active:scale-95 cursor-pointer"
-          >
-            <Ticket size={14} className="text-purple-600 animate-pulse" />
-            <span>ตั๋วของฉัน ({redeemedHistory.length})</span>
-          </button>
+          {/* 🌟 Top-Right Header Widgets (Level & Tickets) */}
+          <div className="absolute top-0 right-0 z-40 flex items-center gap-2">
+            {/* Tiny Level Circular Progress */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200/80 pl-2 pr-3 py-1 rounded-full shadow-sm shrink-0 h-9">
+              <div className="relative w-6 h-6 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 shadow-inner shrink-0">
+                <svg className="absolute inset-0 w-full h-full -rotate-90">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9.5"
+                    fill="transparent"
+                    stroke="#f1f5f9"
+                    strokeWidth="2"
+                  />
+                  <motion.circle
+                    cx="12"
+                    cy="12"
+                    r="9.5"
+                    fill="transparent"
+                    stroke="url(#orangeGradientTiny)"
+                    strokeWidth="2"
+                    strokeDasharray="59.7"
+                    initial={{ strokeDashoffset: 59.7 }}
+                    animate={{ strokeDashoffset: 59.7 - (currentLevelXP / 100) * 59.7 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    strokeLinecap="round"
+                  />
+                  <defs>
+                    <linearGradient id="orangeGradientTiny" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#ea580c" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="relative z-10 text-[9px] font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-red-650 leading-none">
+                  {currentLevel}
+                </div>
+              </div>
+              <span className="text-[10px] font-black text-slate-700 leading-none">LV {currentLevel}</span>
+            </div>
+
+            {/* 🎫 Floating Ticket Button */}
+            <button
+              onClick={() => setShowInventoryModal(true)}
+              className="flex items-center justify-center gap-1.5 bg-white border border-slate-200/80 px-3.5 py-2 rounded-full shadow-sm text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-black text-xs active:scale-95 h-9 cursor-pointer"
+            >
+              <Ticket size={14} className="text-purple-600 animate-pulse" />
+              <span>ตั๋วของฉัน ({redeemedHistory.length})</span>
+            </button>
+          </div>
+
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black mb-4 border border-purple-200/60 uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(168,85,247,0.04)]">
               <Trophy size={14} /> <span>Exclusive Happiness Shop</span>
@@ -500,57 +543,8 @@ export default function PremiumShopPage() {
             <p className="text-slate-500 text-sm md:text-base font-medium">แลกเปลี่ยนเศษเสี้ยวความสำเร็จ เพื่อให้การพัฒนาตัวเองสนุกในระยะยาว</p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 shrink-0 w-full md:w-auto">
-            {/* 🌟 Card 1: Current Level (Minimal Style) */}
-            <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-[2rem] p-5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)] shrink-0 min-w-[280px]">
-              <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 shadow-inner shrink-0">
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="27"
-                    fill="transparent"
-                    stroke="#f1f5f9"
-                    strokeWidth="3.5"
-                  />
-                  <motion.circle
-                    cx="32"
-                    cy="32"
-                    r="27"
-                    fill="transparent"
-                    stroke="url(#orangeGradient)"
-                    strokeWidth="3.5"
-                    strokeDasharray="169.6"
-                    initial={{ strokeDashoffset: 169.6 }}
-                    animate={{ strokeDashoffset: 169.6 - (currentLevelXP / 100) * 169.6 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    strokeLinecap="round"
-                  />
-                  <defs>
-                    <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#f97316" />
-                      <stop offset="100%" stopColor="#ea580c" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-
-                <div className="relative z-10 text-center flex flex-col items-center justify-center leading-none mt-0.5">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">LV</span>
-                  <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-red-600 mt-1 block">
-                    {currentLevel}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="text-left">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-wider block leading-none">เลเวลของคุณ</span>
-                <p className="text-sm font-black text-slate-800 mt-1.5 leading-none">
-                  {currentLevelXP} <span className="text-xs font-bold text-slate-400">/ 100 XP</span>
-                </p>
-              </div>
-            </div>
-
-            {/* 🐷 Card 2: Saving Pot (Minimal Style) */}
+          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center md:items-stretch gap-3 shrink-0">
+            {/* 🐷 Saving Pot Card (Minimal Style) */}
             <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-[2rem] p-5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)] shrink-0 min-w-[340px] flex-1 md:flex-none">
               <div className="w-16 h-16 rounded-[1.25rem] bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/10 shrink-0">
                 <PiggyBank size={24} />
