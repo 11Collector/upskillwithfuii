@@ -1510,30 +1510,30 @@ export default function DashboardPage() {
 
     const content = (
       <div className="space-y-5 text-left -mt-2">
-        <div className="relative p-6 rounded-[2.5rem] bg-zinc-950 border border-red-900/40 overflow-hidden shadow-sm">
-          <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
+        <div className="relative p-6 rounded-[2.5rem] bg-[#FAF5F2] border border-[#E6D9C5] overflow-hidden shadow-sm">
+          <div className="absolute inset-0 bg-red-500/5 pointer-events-none" />
           <div className="absolute right-[-10px] bottom-[-20px] text-8xl opacity-10 pointer-events-none">{ghost.emoji}</div>
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-600" />
 
           <div className="relative z-10">
             <div className="flex justify-between items-start gap-3 mb-5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-red-900/40 bg-red-950/50 text-red-400">
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-red-200 bg-red-50 text-red-600">
                 <Ghost size={14} />
                 <span className="text-[11px] font-black uppercase tracking-widest">{ghost.fearLabel}</span>
               </div>
               <div className="w-16 h-16 shrink-0">
-                <img src={`/ghosts/${ghost.id}.png`} alt={ghost.name} className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(220,38,38,0.5)]" />
+                <img src={`/ghosts/${ghost.id}.png`} alt={ghost.name} className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(220,38,38,0.3)]" />
               </div>
             </div>
 
-            <h4 className="font-black text-2xl text-white mb-1">{ghost.name}</h4>
-            <p className="text-[11px] text-red-500 font-black uppercase tracking-widest mb-4">"{ghost.tagline}"</p>
-            <p className="text-[13px] text-zinc-400 leading-relaxed mb-5">{ghost.story}</p>
+            <h4 className="font-black text-2xl text-[#3E2723] mb-1">{ghost.name}</h4>
+            <p className="text-[11px] text-red-600 font-black uppercase tracking-widest mb-4">"{ghost.tagline}"</p>
+            <p className="text-[13px] text-[#5C4033] leading-relaxed mb-5">{ghost.story}</p>
 
             <div className="flex flex-wrap gap-2">
               {/* ค่า value ต่ำคือจุดที่ขาด ไม่ใช่พฤติกรรมเด่น จึงไม่แสดง */}
               {ghost.stats.filter((s) => s.value >= 50).map((s) => (
-                <span key={s.label} className="text-[11px] font-bold text-red-400 bg-red-950/40 border border-red-900/40 px-3 py-1.5 rounded-full">
+                <span key={s.label} className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full">
                   {s.label}
                 </span>
               ))}
@@ -1544,30 +1544,30 @@ export default function DashboardPage() {
         {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
           const sec = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
           return (
-            <div className="flex items-center gap-4 px-5 py-4 rounded-[2rem] bg-zinc-900 border border-zinc-800">
+            <div className="flex items-center gap-4 px-5 py-4 rounded-[2rem] bg-white border border-[#E6D9C5] shadow-sm">
               <img src={`/ghosts/${sec.id}.png`} alt={sec.name} className="w-12 h-12 object-contain opacity-80 shrink-0" />
               <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">ตัวตนรอง</span>
-                <span className="text-[15px] font-black text-white">{sec.name}</span>
-                <span className="text-[10px] font-bold text-red-700/70 uppercase tracking-wide">{sec.fearLabel}</span>
+                <span className="text-[9px] font-black text-red-600/70 uppercase tracking-widest">ตัวตนรอง</span>
+                <span className="text-[15px] font-black text-[#3E2723]">{sec.name}</span>
+                <span className="text-[10px] font-bold text-red-600/80 uppercase tracking-wide">{sec.fearLabel}</span>
               </div>
             </div>
           );
         })()}
 
-        <div className="bg-red-950/30 border border-red-900/40 text-white p-6 rounded-[2rem] relative overflow-hidden">
-          <div className="flex items-center gap-2 text-red-400 font-black text-xs mb-3 uppercase tracking-widest">
+        <div className="bg-red-50/50 border border-red-200 text-[#3E2723] p-6 rounded-[2rem] relative overflow-hidden">
+          <div className="flex items-center gap-2 text-red-600 font-black text-xs mb-3 uppercase tracking-widest">
             <Sparkles size={14} /> วิธีฮีลตัวเอง
           </div>
-          <h5 className="font-black text-base text-white mb-3">{ghost.heal.title}</h5>
+          <h5 className="font-black text-base text-[#3E2723] mb-3">{ghost.heal.title}</h5>
           <ul className="space-y-2">
             {ghost.heal.steps.map((step, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-red-100/70 leading-relaxed">
-                <span className="text-red-500 font-black shrink-0">{i + 1}.</span> {step}
+              <li key={i} className="flex items-start gap-2 text-xs text-[#5C4033] leading-relaxed">
+                <span className="text-red-600 font-black shrink-0">{i + 1}.</span> {step}
               </li>
             ))}
           </ul>
-          <div className="mt-4 pt-4 border-t border-red-900/30 text-[11px] text-red-400/60 italic">"{ghost.affirmation}"</div>
+          <div className="mt-4 pt-4 border-t border-red-200/60 text-[11px] text-red-600/80 italic">"{ghost.affirmation}"</div>
         </div>
       </div>
     );
@@ -4623,7 +4623,7 @@ export default function DashboardPage() {
                 <Link href="/tools/ghost-in-you" className="group flex flex-col h-full relative">
                   {lastGhostResult && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGhostInfo(e); }}
-                      className="absolute top-8 right-8 z-20 p-2.5 text-zinc-500 hover:text-red-400 hover:bg-red-950/60 rounded-full transition-all bg-zinc-900/80 backdrop-blur-sm border border-zinc-800">
+                      className="absolute top-8 right-8 z-20 p-2.5 text-[#8C7A6B] hover:text-red-600 hover:bg-red-50 rounded-full transition-all bg-white border border-[#E6D9C5] shadow-sm">
                       <Info size={18} />
                     </button>
                   )}
@@ -4631,17 +4631,17 @@ export default function DashboardPage() {
                     <motion.div
                       initial={{ scale: 0, rotate: 10 }}
                       animate={{ scale: 1, rotate: -5 }}
-                      className="absolute top-8 right-8 bg-gradient-to-r from-red-700 to-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-red-950 flex items-center gap-1 z-30"
+                      className="absolute top-8 right-8 bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1 z-30"
                     >
                       <Zap size={10} className="fill-white" /> +50 XP
                     </motion.div>
                   )}
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="flex-1 bg-zinc-950 p-8 rounded-[3rem] border border-zinc-800/80 flex flex-col items-center text-center transition-all duration-500 hover:shadow-[0_20px_60px_rgba(220,38,38,0.15)] hover:border-red-900/50 relative overflow-hidden group"
+                    className="flex-1 bg-[#FAF5F2] p-8 rounded-[3rem] border border-[#E6D9C5] flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-red-900/30 relative overflow-hidden group"
                   >
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-900 via-red-500 to-red-900 transition-all duration-500 group-hover:h-2 z-0" />
-                    <div className="absolute top-0 right-0 w-72 h-72 bg-red-900/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:bg-red-900/20 transition-colors duration-700 z-0" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-red-600 opacity-90 transition-all duration-500 group-hover:h-2 z-0" />
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-red-500/5 to-red-900/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-red-500/10 transition-colors duration-700 z-0" />
 
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastGhostResult ? (() => {
@@ -4651,8 +4651,8 @@ export default function DashboardPage() {
                           <>
                             <div className="flex flex-col items-center mb-8">
                               <div className="relative mb-6 mt-2">
-                                <div className="absolute inset-0 bg-red-600/20 blur-3xl" />
-                                <div className="relative w-24 h-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
+                                <div className="absolute inset-0 bg-red-600/10 blur-3xl" />
+                                <div className="relative w-24 h-24 rounded-full bg-white border border-[#E6D9C5] flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden shadow-sm">
                                   <img
                                     src={`/ghosts/${ghost.id}.png`}
                                     alt={ghost.name}
@@ -4661,9 +4661,9 @@ export default function DashboardPage() {
                                 </div>
                               </div>
 
-                              <h3 className="font-bold text-zinc-600 text-[10px] uppercase tracking-[0.3em] mb-2.5">GHOST IN YOU</h3>
+                              <h3 className="font-bold text-red-600/80 text-[10px] uppercase tracking-[0.3em] mb-2.5">GHOST IN YOU</h3>
 
-                              <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-white group-hover:text-red-400 transition-colors">
+                              <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-[#3E2723] group-hover:text-red-600 transition-colors">
                                 {ghost.name}
                               </h2>
 
@@ -4671,11 +4671,11 @@ export default function DashboardPage() {
                                 {ghost.fearLabel}
                               </p>
 
-                              <div className="inline-flex items-center bg-red-950/50 text-red-400 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-red-900/40">
+                              <div className="inline-flex items-center bg-red-50 text-red-600 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-red-200">
                                 {ghost.nameEn}
                               </div>
 
-                              <p className="text-[14px] font-medium text-zinc-500 mb-5 px-2 leading-loose italic w-full">
+                              <p className="text-[14px] font-medium text-[#5C4033] mb-5 px-2 leading-loose italic w-full">
                                 "{ghost.tagline}"
                               </p>
 
@@ -4683,11 +4683,11 @@ export default function DashboardPage() {
                               {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
                                 const secGhost = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
                                 return (
-                                  <div className="mb-6 py-2.5 px-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center gap-3 w-full">
+                                  <div className="mb-6 py-2.5 px-4 rounded-2xl bg-white border border-[#E6D9C5] flex items-center gap-3 w-full shadow-sm">
                                     <img src={`/ghosts/${secGhost.id}.png`} alt={secGhost.name} className="w-8 h-8 object-contain opacity-70 shrink-0" />
                                     <div className="flex flex-col items-start leading-none gap-1">
-                                      <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">ตัวตนรอง</span>
-                                      <span className="text-[12px] font-bold text-zinc-400">{secGhost.name}</span>
+                                      <span className="text-[8px] font-black text-red-600/70 uppercase tracking-widest">ตัวตนรอง</span>
+                                      <span className="text-[12px] font-bold text-[#3E2723]">{secGhost.name}</span>
                                     </div>
                                   </div>
                                 );
@@ -4695,7 +4695,7 @@ export default function DashboardPage() {
                             </div>
 
                             <div className="w-full px-4 mt-auto">
-                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-zinc-800 text-zinc-500 text-[12px] font-black uppercase tracking-widest transition-all hover:border-red-900/60 hover:text-red-400 active:scale-95">
+                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-[#E6D9C5] text-[#8C7A6B] text-[12px] font-black uppercase tracking-widest transition-all hover:border-red-600/40 hover:text-red-600 active:scale-95 bg-white">
                                 <RefreshCw size={14} />
                                 <span>ประเมินใหม่</span>
                               </div>
@@ -4706,16 +4706,16 @@ export default function DashboardPage() {
                         <div className="flex flex-col items-center justify-between h-full w-full py-2">
                           <div className="flex flex-col items-center justify-center pt-8 mb-8">
                             <div className="relative mb-6">
-                              <div className="absolute inset-0 bg-red-900/20 blur-3xl" />
-                              <div className="relative w-24 h-24 rounded-full bg-zinc-900 text-zinc-600 flex items-center justify-center border border-zinc-800 group-hover:border-red-900/60 group-hover:text-red-500 transition-all">
+                              <div className="absolute inset-0 bg-red-600/10 blur-3xl" />
+                              <div className="relative w-24 h-24 rounded-full bg-white text-red-600/80 flex items-center justify-center border border-[#E6D9C5] group-hover:border-red-600 group-hover:text-red-600 transition-all shadow-sm">
                                 <Ghost size={36} />
                               </div>
                             </div>
-                            <h3 className="text-2xl font-black text-white mb-2">Ghost in You</h3>
-                            <p className="text-zinc-500 text-sm font-medium">ผีอะไรสิงคุณอยู่?</p>
+                            <h3 className="text-2xl font-black text-[#3E2723] mb-2">Ghost in You</h3>
+                            <p className="text-[#6F5B4E] text-sm font-medium">ผีอะไรสิงคุณอยู่?</p>
                           </div>
                           <div className="w-full px-4 mt-auto">
-                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-red-800 to-red-600 text-white text-[13px] font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(220,38,38,0.35)] group-hover:scale-[1.02] transition-all active:scale-95">
+                            <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-red-700 to-red-600 text-white text-[13px] font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(220,38,38,0.25)] group-hover:scale-[1.02] transition-all active:scale-95">
                               <Sparkles size={16} className="text-white/80" />
                               <span>สำรวจความกลัวลึกๆ (+50 XP)</span>
                             </div>
