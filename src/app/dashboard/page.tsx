@@ -2879,10 +2879,10 @@ export default function DashboardPage() {
               <div className="relative z-10 flex flex-col h-full w-full">
 
                 {/* 📊 1. Top Navbar (🌟 แสดงบน Desktop เท่านั้น - hidden lg:flex) */}
-                <div className="hidden lg:flex relative z-[999] flex-row flex-wrap items-center justify-between gap-4 w-full mb-8">
+                <div className="hidden lg:flex relative z-[999] flex-row flex-nowrap items-center justify-between gap-4 w-full mb-8">
 
                   {/* Left: Combined Profile & Level Card */}
-                  <div className="flex items-center gap-3 bg-slate-800/80 p-2 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[280px] md:min-w-[340px] hover:border-yellow-500/30 transition-colors">
+                  <div className="flex items-center gap-3 bg-slate-800/80 p-2 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[280px] xl:min-w-[340px] hover:border-yellow-500/30 transition-colors">
                     {/* Left: Avatar with floating Trophy icon */}
                     <div className="relative shrink-0">
                       <img
