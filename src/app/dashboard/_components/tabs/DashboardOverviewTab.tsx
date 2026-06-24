@@ -171,80 +171,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
               </div>
 
-              {/* 🎯 Level Info Modal: เด้งกลางจอแบบ Premium */}
-              <AnimatePresence>
-                {showLevelInfo && (
-                  /* 1. Backdrop: ฉากหลังดำจางๆ และเบลอ */
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
-                    onClick={() => setShowLevelInfo(false)} // คลิกข้างนอกเพื่อปิด
-                  >
-/* 2. Modal Content: เด้งขึ้นมาจากด้านล่างนิดๆ */
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                      className="relative w-full max-w-sm bg-slate-800 border border-slate-600 p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] text-left overflow-hidden"
-                      onClick={(e) => e.stopPropagation()} // กันบั๊ก: คลิกข้างในไม่ต้องปิด
-                    >
-                      {/* ✨ ตกแต่งด้วยแสงฟุ้งมุมขวาบนเหมือนหน้าบอร์ด */}
-                      <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none" />
 
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-center mb-6">
-                          <h4 className="text-lg font-black text-white flex items-center gap-2">
-                            <Sparkles size={18} className="text-yellow-400" />
-                            ระบบ Level การเรียนรู้
-                          </h4>
-                          <button
-                            onClick={() => setShowLevelInfo(false)}
-                            className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
-                          >
-                            <X size={20} />
-                          </button>
-                        </div>
-
-                        <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-                          ทุกๆ <span className="text-yellow-400 font-bold">100 XP</span> ที่สะสมจากการทำภารกิจ จะถูกนำมาอัป Level เพื่อปลดล็อกสิทธิพิเศษต่างๆ!
-                        </p>
-
-                        <ul className="space-y-4 text-[13px] font-bold text-slate-300 mb-8">
-                          <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-slate-500 transition-all">
-                            <span className="w-3 h-3 rounded-full bg-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.5)]" />
-                            <span>LV 1-9 : Rookie Upskiller</span>
-                          </li>
-                          <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-yellow-500 transition-all">
-                            <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
-                            <span>LV 10-19 : Habit Master</span>
-                          </li>
-                          <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
-                            <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
-                            <span>LV 20-29 : Life Architect</span>
-                          </li>
-                          <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-red-500 transition-all">
-                            <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                            <span>LV 30+ : Legacy Shaper</span>
-                          </li>
-                        </ul>
-
-                        {/* ✨ แถบสรุป XP ด้านล่าง (ไฮไลต์ให้เด่น) */}
-                        <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-5 rounded-3xl border border-slate-500 flex justify-between items-center shadow-inner">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Progress</span>
-                            <span className="text-sm font-bold text-white">แต้มสะสมทั้งหมด</span>
-                          </div>
-                          <div className="bg-yellow-400 text-slate-900 px-4 py-2 rounded-xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.3)]">
-                            {totalXP} <span className="text-xs">XP</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
 
@@ -286,33 +213,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
 
 
 
-                {/* Floating Gender Toggle (ชาย/หญิง) */}
-                <div className="absolute top-1/2 -translate-y-1/2 -right-8 z-30 flex flex-col gap-2 bg-slate-950/80 backdrop-blur-md p-1 border border-white/10 rounded-2xl shadow-2xl">
-                  <button
-                    onClick={() => handleGenderChange("male")}
-                    className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 cursor-pointer ${
-                      gender === "male"
-                        ? "bg-gradient-to-br from-blue-500/80 to-sky-400/80 text-white shadow-[0_0_12px_rgba(59,130,246,0.5)] border border-blue-400/30"
-                        : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
-                    }`}
-                    title="เพศชาย"
-                  >
-                    <span className="text-lg leading-none">👨🏻</span>
-                    <span className="text-[8px] font-black tracking-tighter mt-0.5 leading-none">ชาย</span>
-                  </button>
-                  <button
-                    onClick={() => handleGenderChange("female")}
-                    className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 cursor-pointer ${
-                      gender === "female"
-                        ? "bg-gradient-to-br from-pink-500/80 to-rose-400/80 text-white shadow-[0_0_12px_rgba(236,72,153,0.5)] border border-pink-400/30"
-                        : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
-                    }`}
-                    title="เพศหญิง"
-                  >
-                    <span className="text-lg leading-none">👩🏻</span>
-                    <span className="text-[8px] font-black tracking-tighter mt-0.5 leading-none">หญิง</span>
-                  </button>
-                </div>
+
               </div>
 
               {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
