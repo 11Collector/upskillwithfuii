@@ -313,6 +313,9 @@ export default function DashboardPage() {
   const [showFloatingXP, setShowFloatingXP] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [depositError, setDepositError] = useState<string>("");
+  const [activePotTab, setActivePotTab] = useState<"deposit" | "withdraw">("deposit");
+  const [withdrawAmount, setWithdrawAmount] = useState<string>("");
+  const [withdrawError, setWithdrawError] = useState<string>("");
 
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean, title: string, content: string | React.ReactNode } | null>(null);
   const [bookMatchModal, setBookMatchModal] = useState(false);
@@ -714,11 +717,58 @@ export default function DashboardPage() {
       setTotalXP((prev) => prev - amount);
       setPotXP((prev) => prev + amount);
       setShowDepositModal(false);
+      setDepositAmount("");
+      setWithdrawAmount("");
+      setDepositError("");
+      setWithdrawError("");
+      setActivePotTab("deposit");
       
       playSuccessChime();
     } catch (error) {
       console.error("Error depositing XP:", error);
       alert("เกิดข้อผิดพลาดในการหยอดกระปุก");
+    }
+  };
+
+  const handleWithdrawXP = async (amount: number) => {
+    if (!user) return;
+    if (amount <= 0 || amount > potXP) {
+      alert("จำนวน XP ไม่ถูกต้อง");
+      return;
+    }
+
+    try {
+      const fee = Math.floor(amount * 0.05);
+      const netAmount = amount - fee;
+
+      const oldLevel = Math.floor(totalXP / 100) + 1;
+      const newLevel = Math.floor((totalXP + netAmount) / 100) + 1;
+
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        totalXP: increment(netAmount),
+        potXP: increment(-amount)
+      });
+
+      setTotalXP((prev) => prev + netAmount);
+      setPotXP((prev) => prev - amount);
+
+      if (newLevel > oldLevel) {
+        setShowLevelUp({ isOpen: true, newLevel });
+        setTimeout(() => setShowLevelUp(null), 4000);
+      }
+
+      setShowDepositModal(false);
+      setDepositAmount("");
+      setWithdrawAmount("");
+      setDepositError("");
+      setWithdrawError("");
+      setActivePotTab("deposit");
+      
+      playSuccessChime();
+    } catch (error) {
+      console.error("Error withdrawing XP:", error);
+      alert("เกิดข้อผิดพลาดในการถอน XP");
     }
   };
 
@@ -1170,6 +1220,59 @@ export default function DashboardPage() {
       </div>
     );
     setInfoModal({ isOpen: true, title: "ถอดรหัสสไตล์การเงิน", content });
+  };
+  const openQuoteInfo = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!lastQuote) return;
+
+    const mood = lastQuote.mood || "ไม่ระบุ";
+    const wordsList = lastQuote.words || [];
+
+    const content = (
+      <div className="space-y-5 text-left -mt-2">
+        {/* ✨ ความรู้สึกขณะนั้น */}
+        <div className="relative p-6 rounded-[2rem] bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 overflow-hidden shadow-sm">
+          <div className="relative z-10">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 block mb-1">
+              อารมณ์ / ความรู้สึกในตอนนั้น
+            </span>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="px-3 py-1 bg-indigo-500 text-white rounded-full text-xs font-black shadow-[0_4px_10px_rgba(99,102,241,0.2)]">
+                {mood}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-bold mt-3 leading-relaxed">
+              นี่คือความรู้สึกที่คุณเลือกไว้ก่อนที่ AI จะประมวลผลกลั่นกรองออกมาเป็นคำคมฮีลใจเฉพาะตัวคุณ
+            </p>
+          </div>
+        </div>
+
+        {/* 💡 3 คำทัชใจ */}
+        <div className="relative p-6 rounded-[2rem] bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 overflow-hidden shadow-sm">
+          <div className="relative z-10">
+            <span className="text-[10px] font-black uppercase tracking-wider text-purple-500 block mb-1">
+              3 คำศัพท์ที่ทัชใจคุณ
+            </span>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {wordsList.length > 0 ? (
+                wordsList.map((word: string, i: number) => (
+                  <span key={i} className="px-3.5 py-1.5 bg-purple-100 border border-purple-200 text-purple-700 rounded-xl text-xs font-extrabold shadow-sm">
+                    ✨ {word}
+                  </span>
+                ))
+              ) : (
+                <span className="text-slate-400 text-xs italic">ไม่มีข้อมูลคำศัพท์สะสม</span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 font-bold mt-4 leading-relaxed">
+              ชุดคำศัพท์เชิงนามธรรมที่คุณได้ทำการเลือกไว้ ซึ่งถูกนำมาร้อยเรียงเข้ากับเนื้อหาคำคมวันนี้
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+
+    setInfoModal({ isOpen: true, title: "ถอดรหัสความรู้สึกคำคม", content });
   };
   const openDiscInfo = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -2775,183 +2878,227 @@ export default function DashboardPage() {
 
               <div className="relative z-10 flex flex-col h-full w-full">
 
-                {/* 📊 1. Top Navbar (🌟 แสดงเฉพาะบน Desktop เท่านั้น - hidden sm:flex) */}
-                <div className="hidden sm:flex relative z-[999] flex-row justify-between items-center gap-4 w-full mb-8">
+                {/* 📊 1. Top Navbar (🌟 แสดงบน Desktop เท่านั้น - hidden lg:flex) */}
+                <div className="hidden lg:flex relative z-[999] flex-row flex-nowrap items-center justify-between gap-4 w-full mb-8">
 
-                  {/* Desktop: Profile Box */}
-                  <div className="flex items-center justify-between bg-white/5 p-1.5 pl-2 pr-4 rounded-full border border-white/10 backdrop-blur-sm shadow-xl w-auto min-w-[220px] hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0 text-left flex-1">
+                  {/* Left: Combined Profile & Level Card */}
+                  <div className="flex items-center gap-3 bg-slate-800/80 p-2 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[280px] xl:min-w-[340px] hover:border-yellow-500/30 transition-colors">
+                    {/* Left: Avatar with floating Trophy icon */}
+                    <div className="relative shrink-0">
                       <img
                         src={user?.photoURL || "/default-avatar.png"}
                         alt="Profile"
                         referrerPolicy="no-referrer"
-                        className="w-9 h-9 rounded-full border-2 border-slate-50 shadow-md shrink-0"
+                        className="w-10 h-10 rounded-full border-2 border-slate-50 shadow-md shrink-0"
                       />
-
-                      {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
-                      {isEditingName ? (
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <input
-                            id="desktopNameInput"
-                            autoFocus
-                            defaultValue={newName}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleUpdateName((e.target as HTMLInputElement).value);
-                              if (e.key === 'Escape') setIsEditingName(false);
-                            }}
-                            className="bg-slate-800 border border-blue-500/50 rounded-md px-2 py-0.5 text-[11px] text-white outline-none w-full shadow-inner focus:border-blue-500 transition-all"
-                          />
-                          <button
-                            onClick={() => {
-                              const val = (document.getElementById('desktopNameInput') as HTMLInputElement)?.value;
-                              handleUpdateName(val);
-                            }}
-                            className="text-emerald-400 hover:text-emerald-300 transition-colors shrink-0 p-0.5"
-                          >
-                            <CheckCircle2 size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          className="truncate pr-2 cursor-pointer group/name flex-1 min-w-0"
-                          onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}
-                          title="คลิกเพื่อเปลี่ยนชื่อ"
-                        >
-                          <p className="text-xs font-black text-white truncate flex items-center gap-1.5">
-                            {user?.displayName}
-                            {/* ✨ ไอคอนวิ้งๆ บอกใบ้ว่ากดแก้ได้ */}
-                            <Sparkles size={10} className="text-slate-500 group-hover/name:text-yellow-400 transition-colors" />
-                          </p>
-                          <p className="text-[9px] text-slate-400 font-medium truncate">{user?.email}</p>
-                        </div>
-                      )}
+                      <div className="absolute -bottom-1 -right-1 p-0.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-md scale-90">
+                        <Trophy size={10} className="fill-current" />
+                      </div>
                     </div>
 
-                    <button
-                      onClick={handleLogout}
-                      className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
-                    >
-                      <LogOut size={14} className="group-hover/btn:-translate-x-0.5 transition-transform" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {/* 📊 1.2 Level Box (Desktop) */}
-                    <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[220px] hover:border-yellow-500/50 transition-colors">
-                    <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.3)] shrink-0 group-hover:scale-110 transition-transform">
-                      <Trophy size={14} className="fill-current" />
-                    </div>
+                    {/* Middle: User details and Level progress */}
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-black text-white">LV.{currentLevel}</span>
-                        <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors shrink-0">
-                          <Info size={12} />
-                        </button>
+                        {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
+                        {isEditingName ? (
+                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <input
+                              id="desktopNameInput"
+                              autoFocus
+                              defaultValue={newName}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateName((e.target as HTMLInputElement).value);
+                                if (e.key === 'Escape') setIsEditingName(false);
+                              }}
+                              className="bg-slate-900 border border-blue-500/50 rounded-md px-1.5 py-0.5 text-[10px] text-white outline-none w-full shadow-inner focus:border-blue-500 transition-all"
+                            />
+                            <button
+                              onClick={() => {
+                                const val = (document.getElementById('desktopNameInput') as HTMLInputElement)?.value;
+                                handleUpdateName(val);
+                              }}
+                              className="text-emerald-400 hover:text-emerald-300 transition-colors shrink-0 p-0.5"
+                            >
+                              <CheckCircle2 size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            className="truncate cursor-pointer group/name flex-1 min-w-0"
+                            onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}
+                            title="คลิกเพื่อเปลี่ยนชื่อ"
+                          >
+                            <p className="text-xs font-black text-white truncate flex items-center gap-1">
+                              {user?.displayName}
+                              <Sparkles size={8} className="text-slate-500 group-hover/name:text-yellow-400 transition-colors" />
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[9px] font-black text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded-full border border-yellow-400/20">
+                            LV.{currentLevel}
+                          </span>
+                          <button onClick={() => setShowLevelInfo(!showLevelInfo)} className="text-slate-400 hover:text-yellow-400 transition-colors shrink-0">
+                            <Info size={10} />
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none mt-0.5 truncate">
-                        {getLevelTitle(currentLevel)}
-                      </p>
-                      <div className="w-full h-1.5 bg-slate-700 rounded-full mt-1.5 overflow-hidden flex items-center relative">
+
+                      {/* Level title and email line */}
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p className="text-[9px] font-bold text-yellow-400 uppercase tracking-widest leading-none truncate">
+                          {getLevelTitle(currentLevel)}
+                        </p>
+                        <span className="text-[8px] text-slate-500 truncate max-w-[100px] leading-none">
+                          {user?.email}
+                        </span>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <div className="w-full h-1 bg-slate-700 rounded-full mt-1.5 overflow-hidden relative">
                         <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000 relative" style={{ width: `${currentLevelXP}%` }} />
                       </div>
                     </div>
 
-                    {/* 🎯 Level Info Modal: เด้งกลางจอแบบ Premium */}
-                    <AnimatePresence>
-                      {showLevelInfo && (
-                        /* 1. Backdrop: ฉากหลังดำจางๆ และเบลอ */
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
-                          onClick={() => setShowLevelInfo(false)} // คลิกข้างนอกเพื่อปิด
-                        >
-      /* 2. Modal Content: เด้งขึ้นมาจากด้านล่างนิดๆ */
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-sm bg-slate-800 border border-slate-600 p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] text-left overflow-hidden"
-                            onClick={(e) => e.stopPropagation()} // กันบั๊ก: คลิกข้างในไม่ต้องปิด
-                          >
-                            {/* ✨ ตกแต่งด้วยแสงฟุ้งมุมขวาบนเหมือนหน้าบอร์ด */}
-                            <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none" />
-
-                            <div className="relative z-10">
-                              <div className="flex justify-between items-center mb-6">
-                                <h4 className="text-lg font-black text-white flex items-center gap-2">
-                                  <Sparkles size={18} className="text-yellow-400" />
-                                  ระบบ Level การเรียนรู้
-                                </h4>
-                                <button
-                                  onClick={() => setShowLevelInfo(false)}
-                                  className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
-                                >
-                                  <X size={20} />
-                                </button>
-                              </div>
-
-                              <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-                                ทุกๆ <span className="text-yellow-400 font-bold">100 XP</span> ที่สะสมจากการทำภารกิจ จะถูกนำมาอัป Level เพื่อปลดล็อกสิทธิพิเศษต่างๆ!
-                              </p>
-
-                              <ul className="space-y-4 text-[13px] font-bold text-slate-300 mb-8">
-                                <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-slate-500 transition-all">
-                                  <span className="w-3 h-3 rounded-full bg-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.5)]" />
-                                  <span>LV 1-9 : Rookie Upskiller</span>
-                                </li>
-                                <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-yellow-500 transition-all">
-                                  <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
-                                  <span>LV 10-19 : Habit Master</span>
-                                </li>
-                                <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
-                                  <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
-                                  <span>LV 20-29 : Life Architect</span>
-                                </li>
-                                <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-red-500 transition-all">
-                                  <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                                  <span>LV 30+ : Legacy Shaper</span>
-                                </li>
-                              </ul>
-
-                              {/* ✨ แถบสรุป XP ด้านล่าง (ไฮไลต์ให้เด่น) */}
-                              <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-5 rounded-3xl border border-slate-500 flex justify-between items-center shadow-inner">
-                                <div className="flex flex-col">
-                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Progress</span>
-                                  <span className="text-sm font-bold text-white">แต้มสะสมทั้งหมด</span>
-                                </div>
-                                <div className="bg-yellow-400 text-slate-900 px-4 py-2 rounded-xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.3)]">
-                                  {totalXP} <span className="text-xs">XP</span>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* 🐷 Saving Pot Widget (Desktop) */}
-                  <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[180px] hover:border-violet-500/50 transition-colors">
-                    <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] shrink-0">
-                      <PiggyBank size={14} />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
-                      <p className="text-xs font-black text-white mt-0.5 truncate">
-                        {potXP} <span className="text-[10px] font-bold text-slate-400">XP</span>
-                      </p>
-                    </div>
+                    {/* Right: Logout Button */}
                     <button
-                      onClick={() => setShowDepositModal(true)}
-                      className="px-2.5 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                      onClick={handleLogout}
+                      className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
                     >
-                      ออม XP
+                      <LogOut size={12} className="group-hover/btn:-translate-x-0.5 transition-transform" />
                     </button>
                   </div>
+
+                  {/* Right side: Widgets & Actions */}
+                  <div className="flex items-center gap-3">
+                    {/* 🐷 Saving Pot Widget (Desktop) */}
+                    <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 pl-2 pr-4 rounded-full border border-slate-600 backdrop-blur-sm shadow-xl relative w-auto min-w-[180px] hover:border-violet-500/50 transition-colors">
+                      <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] shrink-0">
+                        <PiggyBank size={14} />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
+                        <p className="text-xs font-black text-white mt-0.5 truncate">
+                          {potXP} <span className="text-[10px] font-bold text-slate-400">XP</span>
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setDepositError("");
+                          setWithdrawError("");
+                          setDepositAmount("");
+                          setWithdrawAmount("");
+                          setActivePotTab("deposit");
+                          setShowDepositModal(true);
+                        }}
+                        className="px-2.5 py-1 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95 cursor-pointer"
+                      >
+                        ออม/ถอน XP
+                      </button>
+                    </div>
+
+                    {/* 🛍️ Shop Shortcut (Rainbow theme) */}
+                    <Link href="/shop" className="shrink-0">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center justify-center w-10 h-10 rounded-full p-[1px] cursor-pointer shadow-md bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600"
+                        title="Happiness Shop"
+                      >
+                        <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                          <ShoppingBag size={16} />
+                        </div>
+                      </motion.div>
+                    </Link>
+
+                    {/* 📷 Player Card Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowShareModal(true)}
+                      className="flex items-center justify-center w-10 h-10 bg-slate-800/80 hover:bg-slate-700/80 rounded-full border border-slate-600 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
+                      title="Player Card"
+                    >
+                      <Camera size={16} />
+                    </motion.button>
+                  </div>
+
+                  {/* 🎯 Level Info Modal: เด้งกลางจอแบบ Premium */}
+                  <AnimatePresence>
+                    {showLevelInfo && (
+                      /* 1. Backdrop: ฉากหลังดำจางๆ และเบลอ */
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl"
+                        onClick={() => setShowLevelInfo(false)} // คลิกข้างนอกเพื่อปิด
+                      >
+                        {/* 2. Modal Content: เด้งขึ้นมาจากด้านล่างนิดๆ */}
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                          className="relative w-full max-w-sm bg-slate-800 border border-slate-600 p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] text-left overflow-hidden"
+                          onClick={(e) => e.stopPropagation()} // กันบั๊ก: คลิกข้างในไม่ต้องปิด
+                        >
+                          {/* ✨ ตกแต่งด้วยแสงฟุ้งมุมขวาบนเหมือนหน้าบอร์ด */}
+                          <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+                          <div className="relative z-10">
+                            <div className="flex justify-between items-center mb-6">
+                              <h4 className="text-lg font-black text-white flex items-center gap-2">
+                                <Sparkles size={18} className="text-yellow-400" />
+                                ระบบ Level การเรียนรู้
+                              </h4>
+                              <button
+                                onClick={() => setShowLevelInfo(false)}
+                                className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
+                              >
+                                <X size={20} />
+                              </button>
+                            </div>
+
+                            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+                              ทุกๆ <span className="text-yellow-400 font-bold">100 XP</span> ที่สะสมจากการทำภารกิจ จะถูกนำมาอัป Level เพื่อปลดล็อกสิทธิพิเศษต่างๆ!
+                            </p>
+
+                            <ul className="space-y-4 text-[13px] font-bold text-slate-300 mb-8">
+                              <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-slate-500 transition-all">
+                                <span className="w-3 h-3 rounded-full bg-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.5)]" />
+                                <span>LV 1-9 : Rookie Upskiller</span>
+                              </li>
+                              <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-yellow-500 transition-all">
+                                <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
+                                <span>LV 10-19 : Habit Master</span>
+                              </li>
+                              <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
+                                <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+                                <span>LV 20-29 : Life Architect</span>
+                              </li>
+                              <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-red-500 transition-all">
+                                <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+                                <span>LV 30+ : Legacy Shaper</span>
+                              </li>
+                            </ul>
+
+                            {/* ✨ แถบสรุป XP ด้านล่าง (ไฮไลต์ให้เด่น) */}
+                            <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-5 rounded-3xl border border-slate-500 flex justify-between items-center shadow-inner">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Progress</span>
+                                <span className="text-sm font-bold text-white">แต้มสะสมทั้งหมด</span>
+                              </div>
+                              <div className="bg-yellow-400 text-slate-900 px-4 py-2 rounded-xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+                                {totalXP} <span className="text-xs">XP</span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
 
                 {/* 🎯 2. Hero Section (จัดข้อความซ้าย อวตาร+Badge ขวา) */}
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between w-full gap-6 mb-6 relative z-30">
@@ -3028,10 +3175,17 @@ export default function DashboardPage() {
                           
                           <div className="flex items-center gap-1 shrink-0">
                             <button
-                              onClick={() => setShowDepositModal(true)}
-                              className="px-3.5 py-1.5 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_8px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95"
+                              onClick={() => {
+                                setDepositError("");
+                                setWithdrawError("");
+                                setDepositAmount("");
+                                setWithdrawAmount("");
+                                setActivePotTab("deposit");
+                                setShowDepositModal(true);
+                              }}
+                              className="px-3.5 py-1.5 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_8px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95 cursor-pointer"
                             >
-                              ออม XP
+                              ออม/ถอน XP
                             </button>
                           </div>
                         </div>
@@ -3060,6 +3214,137 @@ export default function DashboardPage() {
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setShowShareModal(true)}
                           className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                          title="Player Card"
+                        >
+                          <Camera size={18} />
+                        </motion.button>
+                      </div>
+                    </div>
+
+                    {/* 📟 iPad / Tablet Only: Image 2 Layout */}
+                    <div className="hidden sm:flex lg:hidden items-center justify-center gap-4 w-full max-w-[500px] mt-6 relative z-[999]">
+                      
+                      {/* Main Combined Card */}
+                      <div className="flex-1 flex flex-col bg-slate-800/80 p-5 rounded-[2rem] border border-slate-600 backdrop-blur-sm relative hover:border-yellow-500/30 transition-all text-left shadow-xl">
+                        
+                        {/* Upper Section: Profile & Level */}
+                        <div className="flex items-center gap-4">
+                          {/* Trophy Icon */}
+                          <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl text-slate-900 shadow-md shrink-0">
+                            <Trophy size={20} className="fill-current" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
+                              {isEditingName ? (
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  <input
+                                    id="ipadNameInput"
+                                    autoFocus
+                                    defaultValue={newName}
+                                    onBlur={() => setIsEditingName(false)}
+                                    className="bg-slate-900 border border-blue-500/50 rounded-md px-1.5 py-0.5 text-[10px] text-white outline-none w-full shadow-inner focus:border-blue-500 transition-all"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleUpdateName((e.target as HTMLInputElement).value)}
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  className="truncate cursor-pointer group/name flex-1 min-w-0"
+                                  onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}
+                                  title="คลิกเพื่อเปลี่ยนชื่อ"
+                                >
+                                  <span className="text-sm font-black text-white truncate flex items-center gap-1">
+                                    {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Info & Logout buttons */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={() => setShowLevelInfo(true)}
+                                  className="text-slate-400 p-1 hover:text-white transition-colors"
+                                >
+                                  <Info size={14} />
+                                </button>
+                                <button
+                                  onClick={handleLogout}
+                                  className="text-slate-400 p-1 hover:text-red-400 transition-colors"
+                                  title="ออกจากระบบ"
+                                >
+                                  <LogOut size={14} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Level Title */}
+                            <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest leading-none mt-1">
+                              LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
+                            </p>
+
+                            {/* Progress bar */}
+                            <div className="w-full h-1.5 bg-slate-950 rounded-full mt-3 overflow-hidden relative">
+                              <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000" style={{ width: `${currentLevelXP}%` }} />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Divider Line */}
+                        <div className="w-full h-px bg-white/10 my-4" />
+
+                        {/* Lower Section: Saving Pot */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="p-2 bg-violet-500/10 rounded-xl text-violet-400 border border-violet-500/20 shrink-0">
+                              <PiggyBank size={16} />
+                            </div>
+                            <div className="text-left min-w-0">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none block">Saving Pot</span>
+                              <p className="text-xs font-black text-white mt-0.5 truncate">
+                                {potXP} <span className="text-[8px] font-bold text-slate-400">XP</span>
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              setDepositError("");
+                              setWithdrawError("");
+                              setDepositAmount("");
+                              setWithdrawAmount("");
+                              setActivePotTab("deposit");
+                              setShowDepositModal(true);
+                            }}
+                            className="px-3.5 py-1.5 text-[10px] font-black text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-full shadow-[0_2px_8px_rgba(109,40,217,0.3)] transition-all shrink-0 active:scale-95 cursor-pointer"
+                          >
+                            ออม/ถอน XP
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Stacked Action Buttons */}
+                      <div className="flex flex-col gap-2.5 shrink-0">
+                        {/* Premium Shop Shortcut (Rainbow theme) */}
+                        <Link href="/shop">
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1px] cursor-pointer shadow-md"
+                            style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
+                            title="Happiness Shop"
+                          >
+                            <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                              <ShoppingBag size={18} />
+                            </div>
+                          </motion.div>
+                        </Link>
+
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowShareModal(true)}
+                          className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
                           title="Player Card"
                         >
                           <Camera size={18} />
@@ -3421,14 +3706,24 @@ export default function DashboardPage() {
               </div>
 
               {/* ✨ ปรับ Quest วันนี้ */}
-              <Link
-                href="/tools/soul-guide?quest=1"
-                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
-                title="คุยกับ AI Mentor เพื่อปรับ quest วันนี้"
-              >
-                <Sparkles size={13} />
-                <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
-              </Link>
+              {currentLevel < 10 ? (
+                <div
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none opacity-60"
+                  title="ฟีเจอร์ปรับแต่งเควสด้วย AI จะปลดล็อกเมื่อถึง Level 10 (Habit Master)"
+                >
+                  <Lock size={12} className="text-slate-400" />
+                  <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest (LV.10)</span>
+                </div>
+              ) : (
+                <Link
+                  href="/tools/soul-guide?quest=1"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
+                  title="คุยกับ AI Mentor เพื่อปรับ quest วันนี้"
+                >
+                  <Sparkles size={13} />
+                  <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
+                </Link>
+              )}
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md mb-6">
@@ -3951,7 +4246,15 @@ export default function DashboardPage() {
                 {/* 🌟 2. คมสัดสัด */}
 
 
-                <Link href="/tools/khomsatsat" className="group block h-full">
+                <Link href="/tools/khomsatsat" className="group block h-full relative">
+                  {/* ปุ่ม Info */}
+                  {lastQuote && (
+                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openQuoteInfo(e); }}
+                      className="absolute top-8 right-8 z-20 p-2.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-all bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100">
+                      <Info size={18} />
+                    </button>
+                  )}
+
                   <motion.div
                     whileHover={{ y: -6, scale: 1.01 }}
                     className="h-full bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 relative overflow-hidden flex flex-col group hover:shadow-xl hover:border-indigo-200 transition-all duration-500"
@@ -6281,6 +6584,9 @@ export default function DashboardPage() {
                 setShowDepositModal(false);
                 setDepositAmount("");
                 setDepositError("");
+                setWithdrawAmount("");
+                setWithdrawError("");
+                setActivePotTab("deposit");
               }}
               className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
             />
@@ -6293,91 +6599,208 @@ export default function DashboardPage() {
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
               
               <div className="relative z-10">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-4">
                   <h4 className="text-lg font-black text-white flex items-center gap-2">
                     <PiggyBank size={18} className="text-violet-400" />
-                    หยอดกระปุกออม XP
+                    {activePotTab === "deposit" ? "ออม XP" : "ทุบกระปุกถอน XP"}
                   </h4>
                   <button
                     onClick={() => {
                       setShowDepositModal(false);
                       setDepositAmount("");
                       setDepositError("");
+                      setWithdrawAmount("");
+                      setWithdrawError("");
+                      setActivePotTab("deposit");
                     }}
-                    className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
+                    className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors cursor-pointer"
                   >
                     <X size={20} />
                   </button>
                 </div>
 
-                <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-                  โอนเศษ XP สะสมไปไว้ที่ Saving Pot เพื่อสะสมไว้แลกของรางวัลใน Shop โดย <span className="text-violet-400 font-bold">เลเวลปัจจุบันของคุณจะไม่ลดลง</span>
-                </p>
-
-                <div className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-3xl mb-6 flex justify-between items-center">
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">โอนได้สูงสุด</span>
-                    <span className="text-xs font-bold text-white">เพื่อรักษาเลเวลเดิม</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-black text-violet-400">{totalXP % 100}</span>
-                    <span className="text-[10px] font-bold text-slate-400 ml-1">XP</span>
-                  </div>
+                {/* Tab Header (Dark Theme) */}
+                <div className="flex border-b border-slate-800 mb-6 -mx-8 px-8">
+                  <button
+                    onClick={() => {
+                      setActivePotTab("deposit");
+                      setDepositError("");
+                      setWithdrawError("");
+                    }}
+                    className={`flex-1 pb-3 text-xs font-black transition-all border-b-2 outline-none cursor-pointer ${
+                      activePotTab === "deposit"
+                        ? "border-violet-500 text-violet-400"
+                        : "border-transparent text-slate-500 hover:text-slate-400"
+                    }`}
+                  >
+                    หยอดกระปุก (ออม XP)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActivePotTab("withdraw");
+                      setDepositError("");
+                      setWithdrawError("");
+                    }}
+                    className={`flex-1 pb-3 text-xs font-black transition-all border-b-2 outline-none cursor-pointer ${
+                      activePotTab === "withdraw"
+                        ? "border-violet-500 text-violet-400"
+                        : "border-transparent text-slate-500 hover:text-slate-400"
+                    }`}
+                  >
+                    ทุบกระปุก (ถอน XP)
+                  </button>
                 </div>
 
-                <div className="mb-6">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">จำนวนที่ต้องการหยอด</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={depositAmount}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setDepositAmount(val);
-                        const num = parseInt(val);
-                        const maxTransfer = totalXP % 100;
-                        if (isNaN(num) || num <= 0) {
-                          setDepositError("กรุณากรอกจำนวนที่ถูกต้อง");
-                        } else if (num > maxTransfer) {
-                          setDepositError(`หยอดได้สูงสุด ${maxTransfer} XP เท่านั้นเพื่อไม่ให้เลเวลลด`);
-                        } else {
-                          setDepositError("");
+                {activePotTab === "deposit" ? (
+                  <>
+                    <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+                      โอนเศษ XP สะสมไปไว้ที่ Saving Pot เพื่อสะสมไว้แลกของรางวัลใน Shop โดย <span className="text-violet-400 font-bold">เลเวลปัจจุบันของคุณจะไม่ลดลง</span>
+                    </p>
+
+                    <div className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-3xl mb-6 flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">โอนได้สูงสุด</span>
+                        <span className="text-xs font-bold text-white">เพื่อรักษาเลเวลเดิม</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-lg font-black text-violet-400">{totalXP % 100}</span>
+                        <span className="text-[10px] font-bold text-slate-400 ml-1">XP</span>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">จำนวนที่ต้องการหยอด</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={depositAmount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDepositAmount(val);
+                            const num = parseInt(val);
+                            const maxTransfer = totalXP % 100;
+                            if (isNaN(num) || num <= 0) {
+                              setDepositError("กรุณากรอกจำนวนที่ถูกต้อง");
+                            } else if (num > maxTransfer) {
+                              setDepositError(`หยอดได้สูงสุด ${maxTransfer} XP เท่านั้นเพื่อไม่ให้เลเวลลด`);
+                            } else {
+                              setDepositError("");
+                            }
+                          }}
+                          placeholder="0"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-2xl py-3.5 px-4 pr-16 text-white font-bold outline-none focus:border-violet-500 transition-all text-sm"
+                        />
+                        <button
+                          onClick={() => {
+                            const maxTransfer = totalXP % 100;
+                            setDepositAmount(maxTransfer.toString());
+                            setDepositError("");
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-[10px] font-black text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-xl transition-all"
+                        >
+                          MAX
+                        </button>
+                      </div>
+                      {depositError && (
+                        <p className="text-[11px] font-bold text-red-400 mt-2 flex items-center gap-1">
+                          <span>⚠️</span> {depositError}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      disabled={!!depositError || !depositAmount || parseInt(depositAmount) <= 0}
+                      onClick={() => {
+                        const amt = parseInt(depositAmount);
+                        if (!isNaN(amt)) {
+                          handleDepositXP(amt);
+                          setDepositAmount("");
                         }
                       }}
-                      placeholder="0"
-                      className="w-full bg-slate-950 border border-slate-700 rounded-2xl py-3.5 px-4 pr-16 text-white font-bold outline-none focus:border-violet-500 transition-all text-sm"
-                    />
-                    <button
-                      onClick={() => {
-                        const maxTransfer = totalXP % 100;
-                        setDepositAmount(maxTransfer.toString());
-                        setDepositError("");
-                      }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-[10px] font-black text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-xl transition-all"
+                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                     >
-                      MAX
+                      ยืนยันหยอดกระปุก 🚀
                     </button>
-                  </div>
-                  {depositError && (
-                    <p className="text-[11px] font-bold text-red-400 mt-2 flex items-center gap-1">
-                      <span>⚠️</span> {depositError}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+                      โอน XP กลับไปเติมเลเวลความคืบหน้า โดยจะโดนหักค่าธรรมเนียม <span className="text-violet-400 font-bold">5%</span> (เศษปัดลง)
                     </p>
-                  )}
-                </div>
 
-                <button
-                  disabled={!!depositError || !depositAmount || parseInt(depositAmount) <= 0}
-                  onClick={() => {
-                    const amt = parseInt(depositAmount);
-                    if (!isNaN(amt)) {
-                      handleDepositXP(amt);
-                      setDepositAmount("");
-                    }
-                  }}
-                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  ยืนยันหยอดกระปุก 🚀
-                </button>
+                    <div className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-3xl mb-6 flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase">XP ในกระปุก</span>
+                        <span className="text-xs font-bold text-white">ถอนไปเติมที่เลเวล</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-lg font-black text-violet-400">{potXP}</span>
+                        <span className="text-[10px] font-bold text-slate-400 ml-1">XP</span>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">จำนวนที่ต้องการถอน</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={withdrawAmount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setWithdrawAmount(val);
+                            const num = parseInt(val);
+                            if (isNaN(num) || num <= 0) {
+                              setWithdrawError("กรุณากรอกจำนวนที่ถูกต้อง");
+                            } else if (num > potXP) {
+                              setWithdrawError(`ในกระปุกมีเพียง ${potXP} XP`);
+                            } else {
+                              setWithdrawError("");
+                            }
+                          }}
+                          placeholder="0"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-2xl py-3.5 px-4 pr-16 text-white font-bold outline-none focus:border-violet-500 transition-all text-sm"
+                        />
+                        <button
+                          onClick={() => {
+                            setWithdrawAmount(potXP.toString());
+                            setWithdrawError("");
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-[10px] font-black text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-xl transition-all"
+                        >
+                          MAX
+                        </button>
+                      </div>
+                      {withdrawError && (
+                        <p className="text-[11px] font-bold text-red-400 mt-2 flex items-center gap-1">
+                          <span>⚠️</span> {withdrawError}
+                        </p>
+                      )}
+                    </div>
+
+                    {withdrawAmount && !withdrawError && parseInt(withdrawAmount) > 0 && (
+                      <div className="bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl space-y-2 mb-6 text-xs font-bold text-slate-300">
+                        <div className="flex justify-between"><span>ถอนออก:</span><span className="text-white">{parseInt(withdrawAmount)} XP</span></div>
+                        <div className="flex justify-between"><span>ค่าธรรมเนียม 5%:</span><span className="text-red-400">-{Math.floor(parseInt(withdrawAmount) * 0.05)} XP</span></div>
+                        <div className="w-full h-px bg-slate-700/50 my-1" />
+                        <div className="flex justify-between text-sm"><span>ได้รับสุทธิ:</span><span className="text-violet-400">{parseInt(withdrawAmount) - Math.floor(parseInt(withdrawAmount) * 0.05)} XP</span></div>
+                      </div>
+                    )}
+
+                    <button
+                      disabled={!!withdrawError || !withdrawAmount || parseInt(withdrawAmount) <= 0 || parseInt(withdrawAmount) > potXP}
+                      onClick={() => {
+                        const amt = parseInt(withdrawAmount);
+                        if (!isNaN(amt)) {
+                          handleWithdrawXP(amt);
+                          setWithdrawAmount("");
+                        }
+                      }}
+                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                    >
+                      ยืนยันการถอน 🔨
+                    </button>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>
