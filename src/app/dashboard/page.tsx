@@ -14,7 +14,7 @@ import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
 import { ghostResults } from "@/data/ghostResults";
 
 import { MONEY_DATA, DISC_DATA, QUEST_POOL, categoryNames } from "@/data/quests";
-import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA } from "@/data/constants";
+import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA, SHOP_ITEMS } from "@/data/constants";
 
 import { formatAnalysisText, AvatarDisplay, calculateRelativeWeek } from "@/utils/dashboardHelpers";
 import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
@@ -95,36 +95,6 @@ const playSuccessChime = () => {
     console.error("Audio Context Error: ", e);
   }
 };
-
-const SHOP_ITEMS = [
-  // 🟢 ระดับที่ 1: ความสุขรายวัน (Green Tier: daily, 20-40 XP)
-  { id: 1, title: "กาแฟ Specialty / ชานมพรีเมียม 1 แก้ว", price: 20, tier: "daily", emoji: "☕" },
-  { id: 2, title: "เบเกอรี่ / เค้กจากร้านดัง 1 ชิ้น", price: 30, tier: "daily", emoji: "🍰" },
-  { id: 3, title: "มื้อพิเศษตามใจปาก ซูชิเซ็ต / หมูกรอบเบิ้ล", price: 30, tier: "daily", emoji: "🍣" },
-  { id: 4, title: "พวงกุญแจ / แผ่นสติกเกอร์ลายที่ชอบ", price: 35, tier: "daily", emoji: "🔑" },
-  { id: 5, title: "แก้วน้ำเก็บความเย็น / แก้วมัคน่ารักๆ", price: 40, tier: "daily", emoji: "🥤" },
-
-  // 🟡 ระดับที่ 2: รางวัลสุดสัปดาห์ (Yellow Tier: weekend, 50-80 XP)
-  { id: 6, title: "เซ็ตชาบู / หมูกระทะ / ปิ้งย่าง 1 มื้อ", price: 50, tier: "weekend", emoji: "🍲" },
-  { id: 7, title: "บอร์ดเกมขนาดเล็ก / การ์ดเกม", price: 50, tier: "weekend", emoji: "🎲" },
-  { id: 8, title: "ตั๋วหนังโรง VIP / โรง IMAX 1 ที่นั่ง", price: 60, tier: "weekend", emoji: "🎬" },
-  { id: 9, title: "หมอนหนุนดูดวิญญาณ / หมอนเมมโมรี่โฟม", price: 70, tier: "weekend", emoji: "🛌" },
-  { id: 10, title: "หนังสือเล่มโปรด / มังงะยกเซ็ต", price: 80, tier: "weekend", emoji: "📚" },
-
-  // 🟠 ระดับที่ 3: ของรางวัลชิ้นกลาง (Orange Tier: mid, 100-150 XP)
-  { id: 11, title: "คอร์สเข้าร้านนวดสปา / นวดแผนไทย", price: 100, tier: "mid", emoji: "💆" },
-  { id: 12, title: "กล่องสุ่ม Art Toy ยอดฮิต 1 จุ่ม", price: 120, tier: "mid", emoji: "🎁" },
-  { id: 13, title: "แผ่นเกมคอนโซล / บัตรเติมเงินเกม", price: 120, tier: "mid", emoji: "🎮" },
-  { id: 14, title: "บัตรรับประทานอาหารบุฟเฟต์โรงแรมหรู", price: 150, tier: "mid", emoji: "🍽️" },
-  { id: 15, title: "สกินแคร์ / น้ำหอมแบรนด์เนม 1 ขวด", price: 150, tier: "mid", emoji: "🧴" },
-
-  // 🔴 ระดับที่ 4: บิ๊กโบนัส/ทริปในฝัน (Red Tier: epic, 200-500 XP)
-  { id: 16, title: "รองเท้าผ้าใบ (Sneakers) คู่ใจคู่ใหม่", price: 200, tier: "epic", emoji: "👟" },
-  { id: 17, title: "บัตรคอนเสิร์ต / งานมิวสิคเฟสติวัล", price: 250, tier: "epic", emoji: "🎟️" },
-  { id: 18, title: "แกดเจ็ตแต่งโต๊ะคอม / คีย์บอร์ด Custom", price: 300, tier: "epic", emoji: "⌨️" },
-  { id: 19, title: "ทริปต่างจังหวัด 2 วัน 1 คืน โรงแรมสวย", price: 350, tier: "epic", emoji: "🏖️" },
-  { id: 20, title: "ตั๋วเครื่องบินไปเที่ยวต่างประเทศใกล้ๆ", price: 500, tier: "epic", emoji: "✈️" }
-];
 
 const ConfettiPiece = ({ color, delay }: { color: string; delay: number }) => {
   const randomX = Math.random() * 200 - 100;
