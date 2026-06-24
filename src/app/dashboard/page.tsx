@@ -19,6 +19,8 @@ import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA 
 import { formatAnalysisText, AvatarDisplay, calculateRelativeWeek } from "@/utils/dashboardHelpers";
 import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
 import { fetchDashboardData } from "@/services/dashboardService";
+import { MementoMoriBento } from "./_components/MementoMoriBento";
+import { MementoMoriModal } from "./_components/MementoMoriModal";
 // AI Quest marker constants or unused legacy variables cleaned up
 
 const playSuccessChime = () => {
@@ -375,6 +377,7 @@ export default function DashboardPage() {
   });
 
   const [userData, setUserData] = useState<any>(null);
+  const [showMementoModal, setShowMementoModal] = useState(false);
 
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
@@ -884,6 +887,77 @@ export default function DashboardPage() {
       if (nav) nav.style.display = 'flex';
     };
   }, [showRerollConfirm, showLevelUp, showDailySuccess, showShareModal, showLevelInfo, showLineModal, showSuccessToast]);
+
+  // --- ⏳ Memento Mori / Life Countdown Handlers ---
+  const handleSaveMementoMoriData = async (birthdate: string, expectedAge: number) => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const isFirstSetup = !userData?.birthdate;
+      const updates: any = { birthdate, expectedAge };
+      
+      if (isFirstSetup) {
+        updates.totalXP = increment(15);
+        playSuccessChime();
+        const oldLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+        const newLevel = Math.floor(((userData?.totalXP || 0) + 15) / 100) + 1;
+        if (newLevel > oldLevel) {
+          setShowLevelUp({ isOpen: true, newLevel });
+          setTimeout(() => setShowLevelUp(null), 4000);
+        }
+        setTotalXP((prev) => prev + 15);
+      }
+      
+      await updateDoc(userRef, updates);
+      setUserData((prev: any) => ({
+        ...prev,
+        birthdate,
+        expectedAge,
+        totalXP: (prev?.totalXP || 0) + (isFirstSetup ? 15 : 0)
+      }));
+    } catch (e) {
+      console.error("Error saving Memento Mori setup:", e);
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลตั้งค่า");
+    }
+  };
+
+  const handleAddMementoReflection = async (question: string, answer: string, xpReward: number) => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const newReflection = {
+        id: "ref-" + Date.now(),
+        question,
+        answer,
+        answeredAt: new Date().toISOString()
+      };
+      
+      const updatedReflections = [...(userData?.mementoReflections || []), newReflection];
+      const updates: any = { mementoReflections: updatedReflections };
+      
+      if (xpReward > 0) {
+        updates.totalXP = increment(xpReward);
+        playSuccessChime();
+        const oldLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+        const checkNewLevel = Math.floor(((userData?.totalXP || 0) + xpReward) / 100) + 1;
+        if (checkNewLevel > oldLevel) {
+          setShowLevelUp({ isOpen: true, newLevel: checkNewLevel });
+          setTimeout(() => setShowLevelUp(null), 4000);
+        }
+        setTotalXP((prev) => prev + xpReward);
+      }
+      
+      await updateDoc(userRef, updates);
+      setUserData((prev: any) => ({
+        ...prev,
+        mementoReflections: updatedReflections,
+        totalXP: (prev?.totalXP || 0) + xpReward
+      }));
+    } catch (e) {
+      console.error("Error saving reflection:", e);
+      alert("เกิดข้อผิดพลาดในการบันทึกการทบทวน");
+    }
+  };
 
   const handleLogout = async () => {
     try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
@@ -4651,6 +4725,12 @@ export default function DashboardPage() {
                     </div>
                   </motion.div>
                 </Link>
+
+                {/* ⏳ Memento Mori / Life Countdown Bento */}
+                <MementoMoriBento
+                  userData={userData}
+                  onOpenModal={() => setShowMementoModal(true)}
+                />
               </>
             )}
 
@@ -6437,6 +6517,19 @@ export default function DashboardPage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- ⏳ Modal: Memento Mori / Life Countdown --- */}
+      <AnimatePresence>
+        {showMementoModal && (
+          <MementoMoriModal
+            isOpen={showMementoModal}
+            onClose={() => setShowMementoModal(false)}
+            userData={userData}
+            onSaveSetup={handleSaveMementoMoriData}
+            onAddReflection={handleAddMementoReflection}
+          />
         )}
       </AnimatePresence>
 
