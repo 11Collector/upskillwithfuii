@@ -480,7 +480,7 @@ export default function PremiumShopPage() {
       <div className="max-w-5xl mx-auto relative z-10">
 
         {/* --- Header --- */}
-        <header className="mb-6 pt-0 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
+        <header className="mb-6 pt-0 md:pt-8 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
           {/* 🎫 Floating Ticket Button */}
           <button
             onClick={() => setShowInventoryModal(true)}
