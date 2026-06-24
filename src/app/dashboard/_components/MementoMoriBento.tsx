@@ -55,7 +55,7 @@ export const MementoMoriBento: React.FC<MementoMoriBentoProps> = ({ userData, on
   const hasSetup = !!userData?.birthdate;
 
   return (
-    <div className="group block h-full relative cursor-pointer" onClick={onOpenModal}>
+    <div className="group flex flex-col h-full relative cursor-pointer" onClick={onOpenModal}>
       {/* Dynamic styling for sand drip animation */}
       <style>{`
         @keyframes sandDrip {
@@ -70,7 +70,7 @@ export const MementoMoriBento: React.FC<MementoMoriBentoProps> = ({ userData, on
 
       <motion.div
         whileHover={{ y: -6 }}
-        className="h-full bg-[#F4ECE1] p-8 rounded-[3rem] shadow-sm border border-[#E6D9C5] flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-[#8B5A2B]/40 relative overflow-hidden"
+        className="flex-1 bg-[#F4ECE1] p-8 rounded-[3rem] shadow-sm border border-[#E6D9C5] flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-[#8B5A2B]/40 relative overflow-hidden"
       >
         {/* Ambient Light & Brown Top Bar */}
         <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-[#8B5A2B]/10 to-[#D2B48C]/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-[#8B5A2B]/15 transition-colors duration-700 z-0" />

@@ -4017,7 +4017,7 @@ export default function DashboardPage() {
             {(activeTab === "home" || activeTab === "identity") && (
               <>
                 {/* 🌟 1. Wheel of Life */}
-                <Link href="/tools/wheel-of-life" className="md:col-span-2 group block h-full relative">
+                <Link href="/tools/wheel-of-life" className="md:col-span-2 group flex flex-col h-full relative">
 
                   {/* ปุ่ม Info ด้านขวาบน */}
                   {lastWheel && (
@@ -4059,7 +4059,7 @@ export default function DashboardPage() {
 
                   <motion.div
                     whileHover={{ y: -6, scale: 1.01 }}
-                    className="h-full bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-red-50 relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:border-red-200 flex flex-col justify-center group"
+                    className="flex-1 bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-red-50 relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:border-red-200 flex flex-col justify-center group"
                   >
                     {!lastWheel && (
                       <motion.div
@@ -4216,7 +4216,7 @@ export default function DashboardPage() {
                 {/* 🌟 2. คมสัดสัด */}
 
 
-                <Link href="/tools/khomsatsat" className="group block h-full relative">
+                <Link href="/tools/khomsatsat" className="group flex flex-col h-full relative">
                   {/* ปุ่ม Info */}
                   {lastQuote && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openQuoteInfo(e); }}
@@ -4227,7 +4227,7 @@ export default function DashboardPage() {
 
                   <motion.div
                     whileHover={{ y: -6, scale: 1.01 }}
-                    className="h-full bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 relative overflow-hidden flex flex-col group hover:shadow-xl hover:border-indigo-200 transition-all duration-500"
+                    className="flex-1 bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 relative overflow-hidden flex flex-col group hover:shadow-xl hover:border-indigo-200 transition-all duration-500"
                   >
                     {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
@@ -4273,7 +4273,7 @@ export default function DashboardPage() {
                 </Link>
 
                 {/* 🌟 3. DISC - ปรับโครงสร้างให้เท่ากับ Money Avatar */}
-                <Link href="/tools/disc" className="group block h-full relative">
+                <Link href="/tools/disc" className="group flex flex-col h-full relative">
                   {/* ปุ่ม Info */}
                   {lastDisc && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openDiscInfo(e); }}
@@ -4284,7 +4284,7 @@ export default function DashboardPage() {
 
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-blue-200 relative overflow-hidden group"
+                    className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-blue-200 relative overflow-hidden group"
                   >
                     {/* XP Badge */}
                     {!lastDisc && (
@@ -4390,7 +4390,7 @@ export default function DashboardPage() {
                   </motion.div>
                 </Link>
 
-                <Link href="/tools/money-avatar" className="group block h-full relative">
+                <Link href="/tools/money-avatar" className="group flex flex-col h-full relative">
                   {lastMoney && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openMoneyInfo(e); }}
                       className="absolute top-8 right-8 z-20 p-2.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-all bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100">
@@ -4399,7 +4399,7 @@ export default function DashboardPage() {
                   )}
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-amber-100 relative overflow-hidden group"
+                    className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-amber-100 relative overflow-hidden group"
                   >
                     {/* 🏷️ Floating XP Badge (ตำแหน่ง Top 8 Right 8 เท่ากันเป๊ะ) */}
                     {!lastMoney && (
@@ -4519,7 +4519,7 @@ export default function DashboardPage() {
                 </Link>
 
                 {/* 🌟 4. Library of Souls - Personality Assessment */}
-                <Link href="/tools/library-of-souls" className="group block h-full relative">
+                <Link href="/tools/library-of-souls" className="group flex flex-col h-full relative">
                   {/* ปุ่ม Info */}
                   {lastLibrarySoul && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openLibrarySoulInfo(e); }}
@@ -4529,7 +4529,7 @@ export default function DashboardPage() {
                   )}
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-emerald-200 relative overflow-hidden group"
+                    className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-emerald-200 relative overflow-hidden group"
                   >
                     {!lastLibrarySoul && (
                       <motion.div
@@ -4620,7 +4620,7 @@ export default function DashboardPage() {
                 </Link>
 
                 {/* 👻 5. Ghost in You */}
-                <Link href="/tools/ghost-in-you" className="group block h-full relative">
+                <Link href="/tools/ghost-in-you" className="group flex flex-col h-full relative">
                   {lastGhostResult && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGhostInfo(e); }}
                       className="absolute top-8 right-8 z-20 p-2.5 text-zinc-500 hover:text-red-400 hover:bg-red-950/60 rounded-full transition-all bg-zinc-900/80 backdrop-blur-sm border border-zinc-800">
@@ -4638,7 +4638,7 @@ export default function DashboardPage() {
                   )}
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="h-full bg-zinc-950 p-8 rounded-[3rem] border border-zinc-800/80 flex flex-col items-center text-center transition-all duration-500 hover:shadow-[0_20px_60px_rgba(220,38,38,0.15)] hover:border-red-900/50 relative overflow-hidden group"
+                    className="flex-1 bg-zinc-950 p-8 rounded-[3rem] border border-zinc-800/80 flex flex-col items-center text-center transition-all duration-500 hover:shadow-[0_20px_60px_rgba(220,38,38,0.15)] hover:border-red-900/50 relative overflow-hidden group"
                   >
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-900 via-red-500 to-red-900 transition-all duration-500 group-hover:h-2 z-0" />
                     <div className="absolute top-0 right-0 w-72 h-72 bg-red-900/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:bg-red-900/20 transition-colors duration-700 z-0" />
@@ -4734,11 +4734,11 @@ export default function DashboardPage() {
                 {/* 🌟 6. Deep Work Mode - Premium Monochrome Style */}
                 <Link
                   href="/tools/focus-room"
-                  className="group block h-full relative cursor-pointer"
+                  className="group flex flex-col h-full relative cursor-pointer"
                 >
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-zinc-200 relative overflow-hidden"
+                    className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-zinc-200 relative overflow-hidden"
                   >
 
                     {/* 🏷️ Status Badge (ตำแหน่งเดียวกับ Library) */}
@@ -4798,10 +4798,10 @@ export default function DashboardPage() {
 
                 {/* 🌟 6. AI Personal Mentor - Silver Premium Style (Placed after Deep Work) */}
                 {(activeTab === "home" || activeTab === "resources" || activeTab === "identity") && (
-                  <Link href="/tools/soul-guide" className="group block h-full relative">
+                  <Link href="/tools/soul-guide" className="group flex flex-col h-full relative">
                     <motion.div
                       whileHover={{ y: -6 }}
-                      className="h-full bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-slate-300 relative overflow-hidden group"
+                      className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-slate-300 relative overflow-hidden group"
                     >
 
 
@@ -4854,11 +4854,11 @@ export default function DashboardPage() {
                 {/* 🌟 6. BRAIN (Upskill Library) - Premium Gold & Black Style */}
                 <Link
                   href="/library"
-                  className="group block h-full relative cursor-pointer"
+                  className="group flex flex-col h-full relative cursor-pointer"
                 >
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="h-full p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-amber-500/50"
+                    className="flex-1 p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-amber-500/50"
                   >
 
                     {/* 🏷️ Status Badge */}
@@ -4912,11 +4912,11 @@ export default function DashboardPage() {
                 {(activeTab === "home" || activeTab === "resources") && (
                   <Link
                     href="/shop"
-                    className="group block h-full relative cursor-pointer"
+                    className="group flex flex-col h-full relative cursor-pointer"
                   >
                     <motion.div
                       whileHover={{ y: -6 }}
-                      className="h-full p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-pink-500/50"
+                      className="flex-1 p-8 rounded-[3rem] shadow-sm border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center bg-slate-950 border-slate-800 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] hover:border-pink-500/50"
                     >
                       {/* 🏷️ Status Badge */}
                       <div className="absolute top-8 right-8 z-30">
