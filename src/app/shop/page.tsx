@@ -487,7 +487,7 @@ export default function PremiumShopPage() {
             className="absolute top-0 right-0 z-40 flex items-center justify-center gap-1.5 bg-white border border-slate-200/80 px-3.5 py-2 rounded-full shadow-sm text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-black text-xs active:scale-95 h-9 cursor-pointer"
           >
             <Ticket size={14} className="text-purple-600 animate-pulse" />
-            <span>ตั๋วของฉัน ({redeemedHistory.length})</span>
+            <span>ตั๋วของฉัน</span>
           </button>
 
           <div>
@@ -660,8 +660,8 @@ export default function PremiumShopPage() {
                           </span>
                         )}
                       </div>
-                      <h3 className="text-sm font-bold text-slate-800 mb-1 leading-snug line-clamp-1 overflow-hidden">{item.title}</h3>
-                      <p className="text-[11px] text-slate-500 mb-4 leading-relaxed line-clamp-3 overflow-hidden min-h-[3rem]">{item.desc}</p>
+                      <h3 className="text-sm font-bold text-slate-800 mb-1 leading-snug">{item.title}</h3>
+                      <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">{item.desc}</p>
                     </div>
                     <button
                       onClick={() => handleRedeemItem(item)}

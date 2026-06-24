@@ -4729,6 +4729,14 @@ export default function DashboardPage() {
               </>
             )}
 
+            {/* ⏳ Memento Mori / Life Countdown Bento */}
+            {(activeTab === "home" || activeTab === "identity") && (
+              <MementoMoriBento
+                userData={userData}
+                onOpenModal={() => setShowMementoModal(true)}
+              />
+            )}
+
             {(activeTab === "home" || activeTab === "resources") && (
               <>
                 {/* 🌟 6. Deep Work Mode - Premium Monochrome Style */}
@@ -4966,14 +4974,6 @@ export default function DashboardPage() {
                 )}
 
               </>
-            )}
-
-            {/* ⏳ Memento Mori / Life Countdown Bento (Placed after Shop) */}
-            {(activeTab === "home" || activeTab === "identity") && (
-              <MementoMoriBento
-                userData={userData}
-                onOpenModal={() => setShowMementoModal(true)}
-              />
             )}
 
           </div>

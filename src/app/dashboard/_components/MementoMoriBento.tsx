@@ -10,49 +10,101 @@ interface MementoMoriBentoProps {
 }
 
 export const MementoMoriBento: React.FC<MementoMoriBentoProps> = ({ userData, onOpenModal }) => {
-  const [weeksRemaining, setWeeksRemaining] = useState<number | null>(null);
-  const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
   const [percentLived, setPercentLived] = useState<number | null>(null);
   const [hasReflectedThisWeek, setHasReflectedThisWeek] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<{
+    years: number;
+    months: number;
+    weeks: number;
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  } | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [displayUnit, setDisplayUnit] = useState<'weeks' | 'months' | 'years'>('weeks');
+
+  const toggleUnit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the modal
+    setDisplayUnit(prev => {
+      if (prev === 'weeks') return 'months';
+      if (prev === 'months') return 'years';
+      return 'weeks';
+    });
+  };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!userData?.birthdate) return;
 
     const birthDate = new Date(userData.birthdate);
     const expectedAge = userData.expectedAge || 80;
-    const now = new Date();
 
-    // Calculate target date of death
-    const targetDate = new Date(birthDate);
-    targetDate.setFullYear(birthDate.getFullYear() + expectedAge);
+    const updateTimer = () => {
+      const now = new Date();
+      const targetDate = new Date(birthDate);
+      targetDate.setFullYear(birthDate.getFullYear() + expectedAge);
 
-    const diffTime = targetDate.getTime() - now.getTime();
-    const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-    const diffWeeks = Math.max(0, Math.floor(diffDays / 7));
+      const diffTime = targetDate.getTime() - now.getTime();
+      
+      // Calculate percent lived
+      const totalDays = expectedAge * 365.25;
+      const daysLived = Math.max(0, (now.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
+      const calculatedPercent = Math.min(100, Math.max(0, (daysLived / totalDays) * 100));
+      setPercentLived(calculatedPercent);
 
-    const totalDays = expectedAge * 365.25;
-    const daysLived = Math.max(0, (now.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
-    const calculatedPercent = Math.min(100, Math.max(0, (daysLived / totalDays) * 100));
+      // Check if reflected this week (within last 7 days)
+      if (userData.mementoReflections && userData.mementoReflections.length > 0) {
+        const sorted = [...userData.mementoReflections].sort(
+          (a: any, b: any) => new Date(b.answeredAt).getTime() - new Date(a.answeredAt).getTime()
+        );
+        const lastAnswer = new Date(sorted[0].answeredAt);
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        setHasReflectedThisWeek(lastAnswer.getTime() > oneWeekAgo.getTime());
+      } else {
+        setHasReflectedThisWeek(false);
+      }
 
-    setDaysRemaining(diffDays);
-    setWeeksRemaining(diffWeeks);
-    setPercentLived(calculatedPercent);
+      if (diffTime <= 0) {
+        setTimeLeft({ years: 0, months: 0, weeks: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
 
-    // Check if reflected this week (within last 7 days)
-    if (userData.mementoReflections && userData.mementoReflections.length > 0) {
-      const sorted = [...userData.mementoReflections].sort(
-        (a: any, b: any) => new Date(b.answeredAt).getTime() - new Date(a.answeredAt).getTime()
-      );
-      const lastAnswer = new Date(sorted[0].answeredAt);
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      setHasReflectedThisWeek(lastAnswer.getTime() > oneWeekAgo.getTime());
-    } else {
-      setHasReflectedThisWeek(false);
-    }
+      const weeks = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7)));
+      const months = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.4375)));
+
+      let years = targetDate.getFullYear() - now.getFullYear();
+      let testDate = new Date(now);
+      testDate.setFullYear(now.getFullYear() + years);
+      if (testDate.getTime() > targetDate.getTime()) {
+        years--;
+      }
+
+      const baseDate = new Date(now);
+      baseDate.setFullYear(now.getFullYear() + years);
+      
+      const diffAfterYears = targetDate.getTime() - baseDate.getTime();
+      
+      const days = Math.floor(diffAfterYears / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffAfterYears / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diffAfterYears / (1000 * 60)) % 60);
+      const seconds = Math.floor((diffAfterYears / 1000) % 60);
+
+      setTimeLeft({ years, months, weeks, days, hours, minutes, seconds });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
   }, [userData]);
 
   const hasSetup = !!userData?.birthdate;
+  const showTime = mounted && timeLeft;
 
   return (
     <div className="group flex flex-col h-full relative cursor-pointer" onClick={onOpenModal}>
@@ -176,16 +228,84 @@ export const MementoMoriBento: React.FC<MementoMoriBentoProps> = ({ userData, on
           {hasSetup ? (
             <>
               {/* Description & XP Badge */}
-              <div className="flex flex-col items-center mb-8 px-6 max-w-[280px]">
+              <div className="flex flex-col items-center mb-8 px-6 max-w-[320px] w-full">
                 {/* Lived percentage pill */}
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF5ED] text-[#5C4033] rounded-full border border-[#D2B48C]/40 text-[11px] font-black mb-3 shadow-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF5ED] text-[#5C4033] rounded-full border border-[#D2B48C]/40 text-[11px] font-black mb-2 shadow-sm">
                   ผ่านไปแล้ว {percentLived !== null ? percentLived.toFixed(1) : "0.0"}% ของชีวิต
                 </span>
+
+                {/* Weeks/Months/Years Remaining Title & Large Stat (Clickable) */}
+                <div 
+                  className="mt-2 mb-4 text-center cursor-pointer select-none group/unit hover:scale-105 active:scale-95 transition-all duration-300"
+                  onClick={toggleUnit}
+                  title="แตะเพื่อสลับหน่วยเวลา"
+                >
+                  <span className="text-4xl font-extrabold text-[#8B5A2B] tracking-tight font-mono group-hover/unit:text-[#724a23] transition-colors">
+                    {showTime && timeLeft[displayUnit] !== undefined 
+                      ? timeLeft[displayUnit].toLocaleString() 
+                      : '---'}
+                  </span>
+                  <span className="text-xs font-black text-[#5C4033] ml-1.5 underline decoration-dotted decoration-[#D2B48C] underline-offset-4 group-hover/unit:text-[#8B5A2B]">
+                    {displayUnit === 'weeks' 
+                      ? 'สัปดาห์ที่เหลืออยู่' 
+                      : displayUnit === 'months' 
+                      ? 'เดือนที่เหลืออยู่' 
+                      : 'ปีที่เหลืออยู่'}
+                  </span>
+                </div>
                 
-                <p className="text-[14px] font-medium text-[#5C4033]/90 leading-relaxed mb-3">
-                  เหลือ <span className="text-[#8B5A2B] font-extrabold">{daysRemaining?.toLocaleString() || 0} วัน</span> <br />
-                  ({weeksRemaining?.toLocaleString()} สัปดาห์)
+                <p className="text-[10px] font-black text-[#8B5A2B]/75 tracking-widest uppercase mb-3">
+                  เวลาถอยหลัง (วัน : ชม. : นาที : วิ)
                 </p>
+
+                {/* Live Countdown Clock Grid */}
+                <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-5 font-mono select-none w-full">
+                  {/* Days */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-11 sm:w-14 sm:h-12 rounded-xl bg-[#EADFCF] border border-[#D2B48C]/40 flex items-center justify-center shadow-sm">
+                      <span className="text-base sm:text-lg font-black text-[#3E2723]">
+                        {showTime ? String(timeLeft.days).padStart(3, '0') : '000'}
+                      </span>
+                    </div>
+                    <span className="text-[8px] sm:text-[9px] font-black text-[#8B5A2B]/70 mt-1 uppercase tracking-wider">วัน</span>
+                  </div>
+
+                  <span className="text-base sm:text-lg font-bold text-[#8B5A2B]/60 -mt-4 animate-pulse">:</span>
+
+                  {/* Hours */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-11 sm:w-11 sm:h-12 rounded-xl bg-[#EADFCF] border border-[#D2B48C]/40 flex items-center justify-center shadow-sm">
+                      <span className="text-base sm:text-lg font-black text-[#3E2723]">
+                        {showTime ? String(timeLeft.hours).padStart(2, '0') : '00'}
+                      </span>
+                    </div>
+                    <span className="text-[8px] sm:text-[9px] font-black text-[#8B5A2B]/70 mt-1 uppercase tracking-wider">ชม.</span>
+                  </div>
+
+                  <span className="text-base sm:text-lg font-bold text-[#8B5A2B]/60 -mt-4 animate-pulse">:</span>
+
+                  {/* Minutes */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-11 sm:w-11 sm:h-12 rounded-xl bg-[#EADFCF] border border-[#D2B48C]/40 flex items-center justify-center shadow-sm">
+                      <span className="text-base sm:text-lg font-black text-[#3E2723]">
+                        {showTime ? String(timeLeft.minutes).padStart(2, '0') : '00'}
+                      </span>
+                    </div>
+                    <span className="text-[8px] sm:text-[9px] font-black text-[#8B5A2B]/70 mt-1 uppercase tracking-wider">นาที</span>
+                  </div>
+
+                  <span className="text-base sm:text-lg font-bold text-[#8B5A2B]/60 -mt-4 animate-pulse">:</span>
+
+                  {/* Seconds */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-11 sm:w-11 sm:h-12 rounded-xl bg-[#8B5A2B]/10 border border-[#8B5A2B]/30 flex items-center justify-center shadow-sm">
+                      <span className="text-base sm:text-lg font-black text-[#8B5A2B] animate-pulse">
+                        {showTime ? String(timeLeft.seconds).padStart(2, '0') : '00'}
+                      </span>
+                    </div>
+                    <span className="text-[8px] sm:text-[9px] font-black text-[#8B5A2B]/70 mt-1 uppercase tracking-wider">วิ.</span>
+                  </div>
+                </div>
                 
                 {hasReflectedThisWeek ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF5ED] text-[#8B5A2B] rounded-full border border-[#D2B48C]/60 text-[10px] font-black uppercase tracking-wider">

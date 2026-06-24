@@ -52,6 +52,39 @@ const STOIC_PROMPTS = [
   "ถ้าต้องสรุปชีวิตตนเองเป็นประโยคสั้นๆ หนึ่งประโยค ประโยคนั้นจะเขียนว่าอย่างไร?"
 ];
 
+const STOIC_QUOTES = [
+  { text: "อย่าใช้ชีวิตเหมือนว่าคุณจะมีชีวิตอยู่ตลอดไป ความตายกำลังเอื้อมมือมาหาคุณ ขณะที่คุณยังมีชีวิตอยู่ จงทำตัวเป็นคนดีเสียตั้งแต่วันนี้", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "เราไม่ได้มีเวลาน้อยหรอก แต่เราใช้เวลานั้นทิ้งขว้างไปต่างหาก", author: "เซเนกา (Seneca)" },
+  { text: "จงทำราวกับว่าวันแต่ละวันคือทั้งชีวิตของตนเอง", author: "เซเนกา (Seneca)" },
+  { text: "ความตายไม่ใช่เรื่องไกลตัว หรือสิ่งที่น่ากลัวในอนาคต แต่ความตายเกิดขึ้นอยู่ตลอดเวลาในอดีตที่ผ่านพ้นไปแล้วต่างหาก", author: "เซเนกา (Seneca)" },
+  { text: "อย่าเพิ่งแน่ใจว่าจะมีวันพรุ่งนี้ จงใช้ชั่วโมงนี้ประหนึ่งมันคือชั่วโมงสุดท้ายของคุณ", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "คุณสมควรได้รับสิ่งที่ดีที่สุดแล้ว เหตุใดคุณจึงยังรีรอที่จะทำเพื่อตัวเองอีกล่ะ?", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "สิ่งที่ควบคุมได้คือความคิดและการกระทำของเราเอง สิ่งที่ควบคุมไม่ได้คือสิ่งภายนอกทั้งหมด จงปล่อยวางสิ่งหลังและโฟกัสสิ่งแรก", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "เวลาชีวิตคือสิ่งมีค่าที่สุดที่เราไม่สามารถซื้อคืนมาได้ แต่เรามักยกมันให้คนอื่นหรือสิ่งไร้สาระไปฟรีๆ อย่างง่ายดาย", author: "เซเนกา (Seneca)" },
+  { text: "ไม่มีสิ่งใดเป็นของเรานอกจากเวลาที่เราครอบครองอยู่ในปัจจุบันขณะนี้เท่านั้น", author: "เซเนกา (Seneca)" },
+  { text: "จงมีความสุขกับสิ่งที่คุณมี ในขณะที่กำลังลงมือทำงานเพื่อสิ่งที่คุณต้องการ", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "ถ้าหากวันพรุ่งนี้ไม่มีจริง งานชิ้นไหนที่คุณอยากทำให้เสร็จในวันนี้ที่สุด?", author: "เซเนกา (Seneca)" },
+  { text: "ไม่ใช่ความตายหรอกที่คนเราควรกลัว แต่การไม่เคยเริ่มต้นใช้ชีวิตต่างหากที่น่ากลัวที่สุด", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "ชีวิตนั้นสั้นเกินกว่าจะไปใส่ใจกับคำพูดหรือความคิดของผู้อื่นเกี่ยวกับตัวเรา", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "สิ่งใดที่ไม่ได้ทำให้สังคมดีขึ้น ก็ไม่ได้ทำให้ตัวคุณดีขึ้นเช่นกัน", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "ความโกรธ ความเกลียด หรือความขุ่นเคืองในวันนี้ มีค่าพอที่จะเก็บไว้ไปจนถึงวันสุดท้ายจริงหรือ?", author: "เซเนกา (Seneca)" },
+  { text: "ความสุขของชีวิตขึ้นอยู่กับคุณภาพของความคิดของคุณเอง", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "สิ่งที่ดีที่สุดที่จะตอบโต้ศัตรู คือการไม่ทำตัวเหมือนกับพวกเขา", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "จงจำไว้ว่าชีวิตของเรานั้นสั้นมาก และมีเพียงช่วงเวลานี้เท่านั้นที่เราสามารถควบคุมได้", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "อุปสรรคในการลงมือทำคือตัวผลักดันให้เกิดการกระทำ สิ่งที่ขวางทางอยู่จะกลายเป็นเส้นทางเอง", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "ความทุกข์ส่วนใหญ่ไม่ได้เกิดจากเหตุการณ์ภายนอก แต่เกิดจากวิธีที่เราตีความเหตุการณ์เหล่านั้นต่างหาก", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "หากคุณต้องการความสงบใจ จงจำกัดสิ่งที่ตัวคุณต้องทำลงเสียบ้าง", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "จงยินดีกับชีวิต เพราะมันเปิดโอกาสให้คุณรัก ทำงาน เล่น และมองดูดวงดาว", author: "เซเนกา (Seneca)" },
+  { text: "ไม่มีใครทำร้ายคุณได้ เว้นแต่คุณจะยอมอนุญาตให้พวกเขาทำในใจคุณเอง", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "เวลาชีวิตเปรียบเหมือนแม่น้ำที่ไหลเชี่ยวและไม่มีวันไหลย้อนกลับ จงรีบใช้มันทำสิ่งที่มีความหมาย", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "ความมั่งคั่งที่แท้จริงคือการมีระดับความต้องการที่น้อยลง ไม่ใช่การสะสมทรัพย์สินให้มากขึ้น", author: "เซเนกา (Seneca)" },
+  { text: "จงรักในโชคชะตาของตนเอง (Amor Fati) เพราะไม่มีอะไรเกิดขึ้นภายนอกที่เกิดขึ้นโดยปราศจากเหตุผล", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "สิ่งที่เกิดขึ้นกับคุณไม่ได้สำคัญเท่ากับวิธีการที่คุณตอบสนองต่อมัน", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "ทุกสิ่งที่เราได้ยินคือความคิดเห็น ไม่ใช่ข้อเท็จจริง ทุกสิ่งที่เราเห็นคือมุมมอง ไม่ใช่ความจริงทั้งหมด", author: "มาร์คุส ออเรลิอุส (Marcus Aurelius)" },
+  { text: "จงขอบคุณความยากลำบาก เพราะมันคือโอกาสในการพิสูจน์ความแข็งแกร่งและความอดทนของคุณ", author: "เอพิคเตตัส (Epictetus)" },
+  { text: "จงเริ่มใช้ชีวิตตั้งแต่วันนี้ และจงนับว่าวันแต่ละวันแยกกันเป็นหนึ่งชีวิตที่มีคุณค่าในตัวเอง", author: "เซเนกา (Seneca)" }
+];
+
 export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
   isOpen,
   onClose,
@@ -418,6 +451,74 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
                       </p>
                     </div>
                   </div>
+
+                  {/* ฤดูกาลของชีวิต (Seasons of Life) */}
+                  <div className="bg-[#FCFAF7] border border-[#E3D9CC] p-5 rounded-3xl space-y-4 text-left">
+                    <h4 className="text-sm font-black text-[#3E2723] flex items-center gap-2">
+                      <Calendar size={16} className="text-[#8B5A2B]" />
+                      ฤดูกาลชีวิตของคุณ
+                    </h4>
+                    
+                    {(() => {
+                      const age = daysLived / 365.25;
+                      const seasons = [
+                        { name: "ฤดูใบไม้ผลิ", label: "0-20 ปี: เรียนรู้และเติบโต", icon: "🌱", range: [0, 20], color: "from-green-500/10 to-green-600/5", border: "border-green-200/50" },
+                        { name: "ฤดูร้อน", label: "20-40 ปี: สร้างตัวและลุยชีวิต", icon: "☀️", range: [20, 40], color: "from-amber-500/10 to-amber-600/5", border: "border-amber-200/50" },
+                        { name: "ฤดูใบไม้ร่วง", label: "40-60 ปี: มั่นคงและตกตะกอน", icon: "🍂", range: [40, 60], color: "from-orange-500/10 to-orange-600/5", border: "border-orange-200/50" },
+                        { name: "ฤดูหนาว", label: "60 ปีขึ้นไป: สงบและส่งมรดกชีวิต", icon: "❄️", range: [60, 150], color: "from-blue-500/10 to-blue-600/5", border: "border-blue-200/50" }
+                      ];
+
+                      return (
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {seasons.map((season, idx) => {
+                            const isActive = age >= season.range[0] && age < season.range[1];
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-3 rounded-2xl border transition-all duration-500 flex flex-col justify-between ${
+                                  isActive
+                                    ? "bg-gradient-to-tr from-[#8B5A2B]/10 to-[#D2B48C]/5 border-[#8B5A2B] shadow-sm scale-[1.02]"
+                                    : `bg-slate-500/5 ${season.border} opacity-50`
+                                }`}
+                              >
+                                <div className="flex items-center gap-1.5 justify-between">
+                                  <span className="text-xs font-black text-[#3E2723]">{season.name}</span>
+                                  <span className="text-sm">{season.icon}</span>
+                                </div>
+                                <span className="text-[9px] font-bold text-[#6F5B4E] mt-2 block leading-snug">
+                                  {season.label}
+                                </span>
+                                {isActive && (
+                                  <span className="inline-block self-start mt-2 px-1.5 py-0.5 bg-[#8B5A2B] text-white text-[7px] font-black uppercase tracking-wider rounded-md">
+                                    ช่วงอายุของคุณ
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Stoic Quote of the Day */}
+                  {(() => {
+                    const today = new Date();
+                    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+                    const quote = STOIC_QUOTES[dayOfYear % STOIC_QUOTES.length];
+
+                    return (
+                      <div className="relative overflow-hidden bg-gradient-to-tr from-[#FAF5ED] to-[#FCFAF7] border border-[#E5DEC9] p-5 rounded-2xl text-left shadow-sm">
+                        <span className="text-[8px] font-black text-[#8B5A2B]/70 tracking-widest uppercase block mb-2">ข้อเตือนใจของวัน (Stoic Wisdom)</span>
+                        <p className="text-xs font-semibold text-[#5C4033] leading-relaxed italic">
+                          "{quote.text}"
+                        </p>
+                        <p className="text-[9px] font-black text-[#8B5A2B] mt-2 text-right">
+                          — {quote.author}
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   {/* Action Banner for Reflections */}
                   {!hasReflectedThisWeek && (
