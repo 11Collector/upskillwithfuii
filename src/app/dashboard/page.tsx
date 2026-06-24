@@ -4726,11 +4726,6 @@ export default function DashboardPage() {
                   </motion.div>
                 </Link>
 
-                {/* ⏳ Memento Mori / Life Countdown Bento */}
-                <MementoMoriBento
-                  userData={userData}
-                  onOpenModal={() => setShowMementoModal(true)}
-                />
               </>
             )}
 
@@ -4971,6 +4966,14 @@ export default function DashboardPage() {
                 )}
 
               </>
+            )}
+
+            {/* ⏳ Memento Mori / Life Countdown Bento (Placed after Shop) */}
+            {(activeTab === "home" || activeTab === "identity") && (
+              <MementoMoriBento
+                userData={userData}
+                onOpenModal={() => setShowMementoModal(true)}
+              />
             )}
 
           </div>

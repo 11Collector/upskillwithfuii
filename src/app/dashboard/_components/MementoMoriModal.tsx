@@ -198,7 +198,7 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
           <div>
             <h3 className="text-xl font-black text-[#3E2723] flex items-center gap-2">
               <Clock className="text-[#8B5A2B]" size={20} />
-              เวลาชีวิต & มรณานุสติ
+              เวลาชีวิต & ตกตะกอนความคิด
             </h3>
             <p className="text-xs font-semibold text-[#6F5B4E] mt-1">ระลึกเวลาจำกัด เพื่อโฟกัสสิ่งสำคัญที่สุดของวัน</p>
           </div>
@@ -288,15 +288,30 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-black text-[#6F5B4E] uppercase tracking-wider flex justify-between">
-                      <span>เป้าหมายอายุขัย (ปี)</span>
-                      <span className="text-[#8B5A2B]">{expectedAge} ปี</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[10px] font-black text-[#6F5B4E] uppercase tracking-wider">
+                        เป้าหมายอายุขัย (ปี)
+                      </label>
+                      <div className="flex items-center gap-1 bg-[#FAF7F2] border border-[#E0D5C3] rounded-lg px-2 py-1">
+                        <input
+                          type="number"
+                          min="1"
+                          max="200"
+                          value={expectedAge}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val)) setExpectedAge(val);
+                          }}
+                          className="w-10 bg-transparent text-right font-black text-xs text-[#8B5A2B] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="text-[10px] font-black text-[#8C7A6B]">ปี</span>
+                      </div>
+                    </div>
                     <input
                       type="range"
                       min="50"
                       max="120"
-                      value={expectedAge}
+                      value={expectedAge > 120 ? 120 : (expectedAge < 50 ? 50 : expectedAge)}
                       onChange={(e) => setExpectedAge(parseInt(e.target.value))}
                       className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#8B5A2B]"
                     />
@@ -414,7 +429,7 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
                         <Sparkles size={16} className="animate-pulse" />
                       </div>
                       <div className="text-left flex-1 min-w-0">
-                        <p className="text-xs font-black text-[#8B5A2B]">เขียนบันทึกมรณานุสติประจำสัปดาห์ของคุณ</p>
+                        <p className="text-xs font-black text-[#8B5A2B]">เขียนบันทึกทบทวนชีวิตประจำสัปดาห์ของคุณ</p>
                         <p className="text-[10px] text-[#7A5B3D]/80 font-bold mt-0.5">รับรางวัล +15 XP เพื่อสะสมการตกตะกอนความคิด</p>
                       </div>
                     </div>
