@@ -231,7 +231,7 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
           <div>
             <h3 className="text-xl font-black text-[#3E2723] flex items-center gap-2">
               <Clock className="text-[#8B5A2B]" size={20} />
-              เวลาชีวิต & ตกตะกอนความคิด
+              ตกตะกอนความคิด
             </h3>
             <p className="text-xs font-semibold text-[#6F5B4E] mt-1">ระลึกเวลาจำกัด เพื่อโฟกัสสิ่งสำคัญที่สุดของวัน</p>
           </div>
