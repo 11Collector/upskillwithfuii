@@ -466,7 +466,6 @@ export default function PremiumShopPage() {
     }
   };
 
-  const currentLevel = Math.floor(totalXP / 100) + 1;
   const currentLevelXP = totalXP % 100;
   const maxTransfer = currentLevelXP;
 
@@ -481,51 +480,15 @@ export default function PremiumShopPage() {
       <div className="max-w-5xl mx-auto relative z-10">
 
         {/* --- Header --- */}
-        <header className="mb-6 pt-12 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
-          {/* 🌟 Top-Right Header Widgets (Level & Tickets) */}
-          <div className="absolute top-0 right-0 z-40 flex items-center gap-2">
-            {/* Tiny Level Circular Progress */}
-            <div className="flex items-center gap-2 bg-white border border-slate-200/80 pl-2 pr-3 py-1 rounded-full shadow-sm shrink-0 h-9">
-              <div className="relative w-7 h-7 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 shadow-inner shrink-0">
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle
-                    cx="14"
-                    cy="14"
-                    r="11"
-                    fill="transparent"
-                    stroke="#f1f5f9"
-                    strokeWidth="2.5"
-                  />
-                  <motion.circle
-                    cx="14"
-                    cy="14"
-                    r="11"
-                    fill="transparent"
-                    stroke="#f97316"
-                    strokeWidth="2.5"
-                    strokeDasharray="69.1"
-                    initial={{ strokeDashoffset: 69.1 }}
-                    animate={{ strokeDashoffset: 69.1 - (currentLevelXP / 100) * 69.1 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="relative z-10 text-[10px] font-black text-orange-500 leading-none">
-                  {currentLevel}
-                </div>
-              </div>
-              <span className="text-[10px] font-black text-slate-700 leading-none">LV {currentLevel}</span>
-            </div>
-
-            {/* 🎫 Floating Ticket Button */}
-            <button
-              onClick={() => setShowInventoryModal(true)}
-              className="flex items-center justify-center gap-1.5 bg-white border border-slate-200/80 px-3.5 py-2 rounded-full shadow-sm text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-black text-xs active:scale-95 h-9 cursor-pointer"
-            >
-              <Ticket size={14} className="text-purple-600 animate-pulse" />
-              <span>ตั๋วของฉัน ({redeemedHistory.length})</span>
-            </button>
-          </div>
+        <header className="mb-6 pt-0 flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
+          {/* 🎫 Floating Ticket Button */}
+          <button
+            onClick={() => setShowInventoryModal(true)}
+            className="absolute top-0 right-0 z-40 flex items-center justify-center gap-1.5 bg-white border border-slate-200/80 px-3.5 py-2 rounded-full shadow-sm text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-black text-xs active:scale-95 h-9 cursor-pointer"
+          >
+            <Ticket size={14} className="text-purple-600 animate-pulse" />
+            <span>ตั๋วของฉัน ({redeemedHistory.length})</span>
+          </button>
 
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black mb-4 border border-purple-200/60 uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(168,85,247,0.04)]">
