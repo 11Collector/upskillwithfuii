@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { logAiCall } from '@/lib/ai-logger';
 
 const ChatSchema = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant", "system"]), content: z.string() })),
@@ -161,6 +162,8 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     const reply = data.choices[0].message.content.trim();
+
+    logAiCall(authResult.uid, "ai_mentor").catch(() => {});
 
     return NextResponse.json({ success: true, reply });
 

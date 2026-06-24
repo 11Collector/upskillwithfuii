@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
+import { logAiCall } from '@/lib/ai-logger';
 
 const MONEY_LABELS: Record<string, string> = {
   HIGH_RISK_HIGH_DISC: "นักลงทุนสายระบบ (กล้าเสี่ยง วางแผนเก่ง)",
@@ -128,6 +129,8 @@ ${distributionNote}
       const unverified = candidates.filter((b: { title: string }) => !validBooks.some((v: { title: string } | null) => v?.title === b.title));
       validBooks.push(...unverified.slice(0, 4 - validBooks.length));
     }
+
+    logAiCall(authResult.uid, "book_match").catch(() => {});
 
     return NextResponse.json({ books: validBooks.slice(0, 4) });
   } catch {
