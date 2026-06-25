@@ -21,9 +21,11 @@ import {
 import { useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
+import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
+import { legacyWheelLeads } from "@/data/legacyWheelLeads";
 
 // ChartJS Imports
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { Bar, Doughnut, Line, Radar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -32,6 +34,7 @@ import {
   PointElement,
   LineElement,
   ArcElement,
+  RadialLinearScale,
   Title,
   Tooltip,
   Legend,
@@ -45,6 +48,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   ArcElement,
+  RadialLinearScale,
   Title,
   Tooltip,
   Legend
@@ -58,9 +62,7 @@ const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").fil
 
 const aiFeatureNames: Record<string, string> = {
   ai_mentor: "AI Mentor Chat",
-  report_review: "PDF Master Report",
   book_match: "Book recommendation",
-  quest_analysis: "AI Quest Generator",
   quote_generation: "Khom Sat Sat (Quotes)",
 };
 
@@ -72,6 +74,43 @@ const toolNames: Record<string, string> = {
   libraryReads: "Library of Souls",
 };
 
+const discLabels: Record<string, string> = {
+  D: "D - เดอะแบกสายบวก (กระทิง)",
+  I: "I - หัวหน้าฝ่ายเอนเตอร์เทน (นกอินทรี)",
+  S: "S - ผู้ประสานสิบทิศ (หนู)",
+  C: "C - นักวิเคราะห์จอมเนี๊ยบ (หมี)"
+};
+
+const discColors: Record<string, string> = {
+  D: "bg-red-500",
+  I: "bg-orange-500",
+  S: "bg-emerald-500",
+  C: "bg-blue-500"
+};
+
+const moneyLabels: Record<string, string> = {
+  HIGH_RISK_HIGH_DISC: "🐺 หมาป่า (เซียนระบบสุดตึง)",
+  MID_RISK_HIGH_DISC: "🐜 มด (นักปั้นพอร์ตมือฉมัง)",
+  LOW_RISK_HIGH_DISC: "🐌 หอยทาก (ผู้พิทักษ์เงินต้น)",
+  HIGH_RISK_MID_DISC: "🐒 ลิง (ล่าเทรนด์ติดดอย)",
+  MID_RISK_MID_DISC: "🦦 คาปิบารา (สุดสมดุล)",
+  LOW_RISK_MID_DISC: "🐢 เต่า (สายโคตรเซฟโซน)",
+  HIGH_RISK_LOW_DISC: "🔥 ฟีนิกซ์ (ดมกาวสุดกราฟ)",
+  MID_RISK_LOW_DISC: "🦚 นกยูง (ตัวตึงสายเปย์)",
+  LOW_RISK_LOW_DISC: "🦌 กวาง (ผู้ประสบภัย)"
+};
+
+const ghostLabels: Record<string, string> = {
+  kaonashi: "👻 ไร้หน้า ไร้ขอบเขต",
+  vampire: "🧛 เคาท์จอมดองงาน",
+  mummy: "🧟 มัมมี่หวั่นสายตา",
+  kasa: "☂️ ร่มสามตาจอมวิตก",
+  kongkoi: "🏃 กองกอยจอม FOMO",
+  headless: "🫀 ผีจอมโอเค",
+  pixel: "🔍 พิกเซลจอมด้อยค่า",
+  guardian: "🏺 ผีเฝ้าของเดิม"
+};
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +118,7 @@ export default function AdminDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [sortBy, setSortBy] = useState<"xp" | "newest">("xp");
   const [copied, setCopied] = useState(false);
+  const [activeLeadTab, setActiveLeadTab] = useState<"ebook" | "legacyWheel">("ebook");
   const router = useRouter();
 
   useEffect(() => {
@@ -269,6 +309,85 @@ export default function AdminDashboard() {
     }
   };
 
+  const wheelAverages = stats.wheelAverages || Array(8).fill(0);
+  const wheelFocusDistribution = stats.wheelFocusDistribution || Array(8).fill(0);
+
+  const wheelRadarData = {
+    labels: [
+      '❤️ สุขภาพ',
+      '💎 การเงิน',
+      '💼 การงาน',
+      '👨‍👩‍👧‍👦 ครอบครัว',
+      '💑 เพื่อนฝูง',
+      '💡 พัฒนาตนเอง',
+      '🧘‍♀️ จิตใจ',
+      '🌏 ช่วยสังคม'
+    ],
+    datasets: [
+      {
+        label: "คะแนนเฉลี่ยความพึงพอใจ",
+        data: wheelAverages,
+        backgroundColor: "rgba(139, 92, 246, 0.15)",
+        borderColor: "rgba(139, 92, 246, 0.75)",
+        pointBackgroundColor: "rgba(139, 92, 246, 1)",
+        pointBorderColor: "#fff",
+        pointHoverBackgroundColor: "#fff",
+        pointHoverBorderColor: "rgba(139, 92, 246, 1)",
+        borderWidth: 2,
+      }
+    ]
+  };
+
+  const wheelRadarOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "rgba(15, 23, 42, 0.95)",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        padding: 12,
+        cornerRadius: 12,
+      }
+    },
+    scales: {
+      r: {
+        angleLines: { color: "rgba(255, 255, 255, 0.06)" },
+        grid: { color: "rgba(255, 255, 255, 0.06)" },
+        pointLabels: {
+          color: "#cbd5e1",
+          font: { size: 10, weight: "bold" as const }
+        },
+        ticks: {
+          color: "#9ca3af",
+          backdropColor: "transparent",
+          stepSize: 2,
+          min: 0,
+          max: 10
+        }
+      }
+    }
+  };
+
+  const wheelFocusAreasList = [
+    { label: '❤️ สุขภาพ', count: wheelFocusDistribution[0] || 0 },
+    { label: '💎 การเงิน', count: wheelFocusDistribution[1] || 0 },
+    { label: '💼 การงานหรือธุรกิจ', count: wheelFocusDistribution[2] || 0 },
+    { label: '👨‍👩‍👧‍👦 ครอบครัว', count: wheelFocusDistribution[3] || 0 },
+    { label: '💑 ความสัมพันธ์เพื่อนฝูง', count: wheelFocusDistribution[4] || 0 },
+    { label: '💡 พัฒนาตนเอง', count: wheelFocusDistribution[5] || 0 },
+    { label: '🧘‍♀️ พัฒนาจิตใจ', count: wheelFocusDistribution[6] || 0 },
+    { label: '🌏 ช่วยเหลือสังคม', count: wheelFocusDistribution[7] || 0 },
+  ];
+
+  const maxFocusCount = Math.max(...wheelFocusAreasList.map(item => item.count), 1);
+  const totalFocusSelections = wheelFocusAreasList.reduce((acc, curr) => acc + curr.count, 0);
+  const filteredGhostEntries = Object.entries(stats.ghostDistribution)
+    .filter(([k]) => k !== "total")
+    .sort((a, b) => b[1] - a[1]);
+  const totalGhostDocs = filteredGhostEntries.reduce((acc, [_, val]) => acc + val, 0);
+
   return (
     <div className="min-h-screen bg-neutral-900 text-white p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -432,6 +551,206 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* --- 📊 New Section: Archetype Distributions for each App --- */}
+        <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-[2rem] p-6 md:p-8 backdrop-blur-sm mt-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-indigo-500/20 rounded-xl">
+              <PieChart className="text-indigo-400" size={22} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">สถิติผลลัพธ์แบบประเมินรายเครื่องมือ</h2>
+              <p className="text-neutral-400 text-xs mt-0.5">การกระจายตัวของคาแรกเตอร์/ประเภทนิสัยที่ผู้ใช้งานเล่นได้ในแต่ละแบบประเมิน</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* DISC Archetype Card */}
+            <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-300 mb-4 pb-2 border-b border-neutral-800/60 flex items-center justify-between">
+                  <span>📊 DISC Assessment</span>
+                  <span className="text-[10px] text-indigo-400 font-black">
+                    (ทั้งหมด {Object.values(stats.discDistribution).reduce((a,b)=>a+b, 0)} คน)
+                  </span>
+                </h3>
+                <div className="space-y-4">
+                  {Object.entries(stats.discDistribution)
+                    .sort((a,b) => b[1] - a[1])
+                    .map(([key, value], idx) => {
+                      const total = Object.values(stats.discDistribution).reduce((a,b)=>a+b, 0) || 1;
+                      const percent = Math.round((value / total) * 100);
+                      const name = discLabels[key] || key;
+                      const color = discColors[key] || "bg-indigo-500";
+                      return (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-neutral-300 font-semibold">{name}</span>
+                            <span className="text-white font-bold">{value} คน ({percent}%)</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
+                            <div className={`h-full ${color}`} style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+
+            {/* Money Avatar Archetype Card */}
+            <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-300 mb-4 pb-2 border-b border-neutral-800/60 flex items-center justify-between">
+                  <span>💰 Money Avatar</span>
+                  <span className="text-[10px] text-amber-400 font-black">
+                    (ทั้งหมด {Object.values(stats.moneyDistribution).reduce((a,b)=>a+b, 0)} คน)
+                  </span>
+                </h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 no-scrollbar">
+                  {Object.entries(stats.moneyDistribution)
+                    .sort((a,b) => b[1] - a[1])
+                    .map(([key, value], idx) => {
+                      const total = Object.values(stats.moneyDistribution).reduce((a,b)=>a+b, 0) || 1;
+                      const percent = Math.round((value / total) * 100);
+                      const name = moneyLabels[key] || key;
+                      return (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-neutral-300 font-semibold truncate max-w-[70%]">{name}</span>
+                            <span className="text-white font-bold shrink-0">{value} คน ({percent}%)</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-500" style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+
+            {/* Ghost in You Archetype Card */}
+            <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-300 mb-4 pb-2 border-b border-neutral-800/60 flex items-center justify-between">
+                  <span>👻 Ghost in You</span>
+                  <span className="text-[10px] text-rose-400 font-black">
+                    (ทั้งหมด {totalGhostDocs} คน)
+                  </span>
+                </h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 no-scrollbar">
+                  {filteredGhostEntries.map(([key, value], idx) => {
+                    const percent = totalGhostDocs > 0 ? Math.round((value / totalGhostDocs) * 100) : 0;
+                    const name = ghostLabels[key] || key;
+                    return (
+                      <div key={key} className="space-y-1">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-neutral-300 font-semibold">{name}</span>
+                          <span className="text-white font-bold">{value} คน ({percent}%)</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
+                          <div className="h-full bg-rose-500" style={{ width: `${percent}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Library of Souls Archetype Card */}
+            <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-300 mb-4 pb-2 border-b border-neutral-800/60 flex items-center justify-between">
+                  <span>📚 Library of Souls</span>
+                  <span className="text-[10px] text-violet-400 font-black">
+                    (ทั้งหมด {Object.values(stats.libraryDistribution).reduce((a,b)=>a+b, 0)} คน)
+                  </span>
+                </h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 no-scrollbar">
+                  {Object.entries(stats.libraryDistribution)
+                    .sort((a,b) => b[1] - a[1])
+                    .map(([key, value], idx) => {
+                      const total = Object.values(stats.libraryDistribution).reduce((a,b)=>a+b, 0) || 1;
+                      const percent = Math.round((value / total) * 100);
+                      const resultObj = LIBRARY_SOULS_RESULTS[key];
+                      const name = resultObj ? `${resultObj.emoji} ${resultObj.type} - ${resultObj.title}` : key;
+                      return (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-neutral-300 font-semibold truncate max-w-[70%]" title={name}>{name}</span>
+                            <span className="text-white font-bold shrink-0">{value} คน ({percent}%)</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
+                            <div className="h-full bg-violet-500" style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {Object.keys(stats.libraryDistribution).length === 0 && (
+                    <p className="text-neutral-500 text-xs font-medium text-center py-8">ยังไม่มีข้อมูล</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Wheel of Life Section */}
+          <div className="mt-8 pt-8 border-t border-neutral-800/60">
+            <h3 className="text-sm font-bold text-neutral-300 mb-6 flex items-center justify-between">
+              <span>🎡 Wheel of Life (วงล้อชีวิต)</span>
+              <span className="text-[10px] text-violet-400 font-black">
+                (ทั้งหมด {stats.wheelTotalDocs} ใบประเมิน)
+              </span>
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              {/* Radar Chart: คะแนนเฉลี่ยความพึงพอใจ */}
+              <div className="lg:col-span-3 bg-neutral-900/40 border border-neutral-800 rounded-2xl p-6 flex flex-col justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-neutral-400 mb-4 uppercase tracking-wider">คะแนนความพึงพอใจเฉลี่ย (เต็ม 10 คะแนน)</h4>
+                  <div className="h-[280px] w-full relative flex items-center justify-center">
+                    {stats.wheelTotalDocs > 0 ? (
+                      <Radar data={wheelRadarData} options={wheelRadarOptions} />
+                    ) : (
+                      <p className="text-neutral-500 text-sm font-medium">ยังไม่มีข้อมูลแบบประเมิน</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar: ด้านที่เลือกโฟกัส */}
+              <div className="lg:col-span-2 bg-neutral-900/40 border border-neutral-800 rounded-2xl p-6 flex flex-col justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-neutral-400 mb-4 uppercase tracking-wider">สถิติด้านที่ผู้ใช้เลือกโฟกัสมากที่สุด</h4>
+                  <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1 no-scrollbar">
+                    {stats.wheelTotalDocs > 0 ? (
+                      wheelFocusAreasList
+                        .sort((a, b) => b.count - a.count)
+                        .map((item, idx) => {
+                          const percent = totalFocusSelections > 0 ? Math.round((item.count / totalFocusSelections) * 100) : 0;
+                          return (
+                            <div key={item.label} className="space-y-1">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-neutral-300 font-semibold">{item.label}</span>
+                                <span className="text-white font-bold">{item.count} ครั้ง ({percent}%)</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" style={{ width: `${maxFocusCount > 0 ? (item.count / maxFocusCount) * 100 : 0}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })
+                    ) : (
+                      <p className="text-neutral-500 text-sm font-medium">ยังไม่มีข้อมูลการเลือกโฟกัส</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Top Users Section */}
         <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-[2rem] p-6 md:p-8 backdrop-blur-sm mt-8">
           <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
@@ -512,22 +831,53 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Ebook Leads Section */}
+        {/* Email Leads Section with Tabs */}
         <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-[2rem] p-6 md:p-8 backdrop-blur-sm mt-8">
-          <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-rose-500/20 rounded-xl">
                 <BookOpen className="text-rose-400" size={22} />
               </div>
               <div>
-                <h2 className="text-xl font-bold">E-Book Leads</h2>
-                <p className="text-neutral-400 text-xs mt-0.5">{stats.ebookLeads?.length ?? 0} รายชื่อทั้งหมด</p>
+                <h2 className="text-xl font-bold">Email Leads</h2>
+                <p className="text-neutral-400 text-xs mt-0.5">
+                  {activeLeadTab === "ebook" 
+                    ? `${stats.ebookLeads?.length ?? 0} รายชื่อทั้งหมด`
+                    : `${legacyWheelLeads.length} รายชื่อทั้งหมด`}
+                </p>
               </div>
             </div>
+            
+            {/* Tab Swapping Control */}
+            <div className="flex bg-neutral-900/60 p-1 rounded-2xl border border-neutral-700/30">
+              <button
+                onClick={() => setActiveLeadTab("ebook")}
+                className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
+                  activeLeadTab === "ebook"
+                    ? "bg-rose-500/25 border border-rose-500/35 text-rose-300 shadow-md"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                E-Book ({stats.ebookLeads?.length ?? 0})
+              </button>
+              <button
+                onClick={() => setActiveLeadTab("legacyWheel")}
+                className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
+                  activeLeadTab === "legacyWheel"
+                    ? "bg-indigo-500/25 border border-indigo-500/35 text-indigo-300 shadow-md"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                ลูกค้าเก่า Wheel ({legacyWheelLeads.length})
+              </button>
+            </div>
+
             <button
               onClick={async () => {
-                const emails = (stats.ebookLeads || []).map(l => l.email).join('\n');
-                await navigator.clipboard.writeText(emails);
+                const list = activeLeadTab === "ebook"
+                  ? (stats.ebookLeads || []).map(l => l.email)
+                  : legacyWheelLeads.map(l => l.email);
+                await navigator.clipboard.writeText(list.join('\n'));
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
@@ -547,14 +897,29 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800/80 bg-neutral-900/20">
-                {(stats.ebookLeads || []).map((lead, idx) => (
-                  <tr key={lead.id} className="hover:bg-neutral-800/30 transition-colors">
-                    <td className="px-5 py-3.5 text-neutral-500 font-semibold">{idx + 1}</td>
-                    <td className="px-5 py-3.5 text-white font-bold">{lead.email}</td>
-                    <td className="px-5 py-3.5 text-neutral-400">{lead.createdAt}</td>
+                {activeLeadTab === "ebook" ? (
+                  (stats.ebookLeads || []).map((lead, idx) => (
+                    <tr key={lead.id} className="hover:bg-neutral-800/30 transition-colors">
+                      <td className="px-5 py-3.5 text-neutral-500 font-semibold">{idx + 1}</td>
+                      <td className="px-5 py-3.5 text-white font-bold">{lead.email}</td>
+                      <td className="px-5 py-3.5 text-neutral-400">{lead.createdAt}</td>
+                    </tr>
+                  ))
+                ) : (
+                  legacyWheelLeads.map((lead, idx) => (
+                    <tr key={lead.email} className="hover:bg-neutral-800/30 transition-colors">
+                      <td className="px-5 py-3.5 text-neutral-500 font-semibold">{idx + 1}</td>
+                      <td className="px-5 py-3.5 text-white font-bold">{lead.email}</td>
+                      <td className="px-5 py-3.5 text-neutral-400">{lead.createdAt}</td>
+                    </tr>
+                  ))
+                )}
+                {activeLeadTab === "ebook" && (!stats.ebookLeads || stats.ebookLeads.length === 0) && (
+                  <tr>
+                    <td colSpan={3} className="px-5 py-8 text-center text-neutral-500 font-medium">ยังไม่มี Lead</td>
                   </tr>
-                ))}
-                {(!stats.ebookLeads || stats.ebookLeads.length === 0) && (
+                )}
+                {activeLeadTab === "legacyWheel" && legacyWheelLeads.length === 0 && (
                   <tr>
                     <td colSpan={3} className="px-5 py-8 text-center text-neutral-500 font-medium">ยังไม่มี Lead</td>
                   </tr>
