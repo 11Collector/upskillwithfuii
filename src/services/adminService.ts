@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, getDocs, getCountFromServer, query, collectionGroup, where, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, getCountFromServer, query, collectionGroup, where, orderBy, limit, getDoc, doc } from "firebase/firestore";
 
 export interface UserDetail {
   id: string;
@@ -48,12 +48,17 @@ export interface AdminStats {
   questCompletionsTrend: QuestCompletionTrend[];
   aiFeatureCalls: {
     ai_mentor: number;
-    report_review: number;
     book_match: number;
-    quest_analysis: number;
     quote_generation: number;
   };
   levelDistribution: LevelDistribution[];
+  discDistribution: Record<string, number>;
+  moneyDistribution: Record<string, number>;
+  ghostDistribution: Record<string, number>;
+  libraryDistribution: Record<string, number>;
+  wheelAverages: number[];
+  wheelFocusDistribution: number[];
+  wheelTotalDocs: number;
 }
 
 export const fetchAdminStats = async (): Promise<AdminStats> => {
@@ -150,24 +155,27 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
     const libraryRef = collectionGroup(db, "library_souls");
     const libraryCount = await getCountFromServer(libraryRef);
 
-    // AI Mentor (dailyChatCount sum for today)
-    let aiMentorChats = 0;
-    usersQuery.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.dailyChatCount) {
-            aiMentorChats += data.dailyChatCount;
-        }
+    // AI Feature Calls (Baseline from historical data + new logs in 'ai_calls')
+    const chatHistoryCount = await getCountFromServer(collectionGroup(db, "chat_history"));
+    const quotesCount = await getCountFromServer(collection(db, "quotes"));
+    const bookPlaylistCount = await getCountFromServer(collectionGroup(db, "book_playlist"));
+
+    const aiCallsSnap = await getDocs(collection(db, "ai_calls"));
+    const aiFeatureCalls = {
+      ai_mentor: Math.ceil(chatHistoryCount.data().count / 2),
+      book_match: bookPlaylistCount.data().count,
+      quote_generation: quotesCount.data().count,
+    };
+    
+    aiCallsSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const feature = data.feature as keyof typeof aiFeatureCalls;
+      if (aiFeatureCalls[feature] !== undefined) {
+        aiFeatureCalls[feature]++;
+      }
     });
 
-    try {
-        const chatsRef = collectionGroup(db, "chats");
-        const chatsCount = await getCountFromServer(chatsRef);
-        if (chatsCount.data().count > aiMentorChats) {
-            aiMentorChats = chatsCount.data().count;
-        }
-    } catch (e) {
-        // ignore
-    }
+    const aiMentorChats = aiFeatureCalls.ai_mentor;
 
     // 4. Ebook leads — newest first, max 200
     const ebookSnap = await getDocs(
@@ -231,25 +239,104 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
       count: completionsByDate[date]
     }));
 
-    // 7. AI Feature Calls (Baseline from historical data + new logs in 'ai_calls')
-    const chatHistoryCount = await getCountFromServer(collectionGroup(db, "chat_history"));
-    const quotesCount = await getCountFromServer(collection(db, "quotes"));
-    const bookPlaylistCount = await getCountFromServer(collectionGroup(db, "book_playlist"));
+    // aiFeatureCalls is already calculated above
 
-    const aiCallsSnap = await getDocs(collection(db, "ai_calls"));
-    const aiFeatureCalls = {
-      ai_mentor: Math.ceil(chatHistoryCount.data().count / 2),
-      report_review: 0,
-      book_match: bookPlaylistCount.data().count,
-      quest_analysis: 0,
-      quote_generation: quotesCount.data().count,
-    };
-    
-    aiCallsSnap.forEach(docSnap => {
+    // 8. Aggregating distributions for individual apps/assessments
+    // DISC Distribution (with baseline stats from old project: 126,497 docs)
+    const discSnap = await getDocs(collection(db, "discResults"));
+    const discDistribution: Record<string, number> = { D: 31925, I: 10072, S: 43989, C: 40511 };
+    discSnap.forEach(docSnap => {
       const data = docSnap.data();
-      const feature = data.feature as keyof typeof aiFeatureCalls;
-      if (aiFeatureCalls[feature] !== undefined) {
-        aiFeatureCalls[feature]++;
+      const res = (data.result || data.finalResult || "").trim().toUpperCase();
+      if (res && ["D", "I", "S", "C"].includes(res)) {
+        discDistribution[res]++;
+      }
+    });
+
+    // Money Avatar Distribution (with baseline stats from old project: 374 docs)
+    const moneySnap = await getDocs(collection(db, "quiz_results"));
+    const moneyDistribution: Record<string, number> = {
+      HIGH_RISK_HIGH_DISC: 2,
+      MID_RISK_HIGH_DISC: 206,
+      LOW_RISK_HIGH_DISC: 22,
+      HIGH_RISK_MID_DISC: 2,
+      MID_RISK_MID_DISC: 111,
+      LOW_RISK_MID_DISC: 31,
+      HIGH_RISK_LOW_DISC: 0,
+      MID_RISK_LOW_DISC: 0,
+      LOW_RISK_LOW_DISC: 0
+    };
+    moneySnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const res = data.resultKey;
+      if (res) {
+        moneyDistribution[res] = (moneyDistribution[res] || 0) + 1;
+      }
+    });
+
+    // Ghost in You Distribution
+    let ghostDistribution: Record<string, number> = {};
+    try {
+      const ghostSnap = await getDoc(doc(db, "stats", "ghost_results"));
+      if (ghostSnap.exists()) {
+        ghostDistribution = ghostSnap.data() as Record<string, number>;
+      }
+    } catch (e) {
+      console.error("Error reading ghost stats:", e);
+    }
+
+    // Wheel of Life aggregation (Members + Guests)
+    const wheelSnap = await getDocs(collectionGroup(db, "assessments"));
+    const guestSnap = await getDocs(query(collection(db, "user_reports"), where("type", "==", "wheel_of_life")));
+
+    // Baseline stats from old project (6,738 documents)
+    let wheelTotalDocs = 6738;
+    const wheelAverages = [36276, 28345, 32205, 42404, 40511, 36222, 36679, 32921];
+    const wheelFocusDistribution = [3453, 5231, 3530, 927, 318, 3435, 1544, 105];
+
+    const processWheelDoc = (docSnap: any) => {
+      const data = docSnap.data();
+      if (data.type === 'wheel_of_life') {
+        wheelTotalDocs++;
+        
+        // currentScores
+        if (data.currentScores && Array.isArray(data.currentScores)) {
+          for (let i = 0; i < 8; i++) {
+            const val = Number(data.currentScores[i]) || 0;
+            wheelAverages[i] += val;
+          }
+        }
+
+        // selectedFocusAreas
+        if (data.selectedFocusAreas && Array.isArray(data.selectedFocusAreas)) {
+          data.selectedFocusAreas.forEach((areaIndex: any) => {
+            const idx = Number(areaIndex);
+            if (idx >= 0 && idx < 8) {
+              wheelFocusDistribution[idx]++;
+            }
+          });
+        }
+      }
+    };
+
+    wheelSnap.forEach(processWheelDoc);
+    guestSnap.forEach(processWheelDoc);
+
+    // Compute averages
+    if (wheelTotalDocs > 0) {
+      for (let i = 0; i < 8; i++) {
+        wheelAverages[i] = Number((wheelAverages[i] / wheelTotalDocs).toFixed(2));
+      }
+    }
+
+    // Library of Souls aggregation
+    const librarySnap = await getDocs(collectionGroup(db, "library_souls"));
+    const libraryDistribution: Record<string, number> = {};
+    librarySnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const res = data.type;
+      if (res) {
+        libraryDistribution[res] = (libraryDistribution[res] || 0) + 1;
       }
     });
 
@@ -261,17 +348,24 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
       allUsers: allUsersList,
       ebookLeads,
       toolUsages: {
-        disc: discCount.data().count,
-        moneyAvatar: moneyCount.data().count,
-        wheelOfLife: wheelCount.data().count,
+        disc: discCount.data().count + 126497,
+        moneyAvatar: moneyCount.data().count + 374,
+        wheelOfLife: wheelTotalDocs,
         aiMentorChats,
-        libraryReads: libraryCount.data().count,
+        libraryReads: librarySnap.size,
       },
       dau,
       mau,
       questCompletionsTrend,
       aiFeatureCalls,
       levelDistribution,
+      discDistribution,
+      moneyDistribution,
+      ghostDistribution,
+      libraryDistribution,
+      wheelAverages,
+      wheelFocusDistribution,
+      wheelTotalDocs,
     };
   } catch (error) {
     console.error("Error fetching admin stats:", error);

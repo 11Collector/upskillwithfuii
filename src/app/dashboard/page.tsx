@@ -3283,62 +3283,45 @@ export default function DashboardPage() {
 
                     {/* 📚 หนังสือ (Library of Souls) - ถูกนำออกไปแสดงใน Player Card แทน */}
 
-                    {/* ✨ แถบ Badge ทั้ง 3 (พอดี 1 บรรทัดบนมือถือ) */}
-                    <div className="flex flex-col items-center gap-2.5 w-full px-2">
-                      {/* Row 1: Streak & Perfect Week */}
-                      <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full">
-                        {/* Streak Badge */}
-                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                          <Flame size={12} className={`fill-current shrink-0 ${streakCount === 0 ? 'text-white/30' : 'text-orange-500'}`} />
-                          <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
-                            {streakCount === 0 ? 'เริ่ม Streak วันนี้' : `${streakCount} Days`}
+                    {/* ✨ แถบ Badge (พอดี 1 บรรทัดบนมือถือและสมดุล) */}
+                    <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap px-2">
+                      {/* Perfect Week Badge */}
+                      {perfectWeeks > 0 && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-amber-400/10 border border-amber-400/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-amber-400/20">
+                          <Trophy size={12} className="text-amber-400 shrink-0" />
+                          <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
+                            {perfectWeeks} Perfect
                           </span>
                         </div>
+                      )}
 
-                        {/* Perfect Week Badge */}
-                        {perfectWeeks > 0 && (
-                          <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-amber-400/10 border border-amber-400/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-amber-400/20">
-                            <Trophy size={12} className="text-amber-400 shrink-0" />
-                            <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
-                              {perfectWeeks} Perfect
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      {/* DISC Badge */}
+                      {lastDisc && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                          <Zap size={12} className="text-blue-400 shrink-0" />
+                          <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
+                            {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
+                          </span>
+                        </div>
+                      )}
 
-                      {/* Row 2: DISC, Money, Library of Souls, Perfect Week */}
-                      {(lastDisc || lastMoney || lastLibrarySoul || perfectWeeks > 0) && (
-                        <div className="flex justify-center items-center gap-1.5 sm:gap-2.5 w-full flex-wrap">
-                          {/* DISC Badge */}
-                          {lastDisc && (
-                            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                              <Zap size={12} className="text-blue-400 shrink-0" />
-                              <span className="text-[9px] sm:text-[10px] font-black text-blue-300 tracking-wide whitespace-nowrap">
-                                {DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle}
-                              </span>
-                            </div>
-                          )}
+                      {/* Money Badge */}
+                      {lastMoney && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                          <Star size={12} className="text-amber-400 fill-current shrink-0" />
+                          <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
+                            {MONEY_DATA[lastMoney.resultKey]?.title}
+                          </span>
+                        </div>
+                      )}
 
-                          {/* Perfect Week Badge */}
-                          {/* Money Badge */}
-                          {lastMoney && (
-                            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
-                              <Star size={12} className="text-amber-400 fill-current shrink-0" />
-                              <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
-                                {MONEY_DATA[lastMoney.resultKey]?.title}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Library of Souls Badge */}
-                          {lastLibrarySoul && (
-                            <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-emerald-500/20">
-                              <BookOpen size={12} className="text-emerald-400 shrink-0" />
-                              <span className="text-[9px] sm:text-[10px] font-black text-emerald-300 tracking-wide whitespace-nowrap">
-                                {lastLibrarySoul.type}
-                              </span>
-                            </div>
-                          )}
+                      {/* Library of Souls Badge */}
+                      {lastLibrarySoul && (
+                        <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-emerald-500/20">
+                          <BookOpen size={12} className="text-emerald-400 shrink-0" />
+                          <span className="text-[9px] sm:text-[10px] font-black text-emerald-300 tracking-wide whitespace-nowrap">
+                            {lastLibrarySoul.type}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -3347,6 +3330,14 @@ export default function DashboardPage() {
 
                 {/* 🌟 3. Bottom Bar (เหลือแค่เส้น Progress Track เดี่ยวๆ แล้ว) */}
                 <div className="w-full mt-auto pt-4 border-t border-white/5 flex flex-col items-center relative z-20">
+
+                  {/* 🔥 Streak Count Label - ย้ายมาอยู่เหนือเส้นแทร็กเพื่อให้เข้าใจง่ายและสัมพันธ์กับจุดความคืบหน้า */}
+                  <div className="flex items-center gap-1 mb-2 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+                    <Flame size={12} className={`fill-current shrink-0 ${streakCount === 0 ? 'text-white/30' : 'text-orange-500 animate-pulse'}`} />
+                    <span className="text-[9px] sm:text-[10px] font-black text-orange-400 uppercase tracking-wide whitespace-nowrap">
+                      {streakCount === 0 ? 'เริ่ม Streak วันนี้' : `${streakCount} Days Streak`}
+                    </span>
+                  </div>
 
                   <div className="relative flex items-center justify-between w-full max-w-[380px] mb-4 h-8 px-2">
                     {/* 1. เส้นพื้นหลัง (เทาอ่อน) */}
@@ -4586,7 +4577,7 @@ export default function DashboardPage() {
                               {lastGhostResult.secondary && ghostResults[lastGhostResult.secondary as keyof typeof ghostResults] && (() => {
                                 const secGhost = ghostResults[lastGhostResult.secondary as keyof typeof ghostResults];
                                 return (
-                                  <div className="mb-6 py-2.5 px-4 rounded-2xl bg-white border border-[#E6D9C5] flex items-center gap-3 w-full shadow-sm">
+                                  <div className="mb-6 py-2.5 px-5 rounded-2xl bg-red-50/30 border border-red-100/80 flex items-center gap-3 relative group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
                                     <img src={`/ghosts/${secGhost.id}.png`} alt={secGhost.name} className="w-8 h-8 object-contain opacity-70 shrink-0" />
                                     <div className="flex flex-col items-start leading-none gap-1">
                                       <span className="text-[8px] font-black text-red-600/70 uppercase tracking-widest">ตัวตนรอง</span>
