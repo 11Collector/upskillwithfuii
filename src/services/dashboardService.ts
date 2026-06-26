@@ -46,6 +46,10 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   prevWeekTargetDate.setDate(prevWeekTargetDate.getDate() - 7);
   const prevWeekInfo = calculateRelativeWeek(joinDate, prevWeekTargetDate);
 
+  const prevPrevWeekTargetDate = new Date();
+  prevPrevWeekTargetDate.setDate(prevPrevWeekTargetDate.getDate() - 14);
+  const prevPrevWeekInfo = calculateRelativeWeek(joinDate, prevPrevWeekTargetDate);
+
   // 💡 2. ดึงข้อมูล Assessments และ Weekly Stats อย่างปลอดภัย
   const authWheelRef = collection(db, "users", uid, "assessments");
 
@@ -59,6 +63,7 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   let quoteSnap: QuerySnapshot<DocumentData> = emptyQuery;
   let thisWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
   let prevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
+  let prevPrevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
 
   try {
     const results = await Promise.all([
@@ -68,7 +73,8 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
       getDocs(query(collection(db, "users", uid, "library_souls"), orderBy("createdAt", "desc"), limit(1))),
       getDocs(query(collection(db, "quotes"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(1))),
       getDoc(doc(db, "users", uid, "weekly_stats", currentWeekInfo.id)),
-      getDoc(doc(db, "users", uid, "weekly_stats", prevWeekInfo.id))
+      getDoc(doc(db, "users", uid, "weekly_stats", prevWeekInfo.id)),
+      getDoc(doc(db, "users", uid, "weekly_stats", prevPrevWeekInfo.id))
     ]);
     
     authWheelSnap = results[0];
@@ -78,6 +84,7 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
     quoteSnap = results[4];
     thisWeekSnap = results[5];
     prevWeekSnap = results[6];
+    prevPrevWeekSnap = results[7];
   } catch (error) {
     console.error("Error fetching sub-collections, falling back to empty data:", error);
   }
@@ -121,12 +128,16 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   // --- จัดการข้อมูลสถิติรายสัปดาห์ ---
   let thisWeekData = null;
   let prevWeekData = null;
+  let prevPrevWeekData = null;
 
   if (thisWeekSnap.exists()) {
     thisWeekData = thisWeekSnap.data();
   }
   if (prevWeekSnap.exists()) {
     prevWeekData = prevWeekSnap.data();
+  }
+  if (prevPrevWeekSnap.exists()) {
+    prevPrevWeekData = prevPrevWeekSnap.data();
   }
 
   return {
@@ -143,6 +154,7 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
     quoteData,
     hasSoulGuide: !!(userData?.hasSoulGuide),
     thisWeekData,
-    prevWeekData
+    prevWeekData,
+    prevPrevWeekData
   };
 };

@@ -553,9 +553,9 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
           <div className="mt-8 pt-6 border-t border-slate-800/80">
             <div className="space-y-2">
               {/* Table Header (Grid 3 Columns) */}
-              <div className="grid grid-cols-[4rem_1fr_2fr] gap-2 text-[9px] font-black uppercase tracking-widest text-slate-500 pb-2 border-b border-slate-800/50 px-1">
+              <div className="grid grid-cols-[3rem_auto_1fr] gap-2 text-[9px] font-black uppercase tracking-widest text-slate-500 pb-2 border-b border-slate-800/50 px-1">
                 <span>คะแนน</span>
-                <span className="text-center sm:text-left">Rank Name</span>
+                <span className="text-left">Rank Name</span>
                 <span className="text-right sm:text-left">คำอธิบาย</span>
               </div>
 
@@ -570,10 +570,10 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                 return (
                   <div
                     key={idx}
-                    className={`grid grid-cols-[4rem_1fr_2fr] gap-2 items-center py-1.5 px-1 transition-opacity duration-300 ${isActive ? 'text-white opacity-100' : 'text-slate-500 opacity-40'}`}
+                    className={`grid grid-cols-[3rem_auto_1fr] gap-2 items-center py-1.5 px-1 transition-opacity duration-300 ${isActive ? 'text-white opacity-100' : 'text-slate-500 opacity-40'}`}
                   >
                     <span className="text-[11px] font-black tracking-tight">{rank.score}</span>
-                    <span className="text-[11px] font-bold truncate pr-1 text-center sm:text-left">{rank.emoji} {rank.name}</span>
+                    <span className="text-[11px] font-bold pr-1 text-left whitespace-nowrap">{rank.emoji} {rank.name}</span>
                     <span className="text-[10px] font-medium italic text-right sm:text-left leading-tight break-words">{rank.desc}</span>
                   </div>
                 );

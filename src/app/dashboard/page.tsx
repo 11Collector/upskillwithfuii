@@ -5,13 +5,14 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
 import React from 'react'
 import { results as LIBRARY_SOULS_RESULTS } from "@/data/librarySoulsResults";
 import { ghostResults } from "@/data/ghostResults";
+import { mockArticles } from "@/constants/article";
 
 import { MONEY_DATA, DISC_DATA, QUEST_POOL, categoryNames } from "@/data/quests";
 import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA, SHOP_ITEMS } from "@/data/constants";
@@ -21,6 +22,7 @@ import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
 import { fetchDashboardData } from "@/services/dashboardService";
 import { MementoMoriBento } from "./_components/MementoMoriBento";
 import { MementoMoriModal } from "./_components/MementoMoriModal";
+import { WeeklySummaryModal } from "./_components/WeeklySummaryModal";
 // AI Quest marker constants or unused legacy variables cleaned up
 
 const playSuccessChime = () => {
@@ -222,12 +224,14 @@ export default function DashboardPage() {
         randomWheelQuestTitle: randomTask,
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
+        weeklySavings: 0, // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
       });
 
       setWheelPlanDay(1);
       setIsRandomMode(true);
       setRandomWheelQuestTitle(randomTask);
       setWheelCompletions(0);
+      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0 } : null);
 
       alert("✨ สุ่มภารกิจใหม่จากหมวด Wheel และเริ่ม Day 1 ให้คุณแล้ว!");
     } catch (e) {
@@ -249,11 +253,13 @@ export default function DashboardPage() {
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
         lastActiveAt: serverTimestamp(),
+        weeklySavings: 0, // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
       });
 
       setWheelPlanDay(1);
       setCompletedQuests([]);
       setWheelCompletions(0);
+      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0 } : null);
       alert("เริ่มรอบใหม่ (Day 1) ให้คุณแล้ว! ลุยกันต่อเลยครับ");
     } catch (e) { console.error(e); }
   };
@@ -270,6 +276,11 @@ export default function DashboardPage() {
   const [lastDisc, setLastDisc] = useState<any>(null);
   const [lastMoney, setLastMoney] = useState<any>(null);
   const [lastLibrarySoul, setLastLibrarySoul] = useState<any>(null);
+  const [showBookCollection, setShowBookCollection] = useState(false);
+  const [playlistBooks, setPlaylistBooks] = useState<{ title: string; author: string; category: string; status?: 'interested' | 'completed'; savedAt?: string }[]>([]);
+  const [activeBookTab, setActiveBookTab] = useState<"interested" | "completed">("interested");
+  const [manualBookTitle, setManualBookTitle] = useState("");
+  const [manualBookAuthor, setManualBookAuthor] = useState("");
   const [lastGhostResult, setLastGhostResult] = useState<any>(null);
   const [hasSoulGuide, setHasSoulGuide] = useState(false);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
@@ -295,7 +306,6 @@ export default function DashboardPage() {
   const [bookMatchLoading, setBookMatchLoading] = useState(false);
   const [savedBooks, setSavedBooks] = useState<Set<string>>(new Set());
   const [showCollectionModal, setShowCollectionModal] = useState(false);
-  const [collectionBooks, setCollectionBooks] = useState<{ title: string; author: string; category: string }[]>([]);
   const [collectionQuests, setCollectionQuests] = useState<{ title: string; type: string; completedAt: string }[]>([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
 
@@ -343,11 +353,21 @@ export default function DashboardPage() {
     title: "PERFECT WEEK!",
     bonusXP: 100,
     message: "ยินดีด้วย! คุณทำแผนครบ 7 วันต่อเนื่องได้อย่างยอดเยี่ยม",
-    type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD"
+    type: "PERFECT" as "PERFECT" | "GREAT" | "GOOD",
+    weeklySavings: 0
   });
+  const [showWeeklySummaryModal, setShowWeeklySummaryModal] = useState(false);
+  const [prevWeekInfoState, setPrevWeekInfoState] = useState<any>(null);
+  const [prevWeekDataState, setPrevWeekDataState] = useState<any>(null);
 
   const [userData, setUserData] = useState<any>(null);
   const [showMementoModal, setShowMementoModal] = useState(false);
+
+  const hasSavedToday = useMemo(() => {
+    if (!userData?.savingsLog) return false;
+    const todayStr = new Date().toDateString();
+    return userData.savingsLog.some((log: any) => new Date(log.date).toDateString() === todayStr);
+  }, [userData?.savingsLog]);
 
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
@@ -400,6 +420,17 @@ export default function DashboardPage() {
       const currentWeekInfo = data.currentWeekInfo;
       const userData = data.userData;
       setUserData(userData);
+
+      // Check for weekly wrap-up transition
+      const currentWeekId = currentWeekInfo?.id || "week-1";
+      const lastSeenWeekId = userData?.lastSeenWeekId || "";
+      const prevWeekId = data.prevWeekInfo?.id || "";
+
+      if (currentWeekId !== "week-1" && lastSeenWeekId !== prevWeekId) {
+        setPrevWeekInfoState(data.prevWeekInfo);
+        setPrevWeekDataState(data.prevWeekData || { wheel: 0, disc: 0, money: 0, challenge: 0, focusMinutes: 0 });
+        setShowWeeklySummaryModal(true);
+      }
 
       if (currentWeekInfo.id === "week-1") {
         setIsFirstWeek(true);
@@ -545,17 +576,30 @@ export default function DashboardPage() {
               const xpToAdd = bonusXP;
               const perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
 
+              // 📊 Archive current week's weeklySavings to weekly_stats doc
+              try {
+                const weeklyRef = doc(db, "users", currentUser.uid, "weekly_stats", data.currentWeekInfo.id);
+                await setDoc(weeklyRef, {
+                  weeklySavings: userData.weeklySavings || 0,
+                  updatedAt: new Date()
+                }, { merge: true });
+              } catch (e) {
+                console.error("Failed to archive weeklySavings to weekly_stats:", e);
+              }
+
               updates.wheelPlanDay = nextPlanDay;
               updates.lastActiveDate = todayStr;
               updates.completedQuestIds = [];
               updates.wheelCompletions = 0;
+              updates.weeklySavings = 0; // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
 
               if (xpToAdd > 0) {
                 setRewardModalData({
                   title: milestoneName,
                   bonusXP: xpToAdd,
                   message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
-                  type: modalType
+                  type: modalType,
+                  weeklySavings: userData?.weeklySavings || 0
                 });
                 updates.totalXP = increment(xpToAdd);
                 updates.perfectWeeks = increment(perfectWeekInc);
@@ -580,6 +624,7 @@ export default function DashboardPage() {
               updates.lastActiveDate = todayStr;
               updates.completedQuestIds = [];
               updates.wheelCompletions = 0;
+              updates.weeklySavings = 0; // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
             }
 
             setWheelCompletions(0);
@@ -593,6 +638,7 @@ export default function DashboardPage() {
 
           try {
             await updateDoc(userRef, updates);
+            setUserData((prev: any) => prev ? { ...prev, ...updates } : null);
           } catch (e) {
             console.error("Failed to update user dashboard data for new day:", e);
           }
@@ -658,6 +704,9 @@ export default function DashboardPage() {
   }, []);
   const [isRandomMode, setIsRandomMode] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showMoneyVault, setShowMoneyVault] = useState(false);
+  const [vaultItem, setVaultItem] = useState("");
+  const [vaultPrice, setVaultPrice] = useState("");
   const [showLineModal, setShowLineModal] = useState(false);
 
   const handleGenderChange = async (newGender: "male" | "female") => {
@@ -823,6 +872,7 @@ export default function DashboardPage() {
         setNewName(currentUser.displayName || "");
         
         await loadDashboardData(currentUser);
+        await loadPlaylistBooks(currentUser.uid);
 
         // Update lastLoginAt once per session in the background after data loads
         try {
@@ -937,8 +987,101 @@ export default function DashboardPage() {
     }
   };
 
+  const handleResistTemptation = async () => {
+    if (!user) return;
+    if (!vaultItem.trim()) {
+      alert("กรุณาระบุสิ่งที่ยั้งใจไม่ซื้อ");
+      return;
+    }
+    const priceNum = parseFloat(vaultPrice);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      alert("กรุณาระบุราคาที่ถูกต้อง");
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const newLog = {
+        id: "tempt-" + Date.now(),
+        item: vaultItem.trim(),
+        price: priceNum,
+        date: new Date().toISOString()
+      };
+
+      const todayDate = new Date().toDateString();
+      const todaySaves = (userData?.savingsLog || []).filter((log: any) => new Date(log.date).toDateString() === todayDate);
+      const earnedXP = todaySaves.length === 0 ? 5 : 0;
+
+      const updates: any = {
+        savingsLog: arrayUnion(newLog),
+        weeklySavings: increment(priceNum)
+      };
+
+      if (earnedXP > 0) {
+        updates.totalXP = increment(earnedXP);
+        playSuccessChime();
+        const oldLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+        const checkNewLevel = Math.floor(((userData?.totalXP || 0) + earnedXP) / 100) + 1;
+        if (checkNewLevel > oldLevel) {
+          setShowLevelUp({ isOpen: true, newLevel: checkNewLevel });
+          setTimeout(() => setShowLevelUp(null), 4000);
+        }
+        setTotalXP((prev) => prev + earnedXP);
+      } else {
+        playSuccessChime();
+      }
+
+      // Sync weeklySavings to weekly_stats doc
+      try {
+        const weeklyRef = doc(db, "users", user.uid, "weekly_stats", relativeWeekInfo.id);
+        await setDoc(weeklyRef, {
+          weeklySavings: increment(priceNum),
+          updatedAt: new Date()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Failed to sync weeklySavings to weekly_stats:", e);
+      }
+
+      await updateDoc(userRef, updates);
+      setUserData((prev: any) => ({
+        ...prev,
+        savingsLog: [...(prev?.savingsLog || []), newLog],
+        weeklySavings: (prev?.weeklySavings || 0) + priceNum,
+        totalXP: (prev?.totalXP || 0) + earnedXP
+      }));
+
+      // Show success toast with feedback
+      if (earnedXP > 0) {
+        setShowSuccessToast(`สะกดกิเลสสำเร็จ! คุณประหยัดเงินได้ ฿${priceNum.toLocaleString()} เข้าคลังออมมีสติ และได้รับ +5 XP ประจำวันแล้ว 🌟`);
+      } else {
+        setShowSuccessToast(`สะกดกิเลสสำเร็จ! ออมเงิน ฿${priceNum.toLocaleString()} เข้าคลังออมมีสติ (วันนี้ได้รับโบนัส XP ประจำวันไปแล้ว)`);
+      }
+      setTimeout(() => setShowSuccessToast(null), 2500);
+
+      // Clear input fields
+      setVaultItem("");
+      setVaultPrice("");
+    } catch (e) {
+      console.error("Error saving temptation log:", e);
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+    }
+  };
+
   const handleLogout = async () => {
     try { await signOut(auth); router.push("/"); } catch (error) { console.error(error); }
+  };
+
+  const handleCloseWeeklySummary = async () => {
+    setShowWeeklySummaryModal(false);
+    if (user && prevWeekInfoState) {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, { lastSeenWeekId: prevWeekInfoState.id }, { merge: true });
+        setUserData((prev: any) => prev ? { ...prev, lastSeenWeekId: prevWeekInfoState.id } : null);
+      } catch (e) {
+        console.error("Failed to update lastSeenWeekId:", e);
+      }
+    }
   };
 
   const handleResetAllData = async () => {
@@ -1053,7 +1196,6 @@ export default function DashboardPage() {
       setAiGeneratedMoneyTitle("");
       setCustomQuestTitle("");
       setCollectionQuests([]);
-      setCollectionBooks([]);
       setSavedBooks(new Set());
       localStorage.removeItem('hasSeenDashboardTutorial');
       setShowTutorial(true);
@@ -1313,30 +1455,131 @@ export default function DashboardPage() {
     setInfoModal({ isOpen: true, title: "DISC STYLE", content });
   };
 
-  const handleSaveBook = async (book: { title: string; author: string; reason: string; category: string }) => {
+  const loadPlaylistBooks = async (uid: string) => {
+    try {
+      const snap = await getDocs(collection(db, 'users', uid, 'book_playlist'));
+      const books = snap.docs.map(d => {
+        const data = d.data();
+        return {
+          title: data.title || "",
+          author: data.author || "",
+          category: data.category || "General",
+          status: data.status || 'interested',
+          savedAt: data.savedAt || ""
+        };
+      }) as { title: string; author: string; category: string; status?: 'interested' | 'completed'; savedAt?: string }[];
+      setPlaylistBooks(books);
+      setSavedBooks(new Set(books.filter(b => (b.status || 'interested') === 'interested').map(b => b.title)));
+    } catch (err) {
+      console.error("Error loading playlist books:", err);
+    }
+  };
+
+  const getArticleSlug = (bookTitle: string) => {
+    const match = mockArticles.find(a => 
+      a.title.toLowerCase().includes(bookTitle.toLowerCase()) || 
+      bookTitle.toLowerCase().includes(a.title.toLowerCase())
+    );
+    return match ? match.slug : null;
+  };
+
+  const handleSaveBook = async (book: { title: string; author: string; reason?: string; category: string }) => {
     if (!user) return;
     const key = book.title;
     const isSaved = savedBooks.has(key);
-    // Optimistic update
+    // Optimistic updates
     setSavedBooks(prev => {
       const next = new Set(prev);
       isSaved ? next.delete(key) : next.add(key);
       return next;
     });
+    setPlaylistBooks(prev => {
+      if (isSaved) {
+        return prev.filter(b => b.title !== book.title);
+      } else {
+        return [...prev, { title: book.title, author: book.author, category: book.category, status: 'interested' }];
+      }
+    });
     const playlistRef = collection(db, 'users', user.uid, 'book_playlist');
     if (isSaved) {
-      // ลบออก — หา doc ที่ title ตรงแล้วลบ
       const { getDocs, query, where, deleteDoc } = await import('firebase/firestore');
       const q = query(playlistRef, where('title', '==', book.title));
       const snap = await getDocs(q);
       snap.forEach(d => deleteDoc(d.ref));
     } else {
       const { addDoc } = await import('firebase/firestore');
-      await addDoc(playlistRef, { ...book, savedAt: new Date().toISOString() });
+      await addDoc(playlistRef, { 
+        title: book.title, 
+        author: book.author, 
+        category: book.category,
+        reason: book.reason || "", 
+        status: 'interested',
+        savedAt: new Date().toISOString() 
+      });
     }
   };
 
-  // โหลด saved books เมื่อ modal เปิด
+  const handleMarkAsCompleted = async (book: { title: string; author: string; category: string }) => {
+    if (!user) return;
+    const key = book.title;
+
+    // Optimistic state updates
+    setSavedBooks(prev => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    setPlaylistBooks(prev =>
+      prev.map(b => b.title === key ? { ...b, status: 'completed' } : b)
+    );
+
+    try {
+      const playlistRef = collection(db, 'users', user.uid, 'book_playlist');
+      const { getDocs, query, where, updateDoc } = await import('firebase/firestore');
+      const q = query(playlistRef, where('title', '==', key));
+      const snap = await getDocs(q);
+      snap.forEach(d => updateDoc(d.ref, { status: 'completed' }));
+    } catch (err) {
+      console.error("Error marking book as completed:", err);
+    }
+  };
+
+  const handleAddBookManually = async (status: 'interested' | 'completed') => {
+    if (!user || !manualBookTitle.trim()) return;
+    const title = manualBookTitle.trim();
+    const author = manualBookAuthor.trim() || "ไม่ระบุผู้แต่ง";
+    const category = "General";
+
+    const newBook = {
+      title,
+      author,
+      category,
+      status,
+      savedAt: new Date().toISOString()
+    };
+
+    // Optimistic update
+    setPlaylistBooks(prev => [...prev, newBook]);
+    if (status === 'interested') {
+      setSavedBooks(prev => {
+        const next = new Set(prev);
+        next.add(title);
+        return next;
+      });
+    }
+    setManualBookTitle("");
+    setManualBookAuthor("");
+
+    try {
+      const playlistRef = collection(db, 'users', user.uid, 'book_playlist');
+      const { addDoc } = await import('firebase/firestore');
+      await addDoc(playlistRef, newBook);
+    } catch (err) {
+      console.error(`Error adding manual book (${status}):`, err);
+    }
+  };
+
+  // โหลดข้อมูลกล่องสะสมเมื่อ modal เปิด
   const openCollectionModal = async () => {
     if (!user) return;
     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
@@ -1344,15 +1587,11 @@ export default function DashboardPage() {
     setCollectionSelectedDate(todayStr);
     setCollectionLoading(true);
     try {
-      const [booksSnap, questsSnap] = await Promise.all([
-        getDocs(collection(db, 'users', user.uid, 'book_playlist')),
-        getDocs(query(
-          collection(db, 'users', user.uid, 'quest_log'),
-          orderBy('completedAt', 'desc'),
-          limit(30)
-        )),
-      ]);
-      setCollectionBooks(booksSnap.docs.map(d => d.data() as { title: string; author: string; category: string }));
+      const questsSnap = await getDocs(query(
+        collection(db, 'users', user.uid, 'quest_log'),
+        orderBy('completedAt', 'desc'),
+        limit(30)
+      ));
       setCollectionQuests(questsSnap.docs.map(d => d.data() as { title: string; type: string; completedAt: string }));
     } catch {
       // fail silently
@@ -1363,9 +1602,7 @@ export default function DashboardPage() {
 
   const loadSavedBooks = async () => {
     if (!user) return;
-    const { getDocs } = await import('firebase/firestore');
-    const snap = await getDocs(collection(db, 'users', user.uid, 'book_playlist'));
-    setSavedBooks(new Set(snap.docs.map(d => d.data().title as string)));
+    await loadPlaylistBooks(user.uid);
   };
 
   const fetchBooks = async () => {
@@ -2067,7 +2304,8 @@ export default function DashboardPage() {
       title: milestoneName,
       bonusXP: bonusXP,
       message: `จบแผน 7 วันแล้ว! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!`,
-      type: modalType
+      type: modalType,
+      weeklySavings: userData?.weeklySavings || 0
     });
 
     const finalUpdates: any = {
@@ -2936,12 +3174,14 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Right: Logout Button */}
-                    <button
-                      onClick={handleLogout}
-                      className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
-                    >
-                      <LogOut size={12} className="group-hover/btn:-translate-x-0.5 transition-transform" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 ml-1">
+                      <button
+                        onClick={handleLogout}
+                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all group/btn shrink-0"
+                      >
+                        <LogOut size={12} className="group-hover/btn:-translate-x-0.5 transition-transform" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Right side: Widgets & Actions */}
@@ -3533,8 +3773,8 @@ export default function DashboardPage() {
 
         {/* --- 🎯 Quests Tab Header --- */}
         {activeTab === "quests" && (
-          <div className="mt-2 mb-4">
-            <div className="flex items-center gap-4">
+          <div className="mt-2 mb-4 relative flex items-center justify-center">
+            <div className="flex items-center gap-4 w-full">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
                 <span>🎯</span>
@@ -3542,6 +3782,17 @@ export default function DashboardPage() {
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
             </div>
+
+            {/* กล่องสะสม */}
+            <button
+              onClick={openCollectionModal}
+              className="absolute right-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-xs font-semibold active:scale-95 cursor-pointer z-30"
+              title="ประวัติการทำภารกิจที่ผ่านมา"
+            >
+              <span>🗂️</span>
+              <span className="hidden sm:inline">กล่องสะสม</span>
+              <span className="sm:hidden">สะสม</span>
+            </button>
           </div>
         )}
 
@@ -3570,24 +3821,26 @@ export default function DashboardPage() {
               </div>
 
               {/* ✨ ปรับ Quest วันนี้ */}
-              {currentLevel < 10 ? (
-                <div
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none opacity-60"
-                  title="ฟีเจอร์ปรับแต่งเควสด้วย AI จะปลดล็อกเมื่อถึง Level 10 (Habit Master)"
-                >
-                  <Lock size={12} className="text-slate-400" />
-                  <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest (LV.10)</span>
-                </div>
-              ) : (
-                <Link
-                  href="/tools/soul-guide?quest=1"
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
-                  title="คุยกับ AI Mentor เพื่อปรับ quest วันนี้"
-                >
-                  <Sparkles size={13} />
-                  <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
-                </Link>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {currentLevel < 10 ? (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-2xl border bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none opacity-60"
+                    title="ฟีเจอร์ปรับแต่งเควสด้วย AI จะปลดล็อกเมื่อถึง Level 10 (Habit Master)"
+                  >
+                    <Lock size={12} className="text-slate-400" />
+                    <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest (LV.10)</span>
+                  </div>
+                ) : (
+                  <Link
+                    href="/tools/soul-guide?quest=1"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
+                    title="คุยกับ AI Mentor เพื่อปรับ quest วันนี้"
+                  >
+                    <Sparkles size={13} />
+                    <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
+                  </Link>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-5 py-2 sm:py-3 rounded-[1.5rem] border border-slate-100 shadow-inner group/reward transition-all hover:bg-white hover:border-yellow-200 hover:shadow-md mb-6">
@@ -3892,15 +4145,6 @@ export default function DashboardPage() {
                 {activeTab === 'resources' ? 'เครื่องมืออัพสกิล' : 'ตัวตนของคุณ'}
               </h2>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-              {activeTab === 'identity' && (
-                <button
-                  onClick={openCollectionModal}
-                  className="absolute right-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-sm font-semibold"
-                >
-                  <span>🗂️</span>
-                  <span className="hidden sm:inline">กล่องสะสม</span>
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -4284,16 +4528,31 @@ export default function DashboardPage() {
                   </motion.div>
                 </Link>
 
-                <Link href="/tools/money-avatar" className="group flex flex-col h-full relative">
+                <div className="group flex flex-col h-full relative">
                   {lastMoney && (
-                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openMoneyInfo(e); }}
-                      className="absolute top-8 right-8 z-20 p-2.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-all bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100">
-                      <Info size={18} />
-                    </button>
+                    <div className="absolute top-8 right-8 z-20 flex items-center bg-white/90 backdrop-blur-md border border-slate-100 rounded-full p-1 shadow-sm">
+                      {/* ปุ่มสลับโหมด: คลังออมมีสติ vs โปรไฟล์ */}
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoneyVault(!showMoneyVault); }}
+                        className={`p-2 rounded-full transition-all ${showMoneyVault ? 'text-amber-500 bg-amber-50 shadow-inner' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                        title={showMoneyVault ? "ดูตัวตนการเงิน" : "เปิดคลังออมมีสติ"}
+                      >
+                        {showMoneyVault ? <Users size={16} /> : <Wallet size={16} />}
+                      </button>
+                      <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                      {/* ปุ่ม Info */}
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); openMoneyInfo(e); }}
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
+                        title="ดูคำอธิบาย"
+                      >
+                        <Info size={16} />
+                      </button>
+                    </div>
                   )}
                   <motion.div
                     whileHover={{ y: -6 }}
-                    className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-amber-100 relative overflow-hidden group"
+                    className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-amber-100 relative overflow-hidden"
                   >
                     {/* 🏷️ Floating XP Badge (ตำแหน่ง Top 8 Right 8 เท่ากันเป๊ะ) */}
                     {!lastMoney && (
@@ -4310,80 +4569,193 @@ export default function DashboardPage() {
                     <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-400/5 to-orange-400/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:from-amber-400/10 transition-colors duration-700 z-0" />
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-200 via-orange-400 to-amber-200 opacity-80 z-0" />
 
-                    {/* --- ส่วนของ Money Avatar --- */}
-                    {/* --- ส่วนของ Money Avatar --- */}
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastMoney ? (
                         <>
-                          <div className="flex flex-col items-center mb-8">
-                            <div className="relative mb-6 mt-2">
-                              <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
-                              <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden">
-                                {avatarImages[lastMoney.resultKey] ? (
-                                  <img
-                                    src={avatarImages[lastMoney.resultKey]}
-                                    alt="Avatar"
-                                    className="w-[80%] h-[80%] object-contain"
-                                  />
-                                ) : (
-                                  <span className="text-5xl">
-                                    {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                          {showMoneyVault ? (
+                            /* 🔮 คลังออมมีสติ (ดีไซน์ระดับเดียวกันกับโปรไฟล์หลัก) */
+                            <div className="flex flex-col items-center w-full h-full">
+                              <div className="flex flex-col items-center mb-8 w-full">
+                                {/* 🛡️ ตู้นิรภัยสะกดกิเลส ดีไซน์วงกลมไซส์เดียวกับด้านหน้าเป๊ะ (พื้นขาว + กระเป๋าตังค์) */}
+                                <div className="relative mb-6 mt-2">
+                                  <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
+                                  <div className="relative w-24 h-24 rounded-full bg-white border border-slate-50 flex items-center justify-center shadow-[0_12px_40px_rgb(0,0,0,0.06)] overflow-hidden transition-transform duration-500 hover:scale-105">
+                                    {/* Glass reflection beam */}
+                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-transparent via-white/5 to-white/10" />
+                                    {/* Wallet Icon */}
+                                    <Wallet size={38} className="text-amber-500 drop-shadow-[0_4px_12px_rgba(245,158,11,0.25)]" />
+                                  </div>
+                                </div>
 
-                            <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>
+                                <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MINDFUL SAVINGS </h3>
 
-                            {/* ชื่อหลัก */}
-                            <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
-                              {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"}
-                            </h2>
+                                {/* ชื่อหลักขนาดเดียวกับโปรไฟล์ */}
+                                <h2 className="text-3xl font-black mb-2.5 leading-tight tracking-tight text-amber-500">
+                                  คลังออมมีสติ
+                                </h2>
 
-                            {/* ✨ เพิ่ม Subtitle (Codename) ตรงนี้ครับ */}
-                            <p className="text-[11px] font-black text-amber-500/80 uppercase tracking-[0.2em] mb-4">
-                              {MONEY_DATA[lastMoney.resultKey]?.subtitle || "The Explorer"}
-                            </p>
-
-                            <div className="inline-flex items-center bg-amber-50 text-amber-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-amber-100/50 shadow-sm">
-                              Match {lastMoney.primaryMatch || 100}%
-                            </div>
-
-                            <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
-                              "{MONEY_DATA[lastMoney.resultKey]?.motto}"
-                            </p>
-
-                            {/* 🎭 Secondary Persona */}
-                            {lastMoney.secondaryKey && MONEY_DATA[lastMoney.secondaryKey] && (
-                              <div className="mb-6 py-2.5 px-5 rounded-2xl bg-slate-50/50 border border-slate-100/80 flex items-center gap-3 relative group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
-                                <span className="text-xl shrink-0">{MONEY_DATA[lastMoney.secondaryKey].emoji}</span>
-                                <div className="flex flex-col items-start leading-none gap-1">
-                                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ตัวตนรอง</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[12px] font-bold text-slate-700">
-                                      {MONEY_DATA[lastMoney.secondaryKey].title}
+                                {/* 💳 แท็บแสดงยอดออมสะสมแบบกระจก (Glass Balance Card) */}
+                                <div className="w-full max-w-[260px] bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl border border-amber-100/60 p-3 mb-5 shadow-sm flex items-center justify-between px-5 relative overflow-hidden">
+                                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-300/10 to-orange-300/10 blur-xl pointer-events-none" />
+                                  <div className="flex flex-col items-start">
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">ยอดออมสัปดาห์นี้</span>
+                                    <span className="text-xl font-black text-slate-900 tracking-tight">
+                                      ฿{(userData?.weeklySavings || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-[10px] font-bold text-slate-300 italic">
-                                      {lastMoney.secondaryMatch}%
+                                  </div>
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50">
+                                      ออมปังมาก
                                     </span>
                                   </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
 
-                          {/* 🔘 ปุ่มประเมินใหม่ */}
-                          <div className="w-full px-4 mt-auto">
-                            <div className="group/btn-start relative">
-                              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
-                                <RefreshCw size={16} className="text-white/80" />
-                                <span>ประเมินใหม่</span>
+                                {/* ✍️ ส่วนกรอกข้อมูลดีไซน์พรีเมียม (Side-by-side) */}
+                                <div className="w-full px-2 mb-4">
+                                  <div className="flex gap-2">
+                                    {/* สิ่งที่ยั้งใจ */}
+                                    <div className="flex-1 relative">
+                                      <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-slate-400">
+                                        <ShoppingBag size={14} className="opacity-60" />
+                                      </div>
+                                      <input
+                                        type="text"
+                                        placeholder="ยั้งใจไม่ซื้อ..."
+                                        value={vaultItem}
+                                        onChange={(e) => setVaultItem(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200/85 rounded-2xl pl-10 pr-4 py-3 text-xs text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 focus:bg-white transition-all font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] placeholder:text-slate-400 placeholder:font-medium"
+                                      />
+                                    </div>
+
+                                    {/* ราคา */}
+                                    <div className="w-[110px] relative">
+                                      <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-slate-500 font-black text-xs">
+                                        ฿
+                                      </div>
+                                      <input
+                                        type="number"
+                                        placeholder="ราคา..."
+                                        value={vaultPrice}
+                                        onChange={(e) => setVaultPrice(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200/85 rounded-2xl pl-8 pr-4 py-3 text-xs text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 focus:bg-white transition-all font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] placeholder:text-slate-400 placeholder:font-medium"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* 🏆 ประวัติชัยชนะล่าสุด */}
+                                <div className="w-full px-2 mb-2">
+                                  <div className="py-3 px-4 rounded-2xl bg-slate-50 border border-slate-100/80 flex items-center justify-between text-[11px] min-h-[46px] shadow-sm relative overflow-hidden">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                        <Sparkles size={10} className="fill-amber-500/20" />
+                                      </div>
+                                      <span className="text-slate-400 font-bold">ชัยชนะล่าสุด:</span>
+                                    </div>
+                                    
+                                    {userData?.savingsLog && userData.savingsLog.length > 0 ? (
+                                      <div className="flex items-center gap-2 max-w-[260px]">
+                                        <span className="text-slate-700 font-black truncate max-w-[140px]" title={userData.savingsLog[userData.savingsLog.length - 1].item}>
+                                          {userData.savingsLog[userData.savingsLog.length - 1].item}
+                                        </span>
+                                        <span className="text-amber-600 font-black bg-amber-50 border border-amber-100/50 px-2 py-0.5 rounded-full text-[10px] shrink-0">
+                                          ฿{userData.savingsLog[userData.savingsLog.length - 1].price.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-slate-400 italic font-medium">เริ่มต้นออมมีสติวันนี้!</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* 🔘 ปุ่มล่างสุดขนาดเดียวกับประเมินใหม่ ทำหน้าที่เป็นปุ่มสยบกิเลสหลัก */}
+                              <div className="w-full px-4 mt-auto">
+                                <button
+                                  onClick={handleResistTemptation}
+                                  className="w-full flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] hover:scale-[1.02] hover:shadow-amber-300 active:scale-95 cursor-pointer"
+                                >
+                                  <Zap size={16} className="text-white/80 shrink-0" />
+                                  <span>{hasSavedToday ? "บันทึกออมมีสติ" : "บันทึกออมมีสติ (+5 XP)"}</span>
+                                </button>
                               </div>
                             </div>
-                          </div>
+                          ) : (
+                            /* 👤 โปรไฟล์แสดงตนปกติ */
+                            <div className="flex flex-col items-center w-full h-full">
+                              <div className="flex flex-col items-center mb-8">
+                                <div className="relative mb-6 mt-2">
+                                  <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
+                                  <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden">
+                                    {avatarImages[lastMoney.resultKey] ? (
+                                      <img
+                                        src={avatarImages[lastMoney.resultKey]}
+                                        alt="Avatar"
+                                        className="w-[85%] h-[85%] object-contain"
+                                      />
+                                    ) : (
+                                      <span className="text-5xl">
+                                        {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>
+
+                                {/* ชื่อหลัก */}
+                                <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
+                                  {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"}
+                                </h2>
+
+                                {/* ✨ เพิ่ม Subtitle (Codename) ตรงนี้ครับ */}
+                                <p className="text-[11px] font-black text-amber-500/80 uppercase tracking-[0.2em] mb-4">
+                                  {MONEY_DATA[lastMoney.resultKey]?.subtitle || "The Explorer"}
+                                </p>
+
+                                <div className="inline-flex items-center bg-amber-50 text-amber-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-amber-100/50 shadow-sm">
+                                  Match {lastMoney.primaryMatch || 100}%
+                                </div>
+
+                                <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
+                                  "{MONEY_DATA[lastMoney.resultKey]?.motto}"
+                                </p>
+
+                                {/* 🎭 Secondary Persona */}
+                                {lastMoney.secondaryKey && MONEY_DATA[lastMoney.secondaryKey] && (
+                                  <div className="mb-6 py-2.5 px-5 rounded-2xl bg-slate-50/50 border border-slate-100/80 flex items-center gap-3 relative group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+                                    <span className="text-xl shrink-0">{MONEY_DATA[lastMoney.secondaryKey].emoji}</span>
+                                    <div className="flex flex-col items-start leading-none gap-1">
+                                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ตัวตนรอง</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[12px] font-bold text-slate-700">
+                                          {MONEY_DATA[lastMoney.secondaryKey].title}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-300 italic">
+                                          {lastMoney.secondaryMatch}%
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* 🔘 ปุ่มประเมินใหม่ */}
+                              <div className="w-full px-4 mt-auto">
+                                <Link href="/tools/money-avatar" className="w-full block">
+                                  <div className="group/btn-start relative">
+                                    <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+                                      <RefreshCw size={16} className="text-white/80" />
+                                      <span>ประเมินใหม่</span>
+                                    </div>
+                                  </div>
+                                </Link>
+                              </div>
+                            </div>
+                          )}
                         </>
                       ) : (
-                        // ... ส่วนของ Empty State เหมือนเดิม ...
+                        /* 🎨 Empty State */
                         <div className="flex flex-col items-center justify-between h-full w-full py-2">
                           <div className="flex flex-col items-center justify-center pt-8 mb-8">
                             <div className="relative mb-6">
@@ -4397,29 +4769,45 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="w-full px-4 mt-auto">
-                            <div className="group/btn-start relative">
-                              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
-                                <Sparkles size={16} className="text-white/80" />
-                                <span>
-                                  เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span>
-                                </span>
+                            <Link href="/tools/money-avatar" className="w-full block">
+                              <div className="group/btn-start relative">
+                                <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+                                  <Sparkles size={16} className="text-white/80" />
+                                  <span>
+                                    เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span>
+                                  </span>
+                                </div>
                               </div>
-                            </div>
+                            </Link>
                           </div>
                         </div>
                       )}
                     </div>
                   </motion.div>
-                </Link>
+                </div>
 
                 {/* 🌟 4. Library of Souls - Personality Assessment */}
-                <Link href="/tools/library-of-souls" className="group flex flex-col h-full relative">
-                  {/* ปุ่ม Info */}
+                <div className="group flex flex-col h-full relative">
                   {lastLibrarySoul && (
-                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openLibrarySoulInfo(e); }}
-                      className="absolute top-8 right-8 z-20 p-2.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100">
-                      <Info size={18} />
-                    </button>
+                    <div className="absolute top-8 right-8 z-20 flex items-center bg-white/90 backdrop-blur-md border border-slate-100 rounded-full p-1 shadow-sm">
+                      {/* ปุ่มสลับโหมด: คลังหนังสือ vs โปรไฟล์ */}
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowBookCollection(!showBookCollection); }}
+                        className={`p-2 rounded-full transition-all ${showBookCollection ? 'text-emerald-600 bg-emerald-50 shadow-inner' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                        title={showBookCollection ? "ดูตัวตนคนอ่าน" : "เปิดคลังหนังสือสะสม"}
+                      >
+                        {showBookCollection ? <Users size={16} /> : <Bookmark size={16} />}
+                      </button>
+                      <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                      {/* ปุ่ม Info */}
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); openLibrarySoulInfo(e); }}
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
+                        title="ดูคำอธิบาย"
+                      >
+                        <Info size={16} />
+                      </button>
+                    </div>
                   )}
                   <motion.div
                     whileHover={{ y: -6 }}
@@ -4440,52 +4828,245 @@ export default function DashboardPage() {
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       {lastLibrarySoul ? (
                         <>
-                          <div className="flex flex-col items-center mb-8">
-                            <div className="relative mb-6 mt-2">
-                              <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
-                              <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
-                                <img
-                                  src={`/books/${lastLibrarySoul.type}.png`}
-                                  alt={lastLibrarySoul.type}
-                                  className="w-[80%] h-[80%] object-contain drop-shadow-md"
-                                />
+                           {showBookCollection ? (
+                            /* 📚 คลังหนังสือสะสม (ดีไซน์ระดับเกรดเดียวกับหมวดอื่นๆ) */
+                            <div className="flex flex-col items-center w-full h-full">
+                              <div className="flex flex-col items-center mb-4 w-full">
+                                {/* 1. รูปหัวใจหรือชั้นหนังสือกลมพรีเมียม (พื้นขาว + Bookmark) */}
+                                <div className="relative mb-4 mt-2">
+                                  <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
+                                  <div className="relative w-24 h-24 rounded-full bg-white border border-slate-50 flex items-center justify-center shadow-[0_12px_40px_rgba(0,0,0,0.06)] overflow-hidden transition-transform duration-500 hover:scale-105">
+                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-transparent via-white/5 to-white/10" />
+                                    <Bookmark size={38} className="text-emerald-500 drop-shadow-[0_4px_12px_rgba(16,185,129,0.2)]" />
+                                  </div>
+                                </div>
+
+                                <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2"> BOOK SHELF </h3>
+
+                                <h2 className="text-3xl font-black mb-1.5 leading-tight tracking-tight text-emerald-600">
+                                  คลังหนังสือสะสม
+                                </h2>
+
+                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3">
+                                  สะสมทั้งหมด: {playlistBooks.length} เล่ม
+                                </p>
+
+                                {/* 📑 Tabs: เล่มที่สนใจ vs อ่านจบแล้ว */}
+                                <div className="flex bg-slate-100 p-0.5 rounded-xl w-[90%] text-[10px] font-black uppercase tracking-wider">
+                                  <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveBookTab("interested"); }}
+                                    className={`flex-1 py-1.5 rounded-lg text-center transition-all ${
+                                      activeBookTab === "interested"
+                                        ? "bg-white text-emerald-600 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-800"
+                                    }`}
+                                  >
+                                    เล่มที่สนใจ ({playlistBooks.filter(b => (b.status || "interested") === "interested").length})
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveBookTab("completed"); }}
+                                    className={`flex-1 py-1.5 rounded-lg text-center transition-all ${
+                                      activeBookTab === "completed"
+                                        ? "bg-white text-emerald-600 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-800"
+                                    }`}
+                                  >
+                                    อ่านจบแล้ว ({playlistBooks.filter(b => b.status === "completed").length})
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* 📝 ฟอร์มกรอกหนังสือเพิ่มเอง (ใช้ร่วมกันทั้ง 2 แท็บ) */}
+                              <div className="w-full px-2 mb-3.5">
+                                <form 
+                                  onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); handleAddBookManually(activeBookTab); }}
+                                  className="flex gap-1.5 items-center bg-slate-50 border border-slate-200/60 p-1.5 rounded-2xl w-full"
+                                >
+                                  <input
+                                    type="text"
+                                    placeholder={activeBookTab === "interested" ? "ชื่อหนังสือที่สนใจ..." : "ชื่อหนังสืออ่านจบ..."}
+                                    value={manualBookTitle}
+                                    onChange={(e) => setManualBookTitle(e.target.value)}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    className="flex-1 bg-transparent px-2.5 py-1 text-[11px] font-bold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-normal min-w-0"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="ผู้แต่ง..."
+                                    value={manualBookAuthor}
+                                    onChange={(e) => setManualBookAuthor(e.target.value)}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    className="w-16 bg-transparent border-l border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-normal shrink-0"
+                                  />
+                                  <button
+                                    type="submit"
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black shrink-0 transition-colors cursor-pointer shadow-sm active:scale-95"
+                                  >
+                                    {activeBookTab === "interested" ? "+ สนใจ" : "+ อ่านจบ"}
+                                  </button>
+                                </form>
+                              </div>
+
+                              {/* 📖 รายการหนังสือแยกตามแท็บ */}
+                              <div className="w-full px-2 flex-1 overflow-y-auto max-h-[175px] space-y-2 mb-6 scrollbar-thin">
+                                {activeBookTab === "interested" ? (
+                                  playlistBooks.filter(b => (b.status || "interested") === "interested").length > 0 ? (
+                                    playlistBooks.filter(b => (b.status || "interested") === "interested").map((book, idx) => {
+                                      const slug = getArticleSlug(book.title);
+                                      return (
+                                        <div key={idx} className="p-3 rounded-2xl bg-slate-50 border border-slate-100/80 flex items-center justify-between gap-3 shadow-sm hover:bg-slate-100/40 transition-colors">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-100/30 flex items-center justify-center text-emerald-600 shrink-0 font-bold text-xs">
+                                              {idx + 1}
+                                            </div>
+                                            <div className="flex flex-col items-start leading-tight min-w-0 flex-1">
+                                              <span className="text-[12px] font-black text-slate-700 line-clamp-2 text-left pr-1" title={book.title}>
+                                                {book.title}
+                                              </span>
+                                              <span className="text-[9px] font-bold text-slate-400 truncate text-left w-full mt-0.5" title={book.author}>
+                                                {book.author}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            {slug && (
+                                              <Link href={`/library/${slug}`} className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl transition-colors text-[10px] font-black uppercase tracking-wider shrink-0">
+                                                อ่านสรุป
+                                              </Link>
+                                            )}
+                                            <button
+                                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkAsCompleted(book); }}
+                                              className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all shrink-0"
+                                              title="ทำเครื่องหมายว่าอ่านจบแล้ว"
+                                            >
+                                              <CheckCircle2 size={14} className="text-emerald-500" />
+                                            </button>
+                                            <button
+                                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSaveBook(book as any); }}
+                                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
+                                              title="ลบออกจากคลัง"
+                                            >
+                                              <X size={14} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  ) : (
+                                    <div className="py-8 flex flex-col items-center justify-center text-center">
+                                      <BookOpen size={24} className="text-slate-300 mb-2" />
+                                      <span className="text-[11px] text-slate-400 font-bold">ยังไม่มีหนังสือที่สนใจ</span>
+                                      <span className="text-[9px] text-slate-400/70 font-medium mt-0.5">กดบันทึกที่หัวใจของหนังสือแนะนำเพื่อบันทึก</span>
+                                    </div>
+                                  )
+                                ) : (
+                                  playlistBooks.filter(b => b.status === "completed").length > 0 ? (
+                                    playlistBooks.filter(b => b.status === "completed").map((book, idx) => {
+                                      return (
+                                        <div key={idx} className="p-3 rounded-2xl bg-slate-50 border border-slate-100/80 flex items-center justify-between gap-3 shadow-sm hover:bg-slate-100/40 transition-colors">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-100/30 flex items-center justify-center text-emerald-600 shrink-0 font-bold text-xs">
+                                              {idx + 1}
+                                            </div>
+                                            <div className="flex flex-col items-start leading-tight min-w-0 flex-1">
+                                              <span className="text-[12px] font-black text-slate-700 line-clamp-2 text-left pr-1" title={book.title}>
+                                                {book.title}
+                                              </span>
+                                              <span className="text-[9px] font-bold text-slate-400 truncate text-left w-full mt-0.5" title={book.author}>
+                                                {book.author}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-xl text-[9px] font-black border border-emerald-100/20 whitespace-nowrap shrink-0">
+                                              อ่านจบแล้ว
+                                            </span>
+                                            <button
+                                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSaveBook(book as any); }}
+                                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
+                                              title="ลบออกจากคลัง"
+                                            >
+                                              <X size={14} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  ) : (
+                                    <div className="py-8 flex flex-col items-center justify-center text-center">
+                                      <CheckCircle2 size={24} className="text-slate-300 mb-2" />
+                                      <span className="text-[11px] text-slate-400 font-bold">ยังไม่มีหนังสือที่อ่านจบ</span>
+                                      <span className="text-[9px] text-slate-400/70 font-medium mt-0.5">กดปุ่มอ่านจบในแท็บเล่มที่สนใจ หรือกรอกเพิ่มด้านบน</span>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+
+                              {/* 🔘 ปุ่มล่างสุดขนาดเดียวกับประเมินใหม่ ทำหน้าที่ปิดหรือกลับหน้าแรก */}
+                              <div className="w-full px-4 mt-auto">
+                                <button
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowBookCollection(false); }}
+                                  className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-emerald-600 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 hover:bg-emerald-700 active:scale-95 cursor-pointer shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] hover:shadow-emerald-200"
+                                >
+                                  <span>กลับไปหน้าตัวตน</span>
+                                </button>
                               </div>
                             </div>
+                          ) : (
+                            /* 👤 โปรไฟล์จิตวิญญาณคนอ่านปกติ */
+                            <div className="flex flex-col items-center w-full h-full">
+                              <div className="flex flex-col items-center mb-8">
+                                <div className="relative mb-6 mt-2">
+                                  <div className="absolute inset-0 bg-emerald-100 blur-3xl opacity-20" />
+                                  <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 overflow-hidden">
+                                    <img
+                                      src={`/books/${lastLibrarySoul.type}.png`}
+                                      alt={lastLibrarySoul.type}
+                                      className="w-[80%] h-[80%] object-contain drop-shadow-md"
+                                    />
+                                  </div>
+                                </div>
 
-                            <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> LIBRARY OF SOULS </h3>
+                                <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> LIBRARY OF SOULS </h3>
 
-                            <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
-                              {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || lastLibrarySoul.type}
-                            </h2>
+                                <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                  {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.title || lastLibrarySoul.type}
+                                </h2>
 
-                            <p className="text-[11px] font-black text-emerald-500/80 uppercase tracking-[0.2em] mb-4">
-                              {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.vibe || "The Reader"}
-                            </p>
+                                <p className="text-[11px] font-black text-emerald-500/80 uppercase tracking-[0.2em] mb-4">
+                                  {LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.vibe || "The Reader"}
+                                </p>
 
-                            <div className="inline-flex items-center bg-emerald-50 text-emerald-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-emerald-100/50 shadow-sm">
-                              SOUL TYPE :  {lastLibrarySoul.type}
-                            </div>
+                                <div className="inline-flex items-center bg-emerald-50 text-emerald-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-emerald-100/50 shadow-sm">
+                                  SOUL TYPE :  {lastLibrarySoul.type}
+                                </div>
 
-                            <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
-                              "{LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.description}"
-                            </p>
-                          </div>
+                                <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
+                                  "{LIBRARY_SOULS_RESULTS[lastLibrarySoul.type]?.description}"
+                                </p>
+                              </div>
 
-                          <div className="w-full px-4 mt-auto flex flex-col gap-2">
-                            <button
-                              onClick={handleBookMatch}
-                              className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-95"
-                            >
-                              <BookOpen size={16} className="text-white/80" />
-                              <span>หนังสือแนะนำ</span>
-                            </button>
-                            <div className="group/btn-start relative">
-                              <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-slate-200 text-slate-400 text-[12px] font-black uppercase tracking-widest transition-all duration-300 hover:border-slate-300 hover:text-slate-600 active:scale-95">
-                                <RefreshCw size={14} />
-                                <span>ประเมินใหม่</span>
+                              <div className="w-full px-4 mt-auto flex flex-col gap-2">
+                                <button
+                                  onClick={handleBookMatch}
+                                  className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-95"
+                                >
+                                  <BookOpen size={16} className="text-white/80" />
+                                  <span>หนังสือแนะนำ</span>
+                                </button>
+                                <Link href="/tools/library-of-souls" className="w-full block">
+                                  <div className="group/btn-start relative">
+                                    <div className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-slate-200 text-slate-400 text-[12px] font-black uppercase tracking-widest transition-all duration-300 hover:border-slate-300 hover:text-slate-600 active:scale-95">
+                                      <RefreshCw size={14} />
+                                      <span>ประเมินใหม่</span>
+                                    </div>
+                                  </div>
+                                </Link>
                               </div>
                             </div>
-                          </div>
+                          )}
                         </>
                       ) : (
                         <div className="flex flex-col items-center justify-between h-full w-full py-2">
@@ -4500,18 +5081,20 @@ export default function DashboardPage() {
                             <p className="text-slate-400 text-sm font-medium">ค้นหาจิตวิญญาณนักอ่านในตัวคุณ</p>
                           </div>
                           <div className="w-full px-4 mt-auto">
-                            <div className="group/btn-start relative">
-                              <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-emerald-300 active:scale-95">
-                                <Sparkles size={16} className="text-white/80" />
-                                <span>เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span></span>
+                            <Link href="/tools/library-of-souls" className="w-full block">
+                              <div className="group/btn-start relative">
+                                <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-emerald-300 active:scale-95">
+                                  <Sparkles size={16} className="text-white/80" />
+                                  <span>เริ่มประเมินครั้งแรก <span className="opacity-90">(+50 XP)</span></span>
+                                </div>
                               </div>
-                            </div>
+                            </Link>
                           </div>
                         </div>
                       )}
                     </div>
                   </motion.div>
-                </Link>
+                </div>
 
                 {/* 👻 5. Ghost in You */}
                 <Link href="/tools/ghost-in-you" className="group flex flex-col h-full relative">
@@ -5137,7 +5720,7 @@ export default function DashboardPage() {
                 <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
                   <div>
                     <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Quest & หนังสือที่สนใจ</p>
+                    <p className="text-xs text-slate-400 mt-0.5">สะสม Quest</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -5207,27 +5790,6 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      {/* 📚 หนังสือที่สนใจ */}
-                      <div>
-                        <h3 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
-                          📚 หนังสือที่สนใจ
-                          <span className="px-2 py-0.5 bg-violet-100 text-violet-600 rounded-full text-xs font-bold">{collectionBooks.length}</span>
-                        </h3>
-                        {collectionBooks.length === 0 ? (
-                          <p className="text-xs text-slate-400 py-2">ยังไม่มีหนังสือที่บันทึกไว้ — กด 🔖 จากหนังสือแนะนำเพื่อเพิ่ม</p>
-                        ) : (
-                          <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-                            {collectionBooks.map((book, i) => (
-                              <div key={i} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl shrink-0 w-36">
-                                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-lg">📖</div>
-                                <p className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">{book.title}</p>
-                                <p className="text-[10px] text-slate-400 leading-tight">{book.author}</p>
-                                {book.category && <span className="self-start px-2 py-0.5 bg-white border border-slate-200 rounded-full text-[10px] text-slate-500">{book.category}</span>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
                     </>
                   )}
                 </div>
@@ -6397,6 +6959,14 @@ export default function DashboardPage() {
                 </div>
 
                 <h2 className="text-3xl font-black text-white mb-3 tracking-tight italic">{rewardModalData.title}</h2>
+                
+                {rewardModalData.weeklySavings !== undefined && rewardModalData.weeklySavings > 0 && (
+                  <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center w-full flex flex-col items-center">
+                    <span className="text-xs text-amber-400 uppercase tracking-widest font-black mb-1">ยอดเงินออมมีสติประจำสัปดาห์</span>
+                    <span className="text-2xl font-black text-white">฿{rewardModalData.weeklySavings.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <p className="text-slate-400 text-sm mb-8 leading-relaxed">
                   {rewardModalData.message}
                   <br />
@@ -6416,6 +6986,14 @@ export default function DashboardPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* --- 📊 Modal: Weekly Wrap-up Summary (Relative Week Transition) --- */}
+      <WeeklySummaryModal
+        isOpen={showWeeklySummaryModal && !showPerfectWeekModal && !showLevelUp}
+        onClose={handleCloseWeeklySummary}
+        prevWeekInfo={prevWeekInfoState}
+        prevWeekData={prevWeekDataState}
+      />
 
       {/* --- ⏳ Modal: Memento Mori / Life Countdown --- */}
       <AnimatePresence>
