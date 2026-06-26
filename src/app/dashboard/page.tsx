@@ -5690,11 +5690,12 @@ export default function DashboardPage() {
           const canNext = selIndex > 0;
           const questsForDay = (grouped[selDate] || []).filter((q, i, arr) => arr.findIndex(x => x.title === q.title) === i);
           const typeColor = (t: string) =>
-            t === 'CHALLENGE' ? 'bg-green-100 text-green-700' :
-            t === 'WILDCARD'  ? 'bg-emerald-100 text-emerald-700' :
+            t === 'WHEEL'     ? 'bg-red-100 text-red-700' :
             t === 'DISC'      ? 'bg-blue-100 text-blue-700' :
-            t === 'MONEY'     ? 'bg-yellow-100 text-yellow-700' :
-            t === 'WHEEL'     ? 'bg-purple-100 text-purple-700' :
+            t === 'MONEY'     ? 'bg-amber-100 text-amber-700' :
+            t === 'LIBRARY'   ? 'bg-emerald-100 text-emerald-700' :
+            t === 'CHALLENGE' ? 'bg-indigo-100 text-indigo-700' :
+            t === 'WILDCARD'  ? 'bg-purple-100 text-purple-700' :
             'bg-slate-100 text-slate-600';
 
           return (
@@ -5780,9 +5781,9 @@ export default function DashboardPage() {
                                 <p className="text-sm text-slate-700 leading-snug">{customQuestTitle}</p>
                               </div>
                             )}
-                            {questsForDay.map((q, i) => (
+                             {questsForDay.map((q, i) => (
                               <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 mt-0.5 ${typeColor(q.type)}`}>{q.type}</span>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 mt-0.5 ${typeColor(q.type)}`}>{q.type === 'DISC' ? 'HABIT' : q.type}</span>
                                 <p className="text-sm text-slate-700 leading-snug">{q.title}</p>
                               </div>
                             ))}
