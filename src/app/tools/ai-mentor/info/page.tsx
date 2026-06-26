@@ -80,13 +80,13 @@ export default function AiMentorInfoPage() {
           </div>
           
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
-            AI MENTOR <br/>
+            คุยกับพี่ฟุ้ย <br/>
             <span className="text-slate-400 bg-clip-text text-transparent bg-gradient-to-r from-slate-600 via-zinc-500 to-slate-400">
               Personalized Growth Companion
             </span>
           </h1>
           <p className="text-lg text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            ปลดล็อกศักยภาพสูงสุดของคุณด้วย "ที่ปรึกษาส่วนตัว" <br className="hidden md:block"/>
+            ปลดล็อกศักยภาพสูงสุดของคุณด้วย "รุ่นพี่คนสนิท" <br className="hidden md:block"/>
             ที่วิเคราะห์คุณจากทุกมิติ เพื่อการเติบโตที่ไม่มีขีดจำกัด
           </p>
           
@@ -97,7 +97,7 @@ export default function AiMentorInfoPage() {
               <button className="group relative bg-slate-900 text-white px-8 py-4 rounded-full font-black text-lg hover:bg-black transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <Bot size={24} className="text-slate-400" /> 
-                เข้าพบ AI Mentor
+                เข้าพบพี่ฟุ้ย
                 <ArrowRight size={24} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
@@ -112,7 +112,7 @@ export default function AiMentorInfoPage() {
             </button>
           )}
           <p className="text-slate-400 text-[11px] mt-5 font-black uppercase tracking-[0.3em]">
-            {!authLoading && (user ? "พร้อมวิเคราะห์ข้อมูลของคุณแล้ว" : "กรุณาเข้าสู่ระบบเพื่อใช้งาน AI Mentor ส่วนตัว")}
+            {!authLoading && (user ? "พร้อมวิเคราะห์ข้อมูลของคุณแล้ว" : "กรุณาเข้าสู่ระบบเพื่อคุยกับพี่ฟุ้ย (AI Mentor ส่วนตัว)")}
           </p>
         </header>
 
@@ -210,7 +210,7 @@ export default function AiMentorInfoPage() {
 
         {/* --- 4. Value Proposition Grid --- */}
         <section className="mb-20">
-          <h2 className="text-2xl font-black text-slate-800 mb-8 text-center uppercase tracking-widest">Why AI Mentor?</h2>
+          <h2 className="text-2xl font-black text-slate-800 mb-8 text-center uppercase tracking-widest">ทำไมต้องคุยกับพี่ฟุ้ย?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-4 hover:shadow-md transition-all">
               <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600">
@@ -270,7 +270,7 @@ export default function AiMentorInfoPage() {
                   <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors" />
                   <Bot size={28} className="text-white relative z-10 md:w-10 md:h-10" />
                 </div>
-                <span className="text-[9px] md:text-[10px] font-black text-slate-800 mt-2 bg-white px-2.5 py-0.5 rounded-full shadow-sm border border-slate-100 z-10">AI MENTOR</span>
+                <span className="text-[9px] md:text-[10px] font-black text-slate-800 mt-2 bg-white px-2.5 py-0.5 rounded-full shadow-sm border border-slate-100 z-10">คุยกับพี่ฟุ้ย</span>
               </div>
 
               {/* Node 1: Top */}
@@ -316,7 +316,7 @@ export default function AiMentorInfoPage() {
 
             <div className="mt-4 pt-6 border-t border-slate-300/50 relative z-10">
               <p className="text-sm md:text-base text-slate-600 font-bold max-w-sm mx-auto leading-relaxed">
-                <span className="text-slate-900 bg-white px-2 py-0.5 rounded-lg shadow-sm">AI Mentor</span> จะประมวลผลการกระทำจากแอปทั้งหมด <br className="md:hidden" /> 
+                <span className="text-slate-900 bg-white px-2 py-0.5 rounded-lg shadow-sm">พี่ฟุ้ย</span> จะประมวลผลการกระทำจากแอปทั้งหมด <br className="md:hidden" /> 
                 และเชื่อมโยงมาหาคุณ เพื่อสร้าง <span className="text-slate-900 underline decoration-slate-400 underline-offset-4">Insight เดียวที่แม่นยำที่สุด</span>
               </p>
             </div>
@@ -328,14 +328,14 @@ export default function AiMentorInfoPage() {
           {!authLoading && user && (
             <Link href="/tools/ai-mentor">
               <button className="bg-slate-900 text-white px-10 py-4 rounded-full font-black text-[17px] hover:bg-black transition-all hover:scale-110 shadow-2xl flex items-center gap-4 mx-auto border border-slate-800 group">
-                คุยกับ Mentor เดี๋ยวนี้
+                คุยกับพี่ฟุ้ยเดี๋ยวนี้
                 <ArrowRight size={28} className="text-slate-500 group-hover:translate-x-2 transition-transform" />
               </button>
             </Link>
           )}
           
           <p className="text-slate-400 text-sm mt-8 font-bold italic max-w-md mx-auto">
-            "เพราะการมี Mentor ที่ดี คือทางลัดที่สั้นที่สุดสู่ความสำเร็จ"
+            "เพราะการมีพี่ฟุ้ยเป็นเพื่อนคู่คิด คือทางลัดที่สั้นที่สุดสู่การอัพสกิล"
           </p>
           
           <Link href="/" className="inline-block mt-12 text-slate-500 hover:text-slate-800 font-bold text-base transition-colors underline underline-offset-8 decoration-slate-200">
