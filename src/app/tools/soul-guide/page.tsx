@@ -133,7 +133,7 @@ export default function SoulGuidePage() {
           } else {
             setMessages([{
               role: "assistant",
-              content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
+              content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
             }]);
           }
         }
@@ -268,7 +268,7 @@ export default function SoulGuidePage() {
       const userName = user.displayName || 'นักเดินทาง';
       setMessages([{
         role: "assistant",
-        content: `ยินดีที่ได้พบกันครับคุณ **${userName}** ✨ ผมพร้อมที่จะเป็นที่ปรึกษาและร่วมเดินทางไปกับการพัฒนาตัวเองของคุณแล้ววันนี้\n\nมีเรื่องไหนที่ติดขัด หรือมีเป้าหมายอะไรที่อยากให้ผมช่วยวิเคราะห์เป็นพิเศษมั้ยครับ? บอกผมได้ทุกเรื่องเลยนะ`
+        content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
       }]);
 
       setTimeout(() => {
@@ -439,7 +439,7 @@ export default function SoulGuidePage() {
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-2 h-2 rounded-full animate-pulse ${isTyping ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
-              <h1 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-200">AI MENTOR</h1>
+              <h1 className="text-xs font-black text-zinc-200 tracking-wider">คุยกับพี่ฟุ้ย</h1>
             </div>
 
             {/* 🏷️ [AI ACTIVE] Status Badge */}
@@ -460,11 +460,7 @@ export default function SoulGuidePage() {
               transition={{ repeat: Infinity, duration: 2 }}
               className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
             >
-              {userData ? (
-                <img loading="lazy" decoding="async" src={getAvatarPath()} alt="User Avatar" className="w-full h-full object-cover scale-125 translate-y-1" />
-              ) : (
-                <UserIcon size={20} className="text-zinc-600" />
-              )}
+              <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="w-full h-full object-cover" />
             </motion.div>
           </div>
         </header>

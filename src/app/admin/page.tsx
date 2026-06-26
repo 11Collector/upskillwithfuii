@@ -61,7 +61,7 @@ ChartJS.defaults.font.family = "system-ui, -apple-system, sans-serif";
 const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean);
 
 const aiFeatureNames: Record<string, string> = {
-  ai_mentor: "AI Mentor Chat",
+  ai_mentor: "คุยกับพี่ฟุ้ย (AI Chat)",
   book_match: "Book recommendation",
   quote_generation: "Khom Sat Sat (Quotes)",
 };
@@ -70,7 +70,7 @@ const toolNames: Record<string, string> = {
   disc: "DISC Assessment",
   moneyAvatar: "Money Avatar",
   wheelOfLife: "Wheel of Life",
-  aiMentorChats: "AI Mentor (Chats)",
+  aiMentorChats: "คุยกับพี่ฟุ้ย (Chats)",
   libraryReads: "Library of Souls",
 };
 

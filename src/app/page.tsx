@@ -32,7 +32,7 @@ const t = {
     "Hub รวมทุกผลทดสอบตัวตนในที่เดียว",
     "สะสม XP อัพ Level ให้ตัวเอง",
     "Smart Insight เจาะลึกจุดอัพสกิล",
-    "AI Mentor ช่วยวางแผนระดับโปร"
+    "คุยกับพี่ฟุ้ย ช่วยวางแผนพัฒนาตัวเอง"
   ],
   loginGoogle: "เข้าสู่ระบบด้วย Google",
   loginRemark: "* เข้าร่วมฟรีในช่วง Beta พร้อมใช้ Dashboard สุด Exclusive",
@@ -219,7 +219,7 @@ export default function Home() {
       )
     },
     {
-      id: "ai-mentor", name: "AI MENTOR", desc: "ที่ปรึกษาพัฒนาตัวเองส่วนตัวระดับโปร", gimmick: "Personalized วิเคราะห์ตัวคุณ",
+      id: "ai-mentor", name: "คุยกับพี่ฟุ้ย", desc: "ที่ปรึกษาพัฒนาตัวเองส่วนตัวระดับโปร", gimmick: "Personalized วิเคราะห์ตัวคุณ",
       icon: <MessageSquareMore size={28} className="text-slate-600" />, path: "/tools/ai-mentor", color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
       gimmickUI: (
         <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-200 via-zinc-100 to-slate-200 text-slate-700 rounded-full text-[10px] font-black tracking-widest border border-slate-300 shadow-sm group-hover:from-slate-300 group-hover:to-zinc-200 group-hover:text-slate-900 transition-all duration-300">
@@ -1225,7 +1225,7 @@ export default function Home() {
                   {guideStep === 3 && (
                     <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
                       ยิ่งทำแบบประเมิน<span className="text-white font-semibold">ครบมากเท่าไหร่</span>{" "}
-                      AI Mentor ยิ่งรู้จักนิสัยและเป้าหมายของคุณ{" "}
+                      พี่ฟุ้ย (AI Mentor) ยิ่งรู้จักนิสัยและเป้าหมายของคุณ{" "}
                       เพื่อให้คำแนะนำที่<span className="text-white font-semibold">แม่นที่สุด</span>
                     </p>
                   )}

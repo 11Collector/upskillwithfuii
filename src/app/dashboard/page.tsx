@@ -2952,7 +2952,7 @@ export default function DashboardPage() {
             { done: !!lastQuote,       path: "/tools/khomsatsat",       label: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจด้วย AI",              xp: 10,
               icon: <Quote size={22} />,
               gradient: "from-purple-600 to-fuchsia-500", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
-            { done: hasSoulGuide,      path: "/tools/soul-guide",       label: "AI Mentor",        desc: "ลองแชทคุยกับ AI ที่รู้จักคุณแล้ว",   xp: 0,
+            { done: hasSoulGuide,      path: "/tools/soul-guide",       label: "คุยกับพี่ฟุ้ย",        desc: "ลองแชทคุยกับ AI ที่รู้จักคุณแล้ว",   xp: 0,
               icon: <MessageSquare size={22} />,
               gradient: "from-violet-600 to-indigo-500", iconBg: "bg-violet-500/20", iconColor: "text-violet-400" },
           ];
@@ -3834,7 +3834,7 @@ export default function DashboardPage() {
                   <Link
                     href="/tools/soul-guide?quest=1"
                     className="flex items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all duration-300 bg-white/80 backdrop-blur-sm text-slate-400 border-slate-100 hover:text-violet-500 hover:border-violet-200 hover:shadow-[0_8px_20px_-5px_rgba(139,92,246,0.15)] hover:scale-105 active:scale-95"
-                    title="คุยกับ AI Mentor เพื่อปรับ quest วันนี้"
+                    title="คุยกับพี่ฟุ้ยเพื่อปรับ quest วันนี้"
                   >
                     <Sparkles size={13} />
                     <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest</span>
@@ -5307,16 +5307,15 @@ export default function DashboardPage() {
                       <div className="relative z-10 flex flex-col items-center h-full w-full">
                         {/* 🤖 Logo Container */}
                         <div className="relative mb-6 mt-2">
-                          <div className="absolute inset-0 bg-slate-200 blur-3xl opacity-20" />
-                          <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-50 flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-110">
-                            🤖
+                          <div className="relative w-24 h-24 rounded-full overflow-hidden bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-100 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+                            <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="w-full h-full object-cover" />
                           </div>
                         </div>
 
 
-                        <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> AI Personal Mentor </h3>
+                        <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> AI Mentor </h3>
                         <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
-                          ที่ปรึกษาอัจฉริยะ
+                          คุยกับพี่ฟุ้ย
                         </h2>
 
                         <p className="text-[14px] font-medium text-slate-500 mb-8 px-6 leading-relaxed opacity-80 max-w-[280px]">
@@ -5327,7 +5326,7 @@ export default function DashboardPage() {
                           <div className="group/btn-mentor relative">
                             <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] group-hover/btn-mentor:scale-[1.02] active:scale-95">
                               <MessageSquare size={16} className="text-white/80" />
-                              <span>คุยกับ Mentor</span>
+                              <span>คุยกับพี่ฟุ้ย</span>
                             </div>
                           </div>
                         </div>
@@ -6633,7 +6632,7 @@ export default function DashboardPage() {
                   <div className="w-1 h-1 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                   <div className="w-1 h-1 bg-indigo-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
                 </div>
-                คุยกับ Mentor
+                คุยกับพี่ฟุ้ย
               </div>
             </div>
           </motion.div>
@@ -6820,7 +6819,7 @@ export default function DashboardPage() {
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
                       แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span> ด้านล่าง<br />
                       เพื่อใช้งานโหมด <strong>ทำสมาธิ</strong> เพิ่มโฟกัส และอ่านบทความดีๆ<br />
-                      <span className="text-[11px] text-slate-500 mt-1 block">และพูดคุยกับ <strong>AI Mentor ส่วนตัว</strong> ที่เข้าใจคุณที่สุด!</span>
+                      <span className="text-[11px] text-slate-500 mt-1 block">และพูดคุยกับ <strong>พี่ฟุ้ย</strong> ที่เข้าใจคุณที่สุด!</span>
                     </p>
                   </div>
                 </motion.div>
