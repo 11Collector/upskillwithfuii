@@ -206,6 +206,7 @@ REFLECTION PROMPT (1 question — open-ended, personal)
 - Avoid overused phrases: "unlock your potential", "be the best version", "hustle"
 - Length: 80–120 words for social (IG/Facebook), 300–500 words for article (library)
 - Every article version needs a `slug`, `title`, `category`, and `readTime` for `src/constants/article.ts`
+- สำหรับบทความที่ผู้ใช้นำมาให้จัด Format (ไม่ใช่บทความที่ AI คิดคำโฆษณา/โปรโมตให้) ห้ามใส่ลิงก์ชวนเล่นเครื่องมือหรือการโปรโมตท้ายบทความเด็ดขาด เพื่อให้รักษาโทนงานเขียนของจริงไว้
 
 **Weekly Content Schedule Template:**
 
