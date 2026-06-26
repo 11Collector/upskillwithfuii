@@ -6960,13 +6960,6 @@ export default function DashboardPage() {
                 </div>
 
                 <h2 className="text-3xl font-black text-white mb-3 tracking-tight italic">{rewardModalData.title}</h2>
-                
-                {rewardModalData.weeklySavings !== undefined && rewardModalData.weeklySavings > 0 && (
-                  <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center w-full flex flex-col items-center">
-                    <span className="text-xs text-amber-400 uppercase tracking-widest font-black mb-1">ยอดเงินออมมีสติประจำสัปดาห์</span>
-                    <span className="text-2xl font-black text-white">฿{rewardModalData.weeklySavings.toLocaleString()}</span>
-                  </div>
-                )}
 
                 <p className="text-slate-400 text-sm mb-8 leading-relaxed">
                   {rewardModalData.message}
