@@ -64,6 +64,13 @@ export default function Home() {
     setIsInAppBrowser(inApp);
   }, []);
 
+  useEffect(() => {
+    document.body.classList.add("bg-polkadot-white");
+    return () => {
+      document.body.classList.remove("bg-polkadot-white");
+    };
+  }, []);
+
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'yearly'>('monthly');
