@@ -97,7 +97,7 @@ export default function AiMentorInfoPage() {
               <button className="group relative bg-slate-900 text-white px-8 py-4 rounded-full font-black text-lg hover:bg-black transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <Bot size={24} className="text-slate-400" /> 
-                เข้าพบพี่ฟุ้ย
+                ทักหาพี่ฟุ้ย
                 <ArrowRight size={24} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
@@ -266,9 +266,9 @@ export default function AiMentorInfoPage() {
 
               {/* Center Node (AI Mentor / You) */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.3)] border-4 border-white relative group transition-transform hover:scale-105 cursor-default">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.3)] border-4 border-white relative group transition-transform hover:scale-105 cursor-default overflow-hidden">
                   <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors" />
-                  <Bot size={28} className="text-white relative z-10 md:w-10 md:h-10" />
+                  <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="w-full h-full rounded-full object-cover relative z-10 bg-white" />
                 </div>
                 <span className="text-[9px] md:text-[10px] font-black text-slate-800 mt-2 bg-white px-2.5 py-0.5 rounded-full shadow-sm border border-slate-100 z-10">คุยกับพี่ฟุ้ย</span>
               </div>
