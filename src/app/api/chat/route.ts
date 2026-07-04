@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
+import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
+import { adminDb } from '@/lib/firebase-admin';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logAiCall } from '@/lib/ai-logger';
 
+const FREE_DAILY_CHAT_LIMIT = 3;
+
 const ChatSchema = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant", "system"]), content: z.string() })),
+  isQuestMode: z.boolean().optional(),
   userData: z.object({
     displayName: z.string().optional(),
     lastDisc: z.unknown().optional(),
@@ -22,6 +27,85 @@ const ChatSchema = z.object({
   }),
 });
 
+function getBangkokDateKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function isProUser(userData: FirebaseFirestore.DocumentData) {
+  const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || "";
+  const subscriptionTier = userData.subscriptionTier || userData.subscription_tier || "";
+
+  return (
+    userData.role === "premium" ||
+    subscriptionTier === "pro" ||
+    ["active", "trialing"].includes(subscriptionStatus) ||
+    Boolean(userData.isLifetimeMember)
+  );
+}
+
+async function reserveFreeChatQuota(uid: string) {
+  const todayKey = getBangkokDateKey();
+  const userRef = adminDb.collection("users").doc(uid);
+
+  return adminDb.runTransaction(async (transaction) => {
+    const userSnap = await transaction.get(userRef);
+    const userData = userSnap.exists ? userSnap.data() || {} : {};
+
+    if (isProUser(userData)) {
+      return { allowed: true, reserved: false, remaining: null };
+    }
+
+    const isSameDay = userData.aiMentorDailyDate === todayKey;
+    const currentCount = isSameDay ? Number(userData.aiMentorDailyCount || 0) : 0;
+
+    if (currentCount >= FREE_DAILY_CHAT_LIMIT) {
+      return { allowed: false, reserved: false, remaining: 0 };
+    }
+
+    transaction.set(
+      userRef,
+      {
+        aiMentorDailyDate: todayKey,
+        aiMentorDailyCount: currentCount + 1,
+        aiMentorDailyUpdatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return {
+      allowed: true,
+      reserved: true,
+      remaining: Math.max(0, FREE_DAILY_CHAT_LIMIT - currentCount - 1),
+    };
+  });
+}
+
+async function releaseFreeChatQuota(uid: string) {
+  const todayKey = getBangkokDateKey();
+  const userRef = adminDb.collection("users").doc(uid);
+
+  await adminDb.runTransaction(async (transaction) => {
+    const userSnap = await transaction.get(userRef);
+    const userData = userSnap.exists ? userSnap.data() || {} : {};
+
+    if (userData.aiMentorDailyDate !== todayKey) return;
+
+    transaction.set(
+      userRef,
+      {
+        aiMentorDailyCount: Math.max(0, Number(userData.aiMentorDailyCount || 0) - 1),
+        aiMentorDailyUpdatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
+}
+
 export async function POST(req: Request) {
   const authResult = await verifyAuthToken(req);
   if (isAuthError(authResult)) return authResult;
@@ -36,7 +120,20 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
   }
-  const { messages, userData } = parsed.data;
+  const { messages, userData, isQuestMode } = parsed.data;
+  const quota = await reserveFreeChatQuota(authResult.uid);
+
+  if (!quota.allowed) {
+    return NextResponse.json(
+      {
+        error: "วันนี้คุยกับพี่ฟุ้ยครบ 3 ข้อความแล้วครับ อัปเกรด Pro เพื่อคุยต่อได้เต็มที่",
+        code: "FREE_DAILY_CHAT_LIMIT_REACHED",
+        limit: FREE_DAILY_CHAT_LIMIT,
+        remaining: 0,
+      },
+      { status: 429 },
+    );
+  }
 
   try {
     const systemPrompt = `คุณคือ 'พี่ฟุ้ย (Fuii)' รุ่นพี่คนสนิทที่เป็น AI Personal Mentor และผู้ก่อตั้งแพลตฟอร์ม Upskill with Fuii คอยช่วยเหลือให้คำปรึกษาการพัฒนาตัวเองและชีวิตกับน้อง ${userData.displayName || 'นักเดินทาง'}
@@ -116,7 +213,7 @@ export async function POST(req: Request) {
 - ทักทายแบบปกติ เป็นกันเอง ตามประวัติการคุย
 - ใช้ข้อมูล Context เพื่อให้คำแนะนำที่ "ตรงจุด" กับนิสัยและสถานะของผู้ใช้ที่สุด โดยทำเหมือนว่าคุณแค่ "เดาใจเก่ง" เท่านั้นพอ
 
-โหมดปรับ Quest (เมื่อผู้ใช้พูดถึงการปรับ / เปลี่ยน / ขอ Quest ใหม่):
+${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช้พูดถึงการปรับ / เปลี่ยน / ขอ Quest ใหม่):
 1. ถามทีละข้อ ไม่เกิน 3 ข้อ ดังนี้:
    - "วันนี้อยากโฟกัสด้านไหนครับ — การงาน / การเงิน / การอ่าน / ความคิด หรืออื่นๆ?"
    - "มีเรื่องที่ค้างคาใจ หรืออยากทำแต่ยังไม่ได้เริ่มไหมครับ?"
@@ -124,7 +221,9 @@ export async function POST(req: Request) {
 2. เมื่อได้คำตอบครบ ให้ตอบปกติก่อน 1-2 ประโยค แล้วต่อด้วย marker นี้ในบรรทัดสุดท้าย:
    [QUEST_PREFS:{"focus":"[ด้านที่สนใจ]","challenge":"[เรื่องค้างคาหรือเป้าหมาย]","duration":"[ระยะเวลา]"}]
 3. ข้อมูลใน marker จะถูกระบบบันทึกเพื่อสร้าง Quest ที่ตรงกับผู้ใช้ในวันนี้โดยอัตโนมัติ
-4. ถ้าผู้ใช้ไม่ได้ให้ข้อมูลครบ ให้ใช้ default ที่สมเหตุสมผล — ไม่ต้องถามซ้ำ`;
+4. ถ้าผู้ใช้ไม่ได้ให้ข้อมูลครบ ให้ใช้ default ที่สมเหตุสมผล — ไม่ต้องถามซ้ำ` : `โหมดคุยทั่วไป:
+- ห้ามใส่ marker [QUEST_PREFS:...] ในคำตอบเด็ดขาด
+- ถ้าผู้ใช้พูดเรื่อง Quest แบบทั่วไป ให้คุยและแนะนำตามปกติ แต่ไม่ต้องบันทึกหรือเปลี่ยน Quest`}`;
 
     // สร้าง Context Reminder สั้นๆ เพื่อย้ำเตือน AI
     const contextReminder = {
@@ -157,6 +256,9 @@ export async function POST(req: Request) {
     clearTimeout(timeout);
 
     if (!response.ok) {
+      if (quota.reserved) {
+        releaseFreeChatQuota(authResult.uid).catch(() => {});
+      }
       const errorData = await response.json();
       return NextResponse.json({ error: errorData.error?.message || "DeepSeek API Error" }, { status: response.status });
     }
@@ -166,9 +268,13 @@ export async function POST(req: Request) {
 
     logAiCall(authResult.uid, "ai_mentor").catch(() => {});
 
-    return NextResponse.json({ success: true, reply });
+    return NextResponse.json({ success: true, reply, remainingFreeMessages: quota.remaining });
 
   } catch (error: any) {
+    if (quota.reserved) {
+      releaseFreeChatQuota(authResult.uid).catch(() => {});
+    }
+
     console.error("Soul Guide API Error:", error);
     if (error?.name === "AbortError") {
       return NextResponse.json({ error: "Request timeout" }, { status: 504 });

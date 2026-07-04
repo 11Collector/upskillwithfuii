@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import {
   ChevronLeft, Share2, Calendar, Clock, ArrowLeft,
   User, Sparkles, Crown, Target, CheckCircle2, Loader2,
-  LayoutGrid
+  LayoutGrid, Lock
 } from "lucide-react";
 import Link from "next/link";
 
@@ -14,6 +14,8 @@ import { mockArticles, type Article } from "@/constants/article";
 import { db, auth, googleProvider } from "@/lib/firebase";
 import { doc, getDoc, setDoc, increment, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, User as FirebaseUser } from "firebase/auth";
+import { isBrainLibraryUnlocked } from "@/utils/phaseGates";
+import { playSuccessChime } from "@/utils/soundEffects";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -46,6 +48,7 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
   const [isSigningIn, setIsSigningIn]           = useState(false);
   const [copied, setCopied]                     = useState(false);
   const [isInAppBrowser, setIsInAppBrowser]     = useState(false);
+  const [canClaimXP, setCanClaimXP]             = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -119,8 +122,12 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
   const checkReadStatus = async (uid: string, articleSlug: string) => {
     try {
       const snap = await getDoc(doc(db, "users", uid));
-      if (snap.exists() && snap.data().readArticles?.includes(articleSlug)) {
-        setXpClaimed(true);
+      if (snap.exists()) {
+        const userData = snap.data();
+        setCanClaimXP(isBrainLibraryUnlocked(userData));
+        if (userData.readArticles?.includes(articleSlug)) {
+          setXpClaimed(true);
+        }
       }
     } catch { /* non-critical */ }
   };
@@ -134,6 +141,12 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
     try {
       const userRef  = doc(db, "users", activeUser.uid);
       const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() : {};
+      if (!isBrainLibraryUnlocked(userData)) {
+        alert("เคลม XP จากคลังสมองได้หลังจบ Phase 2 และเข้าสู่ Phase 3 ก่อนครับ");
+        setCanClaimXP(false);
+        return;
+      }
       const oldXP    = userSnap.exists() ? (userSnap.data().totalXP ?? 0) : 0;
       const newLevel = Math.floor((oldXP + 5) / 100) + 1;
       const oldLevel = Math.floor(oldXP / 100) + 1;
@@ -141,6 +154,7 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
       await setDoc(userRef, { totalXP: increment(5), readArticles: arrayUnion(slug) }, { merge: true });
 
       if (newLevel > oldLevel) sessionStorage.setItem("pendingLevelUp", String(newLevel));
+      playSuccessChime();
 
       setIsClaimedSuccess(true);
       setXpClaimed(true);
@@ -162,8 +176,10 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
       const userRef  = doc(db, "users", loggedInUser.uid);
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : {};
+      const canClaimAfterLogin = isBrainLibraryUnlocked(userData);
+      setCanClaimXP(canClaimAfterLogin);
 
-      if (!userData.readArticles?.includes(slug)) {
+      if (!userData.readArticles?.includes(slug) && canClaimAfterLogin) {
         setIsClaiming(true);
         const oldXP    = userData.totalXP ?? 0;
         const newLevel = Math.floor((oldXP + 5) / 100) + 1;
@@ -171,10 +187,13 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
 
         await setDoc(userRef, { totalXP: increment(5), readArticles: arrayUnion(slug) }, { merge: true });
         if (newLevel > oldLevel) sessionStorage.setItem("pendingLevelUp", String(newLevel));
+        playSuccessChime();
 
         setIsClaimedSuccess(true);
         setXpClaimed(true);
         setIsClaiming(false);
+      } else if (!canClaimAfterLogin) {
+        alert("เข้าสู่ระบบแล้วครับ อ่านบทความได้เลย ส่วน XP จะเคลมได้หลังเข้าสู่ Phase 3");
       } else {
         setXpClaimed(true);
       }
@@ -389,17 +408,26 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
                     </div>
                   </motion.div>
                 ) : !xpClaimed ? (
-                  <button
-                    onClick={handleClaimXP}
-                    disabled={isClaiming}
-                    className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-amber-500 text-black text-sm font-black rounded-3xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-amber-500/20 uppercase tracking-[0.2em]"
-                  >
-                    {isClaiming ? (
-                      <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                      <><Sparkles size={20} /> Claim +5 XP Now</>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleClaimXP}
+                      disabled={isClaiming || !canClaimXP}
+                      className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-amber-500 text-black text-sm font-black rounded-3xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-amber-500/20 uppercase tracking-[0.2em]"
+                    >
+                      {isClaiming ? (
+                        <Loader2 className="animate-spin" size={20} />
+                      ) : canClaimXP ? (
+                        <><Sparkles size={20} /> Claim +5 XP Now</>
+                      ) : (
+                        <><Lock size={20} /> XP Rewards ล็อกอยู่</>
+                      )}
+                    </button>
+                    {!canClaimXP && (
+                      <p className="text-center text-xs font-bold leading-relaxed text-slate-500">
+                        อ่านได้เลยครับ ส่วน XP จะเคลมได้หลังจบ Phase 2 และเข้าสู่ Phase 3
+                      </p>
                     )}
-                  </button>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3 py-4">
                     <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-black bg-emerald-500/10 w-fit px-8 py-4 rounded-2xl border border-emerald-500/20 uppercase tracking-[0.2em]">

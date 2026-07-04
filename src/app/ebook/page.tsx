@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Download, CheckCircle, ChevronRight, Users } from "lucide-react";
+import { Mail, Download, CheckCircle, ChevronRight, Crown, Lock, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Sarabun } from "next/font/google";
+import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db, googleProvider } from "@/lib/firebase";
 
 const sarabun = Sarabun({
   subsets: ["thai", "latin"],
@@ -21,38 +24,116 @@ const CHAPTERS = [
 const HIGHLIGHTS = [
   "41 บทความในการพัฒนาตัวเอง ธุรกิจ ชีวิต",
   "QR Code เชื่อมไปยัง Tools ช่วย Self-awareness",
-  "ดาวน์โหลดฟรี ไม่มีเงื่อนไข",
+  "โบนัส E-Book สำหรับสมาชิก PRO",
 ];
 
 export default function EbookPage() {
   const [email, setEmail]   = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [downloadCount, setDownloadCount] = useState<number | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingMember, setCheckingMember] = useState(true);
+  const [isProMember, setIsProMember] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/ebook-lead')
-      .then(r => r.json())
-      .then(d => setDownloadCount(d.count ?? null))
-      .catch(() => {});
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      setIsProMember(false);
+      setCheckingMember(true);
+
+      if (!currentUser) {
+        setCheckingMember(false);
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        const data = snap.exists() ? snap.data() : {};
+        const subscriptionStatus = data?.subscriptionStatus || data?.subscription_status || "";
+        const subscriptionTier = data?.subscriptionTier || data?.subscription_tier || "";
+        setIsProMember(
+          data?.role === "premium" ||
+          subscriptionTier === "pro" ||
+          ["active", "trialing"].includes(subscriptionStatus) ||
+          Boolean(data?.isLifetimeMember)
+        );
+      } catch {
+        setIsProMember(false);
+      } finally {
+        setCheckingMember(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!user) {
+      setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book สำหรับ PRO นะครับ");
+      return;
+    }
+    if (!isProMember) {
+      setErrorMsg("E-Book เล่มนี้เป็นโบนัสสำหรับสมาชิก PRO ครับ");
+      return;
+    }
     if (!email.trim()) return;
     setStatus("loading");
     setErrorMsg("");
     try {
+      const token = await user.getIdToken();
       const res = await fetch('/api/ebook-lead', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ email: email.trim() }),
       });
-      if (!res.ok) throw new Error('server error');
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'server error');
+      }
       setStatus("done");
-    } catch {
-      setErrorMsg("เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะครับ");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะครับ");
       setStatus("error");
+    }
+  }
+
+  async function handleDownload() {
+    if (!user || !isProMember) {
+      setErrorMsg("E-Book เล่มนี้เป็นโบนัสสำหรับสมาชิก PRO ครับ");
+      return;
+    }
+
+    setDownloading(true);
+    setErrorMsg("");
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/ebook-download", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "ดาวน์โหลดไม่สำเร็จ ลองใหม่อีกครั้งนะครับ");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "สร้างก่อนพร้อม.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "ดาวน์โหลดไม่สำเร็จ ลองใหม่อีกครั้งนะครับ");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -66,18 +147,22 @@ export default function EbookPage() {
           className="rounded-2xl p-8 text-center"
           style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)", boxShadow: "0 8px 32px rgba(123,24,24,0.08)" }}
         >
-          <div className="text-3xl mb-3">🎉</div>
-          <h2 className="text-lg font-extrabold mb-1">ขอบคุณครับ!</h2>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <Crown size={22} />
+          </div>
+          <h2 className="text-lg font-extrabold mb-1">ปลดล็อกแล้วครับ</h2>
           <p className="text-sm mb-6" style={{ color: "#5a5a5a" }}>กด Download ด้านล่างได้เลย</p>
-          <a
-            href="/สร้างก่อนพร้อม-A5.pdf"
-            download="สร้างก่อนพร้อม.pdf"
+          {errorMsg && <p className="text-xs text-center mb-3" style={{ color: "#c0392b" }}>{errorMsg}</p>}
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
             className="flex items-center justify-center gap-2 font-extrabold py-4 px-8 rounded-xl text-sm w-full"
-            style={{ background: "#7B1818", color: "#fff" }}
+            style={{ background: "#7B1818", color: "#fff", opacity: downloading ? 0.65 : 1 }}
           >
             <Download size={16} />
-            Download E-Book ฟรี
-          </a>
+            {downloading ? "กำลังดาวน์โหลด..." : "Download PRO E-Book"}
+          </button>
         </motion.div>
       ) : (
         <motion.form
@@ -87,37 +172,69 @@ export default function EbookPage() {
           style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)", boxShadow: "0 8px 32px rgba(123,24,24,0.08)" }}
         >
           <div className="text-center">
-            <h2 className="text-base font-extrabold">ดาวน์โหลดฟรี</h2>
-            <p className="text-xs mt-1" style={{ color: "#5a5a5a" }}>กรอก email รับไฟล์ได้เลย</p>
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+              {isProMember ? <Crown size={20} /> : <Lock size={19} />}
+            </div>
+            <h2 className="text-base font-extrabold">{isProMember ? "รับ E-Book สำหรับ PRO" : "E-Book สำหรับสมาชิก PRO"}</h2>
+            <p className="text-xs mt-1" style={{ color: "#5a5a5a" }}>
+              {isProMember ? "กรอก email เพื่อรับไฟล์เล่มนี้" : "ปลดล็อกเมื่อสมัคร PRO รายปีหรือ Lifetime"}
+            </p>
           </div>
-          <div className="relative">
-            <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#aaa" }} />
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-              style={{ background: "#faf9f7", border: "1px solid rgba(123,24,24,0.2)", color: "#1a1a1a" }}
-            />
-          </div>
+          {isProMember && (
+            <div className="relative">
+              <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#aaa" }} />
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
+                style={{ background: "#faf9f7", border: "1px solid rgba(123,24,24,0.2)", color: "#1a1a1a" }}
+              />
+            </div>
+          )}
           {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
-            style={{ background: "#7B1818", color: "#fff", opacity: status === "loading" ? 0.6 : 1 }}
-          >
-            {status === "loading" ? (
-              <span className="animate-pulse">กำลังโหลด...</span>
-            ) : (
-              <><Download size={15} />รับ E-Book ฟรี</>
-            )}
-          </button>
-          <p className="text-xs text-center" style={{ color: "#aaa" }}>
-            ไม่มี spam · เลิก subscribe เมื่อไรก็ได้
-          </p>
+          {isProMember ? (
+            <>
+              <button
+                type="submit"
+                disabled={status === "loading" || checkingMember}
+                className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
+                style={{ background: "#7B1818", color: "#fff", opacity: status === "loading" ? 0.6 : 1 }}
+              >
+                {status === "loading" ? (
+                  <span className="animate-pulse">กำลังโหลด...</span>
+                ) : (
+                  <><Download size={15} />รับ E-Book PRO</>
+                )}
+              </button>
+              <p className="text-xs text-center" style={{ color: "#aaa" }}>
+                ไม่มี spam · ใช้สำหรับส่งไฟล์และข่าวสาร PRO เท่านั้น
+              </p>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!user) {
+                    await signInWithPopup(auth, googleProvider);
+                    return;
+                  }
+                  window.location.href = "/dashboard";
+                }}
+                className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
+                style={{ background: "#111827", color: "#fff" }}
+              >
+                {!user ? "เข้าสู่ระบบก่อนรับสิทธิ์" : "ดูแผน PRO เพื่อปลดล็อก"}
+                <ChevronRight size={15} />
+              </button>
+              <p className="text-xs text-center" style={{ color: "#aaa" }}>
+                E-Book นี้เป็นโบนัสสำหรับสมาชิก PRO เท่านั้น
+              </p>
+            </>
+          )}
         </motion.form>
       )}
     </AnimatePresence>
@@ -161,7 +278,7 @@ export default function EbookPage() {
                 className="inline-block text-xs font-extrabold tracking-widest uppercase px-3 py-1 rounded-full mb-4"
                 style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
               >
-                Free E-Book
+                Pro Member Bonus
               </div>
               <h1 className="text-3xl lg:text-3xl font-extrabold leading-tight mb-3">
                 สร้างก่อนพร้อม
@@ -170,16 +287,14 @@ export default function EbookPage() {
                 41 บทความพัฒนาตัวเอง<br className="hidden lg:block" /> จากคนธรรมดาที่เริ่มต้นแม้ยังไม่พร้อม
               </p>
 
-              {downloadCount !== null && downloadCount > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold"
-                  style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
-                >
-                  <Users size={12} />
-                  {downloadCount.toLocaleString()} คนดาวน์โหลดไปแล้ว
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold"
+                style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
+              >
+                <Sparkles size={12} />
+                โบนัสสำหรับสมาชิก PRO
+              </motion.div>
 
               {/* Highlights — desktop only */}
               <div className="hidden lg:block mt-8 space-y-3 text-left">

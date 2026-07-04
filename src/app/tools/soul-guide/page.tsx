@@ -39,7 +39,13 @@ export default function SoulGuidePage() {
   const [questSaved, setQuestSaved] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<Message[]>([]);
+  const hasLocalChatActivityRef = useRef(false);
   const todayDateStr = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
@@ -55,8 +61,17 @@ export default function SoulGuidePage() {
           if (docSnap.exists()) {
             const baseData = docSnap.data();
             const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
-            // ✅ [NO ENERGY LIMIT] ทุกคนใช้ได้ไม่จำกัด
-            setChatQuota({ used: 0, total: Infinity });
+            const subscriptionStatus = baseData.subscriptionStatus || baseData.subscription_status || "";
+            const subscriptionTier = baseData.subscriptionTier || baseData.subscription_tier || "";
+            const isProMember =
+              baseData.role === "premium" ||
+              subscriptionTier === "pro" ||
+              ["active", "trialing"].includes(subscriptionStatus) ||
+              !!baseData.isLifetimeMember;
+            const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+            const usedToday = baseData.aiMentorDailyDate === todayKey ? Number(baseData.aiMentorDailyCount || 0) : 0;
+
+            setChatQuota(isProMember ? { used: 0, total: Infinity } : { used: usedToday, total: 3 });
             setUserData((prev: any) => ({ ...prev, ...baseData, level }));
           }
         });
@@ -128,14 +143,24 @@ export default function SoulGuidePage() {
 
         if (!messagesInitialized.current) {
           messagesInitialized.current = true;
-          if (history.length > 0) {
-            setMessages(history);
-          } else {
-            setMessages([{
+          const welcomeMessage: Message = {
               role: "assistant",
               content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
-            }]);
-          }
+          };
+
+          setMessages((prev) => {
+            const base = history.length > 0 ? history : [welcomeMessage];
+            if (!hasLocalChatActivityRef.current && prev.length === 0) return base;
+
+            const merged = [...base];
+            prev.forEach((message) => {
+              const alreadyExists = merged.some(
+                (existing) => existing.role === message.role && existing.content === message.content
+              );
+              if (!alreadyExists) merged.push(message);
+            });
+            return merged;
+          });
         }
 
       } else {
@@ -286,7 +311,9 @@ export default function SoulGuidePage() {
     if (!messageText.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: messageText.trim() };
-    setMessages(prev => [...prev, userMessage]);
+    hasLocalChatActivityRef.current = true;
+    const nextMessages = [...messagesRef.current, userMessage];
+    setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
     setIsTyping(true);
@@ -328,7 +355,8 @@ export default function SoulGuidePage() {
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
         signal: controller.signal,
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          messages: nextMessages,
+          isQuestMode,
           userData: {
             displayName: userData?.displayName,
             lastDisc: userData?.lastDisc,
@@ -350,10 +378,14 @@ export default function SoulGuidePage() {
 
       const data = await response.json();
       if (data.success) {
+        if (typeof data.remainingFreeMessages === "number") {
+          setChatQuota({ used: 3 - data.remainingFreeMessages, total: 3 });
+        }
+
         // ตรวจหา [QUEST_PREFS:{...}] ใน AI response
         const questPrefsMatch = data.reply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
         let cleanReply = data.reply;
-        if (questPrefsMatch) {
+        if (questPrefsMatch && isQuestMode) {
           try {
             const prefs = JSON.parse(questPrefsMatch[1]);
             const userRef = doc(db, "users", user.uid);
@@ -365,6 +397,10 @@ export default function SoulGuidePage() {
             });
             setQuestSaved(true);
           } catch {}
+        } else if (questPrefsMatch) {
+          setQuestSaved(false);
+        }
+        if (questPrefsMatch) {
           cleanReply = data.reply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
         }
 
@@ -378,7 +414,7 @@ export default function SoulGuidePage() {
         });
 
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
+        setMessages(prev => [...prev, { role: "assistant", content: data.error || "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
       }
     } catch (error: any) {
       console.error("Chat Error:", error);
@@ -487,7 +523,7 @@ export default function SoulGuidePage() {
                     : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
                     }`}
                 >
-                  <div className="prose prose-invert prose-sm max-w-none">
+                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.content}
                     </ReactMarkdown>

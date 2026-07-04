@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -24,6 +24,8 @@ import { MementoMoriBento } from "./_components/MementoMoriBento";
 import { MementoMoriModal } from "./_components/MementoMoriModal";
 import { WeeklySummaryModal } from "./_components/WeeklySummaryModal";
 // AI Quest marker constants or unused legacy variables cleaned up
+
+type ProPlan = "monthly" | "yearly" | "founding_monthly" | "founding_yearly" | "lifetime";
 
 const playSuccessChime = () => {
   try {
@@ -98,6 +100,10 @@ const playSuccessChime = () => {
   }
 };
 
+const playLevelUpChime = () => {
+  playSuccessChime();
+};
+
 const ConfettiPiece = ({ color, delay }: { color: string; delay: number }) => {
   const randomX = Math.random() * 200 - 100;
   const randomY = Math.random() * -150 - 150;
@@ -156,6 +162,9 @@ export default function DashboardPage() {
   // 🌟 เพิ่ม State เก็บข้อมูล Week ปัจจุบันของผู้ใช้
   const [relativeWeekInfo, setRelativeWeekInfo] = useState({ id: "week-1", label: "สัปดาห์ที่ 1", range: "กำลังโหลด..." });
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [billingPlan, setBillingPlan] = useState<ProPlan>("monthly");
+  const confirmedCheckoutRef = useRef(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -176,6 +185,7 @@ export default function DashboardPage() {
       sessionStorage.removeItem('pendingLevelUp');
       const newLevel = parseInt(pendingLevel);
       setTimeout(() => {
+        playLevelUpChime();
         setShowLevelUp({ isOpen: true, newLevel });
         setTimeout(() => setShowLevelUp(null), 4000);
       }, 1000);
@@ -287,6 +297,8 @@ export default function DashboardPage() {
 
   const [completedQuests, setCompletedQuests] = useState<(number | string)[]>([]);
   const [totalXP, setTotalXP] = useState<number>(0);
+  const currentLevel = Math.floor(totalXP / 100) + 1;
+  const currentLevelXP = totalXP % 100;
   const [potXP, setPotXP] = useState<number>(0);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -319,9 +331,16 @@ export default function DashboardPage() {
   }, [showCollectionModal]);
   const [collectionSelectedDate, setCollectionSelectedDate] = useState("");
   const [showLevelUp, setShowLevelUp] = useState<{ isOpen: boolean, newLevel: number } | null>(null);
+  const showLevelUpModal = useCallback((newLevel: number) => {
+    playLevelUpChime();
+    setShowLevelUp({ isOpen: true, newLevel });
+    setTimeout(() => setShowLevelUp(null), 4000);
+  }, []);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDailySuccess, setShowDailySuccess] = useState(false);
   const [currentSuccessQuote, setCurrentSuccessQuote] = useState("");
+  const [showStreakSavedToast, setShowStreakSavedToast] = useState(false);
+  const hasShownStreakSavedToastRef = useRef(false);
 
   // 🏆 สุ่มคำคมใหม่ทุกครั้งที่เปิด Modal
   useEffect(() => {
@@ -362,6 +381,11 @@ export default function DashboardPage() {
 
   const [userData, setUserData] = useState<any>(null);
   const [showMementoModal, setShowMementoModal] = useState(false);
+  const [pendingJourneyCompletionAfterMementoClose, setPendingJourneyCompletionAfterMementoClose] = useState(false);
+  const [isCelebrating, setIsCelebrating] = useState(false);
+  const [simulatePhase3Done, setSimulatePhase3Done] = useState(false);
+  const [simulateEnteredRealLife, setSimulateEnteredRealLife] = useState(false);
+  const phaseCardsScrollRef = useRef<HTMLDivElement | null>(null);
 
   const hasSavedToday = useMemo(() => {
     if (!userData?.savingsLog) return false;
@@ -375,6 +399,71 @@ export default function DashboardPage() {
   const [wheelPlanSkips, setWheelPlanSkips] = useState<number>(0);
   const [perfectWeeks, setPerfectWeeks] = useState<number>(0);
   const [lastSkipDate, setLastSkipDate] = useState<string>("");
+
+  const hasRedeemedReward = useMemo(() => {
+    return !!(userData?.redeemedHistory && userData.redeemedHistory.length > 0);
+  }, [userData?.redeemedHistory]);
+
+  const hasChattedWithFuii = useMemo(() => {
+    return !!userData?.hasChattedWithFuii || chatQuota.used > 0 || !!userData?.lastChatTime || !!userData?.lastChatDate;
+  }, [userData?.hasChattedWithFuii, userData?.lastChatTime, userData?.lastChatDate, chatQuota.used]);
+
+  const isPhase1Completed = useMemo(() => {
+    const hasCoreAssessments = !!lastWheel && !!lastDisc && !!lastMoney && !!lastLibrarySoul;
+    return hasCoreAssessments && (!!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2);
+  }, [lastWheel, lastDisc, lastMoney, lastLibrarySoul, userData?.hasCompletedPhase1Quests, completedQuests.length]);
+
+  const isKhomsatsatUnlocked = isPhase1Completed;
+  const isGhostUnlocked = isKhomsatsatUnlocked && !!lastQuote;
+  const isShopUnlocked = isGhostUnlocked && !!lastGhostResult;
+  const isSoulGuideUnlocked = isShopUnlocked && hasRedeemedReward;
+  const isPhase2Completed = isSoulGuideUnlocked && hasChattedWithFuii;
+
+  const claimedReadArticlesCount = userData?.readArticles?.length || 0;
+  const hasCompletedFocusRoom = !!userData?.hasCompletedFocusRoom || (userData?.focusReflections?.length || 0) > 0;
+  const isFocusRoomUnlocked = isPhase2Completed && claimedReadArticlesCount >= 3;
+  const isMementoUnlocked = isFocusRoomUnlocked && hasCompletedFocusRoom;
+  const hasCompletedMemento = !!userData?.hasCheckedMemento || !!userData?.birthdate || (userData?.mementoReflections?.length || 0) > 0;
+  const isPhase3Completed = simulatePhase3Done || (isPhase2Completed && claimedReadArticlesCount >= 3 && hasCompletedFocusRoom && hasCompletedMemento);
+  const isRealLifeEntered = simulateEnteredRealLife || !!userData?.enteredRealLife;
+  const shouldShowPhaseJourney = activeTab === "home" && !isRealLifeEntered;
+  const shouldShowHomeBento = activeTab !== "home" || isRealLifeEntered;
+  const subscriptionStatus = userData?.subscriptionStatus || userData?.subscription_status || "";
+  const subscriptionTier = userData?.subscription_tier || userData?.subscriptionTier || "";
+  const isProMember =
+    userData?.role === "premium" ||
+    subscriptionTier === "pro" ||
+    ["active", "trialing"].includes(subscriptionStatus) ||
+    !!userData?.isLifetimeMember;
+  const hasHabitMasterTools = currentLevel >= 10;
+  const shouldShowMembershipStatus = activeTab === "home" && (isPhase3Completed || isRealLifeEntered);
+  const shouldShowHomeHeader = activeTab === "home" && !(isPhase3Completed && !isRealLifeEntered);
+  const shouldShowHomeLevelStrip = activeTab === "home" && !isPhase3Completed && !isRealLifeEntered;
+  const promptPayQrUrl = process.env.NEXT_PUBLIC_PROMPTPAY_QR_URL || "/promptpay-qr.png";
+  const activePhaseIndex = useMemo(() => {
+    if (!isPhase1Completed) return 0;
+    if (!isPhase2Completed) return 1;
+    return 2;
+  }, [isPhase1Completed, isPhase2Completed]);
+
+  useEffect(() => {
+    if (!shouldShowPhaseJourney || activeTab !== "home" || isRealLifeEntered) return;
+    const container = phaseCardsScrollRef.current;
+    if (!container || window.innerWidth >= 768) return;
+
+    const timer = window.setTimeout(() => {
+      const target = container.children[activePhaseIndex] as HTMLElement | undefined;
+      target?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [activePhaseIndex, activeTab, isRealLifeEntered, shouldShowPhaseJourney]);
+
+  useEffect(() => {
+    if (hasHabitMasterTools) return;
+    setShowMoneyVault(false);
+    setShowBookCollection(false);
+  }, [hasHabitMasterTools]);
 
   const loadDashboardData = useCallback(async (currentUser: User) => {
     setLoading(true);
@@ -517,8 +606,7 @@ export default function DashboardPage() {
           const oldLevel = Math.floor(oldXP / 100) + 1;
           const newLevel = Math.floor(newXP / 100) + 1;
           if (newLevel > oldLevel) {
-            setShowLevelUp({ isOpen: true, newLevel });
-            setTimeout(() => setShowLevelUp(null), 4000);
+            showLevelUpModal(newLevel);
           }
           console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
         } else {
@@ -611,8 +699,7 @@ export default function DashboardPage() {
                 const oldLevel = Math.floor(currentXP / 100) + 1;
                 const newLevel = Math.floor(newXP / 100) + 1;
                 if (newLevel > oldLevel) {
-                  setShowLevelUp({ isOpen: true, newLevel });
-                  setTimeout(() => setShowLevelUp(null), 4000);
+                  showLevelUpModal(newLevel);
                 }
                 setTotalXP(newXP);
                 setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
@@ -651,7 +738,15 @@ export default function DashboardPage() {
         } else {
           setHasClaimedQuoteToday(false);
           const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
-          if (!hasShownThisSession && (userData.totalXP || 0) > 0) {
+          const activeQuestIds = activeDateToCheck === todayStr ? (userData.completedQuestIds || []) : [];
+          const phase1CompleteForQuotePopup =
+            !!data.wheelData &&
+            !!data.discData &&
+            !!data.moneyData &&
+            !!data.librarySoulData &&
+            (!!userData.hasCompletedPhase1Quests || activeQuestIds.length >= 2);
+
+          if (!hasShownThisSession && phase1CompleteForQuotePopup) {
             setShowWelcomeQuotePopup(true);
             sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
           }
@@ -671,6 +766,53 @@ export default function DashboardPage() {
     }
     setLoading(false);
   }, [router]);
+
+  useEffect(() => {
+    const checkout = searchParams.get("checkout");
+    const sessionId = searchParams.get("session_id");
+    if (!user || checkout !== "success" || !sessionId || confirmedCheckoutRef.current) return;
+
+    confirmedCheckoutRef.current = true;
+    const confirmCheckout = async () => {
+      try {
+        const idToken = await user.getIdToken();
+        const response = await fetch("/api/checkout/confirm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Confirm checkout failed");
+        }
+
+        const plan = data.plan || searchParams.get("plan") || "monthly";
+        await loadDashboardData(user);
+        setUserData((prev: any) => ({
+          ...(prev || {}),
+          role: "premium",
+          subscription_tier: "pro",
+          subscriptionTier: "pro",
+          subscriptionStatus: "active",
+          subscriptionPlan: plan,
+          isFoundingMember: String(plan).startsWith("founding"),
+          isLifetimeMember: plan === "lifetime",
+        }));
+        setShowMembershipModal(false);
+        setShowSuccessToast("อัปเกรดเป็น PRO เรียบร้อยแล้ว");
+        window.history.replaceState(null, "", "/dashboard");
+      } catch (error) {
+        console.error("Checkout confirm failed:", error);
+        setShowSuccessToast("ชำระเงินสำเร็จแล้ว กำลังรอ Stripe ยืนยันสถานะ PRO");
+      }
+    };
+
+    confirmCheckout();
+  }, [loadDashboardData, searchParams, user]);
 
   const [lastChatDate, setLastChatDate] = useState("");
   const [aiGeneratedQuestTitle, setAiGeneratedQuestTitle] = useState("");
@@ -775,8 +917,7 @@ export default function DashboardPage() {
       setPotXP((prev) => prev - amount);
 
       if (newLevel > oldLevel) {
-        setShowLevelUp({ isOpen: true, newLevel });
-        setTimeout(() => setShowLevelUp(null), 4000);
+        showLevelUpModal(newLevel);
       }
 
       setShowDepositModal(false);
@@ -922,7 +1063,8 @@ export default function DashboardPage() {
     try {
       const userRef = doc(db, "users", user.uid);
       const isFirstSetup = !userData?.birthdate;
-      const updates: any = { birthdate, expectedAge };
+      const shouldCompletePhase3 = isFirstSetup && isPhase2Completed;
+      const updates: any = { birthdate, expectedAge, hasCheckedMemento: true };
       
       if (isFirstSetup) {
         updates.totalXP = increment(15);
@@ -930,8 +1072,7 @@ export default function DashboardPage() {
         const oldLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
         const newLevel = Math.floor(((userData?.totalXP || 0) + 15) / 100) + 1;
         if (newLevel > oldLevel) {
-          setShowLevelUp({ isOpen: true, newLevel });
-          setTimeout(() => setShowLevelUp(null), 4000);
+          showLevelUpModal(newLevel);
         }
         setTotalXP((prev) => prev + 15);
       }
@@ -941,13 +1082,35 @@ export default function DashboardPage() {
         ...prev,
         birthdate,
         expectedAge,
+        hasCheckedMemento: true,
         totalXP: (prev?.totalXP || 0) + (isFirstSetup ? 15 : 0)
       }));
+      if (shouldCompletePhase3) {
+        setPendingJourneyCompletionAfterMementoClose(true);
+      }
     } catch (e) {
       console.error("Error saving Memento Mori setup:", e);
       alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลตั้งค่า");
     }
   };
+
+  const revealJourneyCompletionCard = useCallback(() => {
+    setPendingJourneyCompletionAfterMementoClose(false);
+    setSimulatePhase3Done(true);
+    setSimulateEnteredRealLife(false);
+    setActiveTab("home");
+    setIsCelebrating(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => setIsCelebrating(false), 4200);
+  }, []);
+
+  const handleCloseMementoModal = useCallback(() => {
+    const shouldRevealJourneyCard = pendingJourneyCompletionAfterMementoClose;
+    setShowMementoModal(false);
+    if (shouldRevealJourneyCard) {
+      setTimeout(revealJourneyCompletionCard, 320);
+    }
+  }, [pendingJourneyCompletionAfterMementoClose, revealJourneyCompletionCard]);
 
   const handleAddMementoReflection = async (question: string, answer: string, xpReward: number) => {
     if (!user) return;
@@ -969,8 +1132,7 @@ export default function DashboardPage() {
         const oldLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
         const checkNewLevel = Math.floor(((userData?.totalXP || 0) + xpReward) / 100) + 1;
         if (checkNewLevel > oldLevel) {
-          setShowLevelUp({ isOpen: true, newLevel: checkNewLevel });
-          setTimeout(() => setShowLevelUp(null), 4000);
+          showLevelUpModal(checkNewLevel);
         }
         setTotalXP((prev) => prev + xpReward);
       }
@@ -1023,8 +1185,7 @@ export default function DashboardPage() {
         const oldLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
         const checkNewLevel = Math.floor(((userData?.totalXP || 0) + earnedXP) / 100) + 1;
         if (checkNewLevel > oldLevel) {
-          setShowLevelUp({ isOpen: true, newLevel: checkNewLevel });
-          setTimeout(() => setShowLevelUp(null), 4000);
+          showLevelUpModal(checkNewLevel);
         }
         setTotalXP((prev) => prev + earnedXP);
       } else {
@@ -1135,10 +1296,11 @@ export default function DashboardPage() {
         wheelPlanDay: 0,
         wheelPlanSkips: 0,
         completedQuestIds: [],
-        totalFocusMinutes: 0,     // 🆕 ล้างนาทีสะสม Deep Work
+        totalFocusMinutes: 0,     // 🆕 ล้างนาทีสะสม Focus Room
         focusReflections: [],
         readArticles: [],
         lastLibrarySoul: null,
+        librarySoulResult: deleteField(),
         customQuestTitle: "",
         lastQuestDate: null,
         lastActiveDate: null,
@@ -1151,10 +1313,24 @@ export default function DashboardPage() {
         lastGhostResultFull: null,
         hasGhostXP: false,
         hasSoulGuide: false,
+        hasCompletedPhase1Quests: false,
+        enteredRealLife: false,
+        hasCheckedMemento: false,
+        birthdate: deleteField(),
+        expectedAge: deleteField(),
+        mementoReflections: [],
+        redeemedHistory: [],
+        hasClaimedFocusXP: false,
+        hasClaimedMementoXP: false,
+        hasMementoXP: false,
+        hasCompletedFocusRoom: false,
+        lastFocusCompletedAt: null,
         hasReadXP: false,  // 🌟 ปลดล็อกรีเซ็ต XP การอ่าน
         hasFocusXP: false, // 🌟 ปลดล็อกรีเซ็ต XP สมาธิ
         dailyChatCount: 0,  // 🤖 รีเซ็ตพลังงาน AI Mentor
         chatUsageDate: null,
+        hasChattedWithFuii: false,
+        lastChatTime: deleteField(),
         perfectWeeks: 0,    // 🏆 ล้างจำนวนสัปดาห์ที่สมบูรณ์
         wheelCompletions: 0, // 🎡 ล้างตัวนับความสำเร็จรายวัน
         createdAt: resetDate, // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
@@ -1197,6 +1373,41 @@ export default function DashboardPage() {
       setCustomQuestTitle("");
       setCollectionQuests([]);
       setSavedBooks(new Set());
+      setShowMementoModal(false);
+      setPendingJourneyCompletionAfterMementoClose(false);
+      setShowStreakSavedToast(false);
+      hasShownStreakSavedToastRef.current = false;
+      setSimulatePhase3Done(false);
+      setSimulateEnteredRealLife(false);
+      setUserData((prev: any) => ({
+        ...(prev || {}),
+        totalXP: 0,
+        potXP: 0,
+        streakCount: 0,
+        completedQuestIds: [],
+        totalFocusMinutes: 0,
+        readArticles: [],
+        lastLibrarySoul: null,
+        lastGhostResult: null,
+        lastGhostResultFull: null,
+        hasCompletedPhase1Quests: false,
+        enteredRealLife: false,
+        hasCheckedMemento: false,
+        birthdate: null,
+        expectedAge: null,
+        mementoReflections: [],
+        redeemedHistory: [],
+        hasCompletedFocusRoom: false,
+        hasWheelXP: false,
+        hasDiscXP: false,
+        hasMoneyXP: false,
+        hasLibrarySoulXP: false,
+        hasGhostXP: false,
+        hasSoulGuide: false,
+        hasChattedWithFuii: false,
+        lastChatDate: null,
+        lastChatTime: null,
+      }));
       localStorage.removeItem('hasSeenDashboardTutorial');
       setShowTutorial(true);
       setTutorialStep(1);
@@ -1204,7 +1415,7 @@ export default function DashboardPage() {
       // 🚀 6. เลื่อนขึ้นไปด้านบนสุดเพื่อให้เห็นการเปลี่ยนแปลง
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // 🧹 5. เคลียร์ Cache ของ Deep Work (สำคัญมาก)
+      // 🧹 5. เคลียร์ Cache ของ Focus Room (สำคัญมาก)
       localStorage.removeItem("lastFocusDate_cache");
       localStorage.removeItem("deepWork_endTime");
       localStorage.removeItem("deepWork_selectedTime");
@@ -2214,9 +2425,6 @@ export default function DashboardPage() {
     return [2, 3, 4].some(id => !completedSet.has(String(id)));
   }, [dailyQuests, completedQuests]);
 
-  const currentLevel = Math.floor(totalXP / 100) + 1;
-  const currentLevelXP = totalXP % 100;
-
   const getLevelTitle = (level: number) => {
     if (level < 10) return "Rookie Upskiller (ผู้เริ่มต้น)";
     if (level < 20) return "Habit Master (เซียนระบบ)";
@@ -2325,8 +2533,7 @@ export default function DashboardPage() {
     const newLevel = Math.floor((totalXP + bonusXP) / 100) + 1;
 
     if (newLevel > oldLevel) {
-      setShowLevelUp({ isOpen: true, newLevel });
-      setTimeout(() => setShowLevelUp(null), 4000);
+      showLevelUpModal(newLevel);
     }
 
     setTotalXP(prev => prev + bonusXP);
@@ -2430,6 +2637,12 @@ export default function DashboardPage() {
           newStreak = 1; // ครั้งแรกสุดในระบบที่ทำครบ 3
         }
 
+        if (newStreak > streakCount && shouldShowPhaseJourney && !hasShownStreakSavedToastRef.current) {
+          hasShownStreakSavedToastRef.current = true;
+          setShowStreakSavedToast(true);
+          setTimeout(() => setShowStreakSavedToast(false), 2600);
+        }
+
         // โบนัสวินัย 7 วัน (เฉพาะตอนที่ Streak เพิ่งเพิ่ม)
         if (newStreak > streakCount && newStreak % 7 === 0) {
           xpChange += 100;
@@ -2505,8 +2718,7 @@ export default function DashboardPage() {
       const oldLevel = Math.floor(rollbackXP / 100) + 1;
 
       if (newLevel > oldLevel && xpChange > 0) {
-        setShowLevelUp({ isOpen: true, newLevel });
-        setTimeout(() => setShowLevelUp(null), 4000);
+        showLevelUpModal(newLevel);
       }
 
       // บันทึกลง Firebase (User Profile หลัก)
@@ -2785,6 +2997,132 @@ export default function DashboardPage() {
       accent: "text-white/20"
     };
 
+  const memberLabel = isProMember ? "PRO MEMBER" : "STARTER MEMBER";
+
+  const renderPlayerCardCanvas = (id?: string) => (
+    <div
+      id={id}
+      className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center p-8 transition-all duration-700`}
+      style={{
+        backgroundColor: theme.hexBg,
+        backgroundImage: discType ? `linear-gradient(to bottom, ${theme.hexGlow}, transparent)` : 'none'
+      }}
+    >
+      {discType ? (
+        <>
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0 opacity-[0.015]">
+            <div className="flex flex-col gap-4 rotate-[-15deg] scale-125 transform">
+              {[...Array(20)].map((_, rowIndex) => (
+                <div key={rowIndex} className={`flex gap-10 text-3xl font-black text-white italic ${rowIndex % 2 === 0 ? 'ml-[-30px]' : 'ml-[30px]'}`}>
+                  {[...Array(12)].map((_, colIndex) => (
+                    <span key={colIndex}>{discType}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0">
+            <span
+              className={`text-[46rem] font-black ${theme.accent} leading-none transform italic rotate-[-12deg] -translate-y-8`}
+              style={{
+                WebkitTextStroke: `14px ${theme.hexGlow}`,
+                color: 'transparent',
+                opacity: 0.55,
+                filter: `drop-shadow(0 0 40px ${theme.hexGlow}99)`,
+                lineHeight: 1,
+                display: 'inline-block'
+              }}
+            >
+              {discType}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div
+          className="absolute inset-0 z-0 opacity-20"
+          style={{
+            backgroundImage: `radial-gradient(#ffffff 1px, transparent 1px)`,
+            backgroundSize: '30px 30px'
+          }}
+        />
+      )}
+
+      <div
+        className={`absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b ${theme.glow} to-transparent`}
+        style={{ pointerEvents: 'none' }}
+      />
+      <div className={`absolute -bottom-20 -left-20 w-64 h-64 ${theme.glow.replace('from-', 'bg-')} blur-[80px] rounded-full`} />
+
+      <div className="relative z-10 w-full flex justify-between items-start mb-0">
+        <div className="flex flex-col pt-1">
+          <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">{memberLabel}</span>
+          <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className={`w-16 h-16 bg-white/10 rounded-[1.5rem] border border-white/20 flex items-center justify-center ${isCapturing ? '' : 'backdrop-blur-xl'} overflow-hidden p-2.5 ${isCapturing ? '' : 'shadow-[0_20px_40px_rgba(0,0,0,0.4)]'}`}>
+            <img
+              src={lastLibrarySoul?.type ? `/books/${lastLibrarySoul.type}.png` : "/logo-invert.png"}
+              alt="Soul Type"
+              className="w-full h-full object-contain drop-shadow-lg"
+              onError={(e) => { (e.target as HTMLImageElement).src = "/logo-invert.png"; }}
+            />
+          </div>
+          {lastLibrarySoul?.type && (
+            <span className="text-[11px] font-black text-white uppercase tracking-[0.25em] drop-shadow-md">{lastLibrarySoul.type}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="relative z-0 mb-2 mt-4 h-48 flex justify-center items-end">
+        <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
+        <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-[0.85] origin-bottom">
+          <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
+        </div>
+
+        {lastMoney?.resultKey && (
+          <div className="absolute bottom-0 left-1/2 translate-x-[-25%] translate-y-[14px] z-20 w-40 h-40">
+            <img
+              src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img}
+              alt="Pet"
+              crossOrigin="anonymous"
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-full object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)]"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="relative z-10 text-center w-full mb-5 -mt-6">
+        <h2 className="text-4xl font-black text-white tracking-tight mb-2 drop-shadow-lg">
+          {user?.displayName?.split(' ')[0]}
+        </h2>
+        <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl text-[12px] font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]">
+          <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
+        </div>
+      </div>
+
+      <div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-0 px-2 sm:px-4">
+        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
+          <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] mb-1.5`}>DISC STYLE</span>
+          <Zap size={14} className={`${theme.accent} mb-1.5`} />
+          <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
+            {lastDisc ? DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle : "Life Explorer"}
+          </p>
+        </div>
+
+        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
+          <span className="text-[8px] font-black text-amber-400 uppercase tracking-[0.2em] mb-1.5">MONEY AVATAR</span>
+          <Star size={14} className="text-amber-400 fill-current mb-1.5" />
+          <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
+            {lastMoney ? MONEY_DATA[lastMoney.resultKey]?.title : "Asset Builder"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   // เอาไปวางไว้ก่อน return ใน DashboardPage
   const formatInspirationalText = (text: string) => {
     if (!text) return null;
@@ -2860,6 +3198,72 @@ export default function DashboardPage() {
     }
   };
 
+  const handleMembershipCheckout = async (plan: ProPlan = billingPlan) => {
+    if (isRedirecting) return;
+    if (!user) {
+      alert("กรุณาเข้าสู่ระบบก่อนครับ");
+      return;
+    }
+
+    try {
+      setIsRedirecting(true);
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      alert("เกิดข้อผิดพลาด: " + (data.error || "ไม่สามารถติดต่อ Stripe ได้"));
+      setIsRedirecting(false);
+    } catch (error) {
+      console.error("Membership checkout error:", error);
+      alert("ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง");
+      setIsRedirecting(false);
+    }
+  };
+
+  const handleMembershipPortal = async () => {
+    if (isRedirecting) return;
+    if (!user) {
+      alert("กรุณาเข้าสู่ระบบก่อนครับ");
+      return;
+    }
+
+    try {
+      setIsRedirecting(true);
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/checkout/portal", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      alert(data.error || "ยังไม่สามารถเปิดหน้าจัดการสมาชิกได้ครับ");
+      setIsRedirecting(false);
+    } catch (error) {
+      console.error("Membership portal error:", error);
+      alert("ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง");
+      setIsRedirecting(false);
+    }
+  };
+
   const handleTabChange = (tabId: "home" | "overview" | "quests" | "identity" | "resources") => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2890,6 +3294,44 @@ export default function DashboardPage() {
     } catch (e) { console.error(e); }
   };
 
+  const renderLockedBentoOverlay = (title: string, detail: string) => (
+    <div className="absolute inset-0 z-[90] flex items-center justify-center rounded-[2.5rem] border border-white/50 bg-white/62 p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-[32px]">
+      <div className="absolute inset-0 rounded-[2.5rem] bg-[radial-gradient(circle_at_50%_28%,rgba(255,255,255,0.78),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.35),rgba(248,250,252,0.78))]" />
+      <div className="relative z-10 flex max-w-[320px] flex-col items-center rounded-[2rem] border border-white/65 bg-white/58 px-6 py-7 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-950 text-white shadow-[0_18px_40px_rgba(15,23,42,0.22)]">
+          <Lock size={28} />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-[0.32em] text-slate-400">Locked</p>
+        <h3 className="mt-2 text-[18px] font-black leading-tight text-slate-950">{title}</h3>
+        <p className="mt-3 text-[13px] font-bold leading-relaxed text-slate-600">{detail}</p>
+      </div>
+    </div>
+  );
+
+  const renderJourneyPSACard = () => (
+    <button
+      type="button"
+      onClick={() => setShowShareModal(true)}
+      className="group relative mx-auto mt-6 block w-full max-w-[390px] text-left"
+      title="เปิด Player Card"
+    >
+      <div className="absolute -inset-3 rounded-[3.2rem] bg-gradient-to-br from-amber-200/70 via-orange-100/80 to-white/80 blur-xl transition-all duration-700 group-hover:blur-2xl" />
+      <div className="relative overflow-hidden rounded-[3rem] border border-amber-200/90 bg-gradient-to-br from-white/92 via-orange-50/78 to-amber-50/72 p-3 shadow-[0_36px_100px_rgba(120,53,15,0.22)] backdrop-blur-2xl">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.9),transparent_36%,rgba(255,255,255,0.32)_56%,transparent_74%)] opacity-90" />
+        <div className="relative mb-3 overflow-hidden rounded-[1.7rem] border border-white/80 bg-white/88 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_34px_rgba(245,158,11,0.10)]">
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(251,191,36,0.18),rgba(255,255,255,0.72),rgba(125,211,252,0.18),rgba(244,114,182,0.16))]" />
+          <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-300/70 to-transparent" />
+          <p className="relative inline-flex items-center justify-center rounded-full border border-amber-200/70 bg-white/60 px-4 py-1.5 text-center text-[9px] font-black uppercase tracking-[0.32em] text-orange-500 shadow-[0_10px_24px_rgba(245,158,11,0.10)] backdrop-blur-xl">
+            Upskill Everyday Certified
+          </p>
+        </div>
+        <div className="relative overflow-hidden rounded-[2.65rem] border border-white/85 bg-white/35 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_18px_52px_rgba(120,53,15,0.14)] backdrop-blur-xl">
+          {renderPlayerCardCanvas()}
+        </div>
+      </div>
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-transparent px-6 md:px-8 py-4 pb-28 md:pb-4">
       {/* 🚀 Floating Premium Circular XP */}
@@ -2918,117 +3360,287 @@ export default function DashboardPage() {
 
 
         {/* --- 🏠 Home Tab Header --- */}
-        {activeTab === "home" && (
-          <div className="mt-2 mb-4">
-            <div className="flex items-center gap-4">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
-                <LayoutDashboard size={20} />
-                สรุปภาพรวม
-              </h2>
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+        {shouldShowHomeHeader && (
+          <div className="mt-2 mb-5">
+            <div className="relative flex items-center justify-center">
+              <div className="flex w-full items-center gap-4">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                <h2 className="flex items-center gap-3 rounded-full border border-slate-100 bg-white px-6 py-2 text-xl font-black text-slate-800 shadow-sm">
+                  <LayoutDashboard size={20} />
+                  สรุปภาพรวม
+                </h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              </div>
+              {shouldShowMembershipStatus && (
+                <button
+                  type="button"
+                  onClick={() => setShowMembershipModal(true)}
+                  className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/90 bg-white/80 px-2 py-1.5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_18px_42px_rgba(15,23,42,0.12)] sm:gap-2 sm:px-3"
+                  title={isProMember ? "สมาชิก PRO" : "ดูแผนสมาชิก"}
+                >
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${isProMember ? "bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950" : "bg-slate-100 text-slate-500"} shadow-sm`}>
+                    {isProMember ? <Sparkles size={13} /> : <Lock size={13} />}
+                  </span>
+                  <span className={`text-[10px] font-black uppercase tracking-[0.14em] ${isProMember ? "text-amber-600" : "text-slate-600"}`}>
+                    {isProMember ? "PRO" : "FREE"}
+                  </span>
+                </button>
+              )}
             </div>
+
+            {shouldShowHomeLevelStrip && (
+            <div className="mx-auto mt-4 max-w-3xl rounded-[1.75rem] border border-white/90 bg-white/75 p-2 shadow-[0_24px_80px_rgba(79,70,229,0.14),0_12px_34px_rgba(34,211,238,0.12)] backdrop-blur-xl">
+              <div className="relative overflow-hidden rounded-[1.35rem] border border-white/80 bg-gradient-to-r from-violet-50/95 via-white to-cyan-50/95 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_28px_rgba(15,23,42,0.04)]">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_88%_18%,rgba(34,211,238,0.24),transparent_27%),linear-gradient(120deg,transparent,rgba(255,255,255,0.78),transparent)]" />
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-pink-500 to-rose-500 text-xl font-black text-white shadow-[0_14px_28px_rgba(236,72,153,0.34),0_0_0_6px_rgba(255,255,255,0.32)]">
+                    {(user?.displayName || user?.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-black text-white shadow-sm">
+                        LV.{currentLevel}
+                      </span>
+                      <span className="max-w-full truncate rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+                        {getLevelTitle(currentLevel).split(" (")[0]}
+                      </span>
+                      <span className="rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-[11px] font-black text-violet-600">
+                        {totalXP} XP
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full border border-slate-200 bg-white/80">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-400 to-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.45)] transition-all duration-700"
+                          style={{ width: `${currentLevelXP}%` }}
+                        />
+                      </div>
+                      <span className="w-10 text-right text-xs font-black text-slate-500">{currentLevelXP}%</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/75 text-slate-400 shadow-sm transition-all hover:text-red-400 active:scale-95"
+                    title="ออกจากระบบ"
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+            )}
           </div>
         )}
 
-        {/* --- 🌱 Assessment Journey Banner --- */}
-        {activeTab === "home" && (() => {
-          const steps = [
-            { done: !!lastWheel,       path: "/tools/wheel-of-life",    label: "Wheel of Life",    desc: "เช็กสมดุลชีวิต 8 ด้านของคุณ",         xp: 50,
-              icon: <PieChart size={22} />,
-              gradient: "from-red-600 to-orange-500", iconBg: "bg-red-500/20", iconColor: "text-red-400" },
-            { done: !!lastDisc,        path: "/tools/disc",             label: "DISC",             desc: "ค้นหาสไตล์การทำงานของคุณ",           xp: 50,
-              icon: <Users size={22} />,
-              gradient: "from-blue-600 to-indigo-500", iconBg: "bg-blue-500/20", iconColor: "text-blue-400" },
-            { done: !!lastMoney,       path: "/tools/money-avatar",     label: "Money Avatar",     desc: "ถอดรหัสนิสัยการเงินของคุณ",           xp: 50,
-              icon: <Wallet size={22} />,
-              gradient: "from-amber-500 to-yellow-400", iconBg: "bg-amber-500/20", iconColor: "text-amber-400" },
-            { done: !!lastLibrarySoul, path: "/tools/library-of-souls", label: "Library of Souls", desc: "ค้นพบสไตล์การเรียนรู้ของคุณ",        xp: 50,
-              icon: <BookOpen size={22} />,
-              gradient: "from-emerald-600 to-teal-500", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400" },
-            { done: !!lastGhostResult, path: "/tools/ghost-in-you",     label: "Ghost in You",     desc: "ผีอะไรสิงคุณอยู่? สำรวจความกลัวลึกๆ",  xp: 50,
-              icon: <Ghost size={22} />,
-              gradient: "from-purple-600 to-violet-600", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
-            { done: !!lastQuote,       path: "/tools/khomsatsat",       label: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจด้วย AI",              xp: 10,
-              icon: <Quote size={22} />,
-              gradient: "from-purple-600 to-fuchsia-500", iconBg: "bg-purple-500/20", iconColor: "text-purple-400" },
-            { done: hasSoulGuide,      path: "/tools/soul-guide",       label: "คุยกับพี่ฟุ้ย",        desc: "ลองแชทคุยกับ AI ที่รู้จักคุณแล้ว",   xp: 0,
-              icon: <MessageSquare size={22} />,
-              gradient: "from-violet-600 to-indigo-500", iconBg: "bg-violet-500/20", iconColor: "text-violet-400" },
+        {/* --- 🌱 3 Phase Journey Cards --- */}
+        {shouldShowPhaseJourney && (() => {
+          const phase1Steps = [
+            { done: !!lastWheel, label: "Wheel of Life", shortDesc: "เช็กสมดุลชีวิต 8 ด้าน", path: "/tools/wheel-of-life", buttonClass: "from-red-500 to-orange-500" },
+            { done: !!lastDisc, label: "DISC", shortDesc: "เข้าใจสไตล์การสื่อสารของคุณ", path: "/tools/disc", buttonClass: "from-blue-500 to-indigo-500" },
+            { done: !!lastMoney, label: "Money Avatar", shortDesc: "ถอดรหัสนิสัยการเงิน", path: "/tools/money-avatar", buttonClass: "from-amber-400 to-orange-500" },
+            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านของคุณ", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
+            { done: !!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2, label: `Daily Quests (${Math.min(completedQuests.length, 2)}/2)`, shortDesc: "ทำภารกิจสั้นๆ เพื่อจบ Phase 1", path: "/dashboard?tab=quests", buttonClass: "from-violet-500 to-cyan-400" },
           ];
-          const next = steps.find(s => !s.done);
-          const doneCount = steps.filter(s => s.done).length;
-          if (!next) return null;
+          const phase2Steps = [
+            { done: !!lastQuote, label: "คมสัดสัด", shortDesc: "สร้างคำคมจากความรู้สึกวันนี้", path: "/tools/khomsatsat", buttonClass: "from-fuchsia-500 to-violet-500" },
+            { done: !!lastGhostResult, label: "Ghost in You", shortDesc: "เผชิญหน้าความกลัวลึกๆ", path: "/tools/ghost-in-you", buttonClass: "from-rose-500 to-red-600" },
+            { done: hasRedeemedReward, label: "Happiness Shop", shortDesc: "แลก XP เป็นรางวัลเติมใจ", path: "/shop", buttonClass: "from-pink-500 to-orange-400" },
+            { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-slate-700 to-blue-900" },
+          ];
+          const phase3Steps = [
+            { done: claimedReadArticlesCount >= 3, label: "คลังสมอง 3 บทความ", shortDesc: "อ่านและเคลม XP จากบทความ", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
+            { done: hasCompletedFocusRoom, label: "Focus Room", shortDesc: "ฝึกสมาธิและบันทึก reflection", path: "/tools/focus-room", buttonClass: "from-sky-500 to-blue-600" },
+            { done: hasCompletedMemento, label: "Memento Mori", shortDesc: "ทบทวนเวลาชีวิตอย่างมีสติ", path: "/dashboard?memento=1", buttonClass: "from-amber-600 to-[#8B5A2B]" },
+          ];
+
+          const phaseCards = [
+            {
+              num: 1,
+              title: "ค้นหาตัวตน",
+              desc: "ประเมินสมดุลชีวิต การสื่อสาร\nเข้าใจความรู้ทางการเงิน เลือกหนังสือที่เหมาะกับคุณ",
+              image: "/Phase1.png",
+              unlocked: true,
+              completed: isPhase1Completed,
+              steps: phase1Steps,
+              unlockText: "",
+              buttonClass: "from-orange-500 to-violet-500",
+            },
+            {
+              num: 2,
+              title: "สุขระหว่างทาง",
+              desc: "เข้าใจความรู้สึกของตัวเอง เผชิญหน้ากับความกลัว\nความสุข และเติบโตไปกับพี่ฟุ้ย",
+              image: "/Phase2.png",
+              unlocked: isPhase1Completed,
+              completed: isPhase2Completed,
+              steps: phase2Steps,
+              unlockText: "ปลดล็อกหลังจบ Phase 1",
+              buttonClass: "from-pink-500 to-violet-500",
+            },
+            {
+              num: 3,
+              title: "ระลึกความตาย",
+              desc: "ปลดล็อกสรุปบทความดีๆ ฝึกสมาธิและจิตใจ\nเพื่อระลึกถึงคุณค่าของชีวิต",
+              image: "/Phase3.png",
+              unlocked: isPhase2Completed,
+              completed: isPhase3Completed,
+              steps: phase3Steps,
+              unlockText: "ปลดล็อกหลังจบ Phase 2",
+              buttonClass: "from-amber-500 to-[#8B5A2B]",
+            },
+          ];
+
+          const getNextStep = (steps: typeof phase1Steps) => steps.find((step) => !step.done) || steps[steps.length - 1];
+
           return (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 rounded-[2rem] p-[1px] relative"
-              style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa, #34d399, #fbbf24, #f472b6, #a78bfa)" }}
-            >
-              <div className="relative rounded-[2rem] bg-slate-950 px-4 pt-3 pb-4 overflow-hidden">
+            <div className="relative mb-10">
+              {!isPhase3Completed && (
+              <div ref={phaseCardsScrollRef} className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto px-3 pt-3 pb-7 -mx-3 md:mx-0 md:px-0 md:pt-0 md:pb-0 snap-x snap-mandatory scrollbar-none md:overflow-visible">
+                {phaseCards.map((phase) => {
+                  const doneCount = phase.steps.filter((step) => step.done).length;
+                  const nextStep = getNextStep(phase.steps);
+                  const currentButtonClass = phase.completed ? "from-emerald-500 to-teal-400" : nextStep.buttonClass || phase.buttonClass;
+                  const isActive = phase.unlocked && !phase.completed;
 
-                {/* Row 1: Next step info + CTA */}
-                <div className="flex items-center gap-2.5 mb-3 relative z-10">
-                  <div className={`shrink-0 w-8 h-8 rounded-lg ${next.iconBg} flex items-center justify-center ${next.iconColor}`}>
-                    {next.icon && <span className="scale-75">{next.icon}</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-nowrap">
-                      <p className="text-white text-[11px] font-bold whitespace-nowrap truncate">
-                        {doneCount === 0 ? "ยินดีต้อนรับสู่ Upskill Everyday" : `ต่อไป: ${next.label}`}
-                      </p>
-                      {next.xp > 0 && (
-                        <span className="shrink-0 text-[9px] font-black text-amber-400 bg-amber-400/15 border border-amber-400/30 px-1.5 py-0.5 rounded-full">+{next.xp} XP</span>
-                      )}
-                    </div>
-                    <p className="text-slate-400 text-[10px] mt-0.5 truncate">{doneCount === 0 ? "เริ่มต้นทำ Wheel of Life เพื่อเช็กสมดุลชีวิต" : next.desc}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] font-black text-slate-500 hidden sm:block">{doneCount}/{steps.length}</span>
-                    <Link
-                      href={next.path}
-                      onClick={() => {
-                        if (doneCount === 6 && user && !hasSoulGuide) {
-                          setHasSoulGuide(true);
-                          setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
-                        }
-                      }}
-                      className="flex items-center gap-1 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap"
-                      style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}
+                  return (
+                    <motion.div
+                      key={phase.num}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`relative flex min-w-[82vw] snap-center flex-col overflow-hidden rounded-[2.25rem] border shadow-[0_18px_46px_rgba(15,23,42,0.08)] md:min-w-0 ${phase.unlocked ? "border-violet-300/70 bg-slate-950 text-white" : "border-slate-300/70 bg-slate-100 text-slate-500 grayscale"}`}
                     >
-                      {doneCount === 0 ? "เริ่มเลย" : doneCount === 6 ? "แชทเลย" : "ทำต่อ"} <ArrowRight size={11} />
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Row 2: Step progress indicators */}
-                <div className="flex items-center gap-1 relative z-10">
-                  {steps.map((step, i) => {
-                    const isNext = step === next;
-                    const isDone = step.done;
-                    const shortLabels = ["Wheel", "DISC", "Money", "Library", "Ghost", "คมสัด", "AI"];
-                    return (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        <div className={`h-1 w-full rounded-full transition-all duration-500 ${
-                          isDone
-                            ? `bg-gradient-to-r ${step.gradient}`
-                            : isNext
-                              ? "bg-slate-600"
-                              : "bg-slate-800"
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img
+                          src={phase.image}
+                          alt={phase.title}
+                          className={`h-full w-full object-cover ${phase.unlocked ? "" : "opacity-45 blur-[1px]"}`}
+                        />
+                        <div className={`absolute inset-0 ${phase.unlocked
+                          ? "bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent"
+                          : "bg-white/55"
                         }`} />
-                        <span className={`text-[8px] font-bold truncate w-full text-center leading-none ${
-                          isDone ? "text-emerald-400" : isNext ? "text-slate-300" : "text-slate-700"
-                        }`}>
-                          {isDone ? "✓" : shortLabels[i]}
-                        </span>
+                        <div className="absolute left-5 top-5 rounded-full border border-white/45 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm backdrop-blur-md">
+                          Phase {phase.num}
+                        </div>
+                        <div className={`absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black shadow-sm backdrop-blur-md ${phase.completed ? "bg-emerald-500 text-white" : isActive ? "bg-violet-500 text-white" : "bg-slate-500/75 text-white"}`}>
+                          {phase.completed ? "ครบแล้ว" : isActive ? "กำลังทำ" : "ล็อกอยู่"}
+                          {!phase.unlocked && <Lock size={10} />}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
 
+                      <div className="flex flex-1 flex-col space-y-4 p-5">
+                        <div>
+                          <h3 className={`text-2xl font-black ${phase.unlocked ? "text-white" : "text-slate-600"}`}>{phase.title}</h3>
+                          <p className={`mt-2 min-h-[3rem] whitespace-pre-line text-sm font-bold leading-relaxed ${phase.unlocked ? "text-slate-300" : "text-slate-400"}`}>{phase.desc}</p>
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-black">
+                            <span className={phase.unlocked ? "text-slate-400" : "text-slate-500"}>ความคืบหน้า</span>
+                            <span>{doneCount}/{phase.steps.length} ขั้นตอน</span>
+                          </div>
+                          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${phase.steps.length}, minmax(0, 1fr))` }}>
+                            {phase.steps.map((step) => (
+                              <div key={step.label} className={`h-1.5 rounded-full ${step.done ? `bg-gradient-to-r ${step.buttonClass}` : phase.unlocked ? "bg-slate-700" : "bg-slate-300"}`} />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className={phase.completed || !phase.unlocked ? "mt-auto pt-4 pb-1" : "mt-4"}>
+                        {phase.completed ? (
+                          <div className="flex min-h-[4.25rem] items-center justify-between rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-3 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_30px_rgba(16,185,129,0.06)]">
+                            <span>
+                              <span className="block text-[10px] uppercase tracking-widest text-emerald-300/80">สำเร็จแล้ว</span>
+                              Phase Complete
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-3 py-2 text-xs text-white shadow-[0_10px_24px_rgba(16,185,129,0.24)]">
+                              เรียบร้อย <CheckCircle2 size={13} />
+                            </span>
+                          </div>
+                        ) : phase.unlocked ? (
+                          <Link
+                            href={nextStep.path}
+                            onClick={(e) => {
+                              if (nextStep.path.includes("memento")) {
+                                e.preventDefault();
+                                setShowMementoModal(true);
+                              }
+                              if (nextStep.path === "/tools/soul-guide" && user && !hasSoulGuide) {
+                                setHasSoulGuide(true);
+                                setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
+                              }
+                            }}
+                            className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white transition-all hover:bg-white/[0.1]"
+                          >
+                            <span>
+                              <span className="block text-[10px] uppercase tracking-widest text-slate-400">ถัดไป</span>
+                              {nextStep.label}
+                              <span className="mt-1 block text-[11px] font-bold leading-snug text-slate-400">{nextStep.shortDesc}</span>
+                            </span>
+                            <span className={`inline-flex items-center gap-1 rounded-xl bg-gradient-to-r ${currentButtonClass} px-3 py-2 text-xs text-white shadow-sm`}>
+                              {doneCount === 0 || nextStep === phase.steps[0] ? "เริ่มเลย" : "ไปต่อ"} <ArrowRight size={12} />
+                            </span>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center justify-center">
+                            <div className="flex min-h-[4.25rem] w-full items-center justify-center gap-2 rounded-2xl border border-slate-300/80 bg-white/58 px-4 py-4 text-xs font-black text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_12px_30px_rgba(15,23,42,0.04)] backdrop-blur-sm">
+                              <Lock size={13} />
+                              {phase.unlockText}
+                            </div>
+                          </div>
+                        )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
-            </motion.div>
+              )}
+              {isPhase3Completed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative mt-2 overflow-hidden rounded-[2.5rem] border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 text-center shadow-[0_24px_70px_rgba(245,158,11,0.16)]"
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,0.25),transparent_34%),radial-gradient(circle_at_85%_30%,rgba(125,211,252,0.20),transparent_24%)]" />
+                  <div className="relative z-10">
+                  <div className="mx-auto mb-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">
+                    <Sparkles size={14} />
+                    Upskill Everyday Certified
+                  </div>
+                  <h3 className="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-400 bg-clip-text text-2xl font-black text-transparent">
+                    ยินดีด้วย! คุณผ่าน 3 Phase แล้ว
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-xl text-sm font-bold leading-relaxed text-slate-500">
+                    กดเข้าสู่ชีวิตจริงเพื่อเปิด Bento Grid ทั้งหมด และเริ่มใช้งานระบบหลักในเวอร์ชันเต็มของคุณ
+                  </p>
+                  {renderJourneyPSACard()}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsCelebrating(true);
+                      playSuccessChime();
+                      setSimulateEnteredRealLife(true);
+                      setUserData((prev: any) => ({ ...prev, enteredRealLife: true }));
+                      if (user) {
+                        try {
+                          await setDoc(doc(db, "users", user.uid), { enteredRealLife: true }, { merge: true });
+                        } catch (error) {
+                          console.error("Error entering real life:", error);
+                        }
+                      }
+                      window.setTimeout(() => setShowMembershipModal(true), 450);
+                      setTimeout(() => setIsCelebrating(false), 850);
+                    }}
+                    className="mt-5 inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 px-8 py-4 text-sm font-black text-slate-950 shadow-[0_18px_38px_rgba(245,158,11,0.28)] transition-all hover:-translate-y-0.5 active:scale-95"
+                  >
+                    เข้าสู่ชีวิตจริง
+                    <ArrowRight size={17} />
+                  </button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
           );
         })()}
 
@@ -3073,7 +3685,7 @@ export default function DashboardPage() {
         )}
 
         {/* --- 🧭 1. Top Section --- */}
-        {(activeTab === "home" || activeTab === "overview") && (
+        {((activeTab === "home" && isRealLifeEntered) || activeTab === "overview") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
             <header className="lg:col-span-2 bg-slate-900 text-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative flex flex-col group transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.2)] border border-slate-800 hover:border-slate-700 overflow-hidden">
@@ -3213,29 +3825,33 @@ export default function DashboardPage() {
                     </div>
 
                     {/* 🛍️ Shop Shortcut (Rainbow theme) */}
-                    <Link href="/shop" className="shrink-0">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex items-center justify-center w-10 h-10 rounded-full p-[1px] cursor-pointer shadow-md bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600"
-                        title="Happiness Shop"
-                      >
-                        <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-white hover:text-pink-400 transition-colors">
-                          <ShoppingBag size={16} />
-                        </div>
-                      </motion.div>
-                    </Link>
+                    {isShopUnlocked && (
+                      <Link href="/shop" className="shrink-0">
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center justify-center w-10 h-10 rounded-full p-[1px] cursor-pointer shadow-md bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600"
+                          title="Happiness Shop"
+                        >
+                          <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                            <ShoppingBag size={16} />
+                          </div>
+                        </motion.div>
+                      </Link>
+                    )}
 
                     {/* 📷 Player Card Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowShareModal(true)}
-                      className="flex items-center justify-center w-10 h-10 bg-slate-800/80 hover:bg-slate-700/80 rounded-full border border-slate-600 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
-                      title="Player Card"
-                    >
-                      <Camera size={16} />
-                    </motion.button>
+                    {isPhase3Completed && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowShareModal(true)}
+                        className="flex items-center justify-center w-10 h-10 bg-slate-800/80 hover:bg-slate-700/80 rounded-full border border-slate-600 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
+                        title="Player Card"
+                      >
+                        <IdCard size={17} />
+                      </motion.button>
+                    )}
                   </div>
 
 
@@ -3336,29 +3952,33 @@ export default function DashboardPage() {
                       {/* 📱 Mobile Only: Action Buttons next to the card */}
                       <div className="flex flex-col gap-2.5">
                         {/* Premium Shop Shortcut (Rainbow theme) */}
-                        <Link href="/shop">
-                          <motion.div
+                        {isShopUnlocked && (
+                          <Link href="/shop">
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1px] cursor-pointer shadow-md"
+                              style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
+                              title="Happiness Shop"
+                            >
+                              <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                                <ShoppingBag size={18} />
+                              </div>
+                            </motion.div>
+                          </Link>
+                        )}
+
+                        {isPhase3Completed && (
+                          <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1px] cursor-pointer shadow-md"
-                            style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
-                            title="Happiness Shop"
+                            onClick={() => setShowShareModal(true)}
+                            className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                            title="Player Card"
                           >
-                            <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
-                              <ShoppingBag size={18} />
-                            </div>
-                          </motion.div>
-                        </Link>
-
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowShareModal(true)}
-                          className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-                          title="Player Card"
-                        >
-                          <Camera size={18} />
-                        </motion.button>
+                            <IdCard size={18} />
+                          </motion.button>
+                        )}
                       </div>
                     </div>
 
@@ -3467,29 +4087,33 @@ export default function DashboardPage() {
                       {/* Stacked Action Buttons */}
                       <div className="flex flex-col gap-2.5 shrink-0">
                         {/* Premium Shop Shortcut (Rainbow theme) */}
-                        <Link href="/shop">
-                          <motion.div
+                        {isShopUnlocked && (
+                          <Link href="/shop">
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1px] cursor-pointer shadow-md"
+                              style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
+                              title="Happiness Shop"
+                            >
+                              <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                                <ShoppingBag size={18} />
+                              </div>
+                            </motion.div>
+                          </Link>
+                        )}
+
+                        {isPhase3Completed && (
+                          <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1px] cursor-pointer shadow-md"
-                            style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
-                            title="Happiness Shop"
+                            onClick={() => setShowShareModal(true)}
+                            className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                            title="Player Card"
                           >
-                            <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
-                              <ShoppingBag size={18} />
-                            </div>
-                          </motion.div>
-                        </Link>
-
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowShareModal(true)}
-                          className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-                          title="Player Card"
-                        >
-                          <Camera size={18} />
-                        </motion.button>
+                            <IdCard size={18} />
+                          </motion.button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3797,7 +4421,7 @@ export default function DashboardPage() {
         )}
 
         {/* --- 🎮 2. Daily Quests Section --- */}
-        {(activeTab === "home" || activeTab === "quests") && (
+        {((activeTab === "home" && isRealLifeEntered) || activeTab === "quests") && (
           <div className="mb-8 bg-white border border-slate-100 hover:border-orange-100 rounded-[2.5rem] p-6 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(249,115,22,0.08)] relative overflow-hidden group transition-all duration-500">
 
             {/* ✨ แสงฟุ้งตกแต่งพื้นหลัง */}
@@ -3822,13 +4446,13 @@ export default function DashboardPage() {
 
               {/* ✨ ปรับ Quest วันนี้ */}
               <div className="flex items-center gap-2 shrink-0">
-                {currentLevel < 10 ? (
+                {!isProMember ? (
                   <div
                     className="flex items-center gap-1.5 px-3 py-2 rounded-2xl border bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none opacity-60"
-                    title="ฟีเจอร์ปรับแต่งเควสด้วย AI จะปลดล็อกเมื่อถึง Level 10 (Habit Master)"
+                    title="ฟีเจอร์ปรับแต่ง Quest วันนี้จะปลดล็อกสำหรับสมาชิก Pro"
                   >
                     <Lock size={12} className="text-slate-400" />
-                    <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest (LV.10)</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight">ปรับ Quest (PRO)</span>
                   </div>
                 ) : (
                   <Link
@@ -4149,7 +4773,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {(activeTab === "home" || activeTab === "identity" || activeTab === "resources") && (
+        {((activeTab === "home" && shouldShowHomeBento) || activeTab === "identity" || activeTab === "resources") && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             {(activeTab === "home" || activeTab === "identity") && (
@@ -4354,7 +4978,16 @@ export default function DashboardPage() {
                 {/* 🌟 2. คมสัดสัด */}
 
 
-                <Link href="/tools/khomsatsat" className="group flex flex-col h-full relative">
+                <Link
+                  href="/tools/khomsatsat"
+                  onClick={(e) => {
+                    if (!isKhomsatsatUnlocked) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  className="group flex flex-col h-full relative"
+                >
                   {/* ปุ่ม Info */}
                   {lastQuote && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openQuoteInfo(e); }}
@@ -4407,6 +5040,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
+                    {!isKhomsatsatUnlocked && renderLockedBentoOverlay("คมสัดสัด Locked", "ทำ Phase 1 ให้ครบก่อน เพื่อเริ่มสร้างคำคมจากความรู้สึกของคุณ")}
                   </motion.div>
                 </Link>
 
@@ -4531,15 +5165,19 @@ export default function DashboardPage() {
                 <div className="group flex flex-col h-full relative">
                   {lastMoney && (
                     <div className="absolute top-8 right-8 z-20 flex items-center bg-white/90 backdrop-blur-md border border-slate-100 rounded-full p-1 shadow-sm">
-                      {/* ปุ่มสลับโหมด: คลังออมมีสติ vs โปรไฟล์ */}
-                      <button 
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoneyVault(!showMoneyVault); }}
-                        className={`p-2 rounded-full transition-all ${showMoneyVault ? 'text-amber-500 bg-amber-50 shadow-inner' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                        title={showMoneyVault ? "ดูตัวตนการเงิน" : "เปิดคลังออมมีสติ"}
-                      >
-                        {showMoneyVault ? <Users size={16} /> : <Wallet size={16} />}
-                      </button>
-                      <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                      {hasHabitMasterTools && (
+                        <>
+                          {/* ปุ่มสลับโหมด: คลังออมมีสติ vs โปรไฟล์ */}
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoneyVault(!showMoneyVault); }}
+                            className={`p-2 rounded-full transition-all ${showMoneyVault ? 'text-amber-500 bg-amber-50 shadow-inner' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            title={showMoneyVault ? "ดูตัวตนการเงิน" : "เปิดคลังออมมีสติ"}
+                          >
+                            {showMoneyVault ? <Users size={16} /> : <Wallet size={16} />}
+                          </button>
+                          <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                        </>
+                      )}
                       {/* ปุ่ม Info */}
                       <button 
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); openMoneyInfo(e); }}
@@ -4790,15 +5428,19 @@ export default function DashboardPage() {
                 <div className="group flex flex-col h-full relative">
                   {lastLibrarySoul && (
                     <div className="absolute top-8 right-8 z-20 flex items-center bg-white/90 backdrop-blur-md border border-slate-100 rounded-full p-1 shadow-sm">
-                      {/* ปุ่มสลับโหมด: คลังหนังสือ vs โปรไฟล์ */}
-                      <button 
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowBookCollection(!showBookCollection); }}
-                        className={`p-2 rounded-full transition-all ${showBookCollection ? 'text-emerald-600 bg-emerald-50 shadow-inner' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                        title={showBookCollection ? "ดูตัวตนคนอ่าน" : "เปิดคลังหนังสือสะสม"}
-                      >
-                        {showBookCollection ? <Users size={16} /> : <Bookmark size={16} />}
-                      </button>
-                      <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                      {hasHabitMasterTools && (
+                        <>
+                          {/* ปุ่มสลับโหมด: คลังหนังสือ vs โปรไฟล์ */}
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowBookCollection(!showBookCollection); }}
+                            className={`p-2 rounded-full transition-all ${showBookCollection ? 'text-emerald-600 bg-emerald-50 shadow-inner' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            title={showBookCollection ? "ดูตัวตนคนอ่าน" : "เปิดคลังหนังสือสะสม"}
+                          >
+                            {showBookCollection ? <Users size={16} /> : <Bookmark size={16} />}
+                          </button>
+                          <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                        </>
+                      )}
                       {/* ปุ่ม Info */}
                       <button 
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); openLibrarySoulInfo(e); }}
@@ -5097,14 +5739,23 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 👻 5. Ghost in You */}
-                <Link href="/tools/ghost-in-you" className="group flex flex-col h-full relative">
+                <Link
+                  href="/tools/ghost-in-you"
+                  onClick={(e) => {
+                    if (!isGhostUnlocked) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  className="group flex flex-col h-full relative"
+                >
                   {lastGhostResult && (
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGhostInfo(e); }}
                       className="absolute top-8 right-8 z-20 p-2.5 text-[#8C7A6B] hover:text-red-600 hover:bg-red-50 rounded-full transition-all bg-white border border-[#E6D9C5] shadow-sm">
                       <Info size={18} />
                     </button>
                   )}
-                  {!lastGhostResult && (
+                  {isGhostUnlocked && !lastGhostResult && (
                     <motion.div
                       initial={{ scale: 0, rotate: 10 }}
                       animate={{ scale: 1, rotate: -5 }}
@@ -5200,6 +5851,7 @@ export default function DashboardPage() {
                         </div>
                       )}
                     </div>
+                    {!isGhostUnlocked && renderLockedBentoOverlay("Ghost In You Locked", "สุ่มคำคมจากคมสัดสัดอย่างน้อย 1 ครั้งก่อน เพื่อเปิด Phase 2 ต่อ")}
                   </motion.div>
                 </Link>
 
@@ -5208,18 +5860,29 @@ export default function DashboardPage() {
 
             {/* ⏳ Memento Mori / Life Countdown Bento */}
             {(activeTab === "home" || activeTab === "identity") && (
-              <MementoMoriBento
-                userData={userData}
-                onOpenModal={() => setShowMementoModal(true)}
-              />
+              <div className="relative">
+                <MementoMoriBento
+                  userData={userData}
+                  onOpenModal={() => {
+                    if (isMementoUnlocked) setShowMementoModal(true);
+                  }}
+                />
+                {!isMementoUnlocked && renderLockedBentoOverlay("Memento Mori Locked", "บันทึก Reflection Journal จาก Focus Room อย่างน้อย 1 ครั้งก่อน เพื่อปลดล็อก")}
+              </div>
             )}
 
             {(activeTab === "home" || activeTab === "resources") && (
               <>
-                {/* 🌟 6. Deep Work Mode - Premium Monochrome Style */}
+                {/* 🌟 Focus Room - Premium Monochrome Style */}
                 <Link
                   href="/tools/focus-room"
-                  className="group flex flex-col h-full relative cursor-pointer"
+                  onClick={(e) => {
+                    if (!isFocusRoomUnlocked) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  className={`group flex flex-col h-full relative cursor-pointer ${activeTab === "resources" ? "order-4" : ""}`}
                 >
                   <motion.div
                     whileHover={{ y: -6 }}
@@ -5252,7 +5915,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      <h3 className="font-bold text-zinc-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> Deep Work System </h3>
+                      <h3 className="font-bold text-zinc-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> Focus Room </h3>
                       <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-black transition-colors">
                         ห้องสมาธิอัพสกิล
                       </h2>
@@ -5278,12 +5941,22 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
+                    {!isFocusRoomUnlocked && renderLockedBentoOverlay("Focus Room Locked", "เคลม XP จากคลังสมองให้ครบ 3 บทความก่อน เพื่อปลดล็อก Focus Room")}
                   </motion.div>
                 </Link>
 
-                {/* 🌟 6. AI Personal Mentor - Silver Premium Style (Placed after Deep Work) */}
+                {/* 🌟 AI Personal Mentor - Silver Premium Style */}
                 {(activeTab === "home" || activeTab === "resources" || activeTab === "identity") && (
-                  <Link href="/tools/soul-guide" className="group flex flex-col h-full relative">
+                  <Link
+                    href="/tools/soul-guide"
+                    onClick={(e) => {
+                      if (!isSoulGuideUnlocked) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    className={`group flex flex-col h-full relative ${activeTab === "resources" ? "order-3" : ""}`}
+                  >
                     <motion.div
                       whileHover={{ y: -6 }}
                       className="flex-1 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-500 hover:shadow-2xl hover:border-slate-300 relative overflow-hidden group"
@@ -5313,7 +5986,7 @@ export default function DashboardPage() {
                         </div>
 
 
-                        <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> AI Mentor </h3>
+                        <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> คุยกับพี่ฟุ้ย </h3>
                         <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
                           คุยกับพี่ฟุ้ย
                         </h2>
@@ -5331,6 +6004,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
+                      {!isSoulGuideUnlocked && renderLockedBentoOverlay("คุยกับพี่ฟุ้ย Locked", "แลกของใน Happiness Shop อย่างน้อย 1 ครั้งก่อน เพื่อปลดล็อกพี่ฟุ้ยใน Phase 2")}
                     </motion.div>
                   </Link>
                 )}
@@ -5338,7 +6012,7 @@ export default function DashboardPage() {
                 {/* 🌟 6. BRAIN (Upskill Library) - Premium Gold & Black Style */}
                 <Link
                   href="/library"
-                  className="group flex flex-col h-full relative cursor-pointer"
+                  className={`group flex flex-col h-full relative cursor-pointer ${activeTab === "resources" ? "order-1" : ""}`}
                 >
                   <motion.div
                     whileHover={{ y: -6 }}
@@ -5396,7 +6070,13 @@ export default function DashboardPage() {
                 {(activeTab === "home" || activeTab === "resources") && (
                   <Link
                     href="/shop"
-                    className="group flex flex-col h-full relative cursor-pointer"
+                    onClick={(e) => {
+                      if (!isShopUnlocked) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    className={`group flex flex-col h-full relative cursor-pointer ${activeTab === "resources" ? "order-2" : ""}`}
                   >
                     <motion.div
                       whileHover={{ y: -6 }}
@@ -5445,6 +6125,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
+                      {!isShopUnlocked && renderLockedBentoOverlay("Happiness Shop Locked", "ทำ Ghost In You ให้เสร็จก่อน เพื่อปลดล็อกความสุขระหว่างทาง")}
                     </motion.div>
                   </Link>
                 )}
@@ -5457,7 +6138,7 @@ export default function DashboardPage() {
 
 
 
-        <div className="mt-16 text-center py-6 border-t border-slate-100 flex flex-col items-center">
+        <div className="mt-8 border-t border-slate-100 py-4 text-center sm:mt-12 sm:py-5 md:mt-16 md:py-6 flex flex-col items-center">
           <p className="text-[10px] text-slate-400 font-bold mb-5 tracking-wide">© 2026 อัพสกิลกับฟุ้ย</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full px-6">
@@ -6013,7 +6694,7 @@ export default function DashboardPage() {
                 {/* 1. Header: Logo & Title (ลด mb เพื่อคืนพื้นที่ให้คอนเทนต์หลัก) */}
                 <div className="relative z-10 w-full flex justify-between items-start mb-0">
                   <div className="flex flex-col pt-1">
-                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">Pro Member</span>
+                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">{memberLabel}</span>
                     <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
                   </div>
                   <div className="flex flex-col items-center gap-2">
@@ -6107,6 +6788,230 @@ export default function DashboardPage() {
                 >
                   <Download size={18} /> SAVE CARD
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 💳 Modal: Free vs Pro Membership */}
+      <AnimatePresence>
+        {showMembershipModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99998] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xl"
+            onClick={() => setShowMembershipModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              className="relative max-h-[92vh] w-full max-w-[430px] overflow-y-auto rounded-[2.5rem] border border-white/10 bg-slate-950 p-1 shadow-[0_40px_120px_rgba(0,0,0,0.55)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute inset-0 rounded-[2.5rem] bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,0.28),transparent_34%),radial-gradient(circle_at_95%_20%,rgba(168,85,247,0.20),transparent_30%)]" />
+              <div className="relative rounded-[2.25rem] border border-white/10 bg-slate-950/82 p-6 text-center backdrop-blur-2xl">
+                <button
+                  type="button"
+                  onClick={() => setShowMembershipModal(false)}
+                  className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-colors hover:text-white"
+                  aria-label="Close membership modal"
+                >
+                  <X size={16} />
+                </button>
+
+                <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-200">
+                  <Sparkles size={14} />
+                  Membership
+                </div>
+
+                {isProMember ? (
+                  <>
+                    <h3 className="text-3xl font-black leading-tight text-white">
+                      คุณเป็น PRO แล้ว
+                      <span className="block bg-gradient-to-r from-amber-300 via-orange-400 to-pink-300 bg-clip-text text-transparent">
+                        ขอบคุณที่สนับสนุนครับ
+                      </span>
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-[320px] text-[12px] font-bold leading-relaxed text-slate-400">
+                      ใช้งาน AI Mentor, ปรับ Quest และ Focus Room Lounge ได้เต็มตามสิทธิ์ PRO แล้วครับ
+                    </p>
+
+                    <div className="mt-6 rounded-[1.75rem] border border-amber-300/30 bg-gradient-to-br from-amber-300/14 via-white/[0.04] to-orange-500/10 p-5 text-left shadow-[0_24px_70px_rgba(245,158,11,0.10)]">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-amber-200">Current Plan</p>
+                          <p className="mt-1 text-2xl font-black text-white">
+                            {userData?.subscriptionPlan === "lifetime" ? "Lifetime" : "Pro Member"}
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-emerald-300/30 bg-emerald-300/12 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200">
+                          Active
+                        </span>
+                      </div>
+                      <div className="mt-4 space-y-2 text-[11px] font-bold leading-relaxed text-slate-300">
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> AI Mentor แบบ Pro Fair Use</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ปรับ Quest วันนี้กับพี่ฟุ้ย</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> Focus Room Lounge ห้องโฟกัสรวม</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> Pro Badge / Aura / Card Frame</div>
+                      </div>
+                    </div>
+
+                    {userData?.subscriptionPlan !== "lifetime" && (
+                      <button
+                        type="button"
+                        onClick={handleMembershipPortal}
+                        disabled={isRedirecting}
+                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-white/[0.1] active:scale-95 disabled:opacity-60"
+                      >
+                        {isRedirecting ? "กำลังเปิดหน้าจัดการ..." : "จัดการ / ยกเลิกสมาชิก"}
+                        <ChevronRight size={16} />
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setShowMembershipModal(false)}
+                      className="mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-slate-300"
+                    >
+                      กลับไปใช้งาน
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-3xl font-black leading-tight text-white">
+                      โตต่อแบบ Pro
+                      <span className="block bg-gradient-to-r from-amber-300 via-orange-400 to-pink-300 bg-clip-text text-transparent">
+                        แต่ยังใช้ Free ต่อได้
+                      </span>
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-[320px] text-[12px] font-bold leading-relaxed text-slate-400">
+                      ค่าสมาชิกช่วยจ่ายต้นทุน AI และเซิร์ฟเวอร์จริง เพื่อให้ฟุ้ยพัฒนา Upskill Everyday ต่อได้ทุกเดือนครับ
+                    </p>
+
+                <div className="mt-6 grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Free</p>
+                    <p className="mt-1 text-2xl font-black text-white">฿0</p>
+                    <p className="mt-1 text-[11px] font-bold leading-relaxed text-slate-400">เก่งขึ้นได้ทุกวัน ไม่มีค่าใช้จ่าย</p>
+                    <ul className="mt-3 space-y-2 text-[11px] font-bold leading-relaxed text-slate-300">
+                      <li>Dashboard และ Bento Grid หลัก</li>
+                      <li>Daily Quest และสะสม XP</li>
+                      <li>อ่าน Library ทั่วไป</li>
+                      <li>คุยกับ AI 3 ข้อความ/วัน</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-[1.5rem] border border-amber-300/40 bg-gradient-to-br from-amber-300/16 to-orange-500/10 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">Pro</p>
+                    <p className="mt-1 text-2xl font-black text-white">เริ่ม ฿149</p>
+                    <p className="mt-1 text-[11px] font-bold leading-relaxed text-amber-100/80">ปลดล็อกพลังเต็มรูปแบบ</p>
+                    <ul className="mt-3 space-y-2 text-[11px] font-bold leading-relaxed text-white">
+                      <li>AI Mentor แบบ Pro Fair Use</li>
+                      <li>ปรับ Quest วันนี้กับพี่ฟุ้ย</li>
+                      <li>Focus Room Lounge ห้องโฟกัสรวม</li>
+                      <li>Pro Badge / Aura / Card Frame</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  {[
+                    { id: "monthly" as ProPlan, label: "PRO รายเดือน", price: "฿149", sub: "ช่วยค่า AI รายเดือน" },
+                    { id: "yearly" as ProPlan, label: "PRO รายปี", price: "฿990", sub: "BEST VALUE" },
+                    { id: "lifetime" as ProPlan, label: "LIFETIME", price: "฿2,490", sub: "จ่ายครั้งเดียวจบ" },
+                  ].map((plan) => (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => setBillingPlan(plan.id)}
+                      className={`rounded-2xl border p-3 text-left transition-all ${billingPlan === plan.id
+                        ? "border-amber-300 bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950 shadow-[0_18px_35px_-20px_rgba(245,158,11,0.95)]"
+                        : "border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.07]"
+                      } ${plan.id === "lifetime" ? "col-span-2" : ""}`}
+                    >
+                      <span className="block text-[9px] font-black uppercase tracking-[0.2em] opacity-80">{plan.label}</span>
+                      <span className="mt-1 block text-2xl font-black">{plan.price}</span>
+                      <span className="block text-[10px] font-bold opacity-70">{plan.sub}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 text-left">
+                  <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                    {billingPlan === "yearly" ? "คุ้มที่สุด / Best Value" : billingPlan === "lifetime" ? "Lifetime Supporter" : "Pro รายเดือน"}
+                  </p>
+                  <div className="space-y-2 text-[11px] font-bold leading-relaxed text-slate-300">
+                    {billingPlan === "monthly" && (
+                      <>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ช่วยค่า AI รายเดือน ปลดล็อกพลังเต็มรูปแบบ</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> หักอัตโนมัติผ่านบัตร หรือเติมวันใช้งาน 30 วันผ่าน PromptPay</div>
+                      </>
+                    )}
+                    {billingPlan === "yearly" && (
+                      <>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เฉลี่ยเพียง ฿82.50 / เดือน ประหยัดทันที 50%</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> สแกน PromptPay ครั้งเดียวจบ ใช้งานยาวๆ ทั้งปี</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ฟรี Ebook “สร้างก่อนพร้อม” + Badge ยุคบุกเบิก</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> คลังออมมีสติ และ Book Shelf ใน Money และ Library</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ให้ PRO ล็อกราคานี้ตลอดชีพ</div>
+                      </>
+                    )}
+                    {billingPlan === "lifetime" && (
+                      <>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> สนับสนุนเต็มสูบ ปลดล็อกถาวรตลอดชีพ</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> สแกน PromptPay ครั้งเดียวจบ ไม่ต้องจ่ายอีกเลยตลอดไป</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ได้รับสิทธิ์และโบนัสพิเศษทั้งหมดเหมือนแพ็กเกจรายปี</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-3 text-left">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white">
+                    <img
+                      src={promptPayQrUrl}
+                      alt="PromptPay QR"
+                      className="h-full w-full object-cover"
+                      onLoad={(event) => {
+                        const label = event.currentTarget.nextElementSibling as HTMLElement | null;
+                        if (label) label.style.display = "none";
+                      }}
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-slate-400">QR</span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black text-white">สนับสนุนค่ากาแฟพี่ฟุ้ย</p>
+                    <p className="mt-1 text-[10px] font-bold leading-relaxed text-slate-500">สำหรับคนที่ยังใช้ Free แต่อยากช่วยเติมพลัง dev ครับ</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleMembershipCheckout()}
+                  disabled={isRedirecting}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 py-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_18px_40px_-18px_rgba(245,158,11,0.9)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-60"
+                >
+                  {isRedirecting ? "กำลังพาไป Stripe..." : "สนับสนุนและไปต่อ"}
+                  <ChevronRight size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMembershipModal(false)}
+                  className="mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-slate-300"
+                >
+                  ใช้ Free ต่อ
+                </button>
+                  </>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -6268,7 +7173,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 gap-3 mb-8">
                   {[
                     { lv: "1-9", title: "Rookie Upskiller", color: "bg-slate-500", desc: "ผู้เริ่มต้น" },
-                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "เซียนระบบ" },
+                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "Book Shelf / คลังออมมีสติ ในแถบตัวตน" },
                     { lv: "20-29", title: "Life Architect", color: "bg-orange-500", desc: "สถาปนิกออกแบบชีวิต" },
                     { lv: "30+", title: "Legacy Shaper", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
                   ].map((item, i) => (
@@ -6324,6 +7229,24 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* 📱 Mobile Bottom Navigation was removed to use the global BottomNavigation component */}
+
+      <AnimatePresence>
+        {showStreakSavedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -14, scale: 0.98 }}
+            className="fixed left-1/2 top-5 z-[100001] w-[calc(100%-2rem)] max-w-md -translate-x-1/2"
+          >
+            <div className="flex items-center gap-3 rounded-full border border-white/80 bg-white/90 px-5 py-3 text-slate-900 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <CheckCircle2 size={22} />
+              </div>
+              <p className="text-sm font-black">บันทึก Streak ไว้ในแท็บ Avatar แล้ว</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 🏆 Modal: ฉลองความสำเร็จรายวัน (Daily Success Celebration) */}
       <AnimatePresence>
@@ -6584,6 +7507,7 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* 💬 Floating AI Mentor Chat Button - Clean & Defined Version */}
+      {isSoulGuideUnlocked && (
       <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[90]">
         <Link href="/tools/soul-guide">
           <motion.div
@@ -6638,6 +7562,7 @@ export default function DashboardPage() {
           </motion.div>
         </Link>
       </div>
+      )}
 
       {/* 🎲 Modal: ยืนยันการสุ่มเควสใหม่ (Luxury Spring Style) */}
       <AnimatePresence>
@@ -6776,16 +7701,32 @@ export default function DashboardPage() {
 
               {tutorialStep === 2 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center mt-4 z-10 w-full">
-                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-teal-500/30 mb-6 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-white/20 w-1/2 h-full -skew-x-12 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                    🧬
+                  <div className="grid w-full grid-cols-3 gap-2 mb-5">
+                    {[
+                      { src: "/Phase1.png", label: "Phase 1", title: "ค้นหาตัวตน" },
+                      { src: "/Phase2.png", label: "Phase 2", title: "สุขระหว่างทาง" },
+                      { src: "/Phase3.png", label: "Phase 3", title: "ระลึกความตาย" },
+                    ].map((phase) => (
+                      <div key={phase.label} className="relative h-24 overflow-hidden rounded-2xl border border-white/80 bg-slate-100 shadow-sm">
+                        <img
+                          src={phase.src}
+                          alt={phase.label}
+                          className="h-full w-full object-cover object-center"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-white/10" />
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <p className="text-[7px] font-black uppercase tracking-[0.16em] text-white/75 drop-shadow">{phase.label}</p>
+                          <p className="text-[9px] font-black leading-tight text-white drop-shadow">{phase.title}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">สร้าง <span className="text-emerald-600">"ตัวตน"</span> ของคุณ</h3>
-                  <div className="bg-emerald-50/80 border border-emerald-100 p-4 rounded-2xl w-full">
+                  <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">เดินทางผ่าน <span className="text-orange-500">3 Phase</span></h3>
+                  <div className="bg-orange-50/80 border border-orange-100 p-4 rounded-2xl w-full">
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
-                      เริ่มแรกให้กดไปที่แท็บ <span className="font-bold text-emerald-700">"ตัวตน"</span> ด้านล่าง เพื่อทำแบบประเมินและ <strong>รับ XP ก้อนแรก!</strong><br />
-                      <span className="text-[11px] text-emerald-800 mt-2 block font-bold bg-emerald-100/50 p-2 rounded-lg">
-                        ✨ คุณจะได้รับ Avatar ประจำตัวสุดเท่ และข้อมูลภารกิจที่ AI ออกแบบมาเพื่อคุณโดยเฉพาะ!
+                      เส้นทางสั้นๆ ที่จะพาคุณสำรวจตัวเอง ออกไปใช้ชีวิต และกลับมาจัดใจให้ชัดขึ้น<br />
+                      <span className="text-[11px] text-orange-800 mt-2 block font-bold bg-orange-100/60 p-2 rounded-lg">
+                        ทำทีละ Phase แล้วระบบจะค่อยๆ ปลดล็อกพื้นที่ใหม่ให้เอง
                       </span>
                     </p>
                   </div>
@@ -6817,9 +7758,9 @@ export default function DashboardPage() {
                   <h3 className="text-[22px] font-black text-slate-800 mb-3 leading-tight">ศูนย์รวม <span className="text-purple-600">"อัพสกิล"</span></h3>
                   <div className="bg-purple-50/80 border border-purple-100 p-4 rounded-2xl w-full">
                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
-                      แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span> ด้านล่าง<br />
-                      เพื่อใช้งานโหมด <strong>ทำสมาธิ</strong> เพิ่มโฟกัส และอ่านบทความดีๆ<br />
-                      <span className="text-[11px] text-slate-500 mt-1 block">และพูดคุยกับ <strong>พี่ฟุ้ย</strong> ที่เข้าใจคุณที่สุด!</span>
+                      แวะไปที่แท็บ <span className="font-bold text-purple-700">"อัพสกิล"</span><br />
+                      เพื่ออ่านคลังสมอง ใช้ Focus Room และเติม <strong>ความสุขระหว่างทาง</strong><br />
+                      <span className="text-[11px] text-slate-500 mt-1 block">พร้อมคุยกับ <strong>พี่ฟุ้ย</strong> ที่เข้าใจคุณที่สุด!</span>
                     </p>
                   </div>
                 </motion.div>
@@ -6993,7 +7934,7 @@ export default function DashboardPage() {
         {showMementoModal && (
           <MementoMoriModal
             isOpen={showMementoModal}
-            onClose={() => setShowMementoModal(false)}
+            onClose={handleCloseMementoModal}
             userData={userData}
             onSaveSetup={handleSaveMementoMoriData}
             onAddReflection={handleAddMementoReflection}

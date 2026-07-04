@@ -53,7 +53,17 @@ export default function SoulGuidePage() {
           if (docSnap.exists()) {
             const baseData = docSnap.data();
             const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
-            setChatQuota({ used: 0, total: Infinity });
+            const subscriptionStatus = baseData.subscriptionStatus || baseData.subscription_status || "";
+            const subscriptionTier = baseData.subscriptionTier || baseData.subscription_tier || "";
+            const isProMember =
+              baseData.role === "premium" ||
+              subscriptionTier === "pro" ||
+              ["active", "trialing"].includes(subscriptionStatus) ||
+              !!baseData.isLifetimeMember;
+            const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+            const usedToday = baseData.aiMentorDailyDate === todayKey ? Number(baseData.aiMentorDailyCount || 0) : 0;
+
+            setChatQuota(isProMember ? { used: 0, total: Infinity } : { used: usedToday, total: 3 });
             setUserData((prev: any) => ({ ...prev, ...baseData, level }));
           }
         });
@@ -293,6 +303,10 @@ export default function SoulGuidePage() {
 
       const data = await response.json();
       if (data.success) {
+        if (typeof data.remainingFreeMessages === "number") {
+          setChatQuota({ used: 3 - data.remainingFreeMessages, total: 3 });
+        }
+
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
 
         // 2. Save Assistant Reply
@@ -303,7 +317,7 @@ export default function SoulGuidePage() {
         });
 
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบเชื่อมต่อขัดข้องนิดหน่อย ลองใหม่อีกครั้งนะครับ" }]);
+        setMessages(prev => [...prev, { role: "assistant", content: data.error || "ขออภัยครับ ระบบเชื่อมต่อขัดข้องนิดหน่อย ลองใหม่อีกครั้งนะครับ" }]);
       }
     } catch (error) {
       console.error("Chat Error:", error);
@@ -408,7 +422,7 @@ export default function SoulGuidePage() {
                     : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
                     }`}
                 >
-                  <div className="prose prose-invert prose-sm max-w-none">
+                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.content}
                     </ReactMarkdown>

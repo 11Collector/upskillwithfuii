@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
+import { playSuccessChime } from "@/utils/soundEffects";
 
 // 🎨 1. Categories & Themes Definition
 const rewardCategories = [
@@ -176,42 +177,6 @@ const shopItems = [
   { id: 49, title: "กองทุนเวลาอิสระ 1 เดือน", desc: "ให้โอกาสตัวเองได้หยุดพักและทดลองทำโปรเจกต์ในฝันอย่างเต็มที่โดยไร้กังวลเรื่องการเงิน", price: 1900, tier: "legendary", category: "freedom", minLevel: 28 },
   { id: 50, title: "ตั๋วอัปเกรดชีวิตครั้งใหญ่", desc: "ตัดสินใจลงทุนในสินทรัพย์ที่เปลี่ยนทิศทางชีวิตได้จริง ไม่ว่าจะเป็นด้านปัญญาหรือเวลาเสรี", price: 2000, tier: "legendary", category: "freedom", minLevel: 30 }
 ];
-
-const playSuccessChime = () => {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const now = ctx.currentTime;
-    const arpeggio = [523.25, 659.25, 783.99];
-    const noteDelay = 0.05;
-
-    arpeggio.forEach((freq, index) => {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now + index * noteDelay);
-      const subOsc = ctx.createOscillator();
-      subOsc.type = "triangle";
-      subOsc.frequency.setValueAtTime(freq / 2, now + index * noteDelay);
-      const noteStart = now + index * noteDelay;
-      const decayDuration = 0.35;
-      gainNode.gain.setValueAtTime(0, noteStart);
-      gainNode.gain.linearRampToValueAtTime(0.08, noteStart + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, noteStart + decayDuration);
-
-      osc.connect(gainNode);
-      subOsc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      osc.start(noteStart);
-      osc.stop(noteStart + decayDuration + 0.05);
-      subOsc.start(noteStart);
-      subOsc.stop(noteStart + decayDuration + 0.05);
-    });
-  } catch (e) {
-    console.error("Audio Context Error: ", e);
-  }
-};
 
 // 🎇 Confetti Component
 const ConfettiPiece = ({ color, delay }: { color: string; delay: number }) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Trophy, CheckCircle2, LogOut, Info, X, Camera, Flame, Zap, Star, BookOpen, BrainCircuit, PieChart, Users, Wallet, Target, PiggyBank, ShoppingBag } from 'lucide-react';
+import { Sparkles, Trophy, CheckCircle2, LogOut, Info, X, Flame, Zap, Star, BookOpen, BrainCircuit, PieChart, Users, Wallet, Target, PiggyBank, ShoppingBag, Ticket } from 'lucide-react';
 import { AvatarDisplay } from '@/utils/dashboardHelpers';
 import { PET_DATA } from '@/data/constants';
 import { DISC_DATA, MONEY_DATA } from '@/data/quests';
@@ -34,6 +34,8 @@ interface OverviewTabProps {
   weeklyData: any;
   potXP: number;
   setShowDepositModal: (val: boolean) => void;
+  isShopUnlocked?: boolean;
+  isPhase3Completed?: boolean;
 }
 
 export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
@@ -63,7 +65,9 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
   relativeWeekInfo,
   weeklyData,
   potXP,
-  setShowDepositModal
+  setShowDepositModal,
+  isShopUnlocked = false,
+  isPhase3Completed = false
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -134,13 +138,15 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
                 )}
               </div>
 
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="p-1.5 text-slate-500 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
-                title="ดูและแชร์ Player Card"
-              >
-                <Camera size={14} className="transition-transform" />
-              </button>
+              {isPhase3Completed && (
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="p-1.5 text-slate-500 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-full transition-all group/btn shrink-0 ml-1"
+                  title="ดูและแชร์ Player Card"
+                >
+                  <Ticket size={14} className="transition-transform" />
+                </button>
+              )}
 
               <button
                 onClick={handleLogout}
@@ -395,29 +401,33 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
             {/* 📱 Mobile Only: Player Card & Sign Out Logos next to the card */}
             <div className="flex flex-col gap-2.5">
               {/* Premium Shop Shortcut (Rainbow theme) */}
-              <Link href="/shop">
-                <motion.div
+              {isShopUnlocked && (
+                <Link href="/shop">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1.5px] cursor-pointer shadow-xl"
+                    style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
+                    title="Happiness Shop"
+                  >
+                    <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
+                      <ShoppingBag size={18} />
+                    </div>
+                  </motion.div>
+                </Link>
+              )}
+
+              {isPhase3Completed && (
+                <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1.5px] cursor-pointer shadow-xl"
-                  style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6, #10b981)" }}
-                  title="Happiness Shop"
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center justify-center w-11 h-11 bg-slate-800/90 border border-slate-700/60 hover:border-yellow-500/50 rounded-2xl text-slate-400 hover:text-yellow-400 transition-all shadow-xl active:scale-95 cursor-pointer backdrop-blur-md"
+                  title="Player Card"
                 >
-                  <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-white hover:text-pink-400 transition-colors">
-                    <ShoppingBag size={18} />
-                  </div>
-                </motion.div>
-              </Link>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowShareModal(true)}
-                className="flex items-center justify-center w-11 h-11 bg-slate-800/90 border border-slate-700/60 hover:border-yellow-500/50 rounded-2xl text-slate-400 hover:text-yellow-400 transition-all shadow-xl active:scale-95 cursor-pointer backdrop-blur-md"
-                title="Player Card"
-              >
-                <Camera size={18} />
-              </motion.button>
+                  <Ticket size={18} />
+                </motion.button>
+              )}
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
