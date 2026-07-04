@@ -37,6 +37,7 @@ export default function SoulGuidePage() {
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [questSaved, setQuestSaved] = useState(false);
+  const [isQuestAnalyzing, setIsQuestAnalyzing] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
@@ -385,8 +386,6 @@ export default function SoulGuidePage() {
         // ตรวจหา [QUEST_PREFS:{...}] ใน AI response
         const questPrefsMatch = data.reply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
         let cleanReply = data.reply;
-        if (questPrefsMatch && isQuestMode) {
-          try {
             const prefs = JSON.parse(questPrefsMatch[1]);
             const userRef = doc(db, "users", user.uid);
             const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
@@ -396,6 +395,34 @@ export default function SoulGuidePage() {
               lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
             });
             setQuestSaved(true);
+            setIsQuestAnalyzing(true);
+
+            // 🎯 Trigger AI quest analysis immediately so it is pre-generated when user goes back to Dashboard
+            const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+            fetch('/api/quest-analysis', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${idToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ level: currentLevel })
+            }).then(async (res) => {
+              if (res.ok) {
+                const result = await res.json();
+                if (result.questTitle || result.discTitle || result.moneyTitle) {
+                  await updateDoc(userRef, {
+                    lastQuestAnalysisDate: todayCA,
+                    aiGeneratedQuestTitle: result.questTitle || "",
+                    aiGeneratedDiscTitle: result.discTitle || "",
+                    aiGeneratedMoneyTitle: result.moneyTitle || ""
+                  });
+                }
+              }
+            }).catch(err => {
+              console.error("Immediate quest analysis failed:", err);
+            }).finally(() => {
+              setIsQuestAnalyzing(false);
+            });
           } catch {}
         } else if (questPrefsMatch) {
           setQuestSaved(false);
@@ -554,7 +581,11 @@ export default function SoulGuidePage() {
             exit={{ opacity: 0, y: 10 }}
             className="w-full px-6 py-2 bg-violet-500/10 border-t border-violet-500/20 flex items-center justify-center gap-2 z-40"
           >
-            <span className="text-[11px] font-black text-violet-400 tracking-wide">✨ Quest วันนี้ถูกปรับแล้ว — ดูใน Dashboard ได้เลยครับ</span>
+            <span className="text-[11px] font-black text-violet-400 tracking-wide">
+              {isQuestAnalyzing 
+                ? "⏳ กำลังคำนวณและอัปเดตเควสใหม่ด้วย AI สักครู่..." 
+                : "✨ Quest วันนี้ถูกปรับสำเร็จแล้ว — ดูใน Dashboard ได้เลยครับ"}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1342,6 +1342,14 @@ export default function DashboardPage() {
         questPreferences: null,
         bookMatchCache: null,
         lastChatDate: null,
+        role: deleteField(),
+        subscription_tier: deleteField(),
+        subscriptionTier: deleteField(),
+        subscriptionStatus: deleteField(),
+        subscription_status: deleteField(),
+        subscriptionPlan: deleteField(),
+        isFoundingMember: deleteField(),
+        isLifetimeMember: deleteField(),
       }, { merge: true });
 
       // 🚀 4. Execute Batch รวดเดียวจบ
@@ -1407,6 +1415,14 @@ export default function DashboardPage() {
         hasChattedWithFuii: false,
         lastChatDate: null,
         lastChatTime: null,
+        role: null,
+        subscription_tier: null,
+        subscriptionTier: null,
+        subscriptionStatus: null,
+        subscription_status: null,
+        subscriptionPlan: null,
+        isFoundingMember: false,
+        isLifetimeMember: false,
       }));
       localStorage.removeItem('hasSeenDashboardTutorial');
       setShowTutorial(true);
@@ -7711,7 +7727,7 @@ export default function DashboardPage() {
                         <img
                           src={phase.src}
                           alt={phase.label}
-                          className="h-full w-full object-cover object-center"
+                          className="h-full w-full object-cover object-center scale-[1.3] -translate-y-1 transition-all duration-300 hover:scale-[1.4] hover:-translate-y-1.5"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-white/10" />
                         <div className="absolute bottom-2 left-2 right-2">
