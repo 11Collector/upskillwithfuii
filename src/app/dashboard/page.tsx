@@ -3465,7 +3465,7 @@ export default function DashboardPage() {
             { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-slate-700 to-blue-900" },
           ];
           const phase3Steps = [
-            { done: claimedReadArticlesCount >= 3, label: "คลังสมอง 3 บทความ", shortDesc: "อ่านและเคลม XP จากบทความ", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
+            { done: claimedReadArticlesCount >= 3, label: `คลังสมอง 3 บทความ (${Math.min(claimedReadArticlesCount, 3)}/3)`, shortDesc: "อ่านและเคลม XP จากบทความ", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
             { done: hasCompletedFocusRoom, label: "Focus Room", shortDesc: "ฝึกสมาธิและบันทึก reflection", path: "/tools/focus-room", buttonClass: "from-sky-500 to-blue-600" },
             { done: hasCompletedMemento, label: "Memento Mori", shortDesc: "ทบทวนเวลาชีวิตอย่างมีสติ", path: "/dashboard?memento=1", buttonClass: "from-amber-600 to-[#8B5A2B]" },
           ];
