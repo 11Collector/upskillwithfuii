@@ -386,6 +386,8 @@ export default function SoulGuidePage() {
         // ตรวจหา [QUEST_PREFS:{...}] ใน AI response
         const questPrefsMatch = data.reply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
         let cleanReply = data.reply;
+        if (questPrefsMatch && isQuestMode) {
+          try {
             const prefs = JSON.parse(questPrefsMatch[1]);
             const userRef = doc(db, "users", user.uid);
             const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
