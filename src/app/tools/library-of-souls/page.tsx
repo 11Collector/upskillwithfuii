@@ -3,15 +3,31 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from 'next/link';
 import { questions } from "@/data/librarySoulsQuestions";
 import { calculateMBTI } from "@/lib/librarySoulsScoring";
 import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, setDoc, doc } from "firebase/firestore";
 import { BookOpen, ArrowLeft, Sparkles, Quote, Wind, Coffee, Loader2 } from "lucide-react";
 import { results } from "@/data/librarySoulsResults";
 
 export default function LibrarySoulsQuizPage() {
   const [gameState, setGameState] = useState<"start" | "playing">("start");
+  const [user, setUser] = useState<User | null>(null);
+  const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from");
+      if (from === "home" || from === "dashboard") {
+        setFromPage(from as any);
+      }
+    }
+    return () => unsubscribe();
+  }, []);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, 'A' | 'B' | 'C'>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +101,13 @@ export default function LibrarySoulsQuizPage() {
     return (
       <main className="min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4">
         <div className="w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 bg-[#FDFCF8]">
+          <Link
+            href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (user ? "/dashboard" : "/")}
+            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-md transition-all hover:bg-slate-50 active:scale-95 z-50 cursor-pointer"
+          >
+            <ArrowLeft size={13} className="text-slate-600" />
+            <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (user ? "แดชบอร์ด" : "หน้าหลัก")}</span>
+          </Link>
           <div className="flex-1 w-full flex flex-col p-5 sm:p-8 relative overflow-y-auto z-10">
             {/* Organic Background Elements for Start Screen */}
             <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-emerald-100 rounded-full blur-[100px] opacity-60 -z-10" />

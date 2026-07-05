@@ -58,7 +58,7 @@ ChartJS.register(
 ChartJS.defaults.color = "#9ca3af";
 ChartJS.defaults.font.family = "system-ui, -apple-system, sans-serif";
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean);
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean);
 
 const aiFeatureNames: Record<string, string> = {
   ai_mentor: "คุยกับพี่ฟุ้ย (AI Chat)",
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const auth = getAuth(app);
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user && user.email && ADMIN_EMAILS.includes(user.email)) {
+      if (user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
         setIsAdmin(true);
         try {
           const data = await fetchAdminStats();

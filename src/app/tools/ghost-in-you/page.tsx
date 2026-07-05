@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
 import Image from "next/image";
 
+import Link from 'next/link';
 import { ghostQuestions, type GhostId } from "@/data/ghostScenarios";
 import { ghostResults } from "@/data/ghostResults";
 import { auth, db, googleProvider } from "@/lib/firebase";
@@ -61,6 +62,7 @@ export default function GhostInYouPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [result, setResult] = useState<{ primary: GhostId; secondary: GhostId; scores: Record<GhostId, number> } | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
   const [saving, setSaving] = useState(false);
   const [googleSaving, setGoogleSaving] = useState(false);
   const [communityStats, setCommunityStats] = useState<Record<string, number> | null>(null);
@@ -70,6 +72,13 @@ export default function GhostInYouPage() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
     loadCommunityStats().then(setCommunityStats);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from");
+      if (from === "home" || from === "dashboard") {
+        setFromPage(from as any);
+      }
+    }
     return () => unsub();
   }, []);
 
@@ -202,7 +211,14 @@ export default function GhostInYouPage() {
   // ══════════════════════════════════════════════════════
   if (phase === "intro") {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-5 py-12 overflow-hidden">
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-5 py-12 overflow-hidden relative">
+        <Link
+          href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (user ? "/dashboard" : "/")}
+          className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-black text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/20 active:scale-95 z-50 cursor-pointer"
+        >
+          <ArrowLeft size={13} className="text-white" />
+          <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (user ? "แดชบอร์ด" : "หน้าหลัก")}</span>
+        </Link>
         <SpookyBg />
 
         <motion.div

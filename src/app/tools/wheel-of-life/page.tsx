@@ -292,7 +292,8 @@ export default function WheelOfLifeApp() {
   const hasMemberSaved = useRef(false);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [step, setStep] = useState('home'); 
+  const [step, setStep] = useState('home');
+  const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null); 
   const [currentScores, setCurrentScores] = useState(Array(8).fill(5));
   const [targetScores, setTargetScores] = useState(Array(8).fill(5));
   const [selectedFocusAreas, setSelectedFocusAreas] = useState<number[]>([]);
@@ -317,6 +318,14 @@ export default function WheelOfLifeApp() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
     });
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from");
+      if (from === "home" || from === "dashboard") {
+        setFromPage(from as any);
+      }
+    }
 
     // 4. Cleanup Function
     return () => {
@@ -624,7 +633,16 @@ const analyzeWithAI = async () => {
   };
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' }}>
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box', position: 'relative' }}>
+      {step === 'home' && (
+        <Link
+          href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (currentUser ? "/dashboard" : "/")}
+          className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-md transition-all hover:bg-slate-50 active:scale-95 z-50 cursor-pointer"
+        >
+          <ArrowLeft size={13} className="text-slate-600" />
+          <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (currentUser ? "แดชบอร์ด" : "หน้าหลัก")}</span>
+        </Link>
+      )}
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: isMobile ? '15px 0' : '20px 0', width: '100%' }}>
         
       {step === 'home' && (

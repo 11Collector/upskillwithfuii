@@ -9,6 +9,7 @@ import { toPng } from "html-to-image";
 import Image from "next/image";
 import { Prompt } from "next/font/google";
 
+import Link from 'next/link';
 import { scenarios } from "@/data/moneyScenarios";
 import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 import { resultData } from "@/data/moneyResult";
@@ -344,6 +345,7 @@ const getProgressiveQuestionSet = (allScenarios: any[], numQuestions: number) =>
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
+  const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<{ risk: number, disc: number, choiceIndex: number }[]>([]);
 
@@ -375,6 +377,13 @@ export default function Home() {
         setCurrentUser(null);
       }
     });
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from");
+      if (from === "home" || from === "dashboard") {
+        setFromPage(from as any);
+      }
+    }
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -643,6 +652,15 @@ export default function Home() {
     <div className={`min-h-[100dvh] bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className}`}>
 
       <div className={`w-full max-w-md shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
+        {(gameState === "start" || gameState === "result") && (
+          <Link
+            href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (currentUser ? "/dashboard" : "/")}
+            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-stone-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-stone-700 shadow-sm backdrop-blur-md transition-all hover:bg-stone-50 active:scale-95 z-50 cursor-pointer"
+          >
+            <ArrowLeft size={13} className="text-stone-600" />
+            <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (currentUser ? "แดชบอร์ด" : "หน้าหลัก")}</span>
+          </Link>
+        )}
 
         {/* --- START SCREEN --- */}
         {gameState === "start" && (

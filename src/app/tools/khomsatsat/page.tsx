@@ -163,6 +163,7 @@ export default function SwipeQuoteApp() {
   // 💡 2. ใส่ State และ useEffect ไว้ตรงแถวๆ บนสุดของฟังก์ชันหลัก (เช่น ใต้พวก useState อื่นๆ)
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
   const [isProMember, setIsProMember] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
 
@@ -201,6 +202,14 @@ export default function SwipeQuoteApp() {
         setIsProMember(false);
       }
     });
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from");
+      if (from === "home" || from === "dashboard") {
+        setFromPage(from as any);
+      }
+    }
 
     return () => {
       unsubscribeAuth();
@@ -550,6 +559,15 @@ export default function SwipeQuoteApp() {
     // 💡 กลับมาใช้ min-h-[100dvh] และ overflow-hidden เพื่อความสวยงามนิ่งๆ แบบแอป
     <div className={`min-h-[100dvh] bg-stone-100 flex flex-col items-center justify-center sm:p-4 ${kanit.className} overflow-hidden`}>
       <div className="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-white shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] lg:h-[900px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-900">
+        {(gameState === "start" || gameState === "result") && (
+          <Link
+            href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (currentUser ? "/dashboard" : "/")}
+            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-stone-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-stone-700 shadow-sm backdrop-blur-md transition-all hover:bg-stone-50 active:scale-95 z-50 cursor-pointer"
+          >
+            <ChevronLeft size={13} className="text-stone-600" />
+            <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (currentUser ? "แดชบอร์ด" : "หน้าหลัก")}</span>
+          </Link>
+        )}
         {/* === 1. START SCREEN === */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-6 text-center relative bg-stone-50 h-full w-full overflow-hidden">
@@ -601,11 +619,11 @@ export default function SwipeQuoteApp() {
                   {currentUser && (
                     <div className="mt-4 pointer-events-auto select-none scale-[0.95] sm:scale-100 transition-all duration-300">
                       {isProMember ? (
-                        <span className="text-[10px] font-black uppercase tracking-[0.15em] bg-cyan-500/10 text-cyan-600 px-3 py-1.5 rounded-full border border-cyan-500/25 flex items-center gap-1.5 justify-center shadow-[0_0_15px_rgba(6,182,212,0.08)]">
+                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.05em] sm:tracking-[0.15em] bg-cyan-500/10 text-cyan-600 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-cyan-500/25 flex items-center gap-1 sm:gap-1.5 justify-center shadow-[0_0_15px_rgba(6,182,212,0.08)]">
                           <Crown size={11} className="text-cyan-500 animate-pulse" /> PRO MEMBER (สร้างได้ไม่จำกัด)
                         </span>
                       ) : (
-                        <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-3 py-1.5 rounded-full border flex items-center gap-1.5 justify-center ${
+                        <span className={`text-[8px] sm:text-[10px] font-black uppercase tracking-[0.05em] sm:tracking-[0.15em] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border flex items-center gap-1 sm:gap-1.5 justify-center ${
                           remainingQuota > 0 
                             ? "bg-amber-500/10 text-amber-600 border-amber-500/25" 
                             : "bg-red-500/10 text-red-600 border-red-500/25"

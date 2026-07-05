@@ -3513,32 +3513,32 @@ export default function DashboardPage() {
         {/* --- 🏠 Home Tab Header --- */}
         {shouldShowHomeHeader && (
           <div className="mt-2 mb-5">
-            <div className="flex flex-col sm:flex-row sm:relative items-center justify-center gap-3 sm:gap-0">
-              <div className="flex items-center gap-4 w-full sm:w-auto sm:flex-1">
-                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                <h2 className="flex items-center gap-2.5 sm:gap-3 rounded-full border border-slate-100 bg-white px-5 py-2 sm:px-6 sm:py-2 text-[15px] sm:text-xl font-black text-slate-800 shadow-sm mx-auto sm:mx-0">
-                  <LayoutDashboard size={18} className="sm:w-5 sm:h-5 text-slate-600" />
+            <div className="relative flex items-center justify-center w-full">
+              <div className="flex items-center gap-4 w-full">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                <h2 className="flex items-center gap-3 rounded-full border border-slate-100 bg-white px-6 py-2 text-xl font-black text-slate-800 shadow-sm mx-auto sm:mx-0 shrink-0">
+                  <LayoutDashboard size={20} className="text-slate-600" />
                   สรุปภาพรวม
                 </h2>
-                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               </div>
               {shouldShowMembershipStatus && (
                 <button
                   type="button"
                   onClick={() => setShowMembershipModal(true)}
-                  className="relative sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2 flex items-center gap-2 rounded-full border border-slate-100 bg-white px-2 py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:sm:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 sm:gap-2.5 sm:px-3 cursor-pointer z-30"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-2 rounded-full border border-slate-100 bg-white p-0.5 sm:px-3 sm:py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 cursor-pointer z-30"
                   title={isProMember ? "สมาชิก PRO" : "ดูแผนสมาชิก"}
                 >
-                  <span className={`flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full ${
+                  <span className={`flex h-5 w-5 sm:h-7 sm:w-7 items-center justify-center rounded-full ${
                     userData?.isFoundingMember
                       ? "bg-slate-950 text-amber-400 shadow-inner"
                       : isProMember
                       ? "bg-slate-950 text-violet-400 shadow-inner"
                       : "bg-slate-100 text-slate-400"
                   } shadow-sm`}>
-                    {userData?.isFoundingMember ? <Crown size={11} className="fill-amber-400/20 text-amber-400" /> : isProMember ? <Sparkles size={11} /> : <Lock size={11} />}
+                    {userData?.isFoundingMember ? <Crown size={9} className="sm:w-3 sm:h-3 fill-amber-400/20 text-amber-400" /> : isProMember ? <Sparkles size={9} className="sm:w-3 sm:h-3" /> : <Lock size={9} className="sm:w-3 sm:h-3" />}
                   </span>
-                  <span className={`text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.24em] pl-0.5 ${
+                  <span className={`hidden sm:inline text-[10px] font-black uppercase tracking-[0.24em] pl-0.5 ${
                     userData?.isFoundingMember
                       ? "text-amber-500"
                       : isProMember
@@ -3733,14 +3733,14 @@ export default function DashboardPage() {
                                 setDoc(doc(db, "users", user.uid), { hasSoulGuide: true }, { merge: true });
                               }
                             }}
-                            className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white transition-all hover:bg-white/[0.1]"
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-black text-white transition-all hover:bg-white/[0.1]"
                           >
                             <span>
-                              <span className="block text-[10px] uppercase tracking-widest text-slate-400">ถัดไป</span>
-                              {nextStep.label}
-                              <span className="mt-1 block text-[11px] font-bold leading-snug text-slate-400">{nextStep.shortDesc}</span>
+                              <span className="block text-[9px] sm:text-[10px] uppercase tracking-widest text-slate-400">ถัดไป</span>
+                              <span className="block mt-0.5 text-xs sm:text-sm">{nextStep.label}</span>
+                              <span className="mt-1 block text-[10px] sm:text-[11px] font-bold leading-snug text-slate-400">{nextStep.shortDesc}</span>
                             </span>
-                            <span className={`inline-flex items-center gap-1 rounded-xl bg-gradient-to-r ${currentButtonClass} px-3 py-2 text-xs text-white shadow-sm`}>
+                            <span className={`inline-flex shrink-0 items-center gap-1 rounded-xl bg-gradient-to-r ${currentButtonClass} px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs text-white shadow-sm`}>
                               {doneCount === 0 || nextStep === phase.steps[0] ? "เริ่มเลย" : "ไปต่อ"} <ArrowRight size={12} />
                             </span>
                           </Link>
@@ -3820,28 +3820,28 @@ export default function DashboardPage() {
             </div>
 
             {/* Gender Switch Toggle */}
-            <div className="absolute right-0 flex items-center bg-white border border-slate-200 rounded-full p-0.5 shadow-sm text-xs font-semibold select-none z-30">
+            <div className="absolute right-0 flex items-center bg-white border border-slate-200 rounded-full p-0.5 shadow-sm text-[10px] sm:text-xs font-semibold select-none z-30">
               <button
                 onClick={() => handleGenderChange("male")}
-                className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded-full transition-all cursor-pointer ${
+                className={`px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full transition-all cursor-pointer ${
                   gender === "male"
                     ? "bg-blue-600 text-white font-black shadow-sm"
                     : "text-slate-400 hover:text-slate-600 hover:bg-slate-50 font-bold"
                 }`}
               >
                 <span className="hidden sm:inline">ชาย</span>
-                <span className="sm:hidden">ช</span>
+                <span className="sm:hidden text-[9px] font-black leading-none">ช</span>
               </button>
               <button
                 onClick={() => handleGenderChange("female")}
-                className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded-full transition-all cursor-pointer ${
+                className={`px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full transition-all cursor-pointer ${
                   gender === "female"
                     ? "bg-pink-600 text-white font-black shadow-sm"
                     : "text-slate-400 hover:text-slate-600 hover:bg-slate-50 font-bold"
                 }`}
               >
                 <span className="hidden sm:inline">หญิง</span>
-                <span className="sm:hidden">ญ</span>
+                <span className="sm:hidden text-[9px] font-black leading-none">ญ</span>
               </button>
             </div>
           </div>
@@ -4617,12 +4617,11 @@ export default function DashboardPage() {
             {/* กล่องสะสม */}
             <button
               onClick={openCollectionModal}
-              className="absolute right-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all text-xs font-semibold active:scale-95 cursor-pointer z-30"
+              className="absolute right-0 flex items-center justify-center p-1 sm:px-3 sm:py-1.5 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-all active:scale-95 cursor-pointer z-30 shrink-0"
               title="ประวัติการทำภารกิจที่ผ่านมา"
             >
-              <span>🗂️</span>
-              <span className="hidden sm:inline">กล่องสะสม</span>
-              <span className="sm:hidden">สะสม</span>
+              <span className="text-xs sm:text-sm leading-none">🗂️</span>
+              <span className="hidden sm:inline ml-1.5 text-xs font-semibold">กล่องสะสม</span>
             </button>
           </div>
         )}
@@ -6449,7 +6448,7 @@ export default function DashboardPage() {
             </button>
 
             {/* 🚨 ปุ่มรีเซ็ตข้อมูล (ซ่อนตัวเนียนๆ เป็นสีแดงอ่อน - แสดงเฉพาะ Dev หรือ Admin) */}
-            {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean).includes(user.email))) && (
+            {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean).includes(user.email.toLowerCase()))) && (
               <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                 <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
                   <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)

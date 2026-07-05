@@ -312,20 +312,20 @@ export default function Home() {
                 การพัฒนาตัวเอง<br />
                 <span className="text-amber-50 drop-shadow-[0_3px_14px_rgba(92,46,11,0.42)]">สนุกกว่าที่คิด</span>
               </h1>
-              <p className="relative mt-5 max-w-[620px] text-base font-black leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(15,23,42,0.36)] sm:text-xl">
+              <p className="relative mt-5 max-w-[620px] text-[13px] sm:text-xl font-black leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(15,23,42,0.36)]">
                 Personal Growth OS ที่พาคุณสำรวจตัวเอง<br />
                 สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
               </p>
 
               <div className="relative mt-6 flex overflow-x-auto flex-nowrap gap-1.5 sm:gap-2 no-scrollbar scrollbar-none pb-1 select-none">
                 {[
-                  { icon: <BrainCircuit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "PERSONALIZED", accent: "bg-violet-100/24 text-violet-50 ring-violet-100/45" },
-                  { icon: <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "ACTIONABLE", accent: "bg-amber-100/24 text-amber-50 ring-amber-100/45" },
-                  { icon: <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "XP & LEVEL", accent: "bg-sky-100/24 text-sky-50 ring-sky-100/45" },
+                  { icon: <BrainCircuit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "PERSONALIZED", textClass: "text-[#4c1d95]", accent: "bg-[#8b5cf6]/10 text-[#6d28d9] ring-[#8b5cf6]/20" },
+                  { icon: <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "ACTIONABLE", textClass: "text-[#78350f]", accent: "bg-[#f59e0b]/10 text-[#b45309] ring-[#f59e0b]/20" },
+                  { icon: <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "XP & LEVEL", textClass: "text-[#0c4a6e]", accent: "bg-[#0ea5e9]/10 text-[#0369a1] ring-[#0ea5e9]/20" },
                 ].map((badge) => (
                   <div
                     key={badge.label}
-                    className="inline-flex h-8 sm:h-10 min-w-0 flex-1 sm:flex-none shrink-0 items-center justify-center gap-1 sm:gap-2 rounded-full border border-white/72 bg-slate-950/18 px-2 sm:px-4 text-[7px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-normal sm:tracking-[0.16em] text-white shadow-[0_10px_26px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.22)] drop-shadow-[0_1px_5px_rgba(15,23,42,0.38)] backdrop-blur-xl"
+                    className={`inline-flex h-8 sm:h-10 min-w-0 flex-1 sm:flex-none shrink-0 items-center justify-center gap-1.5 sm:gap-2 rounded-full border border-white/60 bg-white/20 px-3 sm:px-4 text-[9px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.16em] ${badge.textClass} shadow-sm backdrop-blur-md`}
                   >
                     <span className={`flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
                       {badge.icon}

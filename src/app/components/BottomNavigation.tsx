@@ -45,7 +45,18 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  if (pathname === '/tools/soul-guide' || pathname === '/tools/ai-mentor') return null;
+  const noNavPaths = [
+    '/tools/soul-guide',
+    '/tools/ai-mentor',
+    '/tools/wheel-of-life',
+    '/tools/money-avatar',
+    '/tools/disc',
+    '/tools/khomsatsat',
+    '/tools/library-of-souls',
+    '/tools/ghost-in-you',
+  ];
+
+  if (noNavPaths.includes(pathname)) return null;
 
   if (isDashboardFlow) {
     const navItems = [
@@ -129,7 +140,7 @@ function BottomNavigationInner() {
         const activeColor = getActiveColor(item.id);
         const inactiveColor = isDark ? "text-slate-500" : "text-slate-400";
         return (
-          <Link key={item.id} href={item.path} className={`flex flex-col items-center justify-center w-full h-full transition-all active:scale-95 ${isActive ? activeColor : inactiveColor}`}>
+          <Link key={item.id} href={item.path.startsWith('/tools') ? `${item.path}?from=home` : item.path} className={`flex flex-col items-center justify-center w-full h-full transition-all active:scale-95 ${isActive ? activeColor : inactiveColor}`}>
             <item.icon size={22} />
             <span className="text-[10px] mt-1 font-bold">{item.label}</span>
           </Link>
