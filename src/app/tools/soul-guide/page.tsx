@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Sparkles, ArrowLeft, Bot, User as UserIcon,
   MessageSquare, History, Zap, BrainCircuit, Lightbulb, Target, TrendingUp,
-  AlertCircle, Lock, Battery, Plus
+  AlertCircle, Lock, Battery, Plus, Crown
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -35,11 +35,19 @@ export default function SoulGuidePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([]);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
+  const [isProMember, setIsProMember] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [questSaved, setQuestSaved] = useState(false);
+  const [isQuestAnalyzing, setIsQuestAnalyzing] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<Message[]>([]);
+  const hasLocalChatActivityRef = useRef(false);
   const todayDateStr = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
@@ -55,8 +63,18 @@ export default function SoulGuidePage() {
           if (docSnap.exists()) {
             const baseData = docSnap.data();
             const level = Math.floor((baseData.totalXP || 0) / 100) + 1;
-            // ✅ [NO ENERGY LIMIT] ทุกคนใช้ได้ไม่จำกัด
-            setChatQuota({ used: 0, total: Infinity });
+            const subscriptionStatus = baseData.subscriptionStatus || baseData.subscription_status || "";
+            const subscriptionTier = baseData.subscriptionTier || baseData.subscription_tier || "";
+            const isPro =
+              baseData.role === "premium" ||
+              subscriptionTier === "pro" ||
+              ["active", "trialing"].includes(subscriptionStatus) ||
+              !!baseData.isLifetimeMember;
+            const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+            const usedToday = baseData.aiMentorDailyDate === todayKey ? Number(baseData.aiMentorDailyCount || 0) : 0;
+
+            setIsProMember(isPro);
+            setChatQuota(isPro ? { used: 0, total: Infinity } : { used: usedToday, total: 3 });
             setUserData((prev: any) => ({ ...prev, ...baseData, level }));
           }
         });
@@ -128,14 +146,24 @@ export default function SoulGuidePage() {
 
         if (!messagesInitialized.current) {
           messagesInitialized.current = true;
-          if (history.length > 0) {
-            setMessages(history);
-          } else {
-            setMessages([{
+          const welcomeMessage: Message = {
               role: "assistant",
               content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
-            }]);
-          }
+          };
+
+          setMessages((prev) => {
+            const base = history.length > 0 ? history : [welcomeMessage];
+            if (!hasLocalChatActivityRef.current && prev.length === 0) return base;
+
+            const merged = [...base];
+            prev.forEach((message) => {
+              const alreadyExists = merged.some(
+                (existing) => existing.role === message.role && existing.content === message.content
+              );
+              if (!alreadyExists) merged.push(message);
+            });
+            return merged;
+          });
         }
 
       } else {
@@ -286,7 +314,9 @@ export default function SoulGuidePage() {
     if (!messageText.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: messageText.trim() };
-    setMessages(prev => [...prev, userMessage]);
+    hasLocalChatActivityRef.current = true;
+    const nextMessages = [...messagesRef.current, userMessage];
+    setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
     setIsTyping(true);
@@ -328,7 +358,8 @@ export default function SoulGuidePage() {
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
         signal: controller.signal,
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          messages: nextMessages,
+          isQuestMode,
           userData: {
             displayName: userData?.displayName,
             lastDisc: userData?.lastDisc,
@@ -350,10 +381,14 @@ export default function SoulGuidePage() {
 
       const data = await response.json();
       if (data.success) {
+        if (typeof data.remainingFreeMessages === "number") {
+          setChatQuota({ used: 3 - data.remainingFreeMessages, total: 3 });
+        }
+
         // ตรวจหา [QUEST_PREFS:{...}] ใน AI response
         const questPrefsMatch = data.reply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
         let cleanReply = data.reply;
-        if (questPrefsMatch) {
+        if (questPrefsMatch && isQuestMode) {
           try {
             const prefs = JSON.parse(questPrefsMatch[1]);
             const userRef = doc(db, "users", user.uid);
@@ -364,7 +399,39 @@ export default function SoulGuidePage() {
               lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
             });
             setQuestSaved(true);
+            setIsQuestAnalyzing(true);
+
+            // 🎯 Trigger AI quest analysis immediately so it is pre-generated when user goes back to Dashboard
+            const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+            fetch('/api/quest-analysis', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${idToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ level: currentLevel })
+            }).then(async (res) => {
+              if (res.ok) {
+                const result = await res.json();
+                if (result.questTitle || result.discTitle || result.moneyTitle) {
+                  await updateDoc(userRef, {
+                    lastQuestAnalysisDate: todayCA,
+                    aiGeneratedQuestTitle: result.questTitle || "",
+                    aiGeneratedDiscTitle: result.discTitle || "",
+                    aiGeneratedMoneyTitle: result.moneyTitle || ""
+                  });
+                }
+              }
+            }).catch(err => {
+              console.error("Immediate quest analysis failed:", err);
+            }).finally(() => {
+              setIsQuestAnalyzing(false);
+            });
           } catch {}
+        } else if (questPrefsMatch) {
+          setQuestSaved(false);
+        }
+        if (questPrefsMatch) {
           cleanReply = data.reply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
         }
 
@@ -378,7 +445,7 @@ export default function SoulGuidePage() {
         });
 
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
+        setMessages(prev => [...prev, { role: "assistant", content: data.error || "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
       }
     } catch (error: any) {
       console.error("Chat Error:", error);
@@ -487,7 +554,7 @@ export default function SoulGuidePage() {
                     : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
                     }`}
                 >
-                  <div className="prose prose-invert prose-sm max-w-none">
+                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.content}
                     </ReactMarkdown>
@@ -518,7 +585,11 @@ export default function SoulGuidePage() {
             exit={{ opacity: 0, y: 10 }}
             className="w-full px-6 py-2 bg-violet-500/10 border-t border-violet-500/20 flex items-center justify-center gap-2 z-40"
           >
-            <span className="text-[11px] font-black text-violet-400 tracking-wide">✨ Quest วันนี้ถูกปรับแล้ว — ดูใน Dashboard ได้เลยครับ</span>
+            <span className="text-[11px] font-black text-violet-400 tracking-wide">
+              {isQuestAnalyzing 
+                ? "⏳ กำลังคำนวณและอัปเดตเควสใหม่ด้วย AI สักครู่..." 
+                : "✨ Quest วันนี้ถูกปรับสำเร็จแล้ว — ดูใน Dashboard ได้เลยครับ"}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -543,30 +614,48 @@ export default function SoulGuidePage() {
           </AnimatePresence>
 
           <div className="w-full relative">
-            <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
-              <button
-                onClick={() => setShowResetConfirm(true)}
-                className="w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
-                title="เริ่มบทสนทนาใหม่"
-              >
-                <Plus size={18} />
-              </button>
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder="คุยกับ Mentor..."
-                className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600 ml-2"
-              />
-              <button
-                onClick={() => handleSendMessage()}
-                disabled={isLoading || !input.trim()}
-                className="w-11 h-11 bg-zinc-200 text-black rounded-full flex items-center justify-center hover:bg-white active:scale-95 transition-all disabled:opacity-20"
-              >
-                <Send size={16} />
-              </button>
-            </div>
+            {!isProMember && chatQuota.used >= 3 ? (
+              <div className="flex flex-col items-center justify-center p-5 bg-gradient-to-br from-violet-600/20 to-indigo-600/10 border border-violet-500/25 rounded-[2rem] text-center shadow-lg backdrop-blur-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown size={15} className="text-amber-400 animate-bounce" />
+                  <span className="text-[10px] font-black text-amber-200 uppercase tracking-widest">โควตาคุยฟรีวันนี้หมดแล้ว</span>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+                  คุณคุยกับพี่ฟุ้ยครบ 3 ข้อความในวันนี้แล้วครับ<br />อัปเกรดเป็น PRO เพื่อรับคำแนะนำได้แบบไม่จำกัด
+                </p>
+                <Link
+                  href="/dashboard?membership=1"
+                  className="px-6 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white text-[12px] font-bold rounded-full shadow-lg hover:shadow-purple-500/20 transition-all select-none hover:scale-105 active:scale-95 duration-300"
+                >
+                  สมัครสมาชิก PRO เพื่อคุยไม่จำกัด
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center bg-zinc-900 border border-white/10 rounded-[2.5rem] p-1.5 pl-2 shadow-2xl backdrop-blur-xl">
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  className="w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
+                  title="เริ่มบทสนทนาใหม่"
+                >
+                  <Plus size={18} />
+                </button>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  placeholder="คุยกับ Mentor..."
+                  className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600 ml-2"
+                />
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={isLoading || !input.trim()}
+                  className="w-11 h-11 bg-zinc-200 text-black rounded-full flex items-center justify-center hover:bg-white active:scale-95 transition-all disabled:opacity-20"
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </footer>

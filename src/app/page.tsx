@@ -8,7 +8,6 @@ import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDa
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
-import { loadStripe } from '@stripe/stripe-js';
 import { usePWAInstall } from "@/lib/pwa";
 
 // ==========================================
@@ -45,11 +44,7 @@ const t = {
   }
 };
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-const PRICE_IDS = {
-  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
-  yearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
-};
+type ProPlan = "monthly" | "yearly" | "founding_monthly" | "founding_yearly" | "lifetime";
 
 export default function Home() {
   const { deferredPrompt, isIOS, handleInstallClick } = usePWAInstall();
@@ -73,13 +68,13 @@ export default function Home() {
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showStoryModal, setShowStoryModal] = useState(false);
-  const [billingPlan, setBillingPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingPlan, setBillingPlan] = useState<ProPlan>('monthly');
 
   const [guideStep, setGuideStep] = useState(1);
   const [showGuide, setShowGuide] = useState(false);
   const totalGuideSteps = 4;
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (plan: ProPlan = billingPlan) => {
     if (!user) return alert("Please login first");
 
     try {
@@ -87,19 +82,18 @@ export default function Home() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
-        body: JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          priceId: PRICE_IDS[billingPlan]
-        }),
+        body: JSON.stringify({ plan }),
       });
 
       const data = await response.json();
       if (data.url) {
         window.location.assign(data.url);
+      } else {
+        alert("เกิดข้อผิดพลาด: " + (data.error || "ไม่สามารถเปิดหน้าชำระเงินได้"));
       }
     } catch (err) {
       console.error(err);
+      alert("ระบบชำระเงินขัดข้อง กรุณาลองใหม่อีกครั้ง");
     }
   };
 
@@ -171,7 +165,7 @@ export default function Home() {
       id: "wheel", name: t.tools.wheel.name, desc: t.tools.wheel.desc, gimmick: t.tools.wheel.gimmick,
       icon: <PieChart size={28} className="text-red-600" />, path: "/tools/wheel-of-life", color: "bg-red-50 border-red-200",
       gimmickUI: (
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-orange-50 text-red-600 rounded-full text-[10px] font-black tracking-widest border border-red-100 shadow-sm group-hover:bg-red-100 group-hover:text-red-900 transition-colors duration-300">
+        <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-orange-50 text-red-600 rounded-full text-[10px] font-black tracking-widest border border-red-100 shadow-sm group-hover:bg-red-100 group-hover:text-red-900 transition-colors duration-300">
           <Flame size={12} className="text-red-500 group-hover:text-red-900 transition-colors animate-pulse" />
           <span>{t.tools.wheel.gimmick}</span>
         </div>
@@ -181,7 +175,7 @@ export default function Home() {
       id: "disc", name: t.tools.disc.name, desc: t.tools.disc.desc, gimmick: t.tools.disc.gimmick,
       icon: <Users size={28} className="text-blue-600" />, path: "/tools/disc", color: "bg-blue-50 border-blue-200",
       gimmickUI: (
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 shadow-sm group-hover:bg-blue-100 group-hover:text-blue-900 transition-colors duration-300">
+        <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 shadow-sm group-hover:bg-blue-100 group-hover:text-blue-900 transition-colors duration-300">
           <Users size={12} className="text-blue-500 group-hover:text-blue-900 transition-colors" />
           <span>{t.tools.disc.gimmick}</span>
         </div>
@@ -191,7 +185,7 @@ export default function Home() {
       id: "money", name: t.tools.money.name, desc: t.tools.money.desc, gimmick: t.tools.money.gimmick,
       icon: <Wallet size={28} className="text-amber-600" />, path: "/tools/money-avatar", color: "bg-amber-50 border-amber-200",
       gimmickUI: (
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 rounded-full text-[10px] font-black tracking-widest border border-amber-100 shadow-sm group-hover:bg-amber-100 group-hover:text-amber-950 transition-colors duration-300">
+        <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 rounded-full text-[10px] font-black tracking-widest border border-amber-100 shadow-sm group-hover:bg-amber-100 group-hover:text-amber-950 transition-colors duration-300">
           <BrainCircuit size={12} className="text-amber-500 group-hover:text-amber-950 transition-colors" />
           <span>{t.tools.money.gimmick}</span>
         </div>
@@ -202,7 +196,7 @@ export default function Home() {
       icon: <BookOpen size={24} className="text-emerald-600" />,
       path: "/tools/library-of-souls", color: "bg-emerald-50/50 border-emerald-100",
       gimmickUI: (
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/50 text-emerald-600 rounded-full text-[10px] font-black tracking-widest border border-emerald-100 shadow-sm group-hover:bg-emerald-100 transition-colors duration-300">
+        <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/50 text-emerald-600 rounded-full text-[10px] font-black tracking-widest border border-emerald-100 shadow-sm group-hover:bg-emerald-100 transition-colors duration-300">
           <BookOpen size={12} className="text-emerald-500" />
           <span>ค้นหา Reading Soul</span>
         </div>
@@ -212,7 +206,7 @@ export default function Home() {
       id: "quotes", name: t.tools.quotes.name, desc: t.tools.quotes.desc, gimmick: t.tools.quotes.gimmick,
       icon: <Quote size={28} className="text-purple-600" />, path: "/tools/khomsatsat", color: "bg-purple-50 border-purple-200",
       gimmickUI: (
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-50 text-purple-600 rounded-full text-[10px] font-black tracking-widest border border-purple-100 shadow-sm group-hover:bg-purple-100 group-hover:text-purple-900 transition-colors duration-300">
+        <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-50 text-purple-600 rounded-full text-[10px] font-black tracking-widest border border-purple-100 shadow-sm group-hover:bg-purple-100 group-hover:text-purple-900 transition-colors duration-300">
           <Sparkles size={12} className="text-purple-500 group-hover:text-purple-900 transition-colors" />
           <span>{t.tools.quotes.gimmick}</span>
         </div>
@@ -222,7 +216,7 @@ export default function Home() {
       id: "ai-mentor", name: "คุยกับพี่ฟุ้ย", desc: "ที่ปรึกษาพัฒนาตัวเองส่วนตัวระดับโปร", gimmick: "Personalized วิเคราะห์ตัวคุณ",
       icon: <MessageSquareMore size={28} className="text-slate-600" />, path: "/tools/ai-mentor", color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
       gimmickUI: (
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-200 via-zinc-100 to-slate-200 text-slate-700 rounded-full text-[10px] font-black tracking-widest border border-slate-300 shadow-sm group-hover:from-slate-300 group-hover:to-zinc-200 group-hover:text-slate-900 transition-all duration-300">
+        <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-200 via-zinc-100 to-slate-200 text-slate-700 rounded-full text-[10px] font-black tracking-widest border border-slate-300 shadow-sm group-hover:from-slate-300 group-hover:to-zinc-200 group-hover:text-slate-900 transition-all duration-300">
           <Zap size={12} className="text-slate-500 group-hover:text-slate-900 transition-colors animate-pulse" />
           <span>PRO MENTORSHIP</span>
         </div>
@@ -241,130 +235,77 @@ export default function Home() {
 
   return (
     <>
-    <div className="w-full max-w-5xl mx-auto px-4 py-6 font-sans">
+    <div className="w-full font-sans">
 
       {/* --- 1. Hero Section --- */}
       {!user ? (
-        <section className="relative py-10 sm:py-12 md:py-16 mb-10 px-6 lg:px-12 mt-2 sm:mt-4 bg-white rounded-[2.5rem] sm:rounded-[3rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] z-0">
+        <section className="relative mb-10 min-h-[720px] w-full overflow-hidden bg-amber-50 md:mb-14 md:min-h-[720px]">
+          <img
+            src="/Wallpaper.png"
+            alt="Upskill Everyday"
+            className="absolute inset-x-0 -top-14 h-[calc(100%+3.5rem)] w-full object-cover object-[33%_top] md:inset-0 md:h-full md:object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_28%_76%,rgba(15,23,42,0.22),transparent_42%)]" />
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16">
+          {(deferredPrompt || isIOS) && (
+            <motion.button
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={isIOS ? undefined : handleInstallClick}
+              className="absolute right-4 top-4 z-30 flex items-center gap-2.5 rounded-full border border-white/55 bg-slate-950/94 px-4 py-2.5 text-white shadow-[0_18px_42px_rgba(15,23,42,0.42),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl ring-1 ring-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-slate-900 md:right-7 md:top-7 md:px-5 md:py-3"
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-400/14 text-sky-200 ring-1 ring-sky-200/20">
+                <Download size={14} />
+              </span>
+              <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.55)] md:text-[11px] md:tracking-[0.22em]">
+                {isIOS ? "APP DOWNLOAD" : "APP DOWNLOAD"}
+              </span>
+            </motion.button>
+          )}
 
-            {/* Left side: Typography & CTA */}
-            <div className="flex-1 min-w-0 flex flex-col items-center md:items-start text-center md:text-left z-20 w-full mb-0">
-              {/* Logo */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="inline-flex w-24 h-24 sm:w-28 sm:h-28 p-5 bg-red-50 rounded-[2rem] shadow-inner border border-red-100 items-center justify-center relative mb-8"
-              >
-                <Image
-                  src="/logo-full.png"
-                  alt="Idea Logo"
-                  width={112}
-                  height={112}
-                  className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
-                />
-              </motion.div>
+          <div className="relative z-20 flex min-h-[720px] w-full items-end px-4 pb-6 pt-20 md:min-h-[720px] md:px-12 md:pb-12 lg:px-20">
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.75, ease: "easeOut" }}
+              className="relative w-full max-w-[640px] overflow-hidden rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-white/76 via-orange-50/62 to-amber-100/54 px-5 py-6 text-white shadow-[0_28px_90px_rgba(15,23,42,0.20)] backdrop-blur-[38px] sm:px-8 sm:py-8 md:ml-[4vw] md:max-w-[680px] md:rounded-[2.35rem] md:px-10 md:py-9 lg:max-w-[680px]"
+            >
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.52),transparent_42%,rgba(255,255,255,0.22)_70%)]" />
+              <h1 className="relative max-w-[680px] text-[2.55rem] font-black leading-[0.98] tracking-tight text-[#8b1a0f] drop-shadow-[0_2px_12px_rgba(255,255,255,0.45)] sm:text-6xl md:text-[4rem] lg:text-[4.1rem]">
+                การพัฒนาตัวเอง<br />
+                <span className="text-amber-50 drop-shadow-[0_3px_14px_rgba(92,46,11,0.42)]">สนุกกว่าที่คิด</span>
+              </h1>
+              <p className="relative mt-5 max-w-[620px] text-base font-black leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(15,23,42,0.36)] sm:text-xl">
+                Personal Growth OS ที่พาคุณสำรวจตัวเอง<br />
+                สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
+              </p>
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-                className="flex flex-col md:items-start items-center w-full min-w-0"
-              >
-                <div className="mb-4 flex flex-col md:items-start items-center gap-3">
-                  <span className="text-red-700 font-extrabold bg-red-50/80 px-4 py-2 rounded-2xl relative inline-flex items-center gap-2 border border-red-100 shadow-sm text-sm sm:text-base tracking-widest uppercase">
-                    UPSKILL EVERYDAY
-                    <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" style={{ transform: 'translate(40%, -40%)' }}></div>
-                  </span>
-
-                  {/* 📱 PWA Install Button (New Location) */}
-                  {(deferredPrompt || isIOS) && (
-                    <motion.button
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClick={isIOS ? undefined : handleInstallClick}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-black active:scale-95 transition-all group border border-white/10"
-                    >
-                      <Download size={12} className="text-blue-400 group-hover:translate-y-0.5 transition-transform" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">
-                        {isIOS ? "App Download (Share > Home)" : "App Download"}
-                      </span>
-                    </motion.button>
-                  )}
-                </div>
-                <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-black mb-6 text-slate-900 leading-[1.2] md:leading-[1.15] tracking-tight">
-                  <span className="whitespace-nowrap">การพัฒนาตัวเอง</span><br />
-                  สนุกกว่าที่คิด
-                </h1>
-                <p className="text-slate-500 mb-0 md:mb-8 max-w-2xl text-sm sm:text-base font-medium leading-relaxed px-4 md:px-0">
-                  Personal Growth OS<br className="sm:hidden" /> แพลตฟอร์มพัฒนาตัวเอง<span className="whitespace-nowrap">เฉพาะคุณ</span><br />
-                  Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
-                </p>
-
-                {/* 3 Value Badges (Unified responsive layout: wrapped in 2 rows on mobile, row on desktop) */}
-                <div className="flex flex-row flex-wrap md:flex-nowrap justify-center md:justify-start gap-2.5 mt-6 w-full px-4 md:px-0">
-                  {/* Badge 1: Personal Growth Personalized */}
-                  <div className="flex items-center gap-2 bg-indigo-50/70 border border-indigo-100/80 rounded-2xl px-2.5 py-1.5 shadow-sm shrink-0 hover:scale-[1.02] transition-transform duration-300">
-                    <div className="bg-indigo-500 text-white p-1 rounded-lg shrink-0">
-                      <BrainCircuit size={13} />
-                    </div>
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="text-[9.5px] font-black uppercase text-indigo-900 tracking-wider">Personalized</span>
-                      <span className="text-[8px] font-bold text-indigo-600/80 mt-0.5">วิเคราะห์เจาะลึกเฉพาะตัว</span>
-                    </div>
+              <div className="relative mt-6 flex flex-nowrap gap-2 overflow-visible">
+                {[
+                  { icon: <BrainCircuit size={14} />, label: "PERSONALIZED", accent: "bg-violet-100/24 text-violet-50 ring-violet-100/45" },
+                  { icon: <Zap size={14} />, label: "ACTIONABLE", accent: "bg-amber-100/24 text-amber-50 ring-amber-100/45" },
+                  { icon: <Flame size={14} />, label: "XP & LEVEL", accent: "bg-sky-100/24 text-sky-50 ring-sky-100/45" },
+                ].map((badge) => (
+                  <div
+                    key={badge.label}
+                    className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-white/72 bg-slate-950/18 px-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_26px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.22)] drop-shadow-[0_1px_5px_rgba(15,23,42,0.38)] backdrop-blur-xl sm:flex-none sm:gap-2 sm:px-4 sm:text-[11px] sm:tracking-[0.16em]"
+                  >
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
+                      {badge.icon}
+                    </span>
+                    <span className="truncate">{badge.label}</span>
                   </div>
-
-                  {/* Badge 2: Actionable */}
-                  <div className="flex items-center gap-2 bg-amber-50/70 border border-amber-100/80 rounded-2xl px-2.5 py-1.5 shadow-sm shrink-0 hover:scale-[1.02] transition-transform duration-300">
-                    <div className="bg-amber-500 text-white p-1 rounded-lg shrink-0">
-                      <Zap size={13} className="fill-current text-white" />
-                    </div>
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="text-[9.5px] font-black uppercase text-amber-950 tracking-wider">Actionable</span>
-                      <span className="text-[8px] font-bold text-amber-700 mt-0.5">แผนทำจริงได้ใน 1 วัน</span>
-                    </div>
-                  </div>
-
-                  {/* Badge 3: Fun */}
-                  <div className="flex items-center gap-2 bg-rose-50/70 border border-rose-100/80 rounded-2xl px-2.5 py-1.5 shadow-sm shrink-0 hover:scale-[1.02] transition-transform duration-300">
-                    <div className="bg-rose-500 text-white p-1 rounded-lg shrink-0">
-                      <Flame size={13} className="fill-current text-white" />
-                    </div>
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="text-[9.5px] font-black uppercase text-rose-950 tracking-wider">Fun</span>
-                      <span className="text-[8px] font-bold text-rose-600/80 mt-0.5">สะสม XP อัพเลเวล</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Right side: Avatar image */}
-            <div className="flex-1 flex flex-col justify-end items-center md:items-end relative w-full md:mx-0 md:-mr-6 lg:-mr-12 xl:-mr-16 -mt-10 -mb-4 sm:-mt-16 sm:-mb-6 md:-mt-8 md:-mb-2">
-
-              <div className="relative w-full flex justify-center md:justify-end">
-
-                <motion.img
-                  initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 1, type: "spring", bounce: 0.4, delay: 0.1 }}
-                  src="/avatar.png"
-                  alt="Avatar Graphic"
-                  className="relative z-10 w-full max-w-[340px] sm:w-[450px] md:w-[400px] lg:w-[450px] xl:w-[500px] sm:max-w-none h-auto object-cover object-bottom hover:-translate-y-2 hover:scale-105 transition-all duration-500 origin-bottom md:origin-bottom-right pointer-events-auto"
-                />
+                ))}
               </div>
-
-            </div>
-
+            </motion.div>
           </div>
         </section>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative flex flex-col md:flex-row justify-between items-center bg-white p-8 md:p-10 rounded-[3rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] border border-slate-100 mb-12 gap-8 overflow-hidden group"
+          className="relative mx-4 mt-6 mb-12 flex max-w-5xl flex-col items-center justify-between gap-8 overflow-hidden rounded-[3rem] border border-slate-100 bg-white p-8 shadow-[0_15px_40px_rgba(0,0,0,0.04)] group md:mx-auto md:flex-row md:p-10"
         >
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-red-500/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-red-500/10 transition-colors duration-700" />
 
@@ -441,7 +382,7 @@ export default function Home() {
         };
 
         return (
-          <section className="mb-12 relative overflow-hidden bg-slate-900 text-white rounded-[2.5rem] p-6 sm:p-10 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+          <section className="relative mx-4 mb-12 max-w-6xl overflow-hidden rounded-[2.5rem] border border-slate-800 bg-slate-900 p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-10 md:mx-auto">
             {/* Glow Effects */}
             <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
             <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-red-500/10 blur-[100px] rounded-full pointer-events-none" />
@@ -708,36 +649,51 @@ export default function Home() {
       })()}
 
       {/* --- 2. Tools Grid --- */}
-      <section className="mb-12">
-        <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-          {t.toolsHeader}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {getToolsData().map((tool) => (
+      <section className="mx-auto mb-12 w-[calc(100%-2rem)] max-w-6xl rounded-[2.5rem] border border-slate-100/80 bg-white/70 px-4 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] backdrop-blur sm:w-[calc(100%-4rem)] md:px-7 md:py-8">
+        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">Growth OS Apps</span>
+            <h2 className="mt-1 text-2xl font-black leading-tight text-slate-900 md:text-3xl">
+              เครื่องมือเฉพาะสำหรับคุณ
+            </h2>
+          </div>
+          <p className="max-w-md text-sm font-bold leading-relaxed text-slate-500 md:text-right">
+            เลือกเครื่องมือที่อยากใช้ เพื่ออัพสกิลของคุณ
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+          {getToolsData().map((tool, index) => (
             <Link key={tool.id} href={`${tool.path}/info`} className="block h-full group">
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 flex items-center gap-4 cursor-pointer hover:-translate-y-1 h-full relative overflow-hidden">
+              <div className="relative flex min-h-[210px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-white bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:min-h-[230px] sm:rounded-[2rem] sm:p-6 [&_.tool-gimmick]:mt-2 [&_.tool-gimmick]:max-w-full [&_.tool-gimmick]:px-2 [&_.tool-gimmick]:py-1 [&_.tool-gimmick]:text-[8px] [&_.tool-gimmick_span]:truncate sm:[&_.tool-gimmick]:mt-3 sm:[&_.tool-gimmick]:px-3 sm:[&_.tool-gimmick]:py-1.5 sm:[&_.tool-gimmick]:text-[10px]">
+                <div className={`absolute inset-0 opacity-70 ${
+                  index % 6 === 0 ? "bg-gradient-to-br from-red-50 via-white to-rose-50" :
+                  index % 6 === 1 ? "bg-gradient-to-br from-blue-50 via-white to-sky-50" :
+                  index % 6 === 2 ? "bg-gradient-to-br from-amber-50 via-white to-orange-50" :
+                  index % 6 === 3 ? "bg-gradient-to-br from-emerald-50 via-white to-teal-50" :
+                  index % 6 === 4 ? "bg-gradient-to-br from-purple-50 via-white to-fuchsia-50" :
+                  "bg-gradient-to-br from-slate-100 via-white to-sky-50"
+                }`} />
 
-                <div className={`p-4 rounded-2xl border ${tool.color} group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 shrink-0 self-start`}>
-                  {tool.icon}
+                <div className="relative z-10 flex items-start justify-between gap-3 sm:gap-4">
+                  <div className={`rounded-[1.1rem] border p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)] ${tool.color} transition-all duration-300 group-hover:rotate-6 group-hover:scale-105 sm:rounded-[1.35rem] sm:p-4 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-7 sm:[&_svg]:w-7`}>
+                    {tool.icon}
+                  </div>
+
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-slate-300 shadow-sm transition-all duration-300 group-hover:bg-slate-950 group-hover:text-white sm:h-11 sm:w-11">
+                    <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform duration-300 sm:h-5 sm:w-5" />
+                  </div>
                 </div>
 
-                <div className="flex-1 flex flex-col h-full justify-center">
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-lg group-hover:text-red-600 transition-colors">{tool.name}</h3>
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed break-words text-pretty pr-2">
-                      {tool.desc}
-                    </p>
+                <div className="relative z-10 mt-auto pt-6 sm:pt-8">
+                  <h3 className="text-[16px] font-black leading-tight text-slate-950 transition-colors group-hover:text-slate-800 sm:text-xl">{tool.name}</h3>
+                  <p className="mt-2 min-h-[44px] text-[11px] font-bold leading-relaxed text-slate-500 sm:min-h-[48px] sm:text-sm">
+                    {tool.desc}
+                  </p>
+                  <div className="mt-3 min-h-[28px] overflow-hidden sm:mt-5 sm:min-h-[36px]">
+                    <div className="inline-flex max-w-full">
+                      {tool.gimmickUI}
+                    </div>
                   </div>
-                  <div className="mt-auto pt-3">
-                    {tool.gimmickUI}
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-1 text-slate-300 group-hover:text-red-500 transition-colors shrink-0">
-                  <span className="text-[10px] sm:text-[12px] font-bold group-hover:-translate-x-1 transition-transform duration-300">
-                    {t.toolsDetailBtn}
-                  </span>
-                  <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </div>
               </div>
             </Link>
@@ -747,7 +703,7 @@ export default function Home() {
 
       {/* --- 3. Pitch Section (สำหรับคนที่ยังไม่ Login) --- */}
       {!user && (
-        <section className="mb-12 max-w-7xl mx-auto bg-slate-900 rounded-[3rem] overflow-hidden relative min-h-[550px] flex items-center shadow-2xl border border-white/5">
+        <section className="mx-auto mb-12 flex min-h-[550px] w-[calc(100%-2rem)] max-w-6xl items-center overflow-hidden rounded-[2.5rem] border border-white/5 bg-slate-900 shadow-2xl sm:w-[calc(100%-4rem)] md:rounded-[3rem] relative">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 opacity-80" />
 
@@ -913,9 +869,75 @@ export default function Home() {
         </section>
       )}
 
-      <p onClick={() => setShowStoryModal(true)} className="mt-12 text-center text-xs text-slate-400 hover:text-indigo-600 cursor-pointer font-bold tracking-wide transition-colors">
-        {t.footer}
-      </p>
+      <footer className="mx-auto mt-12 flex max-w-5xl flex-col items-center pb-12 sm:pb-16">
+        <div className="mb-5 flex items-center justify-center gap-7 text-slate-500 sm:gap-8">
+          <Link
+            href="https://x.com/FuiiThanawat"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="X"
+            className="group grid h-11 w-11 place-items-center rounded-full transition-all duration-300 hover:-translate-y-1 hover:bg-slate-900 hover:text-white hover:shadow-xl"
+          >
+            <svg viewBox="0 0 1200 1227" className="h-6 w-6" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M714.16 519.28 1160.89 0h-105.86L667.14 450.89 357.33 0H0l468.49 681.82L0 1226.37h105.87l409.62-476.15 327.18 476.15H1200L714.16 519.28Zm-144.99 168.55-47.47-67.9L144.01 79.69h162.6l304.8 435.99 47.47 67.9 396.2 566.72h-162.6L569.17 687.83Z"
+              />
+            </svg>
+          </Link>
+
+          <Link
+            href="https://www.instagram.com/upskillwithfuii/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="group grid h-11 w-11 place-items-center rounded-full transition-all duration-300 hover:-translate-y-1 hover:bg-gradient-to-br hover:from-fuchsia-500 hover:via-rose-500 hover:to-amber-400 hover:text-white hover:shadow-xl"
+          >
+            <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Z"
+              />
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"
+              />
+              <path fill="currentColor" d="M17.5 6.5h.01" />
+            </svg>
+          </Link>
+
+          <Link
+            href="https://www.tiktok.com/@upskillwithfuii"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="TikTok"
+            className="group grid h-11 w-11 place-items-center rounded-full transition-all duration-300 hover:-translate-y-1 hover:bg-slate-950 hover:text-white hover:shadow-xl"
+          >
+            <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M16.6 3c.35 2.03 1.55 3.45 3.4 3.64v3.12a7.3 7.3 0 0 1-3.34-.9v5.86c0 3.1-2.3 5.28-5.32 5.28C8.56 20 6 18.08 6 15.18c0-3.28 2.88-5.36 6.15-4.78v3.17c-1.3-.42-2.73.2-2.73 1.6 0 .98.82 1.62 1.85 1.62 1.12 0 1.9-.72 1.9-2.1V3h3.43Z"
+              />
+            </svg>
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowStoryModal(true)}
+          className="cursor-pointer text-center text-xs font-bold tracking-wide text-slate-400 transition-colors hover:text-indigo-600"
+        >
+          {t.footer}
+        </button>
+      </footer>
 
       {/* --- Upgrade Modal --- */}
       {showUpgradeModal && (
@@ -944,52 +966,68 @@ export default function Home() {
               </div>
 
               <h2 className="text-2xl font-black text-white mb-1 tracking-tight">
-                PRO ACCESS
+                เลือกแผนที่เหมาะกับคุณ
               </h2>
-              <p className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.2em] mb-8">
-                Elevate Your Journey
+              <p className="text-slate-400 text-[11px] font-bold leading-relaxed mb-6">
+                ค่าสมาชิกช่วยจ่ายต้นทุน AI และเซิร์ฟเวอร์จริง เพื่อให้ฟุ้ยพัฒนา Upskill Everyday ต่อได้ทุกเดือนครับ
               </p>
 
-              <div className="flex bg-slate-950/50 p-1 rounded-2xl mb-8 border border-white/5">
-                <button
-                  onClick={() => setBillingPlan('monthly')}
-                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 ${billingPlan === 'monthly'
-                    ? 'bg-slate-800 text-amber-400 shadow-lg'
-                    : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                >
-                  MONTHLY
-                </button>
-                <button
-                  onClick={() => setBillingPlan('yearly')}
-                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-500 relative ${billingPlan === 'yearly'
-                    ? 'bg-slate-800 text-amber-400 shadow-lg'
-                    : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                >
-                  YEARLY
-                  <div className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black border border-slate-900">
-                    -18%
-                  </div>
-                </button>
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                {[
+                  { id: "monthly" as ProPlan, label: "PRO รายเดือน", price: "฿149", sub: "ช่วยค่า AI รายเดือน" },
+                  { id: "yearly" as ProPlan, label: "PRO รายปี", price: "฿990", sub: "BEST VALUE" },
+                  { id: "lifetime" as ProPlan, label: "LIFETIME", price: "฿2,490", sub: "จ่ายครั้งเดียวจบ" },
+                ].map((plan) => (
+                  <button
+                    key={plan.id}
+                    onClick={() => setBillingPlan(plan.id)}
+                    className={`rounded-2xl border p-3 text-left transition-all duration-300 ${billingPlan === plan.id
+                      ? "border-amber-300 bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950 shadow-[0_18px_30px_-16px_rgba(245,158,11,0.8)]"
+                      : "border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.07]"
+                    } ${plan.id === "lifetime" ? "col-span-2" : ""}`}
+                  >
+                    <span className="block text-[9px] font-black uppercase tracking-[0.2em] opacity-80">{plan.label}</span>
+                    <span className="mt-1 block text-2xl font-black tracking-tight">{plan.price}</span>
+                    <span className="block text-[10px] font-bold opacity-70">{plan.sub}</span>
+                  </button>
+                ))}
               </div>
 
-              <div className="mb-8">
-                <div className="flex items-center justify-center gap-1 leading-none">
-                  <span className="text-4xl font-black text-white">
-                    {billingPlan === 'monthly' ? '$5' : '$49'}
-                  </span>
-                  <span className="text-slate-500 font-bold text-sm self-end pb-1">
-                    {billingPlan === 'monthly' ? '/mo' : '/year'}
-                  </span>
-                </div>
+              <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300 mb-3">
+                  {billingPlan === "yearly" ? "รายปีคุ้มที่สุด" : billingPlan === "lifetime" ? "ปลดล็อกถาวร" : "พร้อมใช้ตอนนี้"}
+                </p>
+                <ul className="space-y-2 text-xs font-bold text-slate-200">
+                  {billingPlan === "monthly" && (
+                    <>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ช่วยค่า AI รายเดือน ปลดล็อกพลังเต็มรูปแบบ</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> หักอัตโนมัติผ่านบัตร หรือเติมวันใช้งาน 30 วันผ่าน PromptPay</li>
+                    </>
+                  )}
+                  {billingPlan === "yearly" && (
+                    <>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เฉลี่ยเพียง ฿82.50 / เดือน ประหยัดทันที 50%</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ฟรี Ebook “สร้างก่อนพร้อม” + Badge ยุคบุกเบิก</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> คลังออมมีสติ, Book Shelf และล็อกราคานี้ตลอดชีพ</li>
+                    </>
+                  )}
+                  {billingPlan === "lifetime" && (
+                    <>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> สนับสนุนเต็มสูบ ปลดล็อกถาวรตลอดชีพ</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ได้รับสิทธิ์และโบนัสพิเศษทั้งหมดเหมือนแพ็กเกจรายปี</li>
+                    </>
+                  )}
+                </ul>
               </div>
 
               <button
-                onClick={handleUpgrade}
-                className="w-full bg-white text-slate-900 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-400 transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(255,255,255,0.1)] active:scale-95 flex items-center justify-center gap-2 group"
+                onClick={() => handleUpgrade()}
+                className="w-full bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all duration-300 shadow-[0_18px_40px_-18px_rgba(245,158,11,0.9)] active:scale-95 flex items-center justify-center gap-2 group"
               >
-                Unleash Pro Potential
+                สนับสนุนและไปต่อ
                 <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
 
@@ -997,7 +1035,7 @@ export default function Home() {
                 onClick={() => setShowUpgradeModal(false)}
                 className="mt-5 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-slate-300 transition-colors"
               >
-                Maybe Later
+                ใช้ Free ต่อ
               </button>
 
               <div className="mt-8 pt-6 border-t border-white/5 flex justify-center gap-6">
@@ -1016,9 +1054,8 @@ export default function Home() {
       )}
     </div>
     {/* --- 🧭 Floating App Guide Button (Top Right) --- */}
-    {!user && (
+    {false && !user && (
       <div className="fixed top-24 right-4 sm:top-28 sm:right-6 z-[999] group/floating">
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-600 rounded-full blur-md opacity-40 group-hover/floating:opacity-100 group-hover/floating:scale-110 transition-all duration-700 animate-pulse" />
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -1028,22 +1065,16 @@ export default function Home() {
             setGuideStep(1);
             setShowGuide(true);
           }}
-          className="relative flex items-center gap-3 bg-slate-900/40 hover:bg-slate-900/60 backdrop-blur-xl px-2 py-2 pr-5 rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all overflow-hidden group"
+          className="relative flex items-center gap-2 rounded-full border border-white/30 bg-slate-950/75 px-2 py-2 pr-4 shadow-[0_14px_34px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-all hover:bg-slate-950/85"
         >
-          {/* Animated Glass Shine */}
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000" />
           
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-inner group-hover:rotate-180 transition-transform duration-700">
-            <Sparkles size={16} className="text-white drop-shadow-md" />
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/12 text-white shadow-inner">
+            <HelpCircle size={15} strokeWidth={3} />
           </div>
-          <div className="flex flex-col items-start pr-1">
-            <span className="text-[8px] sm:text-[9px] font-black bg-gradient-to-r from-pink-300 to-violet-300 bg-clip-text text-transparent uppercase tracking-[0.3em] leading-none mb-1">
-              NEW HERE?
-            </span>
-            <span className="text-[11px] sm:text-[12px] font-black text-white leading-none tracking-wide">
-              คู่มือเริ่มต้น 🚀
-            </span>
-          </div>
+          <span className="relative z-10 text-[10px] font-black text-white tracking-[0.14em]">
+            คู่มือเริ่มต้น
+          </span>
         </motion.button>
       </div>
     )}
@@ -1063,10 +1094,10 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.8, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 30 }}
-            className="relative w-full max-w-[400px] bg-[#0A0A0A]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
+            className={`relative w-full ${guideStep === 2 ? "max-w-[460px]" : "max-w-[400px]"} bg-[#0A0A0A]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col`}
           >
             {/* --- Dynamic Glowing Header --- */}
-            <div className="relative h-44 flex items-center justify-center overflow-hidden">
+            <div className={`relative ${guideStep === 2 ? "h-56" : "h-44"} flex items-center justify-center overflow-hidden`}>
               <div className="absolute inset-0 bg-slate-950/40 z-10" />
               
               {/* Background Gradients per Step */}
@@ -1092,27 +1123,41 @@ export default function Home() {
                 className="relative z-20"
               >
                 {guideStep === 1 ? (
-                  <Image
-                    src="/avatars/rookie-static.png"
-                    alt="Rookie Avatar"
-                    width={140}
-                    height={140}
-                    className="drop-shadow-2xl"
-                  />
+                  <div className="rounded-[2rem] border border-white/15 bg-white/10 px-7 py-5 shadow-[0_24px_70px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+                    <Image
+                      src="/logo-full.png"
+                      alt="Upskill Everyday"
+                      width={220}
+                      height={80}
+                      className="h-auto w-[190px] drop-shadow-2xl"
+                      priority
+                    />
+                  </div>
                 ) : guideStep === 2 ? (
-                  <div className="flex gap-2.5 items-center">
+                  <div className="grid w-[420px] max-w-[calc(100vw-2.5rem)] grid-cols-3 gap-3">
                     {[
-                      { icon: <PieChart size={20} className="text-red-400" />, label: "Wheel" },
-                      { icon: <Users size={20} className="text-blue-400" />, label: "DISC" },
-                      { icon: <Wallet size={20} className="text-amber-400" />, label: "Money" },
-                      { icon: <BookOpen size={20} className="text-emerald-400" />, label: "Library" },
-                      { icon: <Quote size={20} className="text-purple-400" />, label: "คมสัดสัด" },
-                    ].map((t, i) => (
-                      <div key={i} className="flex flex-col items-center gap-1">
-                        <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-md">
-                          {t.icon}
+                      { src: "/Phase1.png", label: "Phase 1", title: "ค้นหาตัวตน", position: "object-[center_82%] sm:object-[center_58%]" },
+                      { src: "/Phase2.png", label: "Phase 2", title: "สุขระหว่างทาง", position: "object-[center_84%] sm:object-[center_60%]" },
+                      { src: "/Phase3.png", label: "Phase 3", title: "ระลึกความตาย", position: "object-[center_84%] sm:object-[center_60%]" },
+                    ].map((phase) => (
+                      <div key={phase.label} className="relative h-48 overflow-hidden rounded-[1.65rem] border border-white/25 bg-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.36)]">
+                        <Image
+                          src={phase.src}
+                          alt={phase.label}
+                          fill
+                          sizes="140px"
+                          className={`scale-[1.45] object-cover sm:scale-[1.12] ${phase.position}`}
+                        />
+                        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950/90 via-slate-950/50 to-transparent sm:h-10 sm:from-slate-950/60 sm:via-slate-950/18" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/82 via-slate-950/10 to-white/5" />
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="inline-flex rounded-full bg-white/90 px-2 py-1 text-[7px] font-black uppercase tracking-widest text-slate-900">
+                            {phase.label}
+                          </div>
+                          <p className="mt-1 text-[9px] font-black leading-tight text-white drop-shadow">
+                            {phase.title}
+                          </p>
                         </div>
-                        <span className="text-[8px] font-bold text-white/50 tracking-tight">{t.label}</span>
                       </div>
                     ))}
                   </div>
@@ -1194,46 +1239,48 @@ export default function Home() {
                   className="w-full"
                 >
                   <h3 className="text-[22px] font-black text-white mb-2.5 leading-tight tracking-tight">
-                    {guideStep === 1 && "แพลตฟอร์มวิเคราะห์ตัวตนที่ เข้าใจคุณ"}
-                    {guideStep === 2 && "แบบประเมินของเรา"}
-                    {guideStep === 3 && "ให้ AI รู้จักคุณมากที่สุด"}
-                    {guideStep === 4 && "พร้อมเริ่มต้นแล้ว?"}
+                    {guideStep === 1 && "ยินดีต้อนรับสู่ Upskill Everyday"}
+                    {guideStep === 2 && "เส้นทาง 3 Phase ของคุณ"}
+                    {guideStep === 3 && "ปลดล็อกทีละขั้น"}
+                    {guideStep === 4 && "เริ่มที่ Phase 1"}
                   </h3>
 
                   {guideStep === 1 && (
                     <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
-                      ผ่านแบบประเมินที่ออกแบบมาเพื่อคุณโดยเฉพาะ
+                      พื้นที่ส่วนตัวสำหรับสำรวจตัวเอง สะสม XP และค่อยๆ เติบโตในแบบของคุณ
                     </p>
                   )}
                   {guideStep === 2 && (
-                    <div className="w-full max-w-[280px] mx-auto space-y-2 text-left mt-1">
+                    <div className="w-full max-w-[300px] mx-auto space-y-2.5 text-left mt-1">
                       {[
-                        { color: "bg-red-500",     name: "Wheel of Life",    desc: "สมดุลชีวิต 8 ด้าน + AI แผน 7 วัน" },
-                        { color: "bg-blue-500",    name: "DISC",             desc: "ค้นหาตัวตนและสไตล์การสื่อสาร" },
-                        { color: "bg-amber-500",   name: "Money Avatar",     desc: "ถอดรหัสพฤติกรรมการเงินของคุณ" },
-                        { color: "bg-emerald-500", name: "Library of Souls", desc: "สไตล์การอ่าน สะท้อนตัวตน 16 แบบ" },
-                        { color: "bg-purple-500",  name: "คมสัดสัด",         desc: "สร้างคำคมฮีลใจเฉพาะตัวด้วย AI" },
+                        { color: "from-orange-500 to-rose-500", name: "Phase 1 ค้นหาตัวตน", desc: "สำรวจชีวิต ความคิด การเงิน และสไตล์ตัวเอง" },
+                        { color: "from-pink-500 to-violet-500", name: "Phase 2 สุขระหว่างทาง", desc: "เข้าใจอารมณ์ ความกลัว ความสุข และเติบโตกับพี่ฟุ้ย" },
+                        { color: "from-amber-400 to-emerald-400", name: "Phase 3 ระลึกความตาย", desc: "ฝึกโฟกัส ทบทวนชีวิต และเลือกสิ่งที่สำคัญจริงๆ" },
                       ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${item.color} shrink-0`} />
-                          <span className="text-white font-bold text-[12px] shrink-0">{item.name}</span>
-                          <span className="text-slate-500 text-[11px] truncate">{item.desc}</span>
+                        <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                          <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${item.color} text-[11px] font-black text-white shadow-lg`}>
+                            {i + 1}
+                          </div>
+                          <div>
+                            <p className="text-[12px] font-black text-white">{item.name}</p>
+                            <p className="mt-0.5 text-[10px] font-bold leading-relaxed text-slate-500">{item.desc}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
                   {guideStep === 3 && (
                     <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
-                      ยิ่งทำแบบประเมิน<span className="text-white font-semibold">ครบมากเท่าไหร่</span>{" "}
-                      พี่ฟุ้ย (AI Mentor) ยิ่งรู้จักนิสัยและเป้าหมายของคุณ{" "}
-                      เพื่อให้คำแนะนำที่<span className="text-white font-semibold">แม่นที่สุด</span>
+                      แอพต่างๆ จะค่อยๆ เปิดตามเส้นทางที่คุณทำสำเร็จ
+                      <span className="text-white font-semibold"> ไม่ต้องรีบ ไม่ต้องงง</span>{" "}
+                      แค่ทำทีละขั้นแล้วระบบจะพาไปต่อเอง
                     </p>
                   )}
                   {guideStep === 4 && (
                     <p className="text-slate-400 text-[13px] leading-relaxed max-w-[260px] mx-auto">
                       <span className="text-white font-semibold">Login ฟรีด้วย Google</span>{" "}
-                      บันทึกผลประเมิน สะสม XP อัพ Level และให้ AI ดูแลการพัฒนาตัวเองของคุณ
-                      <span className="text-white font-semibold"> แบบส่วนตัวทุกวัน</span>
+                      แล้วเริ่มจาก Wheel of Life ใน Phase 1 เพื่อให้โปรไฟล์และ Avatar ของคุณ
+                      <span className="text-white font-semibold"> ค่อยๆ เติบโตไปพร้อมกัน</span>
                     </p>
                   )}
                 </motion.div>

@@ -12,6 +12,7 @@ import { db, auth } from "@/lib/firebase";
 import { doc, setDoc, increment, arrayUnion, getDoc, updateDoc, collection, query, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { getStartOfMonday, getCalendarWeekId } from "@/utils/dashboardHelpers";
+import { playSuccessChime } from "@/utils/soundEffects";
 
 import { Inter, Geist_Mono } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
@@ -570,6 +571,7 @@ export default function DeepWorkPage() {
       
       await setDoc(userDocRef, payload, { merge: true });
       await setDoc(weeklyStatsRef, { focusMinutes: increment(selectedTime) }, { merge: true });
+      playSuccessChime();
 
       await updateSessionStatus("idle"); // รีเซ็ตสถานะเป็น idle เมื่อเคลมแต้มเสร็จ
       router.push("/dashboard?tab=resources");

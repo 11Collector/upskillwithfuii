@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Swords, Play, ArrowLeft, Zap, User as UserIcon, Globe, Sparkles, HelpCircle, Info, Clock, Trophy } from "lucide-react";
+import { Users, Swords, Play, ArrowLeft, Zap, User as UserIcon, Globe, Sparkles, HelpCircle, Info, Clock, Trophy, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
@@ -46,6 +46,13 @@ export default function FocusRoomPage() {
 
   const [viewMode, setViewMode] = useState<"selection" | "lounge">("selection");
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const subscriptionStatus = userData?.subscriptionStatus || userData?.subscription_status || "";
+  const subscriptionTier = userData?.subscriptionTier || userData?.subscription_tier || "";
+  const isProMember =
+    userData?.role === "premium" ||
+    subscriptionTier === "pro" ||
+    ["active", "trialing"].includes(subscriptionStatus) ||
+    Boolean(userData?.isLifetimeMember);
 
   // Update currentTime every second for UI purposes
   useEffect(() => {
@@ -57,6 +64,12 @@ export default function FocusRoomPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [viewMode]);
+
+  useEffect(() => {
+    if (viewMode === "lounge" && userData && !isProMember) {
+      setViewMode("selection");
+    }
+  }, [viewMode, userData, isProMember]);
 
   // Heartbeat System: Update lastActive every 60 seconds if joined
   useEffect(() => {
@@ -74,26 +87,43 @@ export default function FocusRoomPage() {
     return () => clearInterval(heartbeat);
   }, [user, isJoined]);
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            setUserData(data);
-            setTaskMessage(data.lastFocusTask || "");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        } finally {
-          setIsLoading(false);
+
+        if (unsubSnapshot) {
+          unsubSnapshot();
+          unsubSnapshot = null;
         }
+
+        const userRef = doc(db, "users", currentUser.uid);
+        unsubSnapshot = onSnapshot(userRef, (userDoc) => {
+          try {
+            if (userDoc.exists()) {
+              const data = userDoc.data();
+              setUserData(data);
+              setTaskMessage(data.lastFocusTask || "");
+            }
+          } catch (error) {
+            console.error("Error listening to user data:", error);
+          } finally {
+            setIsLoading(false);
+          }
+        }, (error) => {
+          console.error("User doc listener failed in focus room:", error);
+          setIsLoading(false);
+        });
       } else {
         router.push("/");
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, [router]);
 
   useEffect(() => {
@@ -206,6 +236,7 @@ export default function FocusRoomPage() {
 
   const handleJoinLounge = async () => {
     if (!user || !userData) return;
+    if (!isProMember) return;
     try {
       const sessionRef = doc(db, "active_sessions", user.uid);
       await setDoc(sessionRef, {
@@ -250,6 +281,7 @@ export default function FocusRoomPage() {
   };
 
   const handleStartLoungeFocus = async () => {
+    if (!isProMember) return;
     if (!isJoined) {
       await handleJoinLounge();
     } else {
@@ -466,19 +498,44 @@ export default function FocusRoomPage() {
               {/* Lounge Mode Card */}
               <motion.div
                 whileHover={{ y: -5, scale: 1.01 }}
-                onClick={() => setViewMode("lounge")}
-                className="group cursor-pointer relative rounded-[2rem] bg-gradient-to-br from-blue-600/10 to-cyan-500/5 backdrop-blur-xl border border-blue-400/30 p-8 sm:p-10 overflow-hidden flex flex-col items-center text-center transition-all hover:from-blue-600/20 hover:to-cyan-400/10 hover:border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.15)]"
+                onClick={() => {
+                  if (!isProMember) {
+                    router.push("/dashboard?membership=1");
+                    return;
+                  }
+                  setViewMode("lounge");
+                }}
+                className={`group relative rounded-[2rem] backdrop-blur-xl border p-8 sm:p-10 overflow-hidden flex flex-col items-center text-center transition-all cursor-pointer ${
+                  isProMember
+                    ? "bg-gradient-to-br from-blue-600/10 to-cyan-500/5 border-blue-400/30 hover:from-blue-600/20 hover:to-cyan-400/10 hover:border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.15)]"
+                    : "bg-white/[0.04] border-white/10 opacity-85 hover:bg-white/[0.06] hover:border-white/20"
+                }`}
               >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/20 blur-[80px] rounded-full pointer-events-none group-hover:bg-cyan-400/30 transition-colors duration-700" />
+                <div className={`absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none transition-colors duration-700 ${
+                  isProMember ? "bg-cyan-500/20 blur-[80px] group-hover:bg-cyan-400/30" : "bg-amber-400/10 blur-[90px]"
+                }`} />
 
                 {/* Online Badge */}
                 <div className="absolute top-6 right-6 flex items-center gap-2 bg-blue-950/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-blue-400/20 z-20">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                  <span className="text-[9px] font-bold text-cyan-300 tracking-widest uppercase">ออนไลน์ {activeUsers.length} คน</span>
+                  {isProMember ? (
+                    <>
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                      <span className="text-[9px] font-bold text-cyan-300 tracking-widest uppercase">ออนไลน์ {activeUsers.length} คน</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={12} className="text-amber-200" />
+                      <span className="text-[9px] font-black text-amber-200 tracking-widest uppercase">PRO ONLY</span>
+                    </>
+                  )}
                 </div>
 
-                <div className="w-20 h-20 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_25px_rgba(6,182,212,0.3)]">
-                  <Globe size={32} className="text-cyan-300" />
+                <div className={`w-20 h-20 rounded-full border flex items-center justify-center mb-6 relative z-10 transition-transform duration-500 ${
+                  isProMember
+                    ? "bg-cyan-500/20 border-cyan-400/40 group-hover:scale-110 shadow-[0_0_25px_rgba(6,182,212,0.3)]"
+                    : "bg-amber-300/10 border-amber-200/20 shadow-inner"
+                }`}>
+                  {isProMember ? <Globe size={32} className="text-cyan-300" /> : <Lock size={30} className="text-amber-100" />}
                 </div>
 
                 <h3 className="text-2xl font-black mb-2 relative z-10 tracking-wide uppercase text-cyan-50">ห้องทำงานรวม (Lounge)</h3>
@@ -486,9 +543,11 @@ export default function FocusRoomPage() {
                   เข้าห้องรวมเพื่อดูเป้าหมายเพื่อนๆ ท้าทายกัน และสร้างวินัยไปพร้อมกัน
                 </p>
 
-                <div className="mt-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-900/40 border border-cyan-500/30 text-[10px] font-black uppercase tracking-widest relative z-10">
-                  <Sparkles size={12} className="text-cyan-300" />
-                  <span className="text-cyan-200">โบนัสห้องรวม: +15 XP</span>
+                <div className={`mt-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest relative z-10 ${
+                  isProMember ? "bg-cyan-900/40 border-cyan-500/30" : "bg-amber-300/10 border-amber-200/20"
+                }`}>
+                  <Sparkles size={12} className={isProMember ? "text-cyan-300" : "text-amber-200"} />
+                  <span className={isProMember ? "text-cyan-200" : "text-amber-100"}>{isProMember ? "โบนัสห้องรวม: +15 XP" : "ปลดล็อกด้วย PRO"}</span>
                 </div>
               </motion.div>
 

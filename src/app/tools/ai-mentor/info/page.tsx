@@ -14,7 +14,9 @@ import { auth, googleProvider, db } from "@/lib/firebase";
 
 export default function AiMentorInfoPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
@@ -24,6 +26,42 @@ export default function AiMentorInfoPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadProfile = async () => {
+      setProfileLoading(true);
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!cancelled) setProfile(snap.exists() ? snap.data() : null);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    };
+
+    loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const hasCompletedPhase1 =
+    !!profile?.hasWheelXP &&
+    !!profile?.hasDiscXP &&
+    !!profile?.hasMoneyXP &&
+    !!profile?.hasLibrarySoulXP &&
+    (!!profile?.hasCompletedPhase1Quests || (Array.isArray(profile?.completedQuestIds) && profile.completedQuestIds.length >= 2));
+
+  const hasQuote = !!(profile?.lastQuote || profile?.lastQuoteDate || profile?.lastQuoteTime);
+  const hasGhost = !!(profile?.lastGhostResult || profile?.lastGhostResultFull);
+  const hasRedeemedReward = Array.isArray(profile?.redeemedHistory) && profile.redeemedHistory.length > 0;
+  const isSoulGuideUnlocked = hasCompletedPhase1 && hasQuote && hasGhost && hasRedeemedReward;
 
   const handleLogin = async () => {
     setIsLoggingIn(true);
@@ -92,8 +130,10 @@ export default function AiMentorInfoPage() {
           
           {authLoading ? (
             <div className="h-[72px] w-[260px] bg-slate-100 animate-pulse rounded-[2rem] mx-auto" />
-          ) : user ? (
-            <Link href="/tools/ai-mentor">
+          ) : user && profileLoading ? (
+            <div className="h-[72px] w-[260px] bg-slate-100 animate-pulse rounded-[2rem] mx-auto" />
+          ) : user && isSoulGuideUnlocked ? (
+            <Link href="/tools/soul-guide">
               <button className="group relative bg-slate-900 text-white px-8 py-4 rounded-full font-black text-lg hover:bg-black transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-3 mx-auto overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <Bot size={24} className="text-slate-400" /> 
@@ -101,6 +141,14 @@ export default function AiMentorInfoPage() {
                 <ArrowRight size={24} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
+          ) : user ? (
+            <button
+              disabled
+              className="group relative bg-slate-100 text-slate-400 px-8 py-4 rounded-full font-black text-lg shadow-sm flex items-center gap-3 mx-auto border border-slate-200 cursor-not-allowed"
+            >
+              <Lock size={22} />
+              ล็อกอยู่ ต้องปลด Phase 2 ก่อน
+            </button>
           ) : (
             <button 
               onClick={handleLogin}
@@ -112,7 +160,9 @@ export default function AiMentorInfoPage() {
             </button>
           )}
           <p className="text-slate-400 text-[11px] mt-5 font-black uppercase tracking-[0.3em]">
-            {!authLoading && (user ? "พร้อมวิเคราะห์ข้อมูลของคุณแล้ว" : "กรุณาเข้าสู่ระบบเพื่อคุยกับพี่ฟุ้ย (AI Mentor ส่วนตัว)")}
+            {!authLoading && (user
+              ? (isSoulGuideUnlocked ? "พร้อมวิเคราะห์ข้อมูลของคุณแล้ว" : "ทำ Phase 2 ตามลำดับใน Dashboard เพื่อปลดล็อกพี่ฟุ้ย")
+              : "กรุณาเข้าสู่ระบบเพื่อคุยกับพี่ฟุ้ย (AI Mentor ส่วนตัว)")}
           </p>
         </header>
 
@@ -323,17 +373,8 @@ export default function AiMentorInfoPage() {
           </div>
         </section>
 
-        {/* --- 5. Final CTA --- */}
+        {/* --- 5. Final Note --- */}
         <div className="text-center pb-20">
-          {!authLoading && user && (
-            <Link href="/tools/ai-mentor">
-              <button className="bg-slate-900 text-white px-10 py-4 rounded-full font-black text-[17px] hover:bg-black transition-all hover:scale-110 shadow-2xl flex items-center gap-4 mx-auto border border-slate-800 group">
-                คุยกับพี่ฟุ้ยเดี๋ยวนี้
-                <ArrowRight size={28} className="text-slate-500 group-hover:translate-x-2 transition-transform" />
-              </button>
-            </Link>
-          )}
-          
           <p className="text-slate-400 text-sm mt-8 font-bold italic max-w-md mx-auto">
             "เพราะการมีพี่ฟุ้ยเป็นเพื่อนคู่คิด คือทางลัดที่สั้นที่สุดสู่การอัพสกิล"
           </p>

@@ -11,7 +11,7 @@ import Link from "next/link";
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 // 🎨 2. Themes
@@ -63,6 +63,8 @@ export default function PremiumLibraryPage() {
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [readArticles, setReadArticles] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [isProMember, setIsProMember] = useState(false);
+  const [hasEbookAccess, setHasEbookAccess] = useState(false);
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -102,27 +104,63 @@ export default function PremiumLibraryPage() {
     fetchArticles();
   }, [isMounted]);
 
-  // 2. Fetch User Read History
+  // 2. Fetch User Read History & PRO status
   useEffect(() => {
     if (!isMounted) return;
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        try {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            if (userData.readArticles) {
-              setReadArticles(userData.readArticles);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching read articles:", error);
+
+        if (unsubSnapshot) {
+          unsubSnapshot();
+          unsubSnapshot = null;
         }
+
+        const userRef = doc(db, "users", currentUser.uid);
+        unsubSnapshot = onSnapshot(userRef, (snap) => {
+          try {
+            if (snap.exists()) {
+              const userData = snap.data();
+              if (userData.readArticles) {
+                setReadArticles(userData.readArticles);
+              }
+              const subscriptionStatus = userData?.subscriptionStatus || userData?.subscription_status || "";
+              const subscriptionTier = userData?.subscriptionTier || userData?.subscription_tier || "";
+              const isPro =
+                userData?.role === "premium" ||
+                subscriptionTier === "pro" ||
+                ["active", "trialing"].includes(subscriptionStatus) ||
+                Boolean(userData?.isLifetimeMember);
+
+              setIsProMember(isPro);
+
+              const hasAccess =
+                isPro && (
+                  Boolean(userData?.isLifetimeMember) ||
+                  userData?.subscriptionPlan === "lifetime" ||
+                  userData?.subscriptionPlan === "yearly" ||
+                  userData?.subscriptionPlan === "founding_yearly"
+                );
+              setHasEbookAccess(hasAccess);
+            }
+          } catch (error) {
+            console.error("Error reading user data in library:", error);
+          }
+        });
+      } else {
+        setUser(null);
+        setReadArticles([]);
+        setIsProMember(false);
+        setHasEbookAccess(false);
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, [isMounted]);
 
   const filteredArticles = articles.filter(article => {
@@ -155,13 +193,19 @@ export default function PremiumLibraryPage() {
         </header>
 
         {/* --- Ebook Banner --- */}
-        <Link href="/ebook" className="flex items-center justify-between gap-4 mb-8 px-5 py-3.5 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7 transition-colors group">
-          <div className="flex items-center gap-3">
-            <span className="text-lg">📖</span>
-            <span className="text-sm text-slate-400">อยากอ่านหนังสือรวมบทความเล่มแรก?</span>
-          </div>
-          <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ดาวน์โหลดฟรี →</span>
-        </Link>
+        {(!user || !isProMember || hasEbookAccess) && (
+          <Link href="/ebook" className="flex items-center justify-between gap-4 mb-8 px-5 py-3.5 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7 transition-colors group">
+            <div className="flex items-center gap-3">
+              <span className="text-lg">📖</span>
+              <span className="text-sm text-slate-400">อยากอ่านหนังสือรวมบทความเล่มแรก?</span>
+            </div>
+            {hasEbookAccess ? (
+              <span className="text-xs font-bold text-emerald-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ดาวน์โหลดฟรี (สำหรับ PRO) →</span>
+            ) : (
+              <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">โบนัสสำหรับสมาชิก PRO →</span>
+            )}
+          </Link>
+        )}
 
         {/* --- 🛠️ Categories (แก้ไขจุดที่ขอบซ้ายขาด) --- */}
         <div className="relative mb-14">
