@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { ChevronLeft, ChevronRight, X, Check, RefreshCcw, Quote, Download, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Check, RefreshCcw, Quote, Download, Loader2, Crown, AlertTriangle } from "lucide-react";
 import { Kanit } from "next/font/google";
 import { domToPng } from 'modern-screenshot';
 import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from "firebase/firestore";
 
 // 💡 1. อย่าลืม Import (ถ้ายังไม่มี)
 import { auth } from '@/lib/firebase';
@@ -161,13 +162,50 @@ export default function SwipeQuoteApp() {
 
   // 💡 2. ใส่ State และ useEffect ไว้ตรงแถวๆ บนสุดของฟังก์ชันหลัก (เช่น ใต้พวก useState อื่นๆ)
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userData, setUserData] = useState<any>(null);
+  const [isProMember, setIsProMember] = useState(false);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
 
   useEffect(() => {
-    // เรดาร์ตรวจจับว่าใคร Login อยู่
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      if (user) {
+        if (unsubSnapshot) {
+          unsubSnapshot();
+          unsubSnapshot = null;
+        }
+
+        const userRef = doc(db, "users", user.uid);
+        unsubSnapshot = onSnapshot(userRef, (snap) => {
+          try {
+            if (snap.exists()) {
+              const data = snap.data();
+              setUserData(data);
+              const subscriptionStatus = data?.subscriptionStatus || data?.subscription_status || "";
+              const subscriptionTier = data?.subscriptionTier || data?.subscription_tier || "";
+              setIsProMember(
+                data?.role === "premium" ||
+                subscriptionTier === "pro" ||
+                ["active", "trialing"].includes(subscriptionStatus) ||
+                Boolean(data?.isLifetimeMember)
+              );
+            }
+          } catch (error) {
+            console.error("Error listening to user data in khomsatsat:", error);
+          }
+        });
+      } else {
+        setUserData(null);
+        setIsProMember(false);
+      }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, []);
 
 
@@ -340,6 +378,10 @@ export default function SwipeQuoteApp() {
   };
 
   const startGame = (mood: { id: string, title: string }) => {
+    if (isOutOfQuota) {
+      setShowQuotaModal(true);
+      return;
+    }
     setPlayerMood(mood);
     const moodKey = mood.id as keyof typeof abstractWords;
     const words = abstractWords[moodKey].sort(() => Math.random() - 0.5);
@@ -492,6 +534,13 @@ export default function SwipeQuoteApp() {
     return `${classes[0]} ${classes[2]}`;
   };
 
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+  const currentDay = userData?.quoteDailyDate || "";
+  const currentCount = currentDay === todayStr ? Number(userData?.quoteDailyCount || 0) : 0;
+  const FREE_DAILY_QUOTE_LIMIT = 1;
+  const isOutOfQuota = !isProMember && currentUser && currentCount >= FREE_DAILY_QUOTE_LIMIT;
+  const remainingQuota = isProMember ? Infinity : Math.max(0, FREE_DAILY_QUOTE_LIMIT - currentCount);
+
   const timestamp = new Date().toLocaleString('th-TH', {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit'
@@ -548,6 +597,28 @@ export default function SwipeQuoteApp() {
                   <p className="text-stone-500 text-[13px] font-medium tracking-wide px-1 drop-shadow-sm text-center leading-relaxed">
                     เลือกสิ่งที่ &quot;ทัช&quot; ในใจ<br />ให้เป็นคำคมเฉพาะคุณ
                   </p>
+
+                  {currentUser && (
+                    <div className="mt-4 pointer-events-auto select-none scale-[0.95] sm:scale-100 transition-all duration-300">
+                      {isProMember ? (
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] bg-cyan-500/10 text-cyan-600 px-3 py-1.5 rounded-full border border-cyan-500/25 flex items-center gap-1.5 justify-center shadow-[0_0_15px_rgba(6,182,212,0.08)]">
+                          <Crown size={11} className="text-cyan-500 animate-pulse" /> PRO MEMBER (สร้างได้ไม่จำกัด)
+                        </span>
+                      ) : (
+                        <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-3 py-1.5 rounded-full border flex items-center gap-1.5 justify-center ${
+                          remainingQuota > 0 
+                            ? "bg-amber-500/10 text-amber-600 border-amber-500/25" 
+                            : "bg-red-500/10 text-red-600 border-red-500/25"
+                        }`}>
+                          {remainingQuota > 0 ? (
+                            <>โควตาวันนี้: เหลือ {remainingQuota}/{FREE_DAILY_QUOTE_LIMIT} ครั้ง</>
+                          ) : (
+                            <>โควตาวันนี้: หมดแล้ว (0/{FREE_DAILY_QUOTE_LIMIT})</>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -978,6 +1049,59 @@ export default function SwipeQuoteApp() {
           </div>
         )}
       </div>
+
+      {/* === QUOTA LIMIT MODAL === */}
+      <AnimatePresence>
+        {showQuotaModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full text-center relative shadow-2xl"
+            >
+              <button
+                onClick={() => setShowQuotaModal(false)}
+                className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors"
+                type="button"
+              >
+                <X size={20} />
+              </button>
+              
+              <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-5 text-amber-400">
+                <Crown size={28} />
+              </div>
+
+              <h3 className="text-xl font-black text-white mb-2">ใช้โควตาวันนี้ครบแล้ว</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                คุณสุ่มสร้างคำคมครบ 1 ครั้งของวันนี้แล้วครับ อัปเกรดเป็น PRO เพื่อสุ่มคำคมได้ไม่จำกัด และปลดล็อกห้องทำงานสมาธิ (Lounge) พร้อมรับสิทธิพิเศษอื่นๆ
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/dashboard?membership=1"
+                  onClick={() => setShowQuotaModal(false)}
+                  className="w-full py-3.5 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white text-sm font-bold shadow-lg hover:shadow-purple-500/20 transition-all text-center block"
+                >
+                  อัปเกรดเป็น PRO
+                </Link>
+                <button
+                  onClick={() => setShowQuotaModal(false)}
+                  className="w-full py-3.5 rounded-full border border-white/10 text-slate-300 text-sm font-bold hover:bg-white/5 transition-all"
+                  type="button"
+                >
+                  ไว้ทีหลัง
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

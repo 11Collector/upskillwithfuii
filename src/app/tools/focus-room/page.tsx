@@ -87,26 +87,43 @@ export default function FocusRoomPage() {
     return () => clearInterval(heartbeat);
   }, [user, isJoined]);
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            setUserData(data);
-            setTaskMessage(data.lastFocusTask || "");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        } finally {
-          setIsLoading(false);
+
+        if (unsubSnapshot) {
+          unsubSnapshot();
+          unsubSnapshot = null;
         }
+
+        const userRef = doc(db, "users", currentUser.uid);
+        unsubSnapshot = onSnapshot(userRef, (userDoc) => {
+          try {
+            if (userDoc.exists()) {
+              const data = userDoc.data();
+              setUserData(data);
+              setTaskMessage(data.lastFocusTask || "");
+            }
+          } catch (error) {
+            console.error("Error listening to user data:", error);
+          } finally {
+            setIsLoading(false);
+          }
+        }, (error) => {
+          console.error("User doc listener failed in focus room:", error);
+          setIsLoading(false);
+        });
       } else {
         router.push("/");
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, [router]);
 
   useEffect(() => {
@@ -480,15 +497,18 @@ export default function FocusRoomPage() {
 
               {/* Lounge Mode Card */}
               <motion.div
-                whileHover={isProMember ? { y: -5, scale: 1.01 } : undefined}
+                whileHover={{ y: -5, scale: 1.01 }}
                 onClick={() => {
-                  if (!isProMember) return;
+                  if (!isProMember) {
+                    router.push("/dashboard?membership=1");
+                    return;
+                  }
                   setViewMode("lounge");
                 }}
-                className={`group relative rounded-[2rem] backdrop-blur-xl border p-8 sm:p-10 overflow-hidden flex flex-col items-center text-center transition-all ${
+                className={`group relative rounded-[2rem] backdrop-blur-xl border p-8 sm:p-10 overflow-hidden flex flex-col items-center text-center transition-all cursor-pointer ${
                   isProMember
-                    ? "cursor-pointer bg-gradient-to-br from-blue-600/10 to-cyan-500/5 border-blue-400/30 hover:from-blue-600/20 hover:to-cyan-400/10 hover:border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.15)]"
-                    : "cursor-default bg-white/[0.04] border-white/10 opacity-85"
+                    ? "bg-gradient-to-br from-blue-600/10 to-cyan-500/5 border-blue-400/30 hover:from-blue-600/20 hover:to-cyan-400/10 hover:border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.15)]"
+                    : "bg-white/[0.04] border-white/10 opacity-85 hover:bg-white/[0.06] hover:border-white/20"
                 }`}
               >
                 <div className={`absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none transition-colors duration-700 ${

@@ -28,6 +28,7 @@ const updateUserSubscription = async ({
   status,
   plan,
   currentPeriodEnd,
+  cancelAtPeriodEnd,
 }: {
   userId: string;
   stripeCustomerId?: string | null;
@@ -35,6 +36,7 @@ const updateUserSubscription = async ({
   status: string;
   plan?: string;
   currentPeriodEnd?: number | null;
+  cancelAtPeriodEnd?: boolean | null;
 }) => {
   const isLifetime = plan === "lifetime";
   const isActive = isLifetime || ["active", "trialing"].includes(status);
@@ -51,6 +53,7 @@ const updateUserSubscription = async ({
       ...(typeof currentPeriodEnd === "number"
         ? { currentPeriodEnd: new Date(currentPeriodEnd * 1000) }
         : {}),
+      ...(typeof cancelAtPeriodEnd === "boolean" ? { cancelAtPeriodEnd } : {}),
       isFoundingMember: plan?.startsWith("founding") || false,
       isLifetimeMember: isLifetime,
       subscriptionUpdatedAt: FieldValue.serverTimestamp(),
@@ -97,6 +100,7 @@ export async function POST(req: Request) {
             status: "active",
             plan: session.metadata.plan || getPlanFromPrice(priceId),
             currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
           });
           return NextResponse.json({ received: true });
         }
@@ -117,6 +121,7 @@ export async function POST(req: Request) {
           status: subscriptionData?.status || "active",
           plan,
           currentPeriodEnd: subscriptionData?.current_period_end,
+          cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
         });
       }
     }
@@ -134,6 +139,7 @@ export async function POST(req: Request) {
           status: subscription.status,
           plan: subscription.metadata?.plan || getPlanFromPrice(priceId),
           currentPeriodEnd: subscriptionData.current_period_end,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
         });
       }
     }
@@ -154,6 +160,7 @@ export async function POST(req: Request) {
             status: subscription.status,
             plan: subscription.metadata?.plan || getPlanFromPrice(subscription.items.data[0]?.price.id),
             currentPeriodEnd: subscriptionData.current_period_end,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
           });
         }
       }

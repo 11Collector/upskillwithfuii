@@ -6,7 +6,7 @@ import { Mail, Download, CheckCircle, ChevronRight, Crown, Lock, Sparkles } from
 import Image from "next/image";
 import { Sarabun } from "next/font/google";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 
 const sarabun = Sarabun({
@@ -34,38 +34,67 @@ export default function EbookPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingMember, setCheckingMember] = useState(true);
   const [isProMember, setIsProMember] = useState(false);
+  const [hasEbookAccess, setHasEbookAccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsProMember(false);
+      setHasEbookAccess(false);
       setCheckingMember(true);
+
+      if (unsubSnapshot) {
+        unsubSnapshot();
+        unsubSnapshot = null;
+      }
 
       if (!currentUser) {
         setCheckingMember(false);
         return;
       }
 
-      try {
-        const snap = await getDoc(doc(db, "users", currentUser.uid));
-        const data = snap.exists() ? snap.data() : {};
-        const subscriptionStatus = data?.subscriptionStatus || data?.subscription_status || "";
-        const subscriptionTier = data?.subscriptionTier || data?.subscription_tier || "";
-        setIsProMember(
-          data?.role === "premium" ||
-          subscriptionTier === "pro" ||
-          ["active", "trialing"].includes(subscriptionStatus) ||
-          Boolean(data?.isLifetimeMember)
-        );
-      } catch {
+      unsubSnapshot = onSnapshot(doc(db, "users", currentUser.uid), (snap) => {
+        try {
+          const data = snap.exists() ? snap.data() : {};
+          const subscriptionStatus = data?.subscriptionStatus || data?.subscription_status || "";
+          const subscriptionTier = data?.subscriptionTier || data?.subscription_tier || "";
+          const isPro =
+            data?.role === "premium" ||
+            subscriptionTier === "pro" ||
+            ["active", "trialing"].includes(subscriptionStatus) ||
+            Boolean(data?.isLifetimeMember);
+
+          setIsProMember(isPro);
+
+          const hasAccess =
+            isPro && (
+              Boolean(data?.isLifetimeMember) ||
+              data?.subscriptionPlan === "lifetime" ||
+              data?.subscriptionPlan === "yearly" ||
+              data?.subscriptionPlan === "founding_yearly"
+            );
+          setHasEbookAccess(hasAccess);
+        } catch {
+          setIsProMember(false);
+          setHasEbookAccess(false);
+        } finally {
+          setCheckingMember(false);
+        }
+      }, (error) => {
+        console.error("Ebook page snapshot error:", error);
         setIsProMember(false);
-      } finally {
+        setHasEbookAccess(false);
         setCheckingMember(false);
-      }
+      });
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,8 +103,8 @@ export default function EbookPage() {
       setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book สำหรับ PRO นะครับ");
       return;
     }
-    if (!isProMember) {
-      setErrorMsg("E-Book เล่มนี้เป็นโบนัสสำหรับสมาชิก PRO ครับ");
+    if (!hasEbookAccess) {
+      setErrorMsg("E-Book เล่มนี้เป็นโบนัสสำหรับสมาชิก PRO รายปี หรือ Lifetime ครับ");
       return;
     }
     if (!email.trim()) return;
@@ -161,7 +190,7 @@ export default function EbookPage() {
             style={{ background: "#7B1818", color: "#fff", opacity: downloading ? 0.65 : 1 }}
           >
             <Download size={16} />
-            {downloading ? "กำลังดาวน์โหลด..." : "Download PRO E-Book"}
+            {downloading ? "กำลังดาวน์โหลด..." : "Download E-Book"}
           </button>
         </motion.div>
       ) : (
@@ -173,14 +202,14 @@ export default function EbookPage() {
         >
           <div className="text-center">
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-              {isProMember ? <Crown size={20} /> : <Lock size={19} />}
+              {hasEbookAccess ? <Crown size={20} /> : <Lock size={19} />}
             </div>
-            <h2 className="text-base font-extrabold">{isProMember ? "รับ E-Book สำหรับ PRO" : "E-Book สำหรับสมาชิก PRO"}</h2>
+            <h2 className="text-base font-extrabold">{hasEbookAccess ? "รับ E-Book สำหรับ PRO" : "E-Book สำหรับสมาชิก PRO"}</h2>
             <p className="text-xs mt-1" style={{ color: "#5a5a5a" }}>
-              {isProMember ? "กรอก email เพื่อรับไฟล์เล่มนี้" : "ปลดล็อกเมื่อสมัคร PRO รายปีหรือ Lifetime"}
+              {hasEbookAccess ? "กรอก email เพื่อรับไฟล์เล่มนี้" : "ปลดล็อกเมื่อสมัคร PRO รายปีหรือ Lifetime"}
             </p>
           </div>
-          {isProMember && (
+          {hasEbookAccess && (
             <div className="relative">
               <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#aaa" }} />
               <input
@@ -195,7 +224,7 @@ export default function EbookPage() {
             </div>
           )}
           {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
-          {isProMember ? (
+          {hasEbookAccess ? (
             <>
               <button
                 type="submit"
@@ -206,7 +235,7 @@ export default function EbookPage() {
                 {status === "loading" ? (
                   <span className="animate-pulse">กำลังโหลด...</span>
                 ) : (
-                  <><Download size={15} />รับ E-Book PRO</>
+                  <><Download size={15} />รับ E-Book</>
                 )}
               </button>
               <p className="text-xs text-center" style={{ color: "#aaa" }}>
@@ -222,7 +251,7 @@ export default function EbookPage() {
                     await signInWithPopup(auth, googleProvider);
                     return;
                   }
-                  window.location.href = "/dashboard";
+                  window.location.href = "/dashboard?membership=1";
                 }}
                 className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
                 style={{ background: "#111827", color: "#fff" }}

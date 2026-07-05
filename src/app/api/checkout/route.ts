@@ -66,10 +66,13 @@ export async function POST(req: Request) {
   const isLifetime = plan === "lifetime";
 
   try {
+    const price = await stripe.prices.retrieve(priceId);
+    const isRecurring = price?.type === "recurring";
+
     const sessionConfig: any = {
       ...(authResult.email ? { customer_email: authResult.email } : {}),
       line_items: [{ price: priceId, quantity: 1 }],
-      mode: isLifetime ? "payment" : "subscription",
+      mode: isRecurring ? "subscription" : "payment",
       success_url: `${origin}/dashboard?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dashboard?checkout=cancelled`,
       metadata: {
@@ -79,8 +82,8 @@ export async function POST(req: Request) {
       },
     };
 
-    if (isLifetime) {
-      sessionConfig.automatic_payment_methods = { enabled: true };
+    if (!isRecurring) {
+      sessionConfig.payment_method_types = ["card", "promptpay"];
       sessionConfig.payment_intent_data = {
         metadata: {
           userId: authResult.uid,

@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -104,6 +104,72 @@ const playLevelUpChime = () => {
   playSuccessChime();
 };
 
+const playProUpgradeSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // A magical, sparkling ascending arpeggio with high-pitched bells
+    // C5 (523.25) -> E5 (659.25) -> G5 (783.99) -> C6 (1046.5) -> E6 (1318.5) -> G6 (1567.98)
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+    const noteDelay = 0.08; // 80ms delay
+
+    notes.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + index * noteDelay);
+
+      // Add a sparkling square/triangle wave at low volume for a retro synth bell feel
+      const sparkleOsc = ctx.createOscillator();
+      sparkleOsc.type = "triangle";
+      sparkleOsc.frequency.setValueAtTime(freq * 2, now + index * noteDelay);
+
+      const noteStart = now + index * noteDelay;
+      const decayDuration = 0.5;
+
+      gainNode.gain.setValueAtTime(0.0, noteStart);
+      gainNode.gain.linearRampToValueAtTime(0.12, noteStart + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, noteStart + decayDuration);
+
+      osc.connect(gainNode);
+      sparkleOsc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(noteStart);
+      sparkleOsc.start(noteStart);
+
+      osc.stop(noteStart + decayDuration);
+      sparkleOsc.stop(noteStart + decayDuration);
+    });
+
+    // Also play a warm bass chord in the background
+    const chord = [261.63, 329.63, 392.00, 523.25]; // C major chord
+    chord.forEach((freq) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now);
+
+      gainNode.gain.setValueAtTime(0.0, now);
+      gainNode.gain.linearRampToValueAtTime(0.08, now + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.2);
+    });
+  } catch (e) {
+    console.error("Failed to play PRO upgrade sound:", e);
+  }
+};
+
 const ConfettiPiece = ({ color, delay }: { color: string; delay: number }) => {
   const randomX = Math.random() * 200 - 100;
   const randomY = Math.random() * -150 - 150;
@@ -157,15 +223,35 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"home" | "overview" | "quests" | "identity" | "resources">("home");
   const [improvement, setImprovement] = useState(0);
   const [isFirstWeek, setIsFirstWeek] = useState(true); // เพิ่มตัวนี้ (Default เป็น true ไว้ก่อน)
-  // เพิ่มไว้แถวๆ State อื่นๆ ครับ
   const [showSuccessToast, setShowSuccessToast] = useState<string | null>(null);
+  const [showProSuccessModal, setShowProSuccessModal] = useState(false);
   // 🌟 เพิ่ม State เก็บข้อมูล Week ปัจจุบันของผู้ใช้
   const [relativeWeekInfo, setRelativeWeekInfo] = useState({ id: "week-1", label: "สัปดาห์ที่ 1", range: "กำลังโหลด..." });
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showLetter, setShowLetter] = useState(false);
   const [billingPlan, setBillingPlan] = useState<ProPlan>("monthly");
   const confirmedCheckoutRef = useRef(false);
   const searchParams = useSearchParams();
+
+  const getFormattedEndDate = () => {
+    if (!userData?.currentPeriodEnd) return "";
+    let date: Date;
+    if (userData.currentPeriodEnd instanceof Date) {
+      date = userData.currentPeriodEnd;
+    } else if (userData.currentPeriodEnd.toDate) {
+      date = userData.currentPeriodEnd.toDate();
+    } else if (userData.currentPeriodEnd.seconds) {
+      date = new Date(userData.currentPeriodEnd.seconds * 1000);
+    } else {
+      date = new Date(userData.currentPeriodEnd);
+    }
+    return date.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -174,9 +260,26 @@ export default function DashboardPage() {
     } else if (!tab) {
       setActiveTab("home");
     }
+
+    if (searchParams.get("membership") === "1") {
+      setShowMembershipModal(true);
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("membership");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      } catch {}
+    }
+
     // 🚀 Scroll to top when tab changes
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!showMembershipModal) {
+      setShowLetter(false);
+    }
+  }, [showMembershipModal]);
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -280,6 +383,31 @@ export default function DashboardPage() {
   const [newName, setNewName] = useState(""); // 👈 ประกาศเป็นค่าว่างไว้ก่อน
   const [loading, setLoading] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
+
+  useEffect(() => {
+    (window as any).testResetFounder = async () => {
+      if (user) {
+        try {
+          await setDoc(doc(db, "users", user.uid), { 
+            isFoundingMember: false,
+            isLifetimeMember: false,
+            subscriptionPlan: null,
+            subscriptionStatus: null
+          }, { merge: true });
+          setUserData((prev: any) => ({ 
+            ...prev, 
+            isFoundingMember: false, 
+            isLifetimeMember: false,
+            subscriptionPlan: null,
+            subscriptionStatus: null
+          }));
+          console.log("✅ Reset Founding Member to false successfully!");
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+  }, [user]);
 
   const [lastWheel, setLastWheel] = useState<any>(null);
   const [lastQuote, setLastQuote] = useState<any>(null);
@@ -802,9 +930,12 @@ export default function DashboardPage() {
           isFoundingMember: String(plan).startsWith("founding"),
           isLifetimeMember: plan === "lifetime",
         }));
+        setIsCelebrating(true);
+        playProUpgradeSound();
         setShowMembershipModal(false);
-        setShowSuccessToast("อัปเกรดเป็น PRO เรียบร้อยแล้ว");
+        setShowProSuccessModal(true);
         window.history.replaceState(null, "", "/dashboard");
+        setTimeout(() => setIsCelebrating(false), 8000);
       } catch (error) {
         console.error("Checkout confirm failed:", error);
         setShowSuccessToast("ชำระเงินสำเร็จแล้ว กำลังรอ Stripe ยืนยันสถานะ PRO");
@@ -1436,6 +1567,7 @@ export default function DashboardPage() {
       localStorage.removeItem("deepWork_endTime");
       localStorage.removeItem("deepWork_selectedTime");
 
+      handleTabChange('home');
       alert(`♻️ ล้างประวัติและเริ่มนับหนึ่งใหม่เรียบร้อยครับ!`);
 
     } catch (error) {
@@ -3070,6 +3202,8 @@ export default function DashboardPage() {
       />
       <div className={`absolute -bottom-20 -left-20 w-64 h-64 ${theme.glow.replace('from-', 'bg-')} blur-[80px] rounded-full`} />
 
+
+
       <div className="relative z-10 w-full flex justify-between items-start mb-0">
         <div className="flex flex-col pt-1">
           <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">{memberLabel}</span>
@@ -3306,6 +3440,7 @@ export default function DashboardPage() {
       setAiGeneratedQuestTitle("");
       setAiGeneratedDiscTitle("");
       setAiGeneratedMoneyTitle("");
+      handleTabChange('home');
       alert("DEV: รีเซ็ตข้อมูลและเตรียมสุ่ม Daily AI Quests ใหม่เรียบร้อยแล้ว!");
     } catch (e) { console.error(e); }
   };
@@ -3391,14 +3526,26 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setShowMembershipModal(true)}
-                  className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/90 bg-white/80 px-2 py-1.5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_18px_42px_rgba(15,23,42,0.12)] sm:gap-2 sm:px-3"
+                  className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2 rounded-full border border-slate-100 bg-white px-2 py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 sm:gap-2.5 sm:px-3"
                   title={isProMember ? "สมาชิก PRO" : "ดูแผนสมาชิก"}
                 >
-                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${isProMember ? "bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950" : "bg-slate-100 text-slate-500"} shadow-sm`}>
-                    {isProMember ? <Sparkles size={13} /> : <Lock size={13} />}
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                    userData?.isFoundingMember
+                      ? "bg-slate-950 text-amber-400 shadow-inner"
+                      : isProMember
+                      ? "bg-slate-950 text-violet-400 shadow-inner"
+                      : "bg-slate-100 text-slate-400"
+                  } shadow-sm`}>
+                    {userData?.isFoundingMember ? <Crown size={12} className="fill-amber-400/20 text-amber-400" /> : isProMember ? <Sparkles size={12} /> : <Lock size={12} />}
                   </span>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.14em] ${isProMember ? "text-amber-600" : "text-slate-600"}`}>
-                    {isProMember ? "PRO" : "FREE"}
+                  <span className={`text-[10px] font-black uppercase tracking-[0.24em] pl-0.5 ${
+                    userData?.isFoundingMember
+                      ? "text-amber-500"
+                      : isProMember
+                      ? "text-slate-900"
+                      : "text-slate-500"
+                  }`}>
+                    {userData?.isFoundingMember ? "FOUNDER" : isProMember ? "PRO" : "FREE"}
                   </span>
                 </button>
               )}
@@ -3462,7 +3609,7 @@ export default function DashboardPage() {
             { done: !!lastQuote, label: "คมสัดสัด", shortDesc: "สร้างคำคมจากความรู้สึกวันนี้", path: "/tools/khomsatsat", buttonClass: "from-fuchsia-500 to-violet-500" },
             { done: !!lastGhostResult, label: "Ghost in You", shortDesc: "เผชิญหน้าความกลัวลึกๆ", path: "/tools/ghost-in-you", buttonClass: "from-rose-500 to-red-600" },
             { done: hasRedeemedReward, label: "Happiness Shop", shortDesc: "แลก XP เป็นรางวัลเติมใจ", path: "/shop", buttonClass: "from-pink-500 to-orange-400" },
-            { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-slate-700 to-blue-900" },
+            { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-violet-500 to-indigo-500" },
           ];
           const phase3Steps = [
             { done: claimedReadArticlesCount >= 3, label: `คลังสมอง 3 บทความ (${Math.min(claimedReadArticlesCount, 3)}/3)`, shortDesc: "อ่านและเคลม XP จากบทความ", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
@@ -3729,10 +3876,20 @@ export default function DashboardPage() {
                         src={user?.photoURL || "/default-avatar.png"}
                         alt="Profile"
                         referrerPolicy="no-referrer"
-                        className="w-10 h-10 rounded-full border-2 border-slate-50 shadow-md shrink-0"
+                        className={`w-10 h-10 rounded-full shadow-md shrink-0 transition-all duration-300 ${
+                          userData?.isFoundingMember 
+                            ? "border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)]" 
+                            : isProMember
+                            ? "border-2 border-violet-400"
+                            : "border-2 border-slate-200"
+                        }`}
                       />
                       <div className="absolute -bottom-1 -right-1 p-0.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-slate-900 shadow-md scale-90">
-                        <Trophy size={10} className="fill-current" />
+                        {userData?.isFoundingMember ? (
+                          <Crown size={10} className="fill-current" />
+                        ) : (
+                          <Trophy size={10} className="fill-current" />
+                        )}
                       </div>
                     </div>
 
@@ -3768,8 +3925,13 @@ export default function DashboardPage() {
                             onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}
                             title="คลิกเพื่อเปลี่ยนชื่อ"
                           >
-                            <p className="text-xs font-black text-white truncate flex items-center gap-1">
+                            <p className="text-xs font-black text-white truncate flex items-center gap-1.5">
                               {user?.displayName}
+                              {userData?.isFoundingMember && (
+                                <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="Founding Member">
+                                  Founder
+                                </span>
+                              )}
                               <Sparkles size={8} className="text-slate-500 group-hover/name:text-yellow-400 transition-colors" />
                             </p>
                           </div>
@@ -3862,10 +4024,13 @@ export default function DashboardPage() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowShareModal(true)}
-                        className="flex items-center justify-center w-10 h-10 bg-slate-800/80 hover:bg-slate-700/80 rounded-full border border-slate-600 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
+                        className="flex items-center justify-center w-10 h-10 rounded-full p-[1.5px] cursor-pointer shadow-[0_8px_16px_-6px_rgba(56,189,248,0.5)] active:scale-95 shrink-0"
+                        style={{ background: "linear-gradient(135deg, #38bdf8, #c084fc, #f472b6, #fb7185, #38bdf8)" }}
                         title="Player Card"
                       >
-                        <IdCard size={17} />
+                        <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-sky-200 hover:text-white transition-colors">
+                          <IdCard size={16} />
+                        </div>
                       </motion.button>
                     )}
                   </div>
@@ -3891,7 +4056,11 @@ export default function DashboardPage() {
                         
                         {/* Upper Section: Profile & Level Info */}
                         <div className="flex items-center gap-3">
-                          <Trophy size={16} className="text-yellow-400 shrink-0" />
+                          {userData?.isFoundingMember ? (
+                            <Crown size={16} className="text-yellow-400 shrink-0" />
+                          ) : (
+                            <Trophy size={16} className="text-yellow-400 shrink-0" />
+                          )}
                           
                           <div className="flex-1 min-w-0 text-left">
                             {/* 🟢 ส่วนสลับโหมด แก้ไข / แสดงผล */}
@@ -3910,8 +4079,14 @@ export default function DashboardPage() {
                             ) : (
                               <div className="cursor-pointer" onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}>
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-xs font-black text-white truncate flex items-center gap-1">
-                                    {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
+                                  <span className="text-xs font-black text-white truncate flex items-center gap-1.5">
+                                    {user?.displayName}
+                                    {userData?.isFoundingMember && (
+                                      <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="Founding Member">
+                                        Founder
+                                      </span>
+                                    )}
+                                    <Sparkles size={10} className="text-yellow-400" />
                                   </span>
                                   <div className="flex items-center gap-1 shrink-0">
                                     <button onClick={(e) => { e.stopPropagation(); setShowLevelInfo(true); }} className="text-slate-400 p-1 hover:text-white transition-colors">
@@ -3989,10 +4164,13 @@ export default function DashboardPage() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowShareModal(true)}
-                            className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                            className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1.5px] cursor-pointer shadow-[0_8px_20px_-6px_rgba(56,189,248,0.5)] active:scale-95 shrink-0"
+                            style={{ background: "linear-gradient(135deg, #38bdf8, #c084fc, #f472b6, #fb7185, #38bdf8)" }}
                             title="Player Card"
                           >
-                            <IdCard size={18} />
+                            <div className="w-full h-full bg-slate-950/90 rounded-[15px] flex items-center justify-center text-sky-200 hover:text-white transition-colors">
+                              <IdCard size={18} />
+                            </div>
                           </motion.button>
                         )}
                       </div>
@@ -4008,7 +4186,11 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-4">
                           {/* Trophy Icon */}
                           <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl text-slate-900 shadow-md shrink-0">
-                            <Trophy size={20} className="fill-current" />
+                            {userData?.isFoundingMember ? (
+                              <Crown size={20} className="fill-current text-slate-900" />
+                            ) : (
+                              <Trophy size={20} className="fill-current" />
+                            )}
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -4031,8 +4213,14 @@ export default function DashboardPage() {
                                   onClick={() => { setIsEditingName(true); setNewName(user?.displayName || ""); }}
                                   title="คลิกเพื่อเปลี่ยนชื่อ"
                                 >
-                                  <span className="text-sm font-black text-white truncate flex items-center gap-1">
-                                    {user?.displayName} <Sparkles size={10} className="text-yellow-400" />
+                                  <span className="text-sm font-black text-white truncate flex items-center gap-1.5">
+                                    {user?.displayName}
+                                    {userData?.isFoundingMember && (
+                                      <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="Founding Member">
+                                        Founder
+                                      </span>
+                                    )}
+                                    <Sparkles size={10} className="text-yellow-400" />
                                   </span>
                                 </div>
                               )}
@@ -4124,10 +4312,13 @@ export default function DashboardPage() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowShareModal(true)}
-                            className="flex items-center justify-center w-11 h-11 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                            className="flex items-center justify-center w-11 h-11 rounded-2xl p-[1.5px] cursor-pointer shadow-[0_8px_20px_-6px_rgba(56,189,248,0.5)] active:scale-95 shrink-0"
+                            style={{ background: "linear-gradient(135deg, #38bdf8, #c084fc, #f472b6, #fb7185, #38bdf8)" }}
                             title="Player Card"
                           >
-                            <IdCard size={18} />
+                            <div className="w-full h-full bg-slate-950/90 rounded-[15px] flex items-center justify-center text-sky-200 hover:text-white transition-colors">
+                              <IdCard size={18} />
+                            </div>
                           </motion.button>
                         )}
                       </div>
@@ -4434,6 +4625,100 @@ export default function DashboardPage() {
               <span className="sm:hidden">สะสม</span>
             </button>
           </div>
+        )}
+
+        {/* --- 📜 Founding Member Certificate Card --- */}
+        {activeTab === "home" && isRealLifeEntered && userData?.isFoundingMember && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 relative overflow-hidden rounded-[2.5rem] border border-amber-200 bg-[#fbfbfb] p-6 md:p-8 shadow-[0_24px_70px_rgba(245,158,11,0.12)] text-center flex flex-col items-center justify-center min-h-[300px]"
+          >
+            {/* Background premium glows */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-200/20 blur-[80px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-orange-200/10 blur-[80px] rounded-full pointer-events-none" />
+
+            {/* Left Chevron Wing (Certificate Style) */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 md:w-20 pointer-events-none overflow-hidden select-none">
+              {/* Gold Ribbon Accents */}
+              <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-top-left shadow-sm" />
+              <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-bottom-left shadow-sm" />
+              {/* Deep Navy Chevrons */}
+              <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+              <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
+              {/* Floating gold mini triangle */}
+              <div className="absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+            </div>
+
+            {/* Right Chevron Wing (Certificate Style) */}
+            <div className="absolute right-0 top-0 bottom-0 w-16 md:w-20 pointer-events-none overflow-hidden select-none">
+              {/* Gold Ribbon Accents */}
+              <div className="absolute top-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-bl from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-top-right shadow-sm" />
+              <div className="absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-bottom-right shadow-sm" />
+              {/* Deep Navy Chevrons */}
+              <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
+              <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
+              {/* Floating gold mini triangle */}
+              <div className="absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+            </div>
+
+            {/* Content Area */}
+            <div className="relative z-10 w-full max-w-lg px-8 flex flex-col items-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-300/40 bg-amber-500/5 text-[8.5px] font-black uppercase tracking-[0.2em] text-amber-700">
+                👑 FOUNDING SUPPORTER
+              </div>
+              
+              <h2 className="text-sm md:text-base font-black text-slate-800 tracking-[0.15em] uppercase mt-3.5">
+                Certificate of Appreciation
+              </h2>
+              
+              <p className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest mt-4">
+                PROUDLY PRESENTED TO
+              </p>
+              
+              <h3 className="text-lg md:text-xl font-serif text-slate-900 font-extrabold italic mt-1.5 border-b border-amber-500/20 pb-1 px-4 leading-none w-full max-w-[280px] truncate select-all">
+                {user?.displayName || "Pro Member"}
+              </h3>
+              
+              <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-4 leading-relaxed max-w-sm italic">
+                “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ” — พี่ฟุ้ย
+              </p>
+
+              {/* Bottom Certificate Grid */}
+              <div className="flex items-end justify-between w-full mt-6 pt-4 border-t border-slate-100/80 gap-2">
+                {/* Member ID */}
+                <div className="text-left flex-1 min-w-0">
+                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">MEMBER ID</span>
+                  <span className="text-base font-black bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 bg-clip-text text-transparent mt-1.5 block tabular-nums leading-none">
+                    PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                  </span>
+                </div>
+
+                {/* Gold Seal */}
+                <div className="relative w-11 h-11 flex items-center justify-center shrink-0 mx-2 -translate-y-1 select-none">
+                  {/* Ribbon Tails */}
+                  <div className="absolute bottom-[-6px] left-[15%] w-2.5 h-4 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                  <div className="absolute bottom-[-6px] right-[15%] w-2.5 h-4 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 -rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                  
+                  {/* Main Seal Body */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 rounded-full shadow-[0_3px_8px_rgba(245,158,11,0.2)] flex items-center justify-center p-[1.5px]">
+                    <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-amber-300 border border-amber-400/30">
+                      <Crown size={10} className="fill-current text-amber-400" />
+                      <span className="text-[4px] font-black tracking-tighter text-amber-300 mt-[0.5px]">FOUNDER</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Verification */}
+                <div className="text-right flex-1 min-w-0">
+                  <span className="text-[7.5px] font-bold text-emerald-600 uppercase tracking-widest block leading-none">VERIFIED BY</span>
+                  <span className="text-[8.5px] font-black text-slate-800 mt-1.5 block uppercase tracking-wide leading-none truncate">
+                    UPSKILL EVERYDAY
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* --- 🎮 2. Daily Quests Section --- */}
@@ -6165,9 +6450,11 @@ export default function DashboardPage() {
 
             {/* 🚨 ปุ่มรีเซ็ตข้อมูล (ซ่อนตัวเนียนๆ เป็นสีแดงอ่อน - แสดงเฉพาะ Dev หรือ Admin) */}
             {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").split(",").filter(Boolean).includes(user.email))) && (
-              <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
-                <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
+                  <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -6410,16 +6697,12 @@ export default function DashboardPage() {
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ type: "spring", damping: 20, stiffness: 300 }}
                 onClick={e => e.stopPropagation()}
-                className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
-                style={{ maxHeight: 'min(85vh, 600px)' }}
+                className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
               >
                 {/* Header */}
-                <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-800">🗂️ กล่องสะสม</h2>
-                    <p className="text-xs text-slate-400 mt-0.5">สะสม Quest</p>
-                  </div>
-                  <div className="flex items-center gap-2">
+                <div className="p-6 pb-2">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-black text-slate-800">ประวัติเควสของคุณ</h2>
                     <button
                       onClick={async () => {
                         if (!user || !window.confirm('ล้างประวัติ Quest ทั้งหมด?')) return;
@@ -6707,6 +6990,8 @@ export default function DashboardPage() {
                 />
                 <div className={`absolute -bottom-20 -left-20 w-64 h-64 ${theme.glow.replace('from-', 'bg-')} blur-[80px] rounded-full`} />
 
+
+
                 {/* 1. Header: Logo & Title (ลด mb เพื่อคืนพื้นที่ให้คอนเทนต์หลัก) */}
                 <div className="relative z-10 w-full flex justify-between items-start mb-0">
                   <div className="flex flex-col pt-1">
@@ -6843,7 +7128,158 @@ export default function DashboardPage() {
                   Membership
                 </div>
 
-                {isProMember ? (
+                {showLetter ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="text-left pt-2"
+                  >
+                    {userData?.isFoundingMember ? (
+                      /* --- Luxury Mini Certificate inside Modal --- */
+                      <div className="relative overflow-hidden rounded-3xl border border-amber-200 bg-[#fbfbfb] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] text-center flex flex-col items-center justify-center min-h-[300px] select-none">
+                        {/* Background premium glows */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-200/20 blur-[60px] rounded-full pointer-events-none" />
+                        
+                        {/* Left Chevron Wing */}
+                        <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
+                          <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-top-left shadow-sm" />
+                          <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-bottom-left shadow-sm" />
+                          <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+                          <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
+                          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+                        </div>
+
+                        {/* Right Chevron Wing */}
+                        <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
+                          <div className="absolute top-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-bl from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-top-right shadow-sm" />
+                          <div className="absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-bottom-right shadow-sm" />
+                          <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
+                          <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
+                          <div className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="relative z-10 w-full px-5 flex flex-col items-center">
+                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-amber-300/40 bg-amber-500/5 text-[7.5px] font-black uppercase tracking-[0.15em] text-amber-700">
+                            👑 FOUNDING SUPPORTER
+                          </div>
+                          
+                          <h2 className="text-[11px] font-black text-slate-800 tracking-[0.12em] uppercase mt-2.5">
+                            Certificate of Appreciation
+                          </h2>
+                          
+                          <p className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest mt-3">
+                            PROUDLY PRESENTED TO
+                          </p>
+                          
+                          <h3 className="text-sm font-serif text-slate-900 font-extrabold italic mt-1 border-b border-amber-500/20 pb-0.5 px-3 leading-none w-full max-w-[200px] truncate select-all">
+                            {user?.displayName || "Pro Member"}
+                          </h3>
+                          
+                          <p className="text-[9px] md:text-[10px] font-bold text-slate-500 mt-3 leading-relaxed max-w-[240px] italic">
+                            “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ” — พี่ฟุ้ย
+                          </p>
+
+                          {/* Bottom Certificate Grid */}
+                          <div className="flex items-end justify-between w-full mt-4 pt-3 border-t border-slate-100/80 gap-2">
+                            {/* Member ID */}
+                            <div className="text-left flex-1 min-w-0">
+                              <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">MEMBER ID</span>
+                              <span className="text-[13px] font-black bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 bg-clip-text text-transparent mt-1 block tabular-nums leading-none">
+                                PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                              </span>
+                            </div>
+
+                            {/* Gold Seal */}
+                            <div className="relative w-8 h-8 flex items-center justify-center shrink-0 mx-1 -translate-y-0.5 select-none">
+                              {/* Ribbon Tails */}
+                              <div className="absolute bottom-[-4px] left-[15%] w-1.5 h-3 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                              <div className="absolute bottom-[-4px] right-[15%] w-1.5 h-3 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 -rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                              
+                              {/* Main Seal Body */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 rounded-full shadow-[0_2px_6px_rgba(245,158,11,0.2)] flex items-center justify-center p-[1px]">
+                                <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-amber-300 border border-amber-400/30">
+                                  <Crown size={8} className="fill-current text-amber-400" />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Verification */}
+                            <div className="text-right flex-1 min-w-0">
+                              <span className="text-[6.5px] font-bold text-emerald-600 uppercase tracking-widest block leading-none">VERIFIED BY</span>
+                              <span className="text-[7.5px] font-black text-slate-800 mt-1 block uppercase tracking-wide leading-none truncate">
+                                UPSKILL EVERYDAY
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-400/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-violet-300">
+                          <Mail size={12} />
+                          จดหมายจากผู้พัฒนา
+                        </div>
+
+                        <div className="flex items-center gap-3 mb-5">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
+                            <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black text-white leading-tight">
+                              สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
+                            </h3>
+                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 text-[13px] font-bold leading-relaxed text-slate-300 bg-white/[0.02] border border-white/5 rounded-3xl p-5 backdrop-blur-md">
+                          {isProMember ? (
+                            <>
+                              <p>
+                                ขอบคุณมากๆ ครับที่สนับสนุน Upskill Everyday! ❤️
+                              </p>
+                              <p>
+                                การสนับสนุนของคุณช่วยแบ่งเบาค่าเซิร์ฟเวอร์ ค่า API และเป็นแรงขับเคลื่อนที่ช่วยให้ผม (ฟุ้ย) ได้พัฒนาฟีเจอร์ใหม่ๆ ในทุกๆ วันครับ
+                              </p>
+                              <p>
+                                หากมีข้อแนะนำหรือฟีดแบ็กตรงไหน บอกผมได้เสมอเลยนะครับ ขอให้สนุกกับการพัฒนาตัวเองทุกวันครับ!
+                              </p>
+                              <p className="font-black text-white pt-1">
+                                รักและขอบคุณจากใจจริงครับ 🙏
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p>
+                                แอปนี้เป็นโปรเจกต์ที่ผมตั้งใจสร้างและโค้ดมันขึ้นมาด้วยตัวคนเดียว 100% เพราะผมเชื่อว่าทุกคนควรมีระบบช่วยออกแบบชีวิตที่ดี โดยไม่ต้องจ่ายค่าโค้ชราคาแพง
+                              </p>
+                              <p>
+                                เงิน <span className="text-amber-300 font-black">149 บาท/เดือน</span> หรือ <span className="text-amber-300 font-black">990 บาท/ปี</span> ของคุณ ไม่ได้เป็นแค่ค่าฟีเจอร์โปร แต่มันคือ <span className="text-emerald-300 font-black">&apos;แรงใจและความเชื่อที่มีตัวตน&apos;</span> ที่ช่วยสนับสนุนให้นักพัฒนาตัวเล็ก ๆ คนนี้ ได้มีทุนพัฒนาฟีเจอร์ใหม่ ๆ และพัฒนาให้แอปนี้ดีขึ้นเพื่อคุณต่อไปครับ
+                              </p>
+                              <p className="font-black text-white pt-1">
+                                ขอบคุณจากใจจริงครับ 🙏
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setShowLetter(false)}
+                      className={`mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-widest text-white transition-all active:scale-95 ${
+                        userData?.isFoundingMember
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] text-slate-950 font-black"
+                          : "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:shadow-[0_0_20px_rgba(139,92,246,0.2)] text-white"
+                      }`}
+                    >
+                      {userData?.isFoundingMember ? "ปิดใบรับรอง" : isProMember ? "ปิดจดหมาย" : "ไปที่หน้าเลือกแผนเพื่อสมัคร PRO →"}
+                    </button>
+                  </motion.div>
+                ) : isProMember ? (
                   <>
                     <h3 className="text-3xl font-black leading-tight text-white">
                       คุณเป็น PRO แล้ว
@@ -6855,6 +7291,28 @@ export default function DashboardPage() {
                       ใช้งาน AI Mentor, ปรับ Quest และ Focus Room Lounge ได้เต็มตามสิทธิ์ PRO แล้วครับ
                     </p>
 
+                    <button
+                      type="button"
+                      onClick={() => setShowLetter(true)}
+                      className={`mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all ${
+                        userData?.isFoundingMember
+                          ? "border-amber-400/30 bg-amber-400/5 text-amber-300 hover:bg-amber-400/10"
+                          : "border-violet-400/20 bg-violet-400/5 text-violet-300 hover:bg-violet-400/10"
+                      }`}
+                    >
+                      {userData?.isFoundingMember ? (
+                        <>
+                          <Crown size={12} className="text-amber-400" />
+                          ใบรับรองผู้ร่วมบุกเบิก
+                        </>
+                      ) : (
+                        <>
+                          <Mail size={12} className="animate-pulse" />
+                          อ่านจดหมายจากผู้พัฒนา
+                        </>
+                      )}
+                    </button>
+
                     <div className="mt-6 rounded-[1.75rem] border border-amber-300/30 bg-gradient-to-br from-amber-300/14 via-white/[0.04] to-orange-500/10 p-5 text-left shadow-[0_24px_70px_rgba(245,158,11,0.10)]">
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -6862,16 +7320,33 @@ export default function DashboardPage() {
                           <p className="mt-1 text-2xl font-black text-white">
                             {userData?.subscriptionPlan === "lifetime" ? "Lifetime" : "Pro Member"}
                           </p>
+                          {userData?.cancelAtPeriodEnd && userData?.currentPeriodEnd && (
+                            <p className="text-[10px] font-bold text-rose-300 mt-1.5 leading-relaxed">
+                              จะสิ้นสุดการใช้งานวันที่ {getFormattedEndDate()}
+                            </p>
+                          )}
                         </div>
-                        <span className="rounded-full border border-emerald-300/30 bg-emerald-300/12 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200">
-                          Active
-                        </span>
+                        {userData?.cancelAtPeriodEnd ? (
+                          <span className="rounded-full border border-rose-300/30 bg-rose-300/12 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">
+                            Canceled
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-emerald-300/30 bg-emerald-300/12 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200">
+                            Active
+                          </span>
+                        )}
                       </div>
                       <div className="mt-4 space-y-2 text-[11px] font-bold leading-relaxed text-slate-300">
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> AI Mentor แบบ Pro Fair Use</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> คุยกับพี่ฟุ้ย แบบ Pro Fair Use</div>
                         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ปรับ Quest วันนี้กับพี่ฟุ้ย</div>
                         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> Focus Room Lounge ห้องโฟกัสรวม</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> Pro Badge / Aura / Card Frame</div>
+                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> บทความพิเศษจากพี่ฟุ้ย</div>
+                        {(userData?.subscriptionPlan === "yearly" ||
+                          userData?.subscriptionPlan === "founding_yearly" ||
+                          userData?.subscriptionPlan === "lifetime" ||
+                          userData?.isLifetimeMember) && (
+                          <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ฟรี E-Book สร้างก่อนพร้อม</div>
+                        )}
                       </div>
                     </div>
 
@@ -6907,6 +7382,28 @@ export default function DashboardPage() {
                       ค่าสมาชิกช่วยจ่ายต้นทุน AI และเซิร์ฟเวอร์จริง เพื่อให้ฟุ้ยพัฒนา Upskill Everyday ต่อได้ทุกเดือนครับ
                     </p>
 
+                    <button
+                      type="button"
+                      onClick={() => setShowLetter(true)}
+                      className={`mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all ${
+                        userData?.isFoundingMember
+                          ? "border-amber-400/30 bg-amber-400/5 text-amber-300 hover:bg-amber-400/10"
+                          : "border-violet-400/20 bg-violet-400/5 text-violet-300 hover:bg-violet-400/10"
+                      }`}
+                    >
+                      {userData?.isFoundingMember ? (
+                        <>
+                          <Crown size={12} className="text-amber-400" />
+                          ใบรับรองผู้ร่วมบุกเบิก
+                        </>
+                      ) : (
+                        <>
+                          <Mail size={12} className="animate-pulse" />
+                          อ่านจดหมายจากผู้พัฒนา
+                        </>
+                      )}
+                    </button>
+
                 <div className="mt-6 grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
                   <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
                     <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Free</p>
@@ -6916,7 +7413,8 @@ export default function DashboardPage() {
                       <li>Dashboard และ Bento Grid หลัก</li>
                       <li>Daily Quest และสะสม XP</li>
                       <li>อ่าน Library ทั่วไป</li>
-                      <li>คุยกับ AI 3 ข้อความ/วัน</li>
+                      <li>คุยกับพี่ฟุ้ย 3 ข้อความ/วัน</li>
+                      <li>สร้างคำคมสัดสัด 1 คำคม/วัน</li>
                     </ul>
                   </div>
                   <div className="rounded-[1.5rem] border border-amber-300/40 bg-gradient-to-br from-amber-300/16 to-orange-500/10 p-4">
@@ -6924,90 +7422,55 @@ export default function DashboardPage() {
                     <p className="mt-1 text-2xl font-black text-white">เริ่ม ฿149</p>
                     <p className="mt-1 text-[11px] font-bold leading-relaxed text-amber-100/80">ปลดล็อกพลังเต็มรูปแบบ</p>
                     <ul className="mt-3 space-y-2 text-[11px] font-bold leading-relaxed text-white">
-                      <li>AI Mentor แบบ Pro Fair Use</li>
+                      <li>คุยกับพี่ฟุ้ย แบบ Pro Fair Use</li>
                       <li>ปรับ Quest วันนี้กับพี่ฟุ้ย</li>
                       <li>Focus Room Lounge ห้องโฟกัสรวม</li>
-                      <li>Pro Badge / Aura / Card Frame</li>
+                      <li>บทความพิเศษจากพี่ฟุ้ย</li>
+                      <li>ฟรี E-Book สร้างก่อนพร้อม (เฉพาะรายปี & Lifetime)</li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-2">
                   {[
-                    { id: "monthly" as ProPlan, label: "PRO รายเดือน", price: "฿149", sub: "ช่วยค่า AI รายเดือน" },
-                    { id: "yearly" as ProPlan, label: "PRO รายปี", price: "฿990", sub: "BEST VALUE" },
-                    { id: "lifetime" as ProPlan, label: "LIFETIME", price: "฿2,490", sub: "จ่ายครั้งเดียวจบ" },
-                  ].map((plan) => (
-                    <button
-                      key={plan.id}
-                      type="button"
-                      onClick={() => setBillingPlan(plan.id)}
-                      className={`rounded-2xl border p-3 text-left transition-all ${billingPlan === plan.id
-                        ? "border-amber-300 bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950 shadow-[0_18px_35px_-20px_rgba(245,158,11,0.95)]"
-                        : "border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.07]"
-                      } ${plan.id === "lifetime" ? "col-span-2" : ""}`}
-                    >
-                      <span className="block text-[9px] font-black uppercase tracking-[0.2em] opacity-80">{plan.label}</span>
-                      <span className="mt-1 block text-2xl font-black">{plan.price}</span>
-                      <span className="block text-[10px] font-bold opacity-70">{plan.sub}</span>
-                    </button>
-                  ))}
+                    { id: "monthly" as ProPlan, label: "PRO รายเดือน", price: "฿149", period: "/ เดือน", sub: "บัตรเครดิต/เดบิต · ยกเลิกได้ทุกเมื่อ" },
+                    { id: "yearly" as ProPlan, label: "PRO รายปี", price: "฿990", period: "/ ปี", sub: "🔥 ประหยัด 50% · PromptPay" },
+                    { id: "lifetime" as ProPlan, label: "LIFETIME", price: "฿2,490", period: "จ่ายครั้งเดียวจบ", sub: "👑 คุ้มที่สุดตลอดชีพ · PromptPay" },
+                  ].map((plan) => {
+                    const isSelected = billingPlan === plan.id;
+                    return (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => setBillingPlan(plan.id)}
+                        className={`rounded-2xl border p-3.5 text-left transition-all ${
+                          isSelected
+                            ? "border-amber-300 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_15px_30px_-15px_rgba(245,158,11,0.8)]"
+                            : "border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.07]"
+                        } ${plan.id === "lifetime" ? "col-span-2" : ""}`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className={`block text-[9px] font-black uppercase tracking-[0.2em] ${isSelected ? "text-slate-900" : "text-slate-400"}`}>{plan.label}</span>
+                          {plan.id === "yearly" && (
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${isSelected ? "bg-slate-950 text-amber-300" : "bg-amber-500/20 text-amber-300 border border-amber-500/30"}`}>SAVE 50%</span>
+                          )}
+                          {plan.id === "lifetime" && (
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${isSelected ? "bg-slate-950 text-emerald-300" : "bg-emerald-500/20 text-emerald-300 border border-emerald-300/30"}`}>คุ้มที่สุด</span>
+                          )}
+                        </div>
+                        <span className="mt-1.5 block text-2xl font-black leading-none">
+                          {plan.price}
+                          <span className={`text-[10px] font-bold ml-1 ${isSelected ? "text-slate-900" : "text-slate-500"}`}>{plan.period}</span>
+                        </span>
+                        <span className={`block text-[9px] font-black mt-1 ${isSelected ? "text-slate-950/80" : "text-slate-550"}`}>{plan.sub}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 text-left">
-                  <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
-                    {billingPlan === "yearly" ? "คุ้มที่สุด / Best Value" : billingPlan === "lifetime" ? "Lifetime Supporter" : "Pro รายเดือน"}
-                  </p>
-                  <div className="space-y-2 text-[11px] font-bold leading-relaxed text-slate-300">
-                    {billingPlan === "monthly" && (
-                      <>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ช่วยค่า AI รายเดือน ปลดล็อกพลังเต็มรูปแบบ</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> หักอัตโนมัติผ่านบัตร หรือเติมวันใช้งาน 30 วันผ่าน PromptPay</div>
-                      </>
-                    )}
-                    {billingPlan === "yearly" && (
-                      <>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เฉลี่ยเพียง ฿82.50 / เดือน ประหยัดทันที 50%</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> สแกน PromptPay ครั้งเดียวจบ ใช้งานยาวๆ ทั้งปี</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ฟรี Ebook “สร้างก่อนพร้อม” + Badge ยุคบุกเบิก</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> คลังออมมีสติ และ Book Shelf ใน Money และ Library</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ให้ PRO ล็อกราคานี้ตลอดชีพ</div>
-                      </>
-                    )}
-                    {billingPlan === "lifetime" && (
-                      <>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> สนับสนุนเต็มสูบ ปลดล็อกถาวรตลอดชีพ</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> สแกน PromptPay ครั้งเดียวจบ ไม่ต้องจ่ายอีกเลยตลอดไป</div>
-                        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ได้รับสิทธิ์และโบนัสพิเศษทั้งหมดเหมือนแพ็กเกจรายปี</div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-5 flex items-center gap-3 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-3 text-left">
-                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white">
-                    <img
-                      src={promptPayQrUrl}
-                      alt="PromptPay QR"
-                      className="h-full w-full object-cover"
-                      onLoad={(event) => {
-                        const label = event.currentTarget.nextElementSibling as HTMLElement | null;
-                        if (label) label.style.display = "none";
-                      }}
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-slate-400">QR</span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-black text-white">สนับสนุนค่ากาแฟพี่ฟุ้ย</p>
-                    <p className="mt-1 text-[10px] font-bold leading-relaxed text-slate-500">สำหรับคนที่ยังใช้ Free แต่อยากช่วยเติมพลัง dev ครับ</p>
-                  </div>
-                </div>
+                <p className="mt-3 text-center text-[9px] font-bold text-slate-500">
+                  * ชำระเงินผ่านระบบ Stripe ปลอดภัยมาตรฐานสากล (รองรับ PromptPay ในแผนรายปี & Lifetime)
+                </p>
 
                 <button
                   type="button"
@@ -7134,6 +7597,92 @@ export default function DashboardPage() {
                   <div className="h-1 w-1 bg-orange-400 rounded-full" />
                   <div className="h-1 w-1 bg-amber-400 rounded-full" />
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* 👑 PRO Upgrade Success Welcome Modal */}
+      <AnimatePresence>
+        {showProSuccessModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-2xl"
+            onClick={() => setShowProSuccessModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 30 }}
+              animate={{
+                scale: 1, y: 0,
+                transition: { type: "spring", bounce: 0.35, duration: 0.7 }
+              }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-md w-full bg-white/90 border border-amber-200/50 p-8 rounded-[3rem] text-center overflow-hidden shadow-[0_40px_80px_rgba(245,158,11,0.15)] backdrop-blur-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Decorative premium glows */}
+              <div className="absolute -top-32 -left-32 w-80 h-80 bg-gradient-to-br from-amber-200/20 via-orange-300/10 to-pink-300/15 blur-[100px] rounded-full pointer-events-none" />
+              <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-gradient-to-tr from-violet-200/10 via-indigo-200/15 to-cyan-200/10 blur-[100px] rounded-full pointer-events-none" />
+
+              <div className="relative z-10">
+                {/* Crown / Sparkle badge */}
+                <div className="relative mx-auto mb-6 w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-300 via-orange-400 to-pink-500 p-[1.5px] shadow-[0_15px_35px_rgba(245,158,11,0.2)] animate-pulse">
+                  <div className="w-full h-full rounded-3xl bg-white flex items-center justify-center">
+                    <Crown size={38} className="text-amber-500 fill-amber-500/10" />
+                  </div>
+                </div>
+
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600">Upgrade Successful</p>
+                <h3 className="mt-2 text-3xl font-black text-slate-900 leading-tight">
+                  ยินดีต้อนรับสู่
+                  <span className="block bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 bg-clip-text text-transparent">
+                    PRO MEMBER
+                  </span>
+                </h3>
+
+                <p className="mt-4 text-[12px] font-bold text-slate-500 max-w-[300px] mx-auto leading-relaxed">
+                  ขอบคุณมากๆ ครับที่สนับสนุนการเดินทางของแอปนี้ คุณได้ปลดล็อกขุมพลังการเติบโตอย่างไร้ขีดจำกัดแล้ว!
+                </p>
+
+                {/* Features list */}
+                <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/50 p-5 text-left space-y-3 shadow-inner">
+                  <div className="flex gap-3 text-xs font-bold text-slate-700">
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span>คุยกับพี่ฟุ้ยยาวต่อเนื่อง ไร้ข้อจำกัด</span>
+                  </div>
+                  <div className="flex gap-3 text-xs font-bold text-slate-700">
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span>สิทธิ์ปรับแต่ง Quest ออกแบบชีวิตกับพี่ฟุ้ย</span>
+                  </div>
+                  <div className="flex gap-3 text-xs font-bold text-slate-700">
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span>เข้า Focus Room Lounge ร่วมโฟกัสกับคอมมูนิตี้</span>
+                  </div>
+                  <div className="flex gap-3 text-xs font-bold text-slate-700">
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span>คลังบทความสรุปและบทเรียนชีวิตพรีเมียม</span>
+                  </div>
+                  {/* Show ebook perk conditionally if they got Yearly/Lifetime */}
+                  {(userData?.subscriptionPlan === "yearly" ||
+                    userData?.subscriptionPlan === "founding_yearly" ||
+                    userData?.subscriptionPlan === "lifetime" ||
+                    userData?.isLifetimeMember) && (
+                    <div className="flex gap-3 text-xs font-bold text-slate-700">
+                      <span className="text-emerald-500 font-extrabold">✓</span>
+                      <span>ฟรี E-Book “สร้างก่อนพร้อม” ดาวน์โหลดได้ทันที</span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowProSuccessModal(false)}
+                  className="mt-8 w-full py-4 rounded-2xl bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_15px_30px_-5px_rgba(245,158,11,0.3)] transition-all hover:brightness-105 active:scale-95 hover:-translate-y-0.5"
+                >
+                  เริ่มยกระดับชีวิตวันนี้เลย ⚡
+                </button>
               </div>
             </motion.div>
           </motion.div>

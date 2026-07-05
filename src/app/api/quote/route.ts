@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyAuthToken, isAuthError } from '@/lib/auth-middleware';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logAiCall } from '@/lib/ai-logger';
+import { adminDb } from '@/lib/firebase-admin';
 
 const QuoteSchema = z.object({
   prompt: z.string().min(1).max(5000),
@@ -17,6 +18,36 @@ export async function POST(req: Request) {
   const rl = checkRateLimit(`quote:${uid}`, 10, 60_000);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
+  }
+
+  // Check Daily Quota for Free Tier (authenticated users only)
+  if (!isAuthError(authResult)) {
+    const userRef = adminDb.collection("users").doc(uid);
+    const userSnap = await userRef.get();
+    const userData = userSnap.exists ? userSnap.data() || {} : {};
+
+    const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || "";
+    const subscriptionTier = userData.subscriptionTier || userData.subscription_tier || "";
+    const isProMember =
+      userData.role === "premium" ||
+      subscriptionTier === "pro" ||
+      ["active", "trialing"].includes(subscriptionStatus) ||
+      Boolean(userData.isLifetimeMember);
+
+    if (!isProMember) {
+      const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+      const currentDay = userData.quoteDailyDate || "";
+      const currentCount = currentDay === todayKey ? Number(userData.quoteDailyCount || 0) : 0;
+
+      if (currentCount >= 1) {
+        return NextResponse.json({ error: "คุณใช้โควตาสร้างคำคมฟรีครบ 1 ครั้งในวันนี้แล้ว อัปเกรดเป็น PRO เพื่อสุ่มสร้างได้ไม่จำกัดครับ" }, { status: 403 });
+      }
+
+      await userRef.set({
+        quoteDailyDate: todayKey,
+        quoteDailyCount: currentCount + 1
+      }, { merge: true });
+    }
   }
 
   const body = await req.json().catch(() => null);

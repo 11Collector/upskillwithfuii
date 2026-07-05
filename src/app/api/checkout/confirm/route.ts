@@ -22,6 +22,7 @@ async function updateUserSubscription({
   status,
   plan,
   currentPeriodEnd,
+  cancelAtPeriodEnd,
 }: {
   userId: string;
   stripeCustomerId?: string | null;
@@ -29,6 +30,7 @@ async function updateUserSubscription({
   status: string;
   plan?: string;
   currentPeriodEnd?: number | null;
+  cancelAtPeriodEnd?: boolean | null;
 }) {
   const isLifetime = plan === "lifetime";
   const isActive = isLifetime || ["active", "trialing", "complete", "paid"].includes(status);
@@ -45,6 +47,7 @@ async function updateUserSubscription({
       ...(typeof currentPeriodEnd === "number"
         ? { currentPeriodEnd: new Date(currentPeriodEnd * 1000) }
         : {}),
+      ...(typeof cancelAtPeriodEnd === "boolean" ? { cancelAtPeriodEnd } : {}),
       isFoundingMember: plan?.startsWith("founding") || false,
       isLifetimeMember: isLifetime,
       subscriptionUpdatedAt: FieldValue.serverTimestamp(),
@@ -92,6 +95,7 @@ export async function POST(req: Request) {
         status: subscriptionData?.status || "active",
         plan,
         currentPeriodEnd: subscriptionData?.current_period_end,
+        cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
       });
 
       return NextResponse.json({ success: true, plan });
@@ -104,6 +108,7 @@ export async function POST(req: Request) {
       status: "active",
       plan,
       currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
     });
 
     return NextResponse.json({ success: true, plan });
