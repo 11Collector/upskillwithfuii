@@ -3513,32 +3513,32 @@ export default function DashboardPage() {
         {/* --- 🏠 Home Tab Header --- */}
         {shouldShowHomeHeader && (
           <div className="mt-2 mb-5">
-            <div className="relative flex items-center justify-center">
-              <div className="flex w-full items-center gap-4">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                <h2 className="flex items-center gap-3 rounded-full border border-slate-100 bg-white px-6 py-2 text-xl font-black text-slate-800 shadow-sm">
-                  <LayoutDashboard size={20} />
+            <div className="flex flex-col sm:flex-row sm:relative items-center justify-center gap-3 sm:gap-0">
+              <div className="flex items-center gap-4 w-full sm:w-auto sm:flex-1">
+                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                <h2 className="flex items-center gap-2.5 sm:gap-3 rounded-full border border-slate-100 bg-white px-5 py-2 sm:px-6 sm:py-2 text-[15px] sm:text-xl font-black text-slate-800 shadow-sm mx-auto sm:mx-0">
+                  <LayoutDashboard size={18} className="sm:w-5 sm:h-5 text-slate-600" />
                   สรุปภาพรวม
                 </h2>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
               </div>
               {shouldShowMembershipStatus && (
                 <button
                   type="button"
                   onClick={() => setShowMembershipModal(true)}
-                  className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2 rounded-full border border-slate-100 bg-white px-2 py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 sm:gap-2.5 sm:px-3"
+                  className="relative sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2 flex items-center gap-2 rounded-full border border-slate-100 bg-white px-2 py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:sm:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 sm:gap-2.5 sm:px-3 cursor-pointer z-30"
                   title={isProMember ? "สมาชิก PRO" : "ดูแผนสมาชิก"}
                 >
-                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                  <span className={`flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full ${
                     userData?.isFoundingMember
                       ? "bg-slate-950 text-amber-400 shadow-inner"
                       : isProMember
                       ? "bg-slate-950 text-violet-400 shadow-inner"
                       : "bg-slate-100 text-slate-400"
                   } shadow-sm`}>
-                    {userData?.isFoundingMember ? <Crown size={12} className="fill-amber-400/20 text-amber-400" /> : isProMember ? <Sparkles size={12} /> : <Lock size={12} />}
+                    {userData?.isFoundingMember ? <Crown size={11} className="fill-amber-400/20 text-amber-400" /> : isProMember ? <Sparkles size={11} /> : <Lock size={11} />}
                   </span>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.24em] pl-0.5 ${
+                  <span className={`text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.24em] pl-0.5 ${
                     userData?.isFoundingMember
                       ? "text-amber-500"
                       : isProMember
@@ -3552,46 +3552,46 @@ export default function DashboardPage() {
             </div>
 
             {shouldShowHomeLevelStrip && (
-            <div className="mx-auto mt-4 max-w-3xl rounded-[1.75rem] border border-white/90 bg-white/75 p-2 shadow-[0_24px_80px_rgba(79,70,229,0.14),0_12px_34px_rgba(34,211,238,0.12)] backdrop-blur-xl">
-              <div className="relative overflow-hidden rounded-[1.35rem] border border-white/80 bg-gradient-to-r from-violet-50/95 via-white to-cyan-50/95 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_28px_rgba(15,23,42,0.04)]">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_88%_18%,rgba(34,211,238,0.24),transparent_27%),linear-gradient(120deg,transparent,rgba(255,255,255,0.78),transparent)]" />
-                <div className="relative z-10 flex items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-pink-500 to-rose-500 text-xl font-black text-white shadow-[0_14px_28px_rgba(236,72,153,0.34),0_0_0_6px_rgba(255,255,255,0.32)]">
-                    {(user?.displayName || user?.email || "U").charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-black text-white shadow-sm">
-                        LV.{currentLevel}
-                      </span>
-                      <span className="max-w-full truncate rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
-                        {getLevelTitle(currentLevel).split(" (")[0]}
-                      </span>
-                      <span className="rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-[11px] font-black text-violet-600">
-                        {totalXP} XP
-                      </span>
+              <div className="mx-auto mt-4 max-w-3xl rounded-[1.5rem] sm:rounded-[1.75rem] border border-white/90 bg-white/75 p-1 sm:p-2 shadow-[0_24px_80px_rgba(79,70,229,0.14),0_12px_34px_rgba(34,211,238,0.12)] backdrop-blur-xl">
+                <div className="relative overflow-hidden rounded-[1.1rem] sm:rounded-[1.35rem] border border-white/80 bg-gradient-to-r from-violet-50/95 via-white to-cyan-50/95 px-3 py-2 sm:px-4 sm:py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_28px_rgba(15,23,42,0.04)]">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_88%_18%,rgba(34,211,238,0.24),transparent_27%),linear-gradient(120deg,transparent,rgba(255,255,255,0.78),transparent)]" />
+                  <div className="relative z-10 flex items-center gap-2.5 sm:gap-3">
+                    <div className="flex h-9 w-9 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-pink-500 to-rose-500 text-sm sm:text-xl font-black text-white shadow-[0_8px_18px_rgba(236,72,153,0.3),0_0_0_4px_rgba(255,255,255,0.3)]">
+                      {(user?.displayName || user?.email || "U").charAt(0).toUpperCase()}
                     </div>
-                    <div className="mt-2 flex items-center gap-3">
-                      <div className="h-2 flex-1 overflow-hidden rounded-full border border-slate-200 bg-white/80">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-400 to-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.45)] transition-all duration-700"
-                          style={{ width: `${currentLevelXP}%` }}
-                        />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span className="rounded-full bg-slate-950 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] font-black text-white shadow-sm">
+                          LV.{currentLevel}
+                        </span>
+                        <span className="max-w-full truncate rounded-full border border-slate-200 bg-white/80 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] font-black uppercase tracking-[0.08em] sm:tracking-[0.12em] text-slate-500">
+                          {getLevelTitle(currentLevel).split(" (")[0]}
+                        </span>
+                        <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] font-black text-violet-600">
+                          {totalXP} XP
+                        </span>
                       </div>
-                      <span className="w-10 text-right text-xs font-black text-slate-500">{currentLevelXP}%</span>
+                      <div className="mt-1.5 flex items-center gap-2 sm:gap-3">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-slate-200 bg-white/80">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-400 to-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.45)] transition-all duration-700"
+                            style={{ width: `${currentLevelXP}%` }}
+                          />
+                        </div>
+                        <span className="w-8 text-right text-[10px] sm:text-xs font-black text-slate-500">{currentLevelXP}%</span>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="ml-0.5 flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/75 text-slate-400 shadow-sm transition-all hover:text-red-400 active:scale-95"
+                      title="ออกจากระบบ"
+                    >
+                      <LogOut size={14} className="sm:w-4 sm:h-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/75 text-slate-400 shadow-sm transition-all hover:text-red-400 active:scale-95"
-                    title="ออกจากระบบ"
-                  >
-                    <LogOut size={16} />
-                  </button>
                 </div>
               </div>
-            </div>
             )}
           </div>
         )}

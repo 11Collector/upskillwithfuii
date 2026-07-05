@@ -49,6 +49,7 @@ type ProPlan = "monthly" | "yearly" | "founding_monthly" | "founding_yearly" | "
 export default function Home() {
   const { deferredPrompt, isIOS, handleInstallClick } = usePWAInstall();
   const [user, setUser] = useState<User | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [onePercentDay, setOnePercentDay] = useState(365);
@@ -99,8 +100,32 @@ export default function Home() {
 
   // 1. เก็บสถานะ Auth ตามปกติ
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const data = userSnap.data() || {};
+            const subscriptionStatus = data.subscriptionStatus || data.subscription_status || "";
+            const subscriptionTier = data.subscriptionTier || data.subscription_tier || "";
+            const isPremium =
+              data.role === "premium" ||
+              subscriptionTier === "pro" ||
+              ["active", "trialing"].includes(subscriptionStatus) ||
+              Boolean(data.isLifetimeMember);
+            setIsPro(isPremium);
+          } else {
+            setIsPro(false);
+          }
+        } catch (e) {
+          console.error(e);
+          setIsPro(false);
+        }
+      } else {
+        setIsPro(false);
+      }
       setLoading(false);
     });
     const timer = setTimeout(() => setLoading(false), 5000);
@@ -135,6 +160,7 @@ export default function Home() {
 
       const userSnap = await getDoc(userRef);
 
+      let isPremium = false;
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           uid: loggedInUser.uid,
@@ -144,7 +170,17 @@ export default function Home() {
           subscription_tier: "free",
           createdAt: serverTimestamp(),
         });
+      } else {
+        const data = userSnap.data() || {};
+        const subscriptionStatus = data.subscriptionStatus || data.subscription_status || "";
+        const subscriptionTier = data.subscriptionTier || data.subscription_tier || "";
+        isPremium =
+          data.role === "premium" ||
+          subscriptionTier === "pro" ||
+          ["active", "trialing"].includes(subscriptionStatus) ||
+          Boolean(data.isLifetimeMember);
       }
+      setIsPro(isPremium);
 
       // ✅ เพิ่มบรรทัดนี้ครับ: เพื่อให้หน้าเด้งกลับไปบนสุดแบบลื่นๆ
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -281,17 +317,17 @@ export default function Home() {
                 สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
               </p>
 
-              <div className="relative mt-6 flex flex-nowrap gap-2 overflow-visible">
+              <div className="relative mt-6 flex overflow-x-auto flex-nowrap gap-1.5 sm:gap-2 no-scrollbar scrollbar-none pb-1 select-none">
                 {[
-                  { icon: <BrainCircuit size={14} />, label: "PERSONALIZED", accent: "bg-violet-100/24 text-violet-50 ring-violet-100/45" },
-                  { icon: <Zap size={14} />, label: "ACTIONABLE", accent: "bg-amber-100/24 text-amber-50 ring-amber-100/45" },
-                  { icon: <Flame size={14} />, label: "XP & LEVEL", accent: "bg-sky-100/24 text-sky-50 ring-sky-100/45" },
+                  { icon: <BrainCircuit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "PERSONALIZED", accent: "bg-violet-100/24 text-violet-50 ring-violet-100/45" },
+                  { icon: <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "ACTIONABLE", accent: "bg-amber-100/24 text-amber-50 ring-amber-100/45" },
+                  { icon: <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "XP & LEVEL", accent: "bg-sky-100/24 text-sky-50 ring-sky-100/45" },
                 ].map((badge) => (
                   <div
                     key={badge.label}
-                    className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-white/72 bg-slate-950/18 px-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_26px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.22)] drop-shadow-[0_1px_5px_rgba(15,23,42,0.38)] backdrop-blur-xl sm:flex-none sm:gap-2 sm:px-4 sm:text-[11px] sm:tracking-[0.16em]"
+                    className="inline-flex h-8 sm:h-10 min-w-0 flex-1 sm:flex-none shrink-0 items-center justify-center gap-1 sm:gap-2 rounded-full border border-white/72 bg-slate-950/18 px-2 sm:px-4 text-[7px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-normal sm:tracking-[0.16em] text-white shadow-[0_10px_26px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.22)] drop-shadow-[0_1px_5px_rgba(15,23,42,0.38)] backdrop-blur-xl"
                   >
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
+                    <span className={`flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
                       {badge.icon}
                     </span>
                     <span className="truncate">{badge.label}</span>
@@ -331,9 +367,15 @@ export default function Home() {
 
             <div className="text-center sm:text-left space-y-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-md">
-                  {t.proMember}
-                </span>
+                {isPro ? (
+                  <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-md">
+                    Pro Member
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-md">
+                    Starter Member
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                 {t.authWelcome} <span className="text-red-800">{user.displayName?.split(' ')[0]}</span> 🚀
@@ -664,7 +706,7 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
           {getToolsData().map((tool, index) => (
             <Link key={tool.id} href={`${tool.path}/info`} className="block h-full group">
-              <div className="relative flex min-h-[210px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-white bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:min-h-[230px] sm:rounded-[2rem] sm:p-6 [&_.tool-gimmick]:mt-2 [&_.tool-gimmick]:max-w-full [&_.tool-gimmick]:px-2 [&_.tool-gimmick]:py-1 [&_.tool-gimmick]:text-[8px] [&_.tool-gimmick_span]:truncate sm:[&_.tool-gimmick]:mt-3 sm:[&_.tool-gimmick]:px-3 sm:[&_.tool-gimmick]:py-1.5 sm:[&_.tool-gimmick]:text-[10px]">
+              <div className="relative flex h-full min-h-[210px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-white bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:min-h-[230px] sm:rounded-[2rem] sm:p-6 [&_.tool-gimmick]:mt-2 [&_.tool-gimmick]:max-w-full [&_.tool-gimmick]:px-2 [&_.tool-gimmick]:py-1 [&_.tool-gimmick]:text-[8px] [&_.tool-gimmick_span]:truncate sm:[&_.tool-gimmick]:mt-3 sm:[&_.tool-gimmick]:px-3 sm:[&_.tool-gimmick]:py-1.5 sm:[&_.tool-gimmick]:text-[10px]">
                 <div className={`absolute inset-0 opacity-70 ${
                   index % 6 === 0 ? "bg-gradient-to-br from-red-50 via-white to-rose-50" :
                   index % 6 === 1 ? "bg-gradient-to-br from-blue-50 via-white to-sky-50" :
