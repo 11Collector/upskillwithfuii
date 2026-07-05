@@ -75,6 +75,7 @@ export async function POST(req: Request) {
       mode: isRecurring ? "subscription" : "payment",
       success_url: `${origin}/dashboard?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dashboard?checkout=cancelled`,
+      allow_promotion_codes: true,
       metadata: {
         userId: authResult.uid,
         type: "pro_membership",
