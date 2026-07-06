@@ -1230,6 +1230,7 @@ export default function DashboardPage() {
     setPendingJourneyCompletionAfterMementoClose(false);
     setSimulatePhase3Done(true);
     setSimulateEnteredRealLife(false);
+    setUserData((prev: any) => prev ? { ...prev, enteredRealLife: false } : null);
     setActiveTab("home");
     setIsCelebrating(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3151,7 +3152,7 @@ export default function DashboardPage() {
   const renderPlayerCardCanvas = (id?: string, isCompact?: boolean) => (
     <div
       id={id}
-      className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center ${isCompact ? "p-6 sm:p-8" : "p-8"} transition-all duration-700`}
+      className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center ${isCompact ? "pt-8 pb-5 px-6" : "p-8"} transition-all duration-700`}
       style={{
         backgroundColor: theme.hexBg,
         backgroundImage: discType ? `linear-gradient(to bottom, ${theme.hexGlow}, transparent)` : 'none'
@@ -3225,14 +3226,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className={`relative z-0 mb-2 ${isCompact ? "mt-2 sm:mt-4 h-36 sm:h-48" : "mt-4 h-48"} flex justify-center items-end`}>
+      <div className={`relative z-0 mb-2 ${isCompact ? "mt-2 sm:mt-4 h-33 sm:h-48" : "mt-4 h-48"} flex justify-center items-end`}>
         <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
-        <div className={`relative z-10 translate-y-[4px] max-w-[500px] ${isCompact ? "scale-[0.72] sm:scale-[0.85]" : "scale-[0.85]"} origin-bottom`}>
-          <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
+        <div className={`relative z-10 translate-y-[4px] max-w-[500px] ${isCompact ? "scale-[0.68] sm:scale-[0.85]" : "scale-[0.85]"} origin-bottom`}>
+          <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={isCompact} />
         </div>
 
         {lastMoney?.resultKey && (
-          <div className={`absolute bottom-0 left-1/2 translate-x-[-25%] ${isCompact ? "translate-y-[10px] sm:translate-y-[14px] w-32 h-32 sm:w-40 sm:h-40" : "translate-y-[14px] w-40 h-40"} z-20`}>
+          <div className={`absolute bottom-0 left-1/2 translate-x-[-25%] ${isCompact ? "translate-y-[10px] w-32 h-32" : "translate-y-[14px] w-40 h-40"} z-20`}>
             <img
               src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img}
               alt="Pet"
@@ -3245,17 +3246,19 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className={`relative z-10 text-center w-full ${isCompact ? "mb-3 sm:mb-5 -mt-3 sm:-mt-6" : "mb-5 -mt-6"}`}>
-        <h2 className={`font-black text-white tracking-tight mb-1 sm:mb-2 drop-shadow-lg ${isCompact ? "text-3xl sm:text-4xl" : "text-4xl"}`}>
+      <div className={`relative z-10 text-center w-full ${isCompact ? "mb-3 mt-0" : "mb-8 -mt-6"}`}>
+        <h2 className={`font-black text-white tracking-tight mb-1 sm:mb-2 drop-shadow-lg ${isCompact ? "text-[1.75rem]" : "text-4xl"}`}>
           {user?.displayName?.split(' ')[0]}
         </h2>
-        <div className={`inline-flex items-center gap-2 ${isCompact ? "px-4 py-1.5 sm:px-5 sm:py-2 text-[10px] sm:text-[12px]" : "px-5 py-2 text-[12px]"} bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]`}>
+        <div className={`inline-flex items-center gap-2 ${isCompact ? "px-4 py-1.5 text-[10px]" : "px-5 py-2 text-[12px]"} bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]`}>
           <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
         </div>
       </div>
 
-      <div className={`relative z-10 w-full grid grid-cols-2 ${isCompact ? "gap-2 px-1 sm:px-4" : "gap-3 px-2 sm:px-4"} mb-0`}>
-        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} ${isCompact ? "p-2 sm:p-3 min-h-[70px] sm:min-h-[85px]" : "p-3 min-h-[85px]"} rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center ${isCapturing ? '' : 'shadow-xl'}`}>
+
+
+      <div className={`relative z-10 w-full grid grid-cols-2 ${isCompact ? "gap-2 px-1 sm:px-4" : "gap-3 px-2 sm:px-4"} ${isCompact ? "mb-0" : "mb-4"}`}>
+        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} ${isCompact ? "p-1.5 min-h-[66px]" : "p-3.5 min-h-[85px]"} rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center ${isCapturing ? '' : 'shadow-xl'}`}>
           <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] ${isCompact ? "mb-1 sm:mb-1.5" : "mb-1.5"}`}>DISC STYLE</span>
           <Zap size={14} className={`${theme.accent} ${isCompact ? "mb-1 sm:mb-1.5" : "mb-1.5"}`} />
           <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
@@ -3459,25 +3462,82 @@ export default function DashboardPage() {
     </div>
   );
 
+  const renderPlayerCardBack = (sizeClasses = "w-full h-full aspect-[3/4.5]") => {
+    return (
+      <div 
+        className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center p-8 transition-all duration-700 cursor-pointer group/back ${sizeClasses}`}
+        style={{
+          backgroundColor: "#0F172A",
+          backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px)",
+          backgroundSize: "20px 20px"
+        }}
+        onClick={() => setShowShareModal(true)}
+      >
+        {/* ✨ Premium Lighting Effects */}
+        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-orange-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+        {/* Subtle Decorative Borders inside */}
+        <div className="absolute inset-4 rounded-[2.2rem] border border-white/5 pointer-events-none" />
+        <div className="absolute inset-6 rounded-[2rem] border border-dashed border-white/5 pointer-events-none" />
+
+        {/* Center: Branded Glass Box with Holographic Logo (NO Camera Badge) */}
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl p-[1px] bg-gradient-to-tr from-pink-500 via-purple-500 via-sky-400 via-emerald-400 to-amber-400 shadow-[0_0_25px_rgba(236,72,153,0.3)] group-hover/back:scale-110 group-hover/back:shadow-[0_0_35px_rgba(56,189,248,0.5)] transition-all duration-500 relative overflow-hidden">
+            {/* Shimmer line inside border overlay */}
+            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%)] bg-[length:250%_250%] group-hover/back:animate-[pulse_2s_infinite] pointer-events-none" />
+            
+            <div className="w-full h-full bg-slate-950/90 rounded-[15px] flex items-center justify-center p-2.5 relative overflow-hidden">
+              {/* Subtle Holo backdrop overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/10 via-sky-400/10 to-transparent opacity-60 pointer-events-none" />
+              
+              <img 
+                src="/logo-invert.png" 
+                alt="Upskill Logo" 
+                className="w-full h-full object-contain opacity-95 group-hover/back:opacity-100 transition-opacity z-10"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          </div>
+          <div className="text-center">
+            <span className="text-[11px] font-black text-white/80 uppercase tracking-[0.25em] drop-shadow-md block group-hover/back:text-amber-400 transition-colors">
+              แตะเพื่อดูการ์ด
+            </span>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block mt-1">
+              Tap to Reveal Card
+            </span>
+          </div>
+        </div>
+
+        {/* Branding text at the bottom */}
+        <div className="absolute bottom-8 left-0 right-0 text-center">
+          <h4 className="text-[9px] font-black text-white/30 tracking-[0.3em] uppercase">UPSKILL EVERYDAY</h4>
+        </div>
+      </div>
+    );
+  };
+
   const renderJourneyPSACard = () => (
     <button
       type="button"
       onClick={() => setShowShareModal(true)}
-      className="group relative mx-auto mt-6 block w-full max-w-[390px] text-left"
+      className="group relative mx-auto mt-2 block w-full max-w-[310px] text-left"
       title="เปิด Player Card"
     >
       <div className="absolute -inset-3 rounded-[3.2rem] bg-gradient-to-br from-amber-200/70 via-orange-100/80 to-white/80 blur-xl transition-all duration-700 group-hover:blur-2xl" />
-      <div className="relative overflow-hidden rounded-[3rem] border border-amber-200/90 bg-gradient-to-br from-white/92 via-orange-50/78 to-amber-50/72 p-3 shadow-[0_36px_100px_rgba(120,53,15,0.22)] backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-[3rem] border border-amber-200/90 bg-gradient-to-br from-white/92 via-orange-50/78 to-amber-50/72 p-3 shadow-[0_36px_100px_rgba(120,53,15,0.22)] backdrop-blur-2xl transition-all duration-500 flex flex-col items-center">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.9),transparent_36%,rgba(255,255,255,0.32)_56%,transparent_74%)] opacity-90" />
-        <div className="relative mb-3 overflow-hidden rounded-[1.7rem] border border-white/80 bg-white/88 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_34px_rgba(245,158,11,0.10)]">
+        <div className="relative mb-3 overflow-hidden rounded-[1.7rem] border border-white/80 bg-white/88 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_34px_rgba(245,158,11,0.10)] w-full">
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(251,191,36,0.18),rgba(255,255,255,0.72),rgba(125,211,252,0.18),rgba(244,114,182,0.16))]" />
           <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-300/70 to-transparent" />
           <p className="relative inline-flex items-center justify-center rounded-full border border-amber-200/70 bg-white/60 px-4 py-1.5 text-center text-[9px] font-black uppercase tracking-[0.32em] text-orange-500 shadow-[0_10px_24px_rgba(245,158,11,0.10)] backdrop-blur-xl">
             Upskill Everyday Certified
           </p>
         </div>
-        <div className="relative overflow-hidden rounded-[2.65rem] border border-white/85 bg-white/35 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_18px_52px_rgba(120,53,15,0.14)] backdrop-blur-xl">
-          {renderPlayerCardCanvas(undefined, true)}
+        <div className="relative overflow-hidden rounded-[2.65rem] border border-white/85 bg-white/35 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_18px_52px_rgba(120,53,15,0.14)] backdrop-blur-xl w-full flex justify-center">
+          {renderPlayerCardBack("w-full aspect-[3/4.5]")}
         </div>
       </div>
     </button>
@@ -3774,8 +3834,8 @@ export default function DashboardPage() {
                   <h3 className="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-400 bg-clip-text text-2xl font-black text-transparent">
                     ยินดีด้วย! คุณผ่าน 3 Phase แล้ว
                   </h3>
-                  <p className="mx-auto mt-2 max-w-xl text-sm font-bold leading-relaxed text-slate-500">
-                    กดเข้าสู่ชีวิตจริงเพื่อเปิด Bento Grid ทั้งหมด และเริ่มใช้งานระบบหลักในเวอร์ชันเต็มของคุณ
+                  <p className="mx-auto mt-2 max-w-xl text-[11.5px] sm:text-sm font-bold leading-relaxed text-slate-500 whitespace-nowrap">
+                    กดเข้าสู่ชีวิตจริง และเริ่มใช้ระบบพัฒนาตัวเองของคุณกัน
                   </p>
                   {renderJourneyPSACard()}
                   <button
@@ -3863,7 +3923,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="relative z-10 flex flex-col h-full w-full">
+              <div className="relative z-10 flex flex-col flex-1 w-full">
 
                 {/* 📊 1. Top Navbar (🌟 แสดงบน Desktop เท่านั้น - hidden lg:flex) */}
                 <div className="hidden lg:flex relative z-[999] flex-row flex-nowrap items-center justify-between gap-4 w-full mb-8">
@@ -4039,15 +4099,17 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 🎯 2. Hero Section (จัดข้อความซ้าย อวตาร+Badge ขวา) */}
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between w-full gap-6 mb-6 relative z-30">
+                <div className="flex-1 flex flex-col lg:flex-row items-start lg:items-center justify-between w-full gap-6 my-auto py-4 relative z-30">
 
                   {/* ⬅️ ฝั่งซ้าย: ข้อความและปุ่มจัดการ */}
                   <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
-                    <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-tight mb-3 mt-4 sm:mt-0">
-                      ยินดีต้อนรับ <br className="hidden sm:block lg:hidden" />
+                    <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-[1.1] mb-1.5 mt-4 sm:mt-0">
+                      ยินดีต้อนรับ <br />
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-extrabold">{user?.displayName?.split(' ')[0]} 🚀</span>
                     </h1>
-                    <p className="text-slate-300 text-sm xl:text-base font-medium max-w-md mx-auto lg:mx-0 mb-5">เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ เพื่อการเติบโตในทุกๆ วัน</p>
+                    <p className="text-slate-300 text-sm xl:text-base font-medium max-w-md mx-auto lg:mx-0 mb-3">
+                      เช็กภาพรวมและอัพเดตเป้าหมายชีวิตของคุณ <br /> เพื่อการเติบโตในทุกๆ วัน
+                    </p>
 
                     {/* 📱 Mobile Only: Level & Logout Row (🌟 แสดงเฉพาะบนมือถือ) */}
                     <div className="flex sm:hidden items-center justify-center w-full mt-2 relative z-[999] gap-3">
@@ -4328,7 +4390,7 @@ export default function DashboardPage() {
                   {/* ➡️ ฝั่งขวา: Avatar + Pet + Badge (รวมร่างกันสมบูรณ์!) */}
                   <div className="flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center mt-4 lg:mt-0 lg:ml-8">
                     {/* 🏗️ Container หลัก: เพิ่ม -translate-x-8 (หรือตามใจชอบ) เพื่อดึงทั้งกลุ่มไปทางซ้าย */}
-                    <div className="relative mb-6 flex justify-center items-end scale-95 sm:scale-100 origin-bottom -translate-x-2 sm:-translate-x-10">
+                    <div className="relative -mb-5 flex justify-center items-end scale-110 sm:scale-[1.15] origin-bottom -translate-x-2 sm:-translate-x-10 translate-y-1">
 
                       {/* 1. รูป Avatar หลัก */}
                       <div className="relative z-10 translate-y-[2px]">
@@ -4337,7 +4399,7 @@ export default function DashboardPage() {
 
                       {/* 🐾 สัตว์เลี้ยง (หน้า Dashboard) - โชว์ทันที ไม่มี Fade-in */}
                       {lastMoney?.resultKey && (
-                        <div className="absolute bottom-0 left-1/2 translate-x-[-15%] sm:translate-x-[0%] z-20 w-36 h-36 sm:w-44 sm:h-44 pointer-events-none">
+                        <div className="absolute bottom-0 left-1/2 translate-x-[-15px] sm:translate-x-[-25px] z-20 w-36 h-36 sm:w-44 sm:h-44 pointer-events-none">
                           <img
                             src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img}
                             alt={PET_DATA[lastMoney.resultKey]?.name}
@@ -6358,6 +6420,7 @@ export default function DashboardPage() {
             {/* 🚨 ปุ่มรีเซ็ตข้อมูล (ซ่อนตัวเนียนๆ เป็นสีแดงอ่อน - แสดงเฉพาะ Dev หรือ Admin) */}
             {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean).includes(user.email.toLowerCase()))) && (
               <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+
                 <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">
                   <RefreshCw size={14} /> เริ่มต้นใหม่ (Reset)
                 </button>
@@ -7157,9 +7220,9 @@ export default function DashboardPage() {
                           : "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:shadow-[0_0_20px_rgba(139,92,246,0.2)] text-white"
                       }`}
                     >
-                      {viewMode === "letter" 
-                        ? "ยินดีที่ได้รู้จักนะครับ :)" 
-                        : "ปิดใบรับรอง"}
+                      {!isProMember 
+                        ? "ขอบคุณครับ" 
+                        : (viewMode === "letter" ? "ยินดีที่ได้รู้จักนะครับ :)" : "ปิดใบรับรอง")}
                     </button>
                   </motion.div>
                 ) : isProMember ? (
