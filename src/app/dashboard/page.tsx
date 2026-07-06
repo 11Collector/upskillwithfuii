@@ -7094,16 +7094,23 @@ export default function DashboardPage() {
                         ) : (
                           /* --- Developer's Letter --- */
                           <>
-                            <div className="flex items-center gap-3 mb-5">
-                              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
-                                <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                            <div className="flex items-center justify-between gap-3 mb-5">
+                              <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
+                                  <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                                </div>
+                                <div>
+                                  <h3 className="text-xl font-black text-white leading-tight">
+                                    สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
+                                  </h3>
+                                  <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="text-xl font-black text-white leading-tight">
-                                  สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
-                                </h3>
-                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
-                              </div>
+                              {isProMember && (
+                                <span className="shrink-0 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 uppercase tracking-widest">
+                                  ขอบคุณที่สนับสนุน ❤️
+                                </span>
+                              )}
                             </div>
 
                             <div className="space-y-4 text-[13px] font-bold leading-relaxed text-slate-300 bg-white/[0.02] border border-white/5 rounded-3xl p-5 backdrop-blur-md">
