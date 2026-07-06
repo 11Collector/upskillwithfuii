@@ -3148,10 +3148,10 @@ export default function DashboardPage() {
 
   const memberLabel = isProMember ? "PRO MEMBER" : "STARTER MEMBER";
 
-  const renderPlayerCardCanvas = (id?: string) => (
+  const renderPlayerCardCanvas = (id?: string, isCompact?: boolean) => (
     <div
       id={id}
-      className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center p-8 transition-all duration-700`}
+      className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center ${isCompact ? "p-6 sm:p-8" : "p-8"} transition-all duration-700`}
       style={{
         backgroundColor: theme.hexBg,
         backgroundImage: discType ? `linear-gradient(to bottom, ${theme.hexGlow}, transparent)` : 'none'
@@ -3225,14 +3225,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="relative z-0 mb-2 mt-4 h-48 flex justify-center items-end">
+      <div className={`relative z-0 mb-2 ${isCompact ? "mt-2 sm:mt-4 h-36 sm:h-48" : "mt-4 h-48"} flex justify-center items-end`}>
         <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
-        <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-[0.85] origin-bottom">
+        <div className={`relative z-10 translate-y-[4px] max-w-[500px] ${isCompact ? "scale-[0.72] sm:scale-[0.85]" : "scale-[0.85]"} origin-bottom`}>
           <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
         </div>
 
         {lastMoney?.resultKey && (
-          <div className="absolute bottom-0 left-1/2 translate-x-[-25%] translate-y-[14px] z-20 w-40 h-40">
+          <div className={`absolute bottom-0 left-1/2 translate-x-[-25%] ${isCompact ? "translate-y-[10px] sm:translate-y-[14px] w-32 h-32 sm:w-40 sm:h-40" : "translate-y-[14px] w-40 h-40"} z-20`}>
             <img
               src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img}
               alt="Pet"
@@ -3245,27 +3245,27 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="relative z-10 text-center w-full mb-5 -mt-6">
-        <h2 className="text-4xl font-black text-white tracking-tight mb-2 drop-shadow-lg">
+      <div className={`relative z-10 text-center w-full ${isCompact ? "mb-3 sm:mb-5 -mt-3 sm:-mt-6" : "mb-5 -mt-6"}`}>
+        <h2 className={`font-black text-white tracking-tight mb-1 sm:mb-2 drop-shadow-lg ${isCompact ? "text-3xl sm:text-4xl" : "text-4xl"}`}>
           {user?.displayName?.split(' ')[0]}
         </h2>
-        <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl text-[12px] font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]">
+        <div className={`inline-flex items-center gap-2 ${isCompact ? "px-4 py-1.5 sm:px-5 sm:py-2 text-[10px] sm:text-[12px]" : "px-5 py-2 text-[12px]"} bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]`}>
           <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
         </div>
       </div>
 
-      <div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-0 px-2 sm:px-4">
-        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
-          <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] mb-1.5`}>DISC STYLE</span>
-          <Zap size={14} className={`${theme.accent} mb-1.5`} />
+      <div className={`relative z-10 w-full grid grid-cols-2 ${isCompact ? "gap-2 px-1 sm:px-4" : "gap-3 px-2 sm:px-4"} mb-0`}>
+        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} ${isCompact ? "p-2 sm:p-3 min-h-[70px] sm:min-h-[85px]" : "p-3 min-h-[85px]"} rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center ${isCapturing ? '' : 'shadow-xl'}`}>
+          <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] ${isCompact ? "mb-1 sm:mb-1.5" : "mb-1.5"}`}>DISC STYLE</span>
+          <Zap size={14} className={`${theme.accent} ${isCompact ? "mb-1 sm:mb-1.5" : "mb-1.5"}`} />
           <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
             {lastDisc ? DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle : "Life Explorer"}
           </p>
         </div>
 
-        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
-          <span className="text-[8px] font-black text-amber-400 uppercase tracking-[0.2em] mb-1.5">MONEY AVATAR</span>
-          <Star size={14} className="text-amber-400 fill-current mb-1.5" />
+        <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} ${isCompact ? "p-2 sm:p-3 min-h-[70px] sm:min-h-[85px]" : "p-3 min-h-[85px]"} rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center ${isCapturing ? '' : 'shadow-xl'}`}>
+          <span className={`text-[8px] font-black text-amber-400 uppercase tracking-[0.2em] ${isCompact ? "mb-1 sm:mb-1.5" : "mb-1.5"}`}>MONEY AVATAR</span>
+          <Star size={14} className={`text-amber-400 fill-current ${isCompact ? "mb-1 sm:mb-1.5" : "mb-1.5"}`} />
           <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
             {lastMoney ? MONEY_DATA[lastMoney.resultKey]?.title : "Asset Builder"}
           </p>
@@ -3273,7 +3273,6 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-
   // เอาไปวางไว้ก่อน return ใน DashboardPage
   const formatInspirationalText = (text: string) => {
     if (!text) return null;
@@ -3478,7 +3477,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="relative overflow-hidden rounded-[2.65rem] border border-white/85 bg-white/35 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_18px_52px_rgba(120,53,15,0.14)] backdrop-blur-xl">
-          {renderPlayerCardCanvas()}
+          {renderPlayerCardCanvas(undefined, true)}
         </div>
       </div>
     </button>
@@ -3673,17 +3672,17 @@ export default function DashboardPage() {
                       animate={{ opacity: 1, y: 0 }}
                       className={`relative flex min-w-[82vw] snap-center flex-col overflow-hidden rounded-[2.25rem] border shadow-[0_18px_46px_rgba(15,23,42,0.08)] md:min-w-0 ${phase.unlocked ? "border-violet-300/70 bg-slate-950 text-white" : "border-slate-300/70 bg-slate-100 text-slate-500 grayscale"}`}
                     >
-                      <div className="relative aspect-[16/9] md:aspect-[4/3] overflow-hidden">
+                      <div className="relative aspect-[4/3.2] md:aspect-[4/3] overflow-hidden">
                         <img
                           src={phase.image}
                           alt={phase.title}
-                          className={`h-full w-full object-cover ${phase.unlocked ? "" : "opacity-45 blur-[1px]"}`}
+                          className={`h-full w-full object-cover scale-[1.08] origin-bottom ${phase.unlocked ? "" : "opacity-45 blur-[1px]"}`}
                         />
                         <div className={`absolute inset-0 ${phase.unlocked
                           ? "bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent"
                           : "bg-white/55"
                         }`} />
-                        <div className="absolute left-5 top-5 rounded-full border border-white/45 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm backdrop-blur-md hidden sm:block">
+                        <div className="absolute left-5 top-5 rounded-full border border-white/45 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm backdrop-blur-md">
                           Phase {phase.num}
                         </div>
                         <div className={`absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black shadow-sm backdrop-blur-md ${phase.completed ? "bg-emerald-500 text-white" : isActive ? "bg-violet-500 text-white" : "bg-slate-500/75 text-white"}`}>
@@ -6839,149 +6838,8 @@ export default function DashboardPage() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* 💳 ตัวการ์ด (The Card Canvas) */}
-              <div
-                id="player-card"
-                className={`relative rounded-[3rem] overflow-hidden border-[1px] ${theme.border} shadow-[0_40px_100px_rgba(0,0,0,0.8)] aspect-[3/4.5] flex flex-col items-center p-8 transition-all duration-700`}
-                style={{
-                  backgroundColor: theme.hexBg,
-                  backgroundImage: discType ? `linear-gradient(to bottom, ${theme.hexGlow}, transparent)` : 'none'
-                }}
-              >
-                {/* 🎨 Logic: ถ้ามี Type โชว์ Monogram + Hero Icon | ถ้าไม่มีโชว์ Polkadot */}
-                {discType ? (
-                  <>
-                    {/* Layer 1: Minimalist Monogram */}
-                    <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0 opacity-[0.015]">
-                      <div className="flex flex-col gap-4 rotate-[-15deg] scale-125 transform">
-                        {[...Array(20)].map((_, rowIndex) => (
-                          <div key={rowIndex} className={`flex gap-10 text-3xl font-black text-white italic ${rowIndex % 2 === 0 ? 'ml-[-30px]' : 'ml-[30px]'}`}>
-                            {[...Array(12)].map((_, colIndex) => (
-                              <span key={colIndex}>{discType}</span>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Layer 2: Hero Centered Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0">
-                      <span
-                        className={`text-[46rem] font-black ${theme.accent} leading-none transform italic rotate-[-12deg] -translate-y-8`}
-                        style={{
-                          WebkitTextStroke: `14px ${theme.hexGlow}`,
-                          color: 'transparent',
-                          opacity: 0.55,
-                          filter: `drop-shadow(0 0 40px ${theme.hexGlow}99)`,
-                          lineHeight: 1,
-                          display: 'inline-block'
-                        }}
-                      >
-                        {discType}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  /* 🎨 Layer เสริม: Premium Black Polkadot (กรณีไม่มีข้อมูล) */
-                  <div
-                    className="absolute inset-0 z-0 opacity-20"
-                    style={{
-                      backgroundImage: `radial-gradient(#ffffff 1px, transparent 1px)`,
-                      backgroundSize: '30px 30px'
-                    }}
-                  />
-                )}
-
-                {/* ✨ Premium Lighting Effects */}
-                <div
-                  className={`absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b ${theme.glow} to-transparent`}
-                  style={{ pointerEvents: 'none' }}
-                />
-                <div className={`absolute -bottom-20 -left-20 w-64 h-64 ${theme.glow.replace('from-', 'bg-')} blur-[80px] rounded-full`} />
-
-
-
-                {/* 1. Header: Logo & Title (ลด mb เพื่อคืนพื้นที่ให้คอนเทนต์หลัก) */}
-                <div className="relative z-10 w-full flex justify-between items-start mb-0">
-                  <div className="flex flex-col pt-1">
-                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-1">{memberLabel}</span>
-                    <h4 className="text-xs font-black text-white/90 tracking-widest">UPSKILL EVERYDAY</h4>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-16 h-16 bg-white/10 rounded-[1.5rem] border border-white/20 flex items-center justify-center ${isCapturing ? '' : 'backdrop-blur-xl'} overflow-hidden p-2.5 ${isCapturing ? '' : 'shadow-[0_20px_40px_rgba(0,0,0,0.4)]'}`}>
-                      <img
-                        src={lastLibrarySoul?.type ? `/books/${lastLibrarySoul.type}.png` : "/logo-invert.png"}
-                        alt="Soul Type"
-                        className="w-full h-full object-contain drop-shadow-lg"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "/logo-invert.png"; }}
-                      />
-                    </div>
-                    {lastLibrarySoul?.type && (
-                      <span className="text-[11px] font-black text-white uppercase tracking-[0.25em] drop-shadow-md">{lastLibrarySoul.type}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 🏗️ 2. Avatar Section: ดึงตัวละครขึ้นมาเพื่อชดเชยขนาดรูปหนังสือด้านบน */}
-                {/* 🎯 mt-4: ลดจาก mt-12 เพื่อให้ตัวละครและ Stats อยู่ในระดับที่เหมาะสม */}
-                <div className="relative z-0 mb-2 mt-4 h-48 flex justify-center items-end">
-
-                  {/* ✨ แสง Glow พื้นหลัง (จัดให้อยู่กึ่งกลางเป๊ะตามตัวคน) */}
-                  <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full scale-100" />
-
-                  {/* 👤 รูป Avatar หลัก - แก้ไขขนาดให้พอดีจอมากขึ้นบนมือถือ */}
-                  <div className="relative z-10 translate-y-[4px] max-w-[500px] scale-[0.85] origin-bottom">
-                    <AvatarDisplay currentLevel={currentLevel} gender={gender} streak={streakCount} isCompact={true} />
-                  </div>
-
-                  {/* 🐾 สัตว์เลี้ยง */}
-                  {lastMoney?.resultKey && (
-                    <div className="absolute bottom-0 left-1/2 translate-x-[-25%] translate-y-[14px] z-20 w-40 h-40">
-                      <img
-                        src={PET_DATA[lastMoney.resultKey]?.img || PET_DATA.DEFAULT.img}
-                        alt="Pet"
-                        crossOrigin="anonymous"
-                        fetchPriority="high"
-                        decoding="async"
-
-                        className="w-full h-full object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)]"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* 👤 3. User Info (ปรับให้ชิดรูปมากขึ้นด้วย -mt) */}
-                {/* 🎯 เติม -mt-6 เพื่อดึงก้อนชื่อให้ลอยขึ้นไปชิดกับเท้ารูปด้านบน */}
-                <div className="relative z-10 text-center w-full mb-5 -mt-6">
-                  <h2 className="text-4xl font-black text-white tracking-tight mb-2 drop-shadow-lg">
-                    {user?.displayName?.split(' ')[0]}
-                  </h2>
-                  <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-2xl text-[12px] font-black uppercase tracking-wider shadow-[0_10px_20px_rgba(245,158,11,0.3)]">
-                    <Trophy size={14} className="fill-current" /> LV.{currentLevel} {getLevelTitle(currentLevel).split(' (')[0]}
-                  </div>
-                </div>
-
-                {/* 📊 4. Stats Grid: บีบกล่องให้กระชับขึ้น เพื่อไม่ให้ทะลุขอบการ์ด */}
-                {/* เปลี่ยน mb-6 เป็น mb-0 เพื่อให้ชิดขอบล่างพอดี px และ sm:px คงเดิมเพื่อความสวยงาม */}
-                <div className="relative z-10 w-full grid grid-cols-2 gap-3 mb-0 px-2 sm:px-4">
-                  {/* Box 1: Identity */}
-                  <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border ${theme.border} flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
-                    <span className={`text-[8px] font-black ${theme.accent} uppercase tracking-[0.2em] mb-1.5`}>DISC STYLE</span>
-                    <Zap size={14} className={`${theme.accent} mb-1.5`} />
-                    <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
-                      {lastDisc ? DISC_DATA[(lastDisc.finalResult || lastDisc.result || "C").charAt(0)]?.rpgTitle : "Life Explorer"}
-                    </p>
-                  </div>
-
-                  {/* Box 2: Portfolio */}
-                  <div className={`bg-white/[0.05] ${isCapturing ? '' : 'backdrop-blur-xl'} p-3 rounded-[1.5rem] border border-amber-500/20 flex flex-col items-center justify-center min-h-[85px] ${isCapturing ? '' : 'shadow-xl'}`}>
-                    <span className="text-[8px] font-black text-amber-400 uppercase tracking-[0.2em] mb-1.5">MONEY AVATAR</span>
-                    <Star size={14} className="text-amber-400 fill-current mb-1.5" />
-                    <p className="text-[10px] font-bold text-white text-center leading-tight uppercase">
-                      {lastMoney ? MONEY_DATA[lastMoney.resultKey]?.title : "Asset Builder"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              {/* 💳 ตัวการ์ด (The Card Canvas) */}
+              {renderPlayerCardCanvas("player-card", false)}
 
               {/* Action Buttons */}
               <div className="mt-8 flex gap-4">
