@@ -50,6 +50,7 @@ export default function Home() {
   const { deferredPrompt, isIOS, handleInstallClick } = usePWAInstall();
   const [user, setUser] = useState<User | null>(null);
   const [isPro, setIsPro] = useState(false);
+  const [isProLoaded, setIsProLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [onePercentDay, setOnePercentDay] = useState(365);
@@ -103,6 +104,7 @@ export default function Home() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        setIsProLoaded(false);
         try {
           const userRef = doc(db, "users", currentUser.uid);
           const userSnap = await getDoc(userRef);
@@ -123,8 +125,10 @@ export default function Home() {
           console.error(e);
           setIsPro(false);
         }
+        setIsProLoaded(true);
       } else {
         setIsPro(false);
+        setIsProLoaded(true);
       }
       setLoading(false);
     });
@@ -148,6 +152,7 @@ export default function Home() {
 
   const handleLogin = async () => {
     try {
+      setIsProLoaded(false);
       const result = await signInWithPopup(auth, googleProvider);
       const loggedInUser = result.user;
 
@@ -181,11 +186,13 @@ export default function Home() {
           Boolean(data.isLifetimeMember);
       }
       setIsPro(isPremium);
+      setIsProLoaded(true);
 
       // ✅ เพิ่มบรรทัดนี้ครับ: เพื่อให้หน้าเด้งกลับไปบนสุดแบบลื่นๆ
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (error: any) {
+      setIsProLoaded(true);
       if (error.code !== 'auth/popup-closed-by-user') {
         console.error("Login failed:", error);
       }
@@ -276,11 +283,14 @@ export default function Home() {
       {/* --- 1. Hero Section --- */}
       {!user ? (
         <section className="relative mb-10 min-h-[720px] w-full overflow-hidden bg-amber-50 md:mb-14 md:min-h-[720px]">
-          <img
-            src="/Wallpaper.png"
-            alt="Upskill Everyday"
-            className="absolute inset-x-0 -top-14 h-[calc(100%+3.5rem)] w-full object-cover object-[33%_top] md:inset-0 md:h-full md:object-center"
-          />
+          <picture className="absolute inset-0 block h-full w-full">
+            <source media="(max-width: 767px)" srcSet="/WallpaperMobile.png" />
+            <img
+              src="/Wallpaper.png"
+              alt="Upskill Everyday"
+              className="absolute inset-0 h-full w-full object-cover object-center md:inset-x-0 md:-top-14 md:h-[calc(100%+3.5rem)] md:object-[33%_top] lg:inset-0 lg:h-full lg:object-center"
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_28%_76%,rgba(15,23,42,0.22),transparent_42%)]" />
 
@@ -325,12 +335,12 @@ export default function Home() {
                 ].map((badge) => (
                   <div
                     key={badge.label}
-                    className={`inline-flex h-8 sm:h-10 min-w-0 flex-1 sm:flex-none shrink-0 items-center justify-center gap-1.5 sm:gap-2 rounded-full border border-white/60 bg-white/20 px-3 sm:px-4 text-[9px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.16em] ${badge.textClass} shadow-sm backdrop-blur-md`}
+                    className={`inline-flex h-8 sm:h-10 shrink-0 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 rounded-full border border-white/60 bg-white/20 px-3 sm:px-4 text-[9px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.16em] ${badge.textClass} shadow-sm backdrop-blur-md`}
                   >
                     <span className={`flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
                       {badge.icon}
                     </span>
-                    <span className="truncate">{badge.label}</span>
+                    <span className="whitespace-nowrap">{badge.label}</span>
                   </div>
                 ))}
               </div>
@@ -367,7 +377,11 @@ export default function Home() {
 
             <div className="text-center sm:text-left space-y-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                {isPro ? (
+                {!isProLoaded ? (
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-400 text-[9px] font-black uppercase tracking-widest rounded-md animate-pulse">
+                    Loading...
+                  </span>
+                ) : isPro ? (
                   <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-md">
                     Pro Member
                   </span>
@@ -706,7 +720,7 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
           {getToolsData().map((tool, index) => (
             <Link key={tool.id} href={`${tool.path}/info`} className="block h-full group">
-              <div className="relative flex h-full min-h-[210px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-white bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:min-h-[230px] sm:rounded-[2rem] sm:p-6 [&_.tool-gimmick]:mt-2 [&_.tool-gimmick]:max-w-full [&_.tool-gimmick]:px-2 [&_.tool-gimmick]:py-1 [&_.tool-gimmick]:text-[8px] [&_.tool-gimmick_span]:truncate sm:[&_.tool-gimmick]:mt-3 sm:[&_.tool-gimmick]:px-3 sm:[&_.tool-gimmick]:py-1.5 sm:[&_.tool-gimmick]:text-[10px]">
+              <div className="relative flex h-full min-h-[210px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-white bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:min-h-[230px] sm:rounded-[2rem] sm:p-6 [&_.tool-gimmick]:mt-2 [&_.tool-gimmick]:max-w-full [&_.tool-gimmick]:px-2 [&_.tool-gimmick]:py-1 [&_.tool-gimmick]:text-[8px] [&_.tool-gimmick_span]:whitespace-nowrap sm:[&_.tool-gimmick]:mt-3 sm:[&_.tool-gimmick]:px-3 sm:[&_.tool-gimmick]:py-1.5 sm:[&_.tool-gimmick]:text-[10px]">
                 <div className={`absolute inset-0 opacity-70 ${
                   index % 6 === 0 ? "bg-gradient-to-br from-red-50 via-white to-rose-50" :
                   index % 6 === 1 ? "bg-gradient-to-br from-blue-50 via-white to-sky-50" :
@@ -1188,12 +1202,12 @@ export default function Home() {
                           alt={phase.label}
                           fill
                           sizes="140px"
-                          className={`scale-[1.45] object-cover sm:scale-[1.12] ${phase.position}`}
+                          className={`scale-100 object-cover sm:scale-[1.12] ${phase.position}`}
                         />
                         <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950/90 via-slate-950/50 to-transparent sm:h-10 sm:from-slate-950/60 sm:via-slate-950/18" />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/82 via-slate-950/10 to-white/5" />
                         <div className="absolute bottom-2 left-2 right-2">
-                          <div className="inline-flex rounded-full bg-white/90 px-2 py-1 text-[7px] font-black uppercase tracking-widest text-slate-900">
+                          <div className="inline-flex rounded-full bg-white/90 px-2 py-1 text-[7px] font-black uppercase tracking-widest text-slate-900 hidden sm:inline-flex">
                             {phase.label}
                           </div>
                           <p className="mt-1 text-[9px] font-black leading-tight text-white drop-shadow">

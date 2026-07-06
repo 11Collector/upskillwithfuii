@@ -928,7 +928,7 @@ export default function DashboardPage() {
           subscriptionTier: "pro",
           subscriptionStatus: "active",
           subscriptionPlan: plan,
-          isFoundingMember: String(plan).startsWith("founding"),
+          isFoundingMember: String(plan).startsWith("founding") || plan === "yearly" || plan === "lifetime",
           isLifetimeMember: plan === "lifetime",
         }));
         setIsCelebrating(true);
@@ -3527,7 +3527,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setShowMembershipModal(true)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-2 rounded-full border border-slate-100 bg-white p-0.5 sm:px-3 sm:py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 cursor-pointer z-30"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-full border border-slate-100 bg-white p-0.5 px-2 sm:px-3 sm:py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all hover:-translate-y-[52%] hover:shadow-[0_16px_38px_rgba(0,0,0,0.06)] active:scale-95 cursor-pointer z-30"
                   title={isProMember ? "สมาชิก PRO" : "ดูแผนสมาชิก"}
                 >
                   <span className={`flex h-5 w-5 sm:h-7 sm:w-7 items-center justify-center rounded-full ${
@@ -3539,7 +3539,7 @@ export default function DashboardPage() {
                   } shadow-sm`}>
                     {userData?.isFoundingMember ? <Crown size={9} className="sm:w-3 sm:h-3 fill-amber-400/20 text-amber-400" /> : isProMember ? <Sparkles size={9} className="sm:w-3 sm:h-3" /> : <Lock size={9} className="sm:w-3 sm:h-3" />}
                   </span>
-                  <span className={`hidden sm:inline text-[10px] font-black uppercase tracking-[0.24em] pl-0.5 ${
+                  <span className={`text-[8px] sm:text-[10px] font-black uppercase tracking-[0.16em] sm:tracking-[0.24em] pl-0.5 ${
                     userData?.isFoundingMember
                       ? "text-amber-500"
                       : isProMember
@@ -3673,7 +3673,7 @@ export default function DashboardPage() {
                       animate={{ opacity: 1, y: 0 }}
                       className={`relative flex min-w-[82vw] snap-center flex-col overflow-hidden rounded-[2.25rem] border shadow-[0_18px_46px_rgba(15,23,42,0.08)] md:min-w-0 ${phase.unlocked ? "border-violet-300/70 bg-slate-950 text-white" : "border-slate-300/70 bg-slate-100 text-slate-500 grayscale"}`}
                     >
-                      <div className="relative aspect-[4/3] overflow-hidden">
+                      <div className="relative aspect-[16/9] md:aspect-[4/3] overflow-hidden">
                         <img
                           src={phase.image}
                           alt={phase.title}
@@ -3683,7 +3683,7 @@ export default function DashboardPage() {
                           ? "bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent"
                           : "bg-white/55"
                         }`} />
-                        <div className="absolute left-5 top-5 rounded-full border border-white/45 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm backdrop-blur-md">
+                        <div className="absolute left-5 top-5 rounded-full border border-white/45 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm backdrop-blur-md hidden sm:block">
                           Phase {phase.num}
                         </div>
                         <div className={`absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black shadow-sm backdrop-blur-md ${phase.completed ? "bg-emerald-500 text-white" : isActive ? "bg-violet-500 text-white" : "bg-slate-500/75 text-white"}`}>
@@ -4627,176 +4627,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* --- 📜 Founding Member Certificate Card --- */}
-        {activeTab === "home" && isRealLifeEntered && (userData?.isFoundingMember || isProMember) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`mb-8 relative overflow-hidden rounded-[2.5rem] border p-6 md:p-8 shadow-[0_24px_70px_rgba(245,158,11,0.12)] text-center flex flex-col items-center justify-center min-h-[300px] ${
-              userData?.isFoundingMember
-                ? "border-amber-200 bg-[#fbfbfb]"
-                : "border-slate-800 bg-slate-950"
-            }`}
-          >
-            {/* Background premium glows */}
-            <div className={`absolute -top-24 -right-24 w-64 h-64 blur-[80px] rounded-full pointer-events-none ${
-              userData?.isFoundingMember ? "bg-amber-200/20" : "bg-violet-500/10"
-            }`} />
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-orange-200/10 blur-[80px] rounded-full pointer-events-none" />
 
-            {/* Left Chevron Wing (Certificate Style) */}
-            <div className="absolute left-0 top-0 bottom-0 w-16 md:w-20 pointer-events-none overflow-hidden select-none">
-              {/* Gold Ribbon Accents */}
-              <div className={`absolute top-[-10%] left-[-20%] w-[140%] h-[60%] rotate-[35deg] origin-top-left shadow-sm ${
-                userData?.isFoundingMember
-                  ? "bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500"
-                  : "bg-gradient-to-br from-violet-400 via-purple-500 to-indigo-600"
-              }`} />
-              <div className={`absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] -rotate-[35deg] origin-bottom-left shadow-sm ${
-                userData?.isFoundingMember
-                  ? "bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500"
-                  : "bg-gradient-to-tr from-violet-400 via-purple-500 to-indigo-600"
-              }`} />
-              {/* Deep Navy Chevrons */}
-              <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
-              {/* Floating gold mini triangle */}
-              <div className={`absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rotate-45 border-2 border-slate-900 shadow-sm ${
-                userData?.isFoundingMember
-                  ? "bg-gradient-to-br from-amber-300 to-yellow-500"
-                  : "bg-gradient-to-br from-violet-400 to-indigo-500"
-              }`} />
-            </div>
-
-            {/* Right Chevron Wing (Certificate Style) */}
-            <div className="absolute right-0 top-0 bottom-0 w-16 md:w-20 pointer-events-none overflow-hidden select-none">
-              {/* Gold Ribbon Accents */}
-              <div className={`absolute top-[-10%] right-[-20%] w-[140%] h-[60%] -rotate-[35deg] origin-top-right shadow-sm ${
-                userData?.isFoundingMember
-                  ? "bg-gradient-to-bl from-amber-300 via-amber-400 to-yellow-500"
-                  : "bg-gradient-to-bl from-violet-400 via-purple-500 to-indigo-600"
-              }`} />
-              <div className={`absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] rotate-[35deg] origin-bottom-right shadow-sm ${
-                userData?.isFoundingMember
-                  ? "bg-gradient-to-tl from-amber-300 via-amber-400 to-yellow-500"
-                  : "bg-gradient-to-tl from-violet-400 via-purple-500 to-indigo-600"
-              }`} />
-              {/* Deep Navy Chevrons */}
-              <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
-              <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
-              {/* Floating gold mini triangle */}
-              <div className={`absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rotate-45 border-2 border-slate-900 shadow-sm ${
-                userData?.isFoundingMember
-                  ? "bg-gradient-to-br from-amber-300 to-yellow-500"
-                  : "bg-gradient-to-br from-violet-400 to-indigo-500"
-              }`} />
-            </div>
-
-            {/* Content Area */}
-            <div className="relative z-10 w-full max-w-lg px-8 flex flex-col items-center">
-              {userData?.isFoundingMember ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-300/40 bg-amber-500/5 text-[8.5px] font-black uppercase tracking-[0.2em] text-amber-700">
-                  👑 FOUNDING SUPPORTER
-                </div>
-              ) : (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-violet-300/40 bg-violet-500/5 text-[8.5px] font-black uppercase tracking-[0.2em] text-violet-400">
-                  ⚡ PRO SUPPORTER
-                </div>
-              )}
-              
-              <h2 className={`text-sm md:text-base font-black tracking-[0.15em] uppercase mt-3.5 ${
-                userData?.isFoundingMember ? "text-slate-800" : "text-white"
-              }`}>
-                Certificate of Appreciation
-              </h2>
-              
-              <p className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest mt-4">
-                PROUDLY PRESENTED TO
-              </p>
-              
-              <h3 className={`text-lg md:text-xl font-serif font-extrabold italic mt-1.5 border-b pb-1 px-4 leading-none w-full max-w-[280px] truncate select-all ${
-                userData?.isFoundingMember
-                  ? "text-slate-900 border-amber-500/20"
-                  : "text-white border-violet-500/20"
-              }`}>
-                {user?.displayName || "Pro Member"}
-              </h3>
-              
-              {userData?.isFoundingMember ? (
-                <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-4 leading-relaxed max-w-sm italic">
-                  “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ” — พี่ฟุ้ย
-                </p>
-              ) : (
-                <p className="text-[10px] md:text-xs font-bold text-slate-400 mt-4 leading-relaxed max-w-sm italic">
-                  “ขอบคุณที่สนับสนุนและร่วมเดินทางไปกับระบบช่วยออกแบบชีวิตนี้ คุณคือส่วนสำคัญในการพัฒนาแอปนี้ให้เติบโตครับ” — พี่ฟุ้ย
-                </p>
-              )}
-
-              {/* Bottom Certificate Grid */}
-              <div className={`flex items-end justify-between w-full mt-6 pt-4 border-t gap-2 ${
-                userData?.isFoundingMember ? "border-slate-100/80" : "border-slate-800"
-              }`}>
-                {/* Member ID */}
-                <div className="text-left flex-1 min-w-0">
-                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">MEMBER ID</span>
-                  <span className={`text-base font-black bg-gradient-to-r bg-clip-text text-transparent mt-1.5 block tabular-nums leading-none ${
-                    userData?.isFoundingMember
-                      ? "from-amber-500 via-orange-500 to-orange-600"
-                      : "from-violet-400 to-indigo-500"
-                  }`}>
-                    PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
-                  </span>
-                </div>
-
-                {/* Gold Seal */}
-                <div className="relative w-11 h-11 flex items-center justify-center shrink-0 mx-2 -translate-y-1 select-none">
-                  {/* Ribbon Tails */}
-                  <div className={`absolute bottom-[-6px] left-[15%] w-2.5 h-4 rotate-[15deg] origin-top ${
-                    userData?.isFoundingMember
-                      ? "bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500"
-                      : "bg-gradient-to-b from-violet-400 to-indigo-500"
-                  }`} style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                  <div className={`absolute bottom-[-6px] right-[15%] w-2.5 h-4 -rotate-[15deg] origin-top ${
-                    userData?.isFoundingMember
-                      ? "bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500"
-                      : "bg-gradient-to-b from-violet-400 to-indigo-500"
-                  }`} style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                  
-                  {/* Main Seal Body */}
-                  <div className={`absolute inset-0 rounded-full shadow-lg flex items-center justify-center p-[1.5px] ${
-                    userData?.isFoundingMember
-                      ? "bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 shadow-[0_3px_8px_rgba(245,158,11,0.2)]"
-                      : "bg-gradient-to-br from-violet-400 to-indigo-500 shadow-[0_3px_8px_rgba(139,92,246,0.2)]"
-                  }`}>
-                    <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-amber-300 border border-amber-400/30">
-                      {userData?.isFoundingMember ? (
-                        <>
-                          <Crown size={10} className="fill-current text-amber-400" />
-                          <span className="text-[4px] font-black tracking-tighter text-amber-300 mt-[0.5px]">FOUNDER</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={10} className="fill-current text-violet-400" />
-                          <span className="text-[4px] font-black tracking-tighter text-violet-300 mt-[0.5px]">PRO</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Verification */}
-                <div className="text-right flex-1 min-w-0">
-                  <span className="text-[7.5px] font-bold text-emerald-600 uppercase tracking-widest block leading-none">VERIFIED BY</span>
-                  <span className={`text-[8.5px] font-black mt-1.5 block uppercase tracking-wide leading-none truncate ${
-                    userData?.isFoundingMember ? "text-slate-800" : "text-slate-300"
-                  }`}>
-                    UPSKILL EVERYDAY
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {/* --- 🎮 2. Daily Quests Section --- */}
         {((activeTab === "home" && isRealLifeEntered) || activeTab === "quests") && (
@@ -7264,7 +7095,7 @@ export default function DashboardPage() {
                             <div className="text-left flex-1 min-w-0">
                               <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">MEMBER ID</span>
                               <span className="text-[13px] font-black bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 bg-clip-text text-transparent mt-1 block tabular-nums leading-none">
-                                PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                                PRO #{userData?.memberNumber ? String(userData.memberNumber).padStart(3, '0') : String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
                               </span>
                             </div>
 
@@ -7372,7 +7203,7 @@ export default function DashboardPage() {
                                 <div className="text-left flex-1 min-w-0">
                                   <span className="text-[6.5px] font-black text-slate-500 uppercase tracking-widest block leading-none">MEMBER ID</span>
                                   <span className="text-[13px] font-black bg-gradient-to-r from-violet-400 to-indigo-500 bg-clip-text text-transparent mt-1 block tabular-nums leading-none">
-                                    PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                                    PRO #{userData?.memberNumber ? String(userData.memberNumber).padStart(3, '0') : String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
                                   </span>
                                 </div>
 
