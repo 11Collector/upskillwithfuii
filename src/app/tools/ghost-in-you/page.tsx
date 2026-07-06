@@ -212,13 +212,7 @@ export default function GhostInYouPage() {
   if (phase === "intro") {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-5 py-12 overflow-hidden relative">
-        <Link
-          href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (user ? "/dashboard" : "/")}
-          className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-black text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/20 active:scale-95 z-50 cursor-pointer"
-        >
-          <ArrowLeft size={13} className="text-white" />
-          <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (user ? "แดชบอร์ด" : "หน้าหลัก")}</span>
-        </Link>
+        {/* Back button link removed as request */}
         <SpookyBg />
 
         <motion.div

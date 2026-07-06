@@ -355,15 +355,7 @@ export default function Home() {
 
       {/* ✨ ปรับ Class h และ max-h ของกรอบหลัก ให้เหมือนโค้ดอ้างอิงเป๊ะๆ h-[100dvh] sm:h-[850px] sm:max-h-[90vh] */}
       <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
-        {(gameState === "start" || gameState === "result") && (
-          <Link
-            href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (currentUser ? "/dashboard" : "/")}
-            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-md transition-all hover:bg-slate-50 active:scale-95 z-50 cursor-pointer"
-          >
-            <ArrowLeft size={13} className="text-slate-600" />
-            <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (currentUser ? "แดชบอร์ด" : "หน้าหลัก")}</span>
-          </Link>
-        )}
+        {/* Back button link removed as request */}
 
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (

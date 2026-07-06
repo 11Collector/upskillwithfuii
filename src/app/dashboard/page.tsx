@@ -3710,7 +3710,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        <div className={phase.completed || !phase.unlocked ? "mt-auto pt-4 pb-1" : "mt-4"}>
+                        <div className="mt-auto pt-4 pb-1">
                         {phase.completed ? (
                           <div className="flex min-h-[4.25rem] items-center justify-between rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-3 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_30px_rgba(16,185,129,0.06)]">
                             <span>

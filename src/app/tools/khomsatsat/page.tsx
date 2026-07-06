@@ -559,15 +559,7 @@ export default function SwipeQuoteApp() {
     // 💡 กลับมาใช้ min-h-[100dvh] และ overflow-hidden เพื่อความสวยงามนิ่งๆ แบบแอป
     <div className={`min-h-[100dvh] bg-stone-100 flex flex-col items-center justify-center sm:p-4 ${kanit.className} overflow-hidden`}>
       <div className="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-white shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] lg:h-[900px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-900">
-        {(gameState === "start" || gameState === "result") && (
-          <Link
-            href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (currentUser ? "/dashboard" : "/")}
-            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-stone-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-stone-700 shadow-sm backdrop-blur-md transition-all hover:bg-stone-50 active:scale-95 z-50 cursor-pointer"
-          >
-            <ChevronLeft size={13} className="text-stone-600" />
-            <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (currentUser ? "แดชบอร์ด" : "หน้าหลัก")}</span>
-          </Link>
-        )}
+        {/* Back button link removed as request */}
         {/* === 1. START SCREEN === */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-6 text-center relative bg-stone-50 h-full w-full overflow-hidden">

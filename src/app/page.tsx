@@ -288,7 +288,7 @@ export default function Home() {
             <img
               src="/Wallpaper.png"
               alt="Upskill Everyday"
-              className="absolute inset-0 h-full w-full object-cover object-center md:inset-x-0 md:-top-14 md:h-[calc(100%+3.5rem)] md:object-[33%_top] lg:inset-0 lg:h-full lg:object-center"
+              className="absolute inset-0 h-full w-full object-cover object-[center_top] md:inset-x-0 md:-top-14 md:h-[calc(100%+3.5rem)] md:object-[33%_top] lg:inset-0 lg:h-full lg:object-center"
             />
           </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28" />
@@ -327,17 +327,17 @@ export default function Home() {
                 สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
               </p>
 
-              <div className="relative mt-6 flex overflow-x-auto flex-nowrap gap-1.5 sm:gap-2 no-scrollbar scrollbar-none pb-1 select-none">
+              <div className="relative mt-6 flex w-full gap-1 sm:gap-2 pb-1 select-none">
                 {[
-                  { icon: <BrainCircuit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "PERSONALIZED", textClass: "text-[#4c1d95]", accent: "bg-[#8b5cf6]/10 text-[#6d28d9] ring-[#8b5cf6]/20" },
-                  { icon: <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "ACTIONABLE", textClass: "text-[#78350f]", accent: "bg-[#f59e0b]/10 text-[#b45309] ring-[#f59e0b]/20" },
-                  { icon: <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: "XP & LEVEL", textClass: "text-[#0c4a6e]", accent: "bg-[#0ea5e9]/10 text-[#0369a1] ring-[#0ea5e9]/20" },
+                  { icon: <BrainCircuit className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />, label: "PERSONALIZED", textClass: "text-[#4c1d95]", accent: "bg-[#8b5cf6]/10 text-[#6d28d9] ring-[#8b5cf6]/20" },
+                  { icon: <Zap className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />, label: "ACTIONABLE", textClass: "text-[#78350f]", accent: "bg-[#f59e0b]/10 text-[#b45309] ring-[#f59e0b]/20" },
+                  { icon: <Flame className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />, label: "XP & LEVEL", textClass: "text-[#0c4a6e]", accent: "bg-[#0ea5e9]/10 text-[#0369a1] ring-[#0ea5e9]/20" },
                 ].map((badge) => (
                   <div
                     key={badge.label}
-                    className={`inline-flex h-8 sm:h-10 shrink-0 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 rounded-full border border-white/60 bg-white/20 px-3 sm:px-4 text-[9px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.16em] ${badge.textClass} shadow-sm backdrop-blur-md`}
+                    className={`inline-flex h-7 sm:h-10 flex-1 sm:flex-none items-center justify-center gap-1 sm:gap-2 rounded-full border border-white/60 bg-white/20 px-1 sm:px-4 text-[7px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-normal sm:tracking-[0.16em] ${badge.textClass} shadow-sm backdrop-blur-md`}
                   >
-                    <span className={`flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
+                    <span className={`flex h-4 w-4 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
                       {badge.icon}
                     </span>
                     <span className="whitespace-nowrap">{badge.label}</span>
