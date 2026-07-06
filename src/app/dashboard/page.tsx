@@ -3545,7 +3545,7 @@ export default function DashboardPage() {
                       ? "text-slate-900"
                       : "text-slate-500"
                   }`}>
-                    {userData?.isFoundingMember ? "FOUNDER" : isProMember ? "PRO" : "FREE"}
+                    {userData?.isFoundingMember ? "PRO" : isProMember ? "PRO" : "FREE"}
                   </span>
                 </button>
               )}
@@ -3928,8 +3928,8 @@ export default function DashboardPage() {
                             <p className="text-xs font-black text-white truncate flex items-center gap-1.5">
                               {user?.displayName}
                               {userData?.isFoundingMember && (
-                                <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="Founding Member">
-                                  Founder
+                                <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="PRO Member (Gold)">
+                                  PRO
                                 </span>
                               )}
                               <Sparkles size={8} className="text-slate-500 group-hover/name:text-yellow-400 transition-colors" />
@@ -4082,8 +4082,8 @@ export default function DashboardPage() {
                                   <span className="text-xs font-black text-white truncate flex items-center gap-1.5">
                                     {user?.displayName}
                                     {userData?.isFoundingMember && (
-                                      <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="Founding Member">
-                                        Founder
+                                      <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="PRO Member (Gold)">
+                                        PRO
                                       </span>
                                     )}
                                     <Sparkles size={10} className="text-yellow-400" />
@@ -4216,8 +4216,8 @@ export default function DashboardPage() {
                                   <span className="text-sm font-black text-white truncate flex items-center gap-1.5">
                                     {user?.displayName}
                                     {userData?.isFoundingMember && (
-                                      <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="Founding Member">
-                                        Founder
+                                      <span className="shrink-0 px-1 py-[1px] rounded-full text-[7px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.25)]" title="PRO Member (Gold)">
+                                        PRO
                                       </span>
                                     )}
                                     <Sparkles size={10} className="text-yellow-400" />
@@ -6928,7 +6928,7 @@ export default function DashboardPage() {
                         {/* Content */}
                         <div className="relative z-10 w-full px-5 flex flex-col items-center">
                           <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-amber-300/40 bg-amber-500/5 text-[7.5px] font-black uppercase tracking-[0.15em] text-amber-700">
-                            👑 FOUNDING SUPPORTER
+                            👑 GOLD PRO SUPPORTER
                           </div>
                           
                           <h2 className="text-[11px] font-black text-slate-800 tracking-[0.12em] uppercase mt-2.5">
@@ -6984,32 +6984,34 @@ export default function DashboardPage() {
                     ) : (
                       <>
                         {/* Toggle header inside modal for regular PRO */}
-                        <div className="flex justify-center gap-1.5 mb-5 bg-white/[0.04] p-1 border border-white/5 rounded-2xl max-w-[320px] mx-auto">
-                          <button
-                            type="button"
-                            onClick={() => setViewMode("cert")}
-                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
-                              viewMode === "cert"
-                                ? "bg-violet-600 text-white shadow-lg"
-                                : "text-slate-400 hover:text-white"
-                            }`}
-                          >
-                            ใบรับรอง
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setViewMode("letter")}
-                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
-                              viewMode === "letter"
-                                ? "bg-violet-600 text-white shadow-lg"
-                                : "text-slate-400 hover:text-white"
-                            }`}
-                          >
-                            จดหมาย
-                          </button>
-                        </div>
+                        {isProMember && (
+                          <div className="flex justify-center gap-1.5 mb-5 bg-white/[0.04] p-1 border border-white/5 rounded-2xl max-w-[320px] mx-auto">
+                            <button
+                              type="button"
+                              onClick={() => setViewMode("cert")}
+                              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                                viewMode === "cert"
+                                  ? "bg-violet-600 text-white shadow-lg"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
+                            >
+                              ใบรับรอง
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setViewMode("letter")}
+                              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                                viewMode === "letter"
+                                  ? "bg-violet-600 text-white shadow-lg"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
+                            >
+                              จดหมาย
+                            </button>
+                          </div>
+                        )}
 
-                        {viewMode === "cert" ? (
+                        {isProMember && viewMode === "cert" ? (
                           /* --- Luxury Mini Certificate inside Modal (PRO MEMBER) --- */
                           <div className="relative overflow-hidden rounded-3xl border border-violet-200/50 bg-slate-950 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] text-center flex flex-col items-center justify-center min-h-[300px] select-none">
                             {/* Background premium glows */}
@@ -7092,16 +7094,23 @@ export default function DashboardPage() {
                         ) : (
                           /* --- Developer's Letter --- */
                           <>
-                            <div className="flex items-center gap-3 mb-5">
-                              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
-                                <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                            <div className="flex items-center justify-between gap-3 mb-5">
+                              <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
+                                  <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                                </div>
+                                <div>
+                                  <h3 className="text-xl font-black text-white leading-tight">
+                                    สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
+                                  </h3>
+                                  <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="text-xl font-black text-white leading-tight">
-                                  สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
-                                </h3>
-                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
-                              </div>
+                              {isProMember && (
+                                <span className="shrink-0 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 uppercase tracking-widest">
+                                  ขอบคุณที่สนับสนุน ❤️
+                                </span>
+                              )}
                             </div>
 
                             <div className="space-y-4 text-[13px] font-bold leading-relaxed text-slate-300 bg-white/[0.02] border border-white/5 rounded-3xl p-5 backdrop-blur-md">
@@ -7172,7 +7181,7 @@ export default function DashboardPage() {
                         className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all border-amber-400/30 bg-amber-400/5 text-amber-300 hover:bg-amber-400/10"
                       >
                         <Crown size={12} className="text-amber-400" />
-                        ใบรับรองผู้ร่วมบุกเบิก
+                        ใบรับรอง PRO สีทอง
                       </button>
                     ) : (
                       <div className="flex justify-center gap-2 mt-3">
@@ -7276,7 +7285,7 @@ export default function DashboardPage() {
                       {userData?.isFoundingMember ? (
                         <>
                           <Crown size={12} className="text-amber-400" />
-                          ใบรับรองผู้ร่วมบุกเบิก
+                          ใบรับรอง PRO สีทอง
                         </>
                       ) : (
                         <>

@@ -288,7 +288,7 @@ export default function Home() {
             <img
               src="/Wallpaper.png"
               alt="Upskill Everyday"
-              className="absolute inset-0 h-full w-full object-cover object-[center_top] md:inset-x-0 md:-top-14 md:h-[calc(100%+3.5rem)] md:object-[33%_top] lg:inset-0 lg:h-full lg:object-center"
+              className="absolute -top-28 left-0 right-0 h-[calc(100%+7rem)] w-full object-cover object-[center_top] md:-top-14 md:inset-x-0 md:h-[calc(100%+3.5rem)] md:object-[33%_top] lg:inset-0 lg:h-full lg:object-center"
             />
           </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28" />
