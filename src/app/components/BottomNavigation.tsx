@@ -45,16 +45,7 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  const noNavPaths = [
-    '/tools/soul-guide',
-    '/tools/ai-mentor',
-    '/tools/wheel-of-life',
-    '/tools/money-avatar',
-    '/tools/disc',
-    '/tools/khomsatsat',
-    '/tools/library-of-souls',
-    '/tools/ghost-in-you',
-  ];
+  const noNavPaths: string[] = [];
 
   if (noNavPaths.includes(pathname)) return null;
 
@@ -100,7 +91,7 @@ function BottomNavigationInner() {
 
   // Standard Navigation
   const standardItems = [
-    { id: 'home', label: 'หน้าหลัก', icon: Home, path: '/' },
+    { id: 'home', label: 'หน้าหลัก', icon: Home, path: user ? '/dashboard' : '/' },
     { id: 'life', label: 'ชีวิต', icon: PieChart, path: '/tools/wheel-of-life' },
     { id: 'work', label: 'ทำงาน', icon: Users, path: '/tools/disc' },
     { id: 'money', label: 'การเงิน', icon: Wallet, path: '/tools/money-avatar' },
@@ -136,7 +127,9 @@ function BottomNavigationInner() {
   return (
     <div className={containerClass}>
       {standardItems.map((item) => {
-        const isActive = item.path === '/' ? pathname === '/' : pathname.startsWith(item.path);
+        const isActive = item.id === 'home'
+          ? (pathname === '/' || pathname.startsWith('/dashboard'))
+          : pathname.startsWith(item.path);
         const activeColor = getActiveColor(item.id);
         const inactiveColor = isDark ? "text-slate-500" : "text-slate-400";
         return (

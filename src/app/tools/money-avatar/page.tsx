@@ -652,15 +652,7 @@ export default function Home() {
     <div className={`min-h-[100dvh] bg-stone-950 flex flex-col items-center justify-center sm:p-4 ${promptFont.className}`}>
 
       <div className={`w-full max-w-md shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] flex flex-col relative sm:rounded-[2.5rem] sm:border-[4px] sm:border-stone-800 ${gameState === 'playing' ? 'bg-[#F4F3ED]' : 'bg-[#FCFBF8]'}`}>
-        {(gameState === "start" || gameState === "result") && (
-          <Link
-            href={fromPage === "home" ? "/" : fromPage === "dashboard" ? "/dashboard" : (currentUser ? "/dashboard" : "/")}
-            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-stone-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-stone-700 shadow-sm backdrop-blur-md transition-all hover:bg-stone-50 active:scale-95 z-50 cursor-pointer"
-          >
-            <ArrowLeft size={13} className="text-stone-600" />
-            <span>{fromPage === "home" ? "หน้าหลัก" : fromPage === "dashboard" ? "แดชบอร์ด" : (currentUser ? "แดชบอร์ด" : "หน้าหลัก")}</span>
-          </Link>
-        )}
+        {/* Back button link removed as request */}
 
         {/* --- START SCREEN --- */}
         {gameState === "start" && (
