@@ -4361,7 +4361,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-amber-400/10 border border-amber-400/20 rounded-xl backdrop-blur-md shadow-sm transition-all hover:bg-amber-400/20">
                           <Trophy size={12} className="text-amber-400 shrink-0" />
                           <span className="text-[9px] sm:text-[10px] font-black text-amber-300 tracking-wide whitespace-nowrap">
-                            {perfectWeeks} Perfect
+                            Perfect
                           </span>
                         </div>
                       )}
