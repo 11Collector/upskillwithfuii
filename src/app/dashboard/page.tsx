@@ -230,6 +230,7 @@ export default function DashboardPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
+  const [viewMode, setViewMode] = useState<"cert" | "letter">("cert");
   const [billingPlan, setBillingPlan] = useState<ProPlan>("monthly");
   const confirmedCheckoutRef = useRef(false);
   const searchParams = useSearchParams();
@@ -4627,47 +4628,85 @@ export default function DashboardPage() {
         )}
 
         {/* --- 📜 Founding Member Certificate Card --- */}
-        {activeTab === "home" && isRealLifeEntered && userData?.isFoundingMember && (
+        {activeTab === "home" && isRealLifeEntered && (userData?.isFoundingMember || isProMember) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 relative overflow-hidden rounded-[2.5rem] border border-amber-200 bg-[#fbfbfb] p-6 md:p-8 shadow-[0_24px_70px_rgba(245,158,11,0.12)] text-center flex flex-col items-center justify-center min-h-[300px]"
+            className={`mb-8 relative overflow-hidden rounded-[2.5rem] border p-6 md:p-8 shadow-[0_24px_70px_rgba(245,158,11,0.12)] text-center flex flex-col items-center justify-center min-h-[300px] ${
+              userData?.isFoundingMember
+                ? "border-amber-200 bg-[#fbfbfb]"
+                : "border-slate-800 bg-slate-950"
+            }`}
           >
             {/* Background premium glows */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-200/20 blur-[80px] rounded-full pointer-events-none" />
+            <div className={`absolute -top-24 -right-24 w-64 h-64 blur-[80px] rounded-full pointer-events-none ${
+              userData?.isFoundingMember ? "bg-amber-200/20" : "bg-violet-500/10"
+            }`} />
             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-orange-200/10 blur-[80px] rounded-full pointer-events-none" />
 
             {/* Left Chevron Wing (Certificate Style) */}
             <div className="absolute left-0 top-0 bottom-0 w-16 md:w-20 pointer-events-none overflow-hidden select-none">
               {/* Gold Ribbon Accents */}
-              <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-top-left shadow-sm" />
-              <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-bottom-left shadow-sm" />
+              <div className={`absolute top-[-10%] left-[-20%] w-[140%] h-[60%] rotate-[35deg] origin-top-left shadow-sm ${
+                userData?.isFoundingMember
+                  ? "bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500"
+                  : "bg-gradient-to-br from-violet-400 via-purple-500 to-indigo-600"
+              }`} />
+              <div className={`absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] -rotate-[35deg] origin-bottom-left shadow-sm ${
+                userData?.isFoundingMember
+                  ? "bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500"
+                  : "bg-gradient-to-tr from-violet-400 via-purple-500 to-indigo-600"
+              }`} />
               {/* Deep Navy Chevrons */}
               <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
               <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
               {/* Floating gold mini triangle */}
-              <div className="absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+              <div className={`absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rotate-45 border-2 border-slate-900 shadow-sm ${
+                userData?.isFoundingMember
+                  ? "bg-gradient-to-br from-amber-300 to-yellow-500"
+                  : "bg-gradient-to-br from-violet-400 to-indigo-500"
+              }`} />
             </div>
 
             {/* Right Chevron Wing (Certificate Style) */}
             <div className="absolute right-0 top-0 bottom-0 w-16 md:w-20 pointer-events-none overflow-hidden select-none">
               {/* Gold Ribbon Accents */}
-              <div className="absolute top-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-bl from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-top-right shadow-sm" />
-              <div className="absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-bottom-right shadow-sm" />
+              <div className={`absolute top-[-10%] right-[-20%] w-[140%] h-[60%] -rotate-[35deg] origin-top-right shadow-sm ${
+                userData?.isFoundingMember
+                  ? "bg-gradient-to-bl from-amber-300 via-amber-400 to-yellow-500"
+                  : "bg-gradient-to-bl from-violet-400 via-purple-500 to-indigo-600"
+              }`} />
+              <div className={`absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] rotate-[35deg] origin-bottom-right shadow-sm ${
+                userData?.isFoundingMember
+                  ? "bg-gradient-to-tl from-amber-300 via-amber-400 to-yellow-500"
+                  : "bg-gradient-to-tl from-violet-400 via-purple-500 to-indigo-600"
+              }`} />
               {/* Deep Navy Chevrons */}
               <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
               <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
               {/* Floating gold mini triangle */}
-              <div className="absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+              <div className={`absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rotate-45 border-2 border-slate-900 shadow-sm ${
+                userData?.isFoundingMember
+                  ? "bg-gradient-to-br from-amber-300 to-yellow-500"
+                  : "bg-gradient-to-br from-violet-400 to-indigo-500"
+              }`} />
             </div>
 
             {/* Content Area */}
             <div className="relative z-10 w-full max-w-lg px-8 flex flex-col items-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-300/40 bg-amber-500/5 text-[8.5px] font-black uppercase tracking-[0.2em] text-amber-700">
-                👑 FOUNDING SUPPORTER
-              </div>
+              {userData?.isFoundingMember ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-300/40 bg-amber-500/5 text-[8.5px] font-black uppercase tracking-[0.2em] text-amber-700">
+                  👑 FOUNDING SUPPORTER
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-violet-300/40 bg-violet-500/5 text-[8.5px] font-black uppercase tracking-[0.2em] text-violet-400">
+                  ⚡ PRO SUPPORTER
+                </div>
+              )}
               
-              <h2 className="text-sm md:text-base font-black text-slate-800 tracking-[0.15em] uppercase mt-3.5">
+              <h2 className={`text-sm md:text-base font-black tracking-[0.15em] uppercase mt-3.5 ${
+                userData?.isFoundingMember ? "text-slate-800" : "text-white"
+              }`}>
                 Certificate of Appreciation
               </h2>
               
@@ -4675,20 +4714,36 @@ export default function DashboardPage() {
                 PROUDLY PRESENTED TO
               </p>
               
-              <h3 className="text-lg md:text-xl font-serif text-slate-900 font-extrabold italic mt-1.5 border-b border-amber-500/20 pb-1 px-4 leading-none w-full max-w-[280px] truncate select-all">
+              <h3 className={`text-lg md:text-xl font-serif font-extrabold italic mt-1.5 border-b pb-1 px-4 leading-none w-full max-w-[280px] truncate select-all ${
+                userData?.isFoundingMember
+                  ? "text-slate-900 border-amber-500/20"
+                  : "text-white border-violet-500/20"
+              }`}>
                 {user?.displayName || "Pro Member"}
               </h3>
               
-              <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-4 leading-relaxed max-w-sm italic">
-                “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ” — พี่ฟุ้ย
-              </p>
+              {userData?.isFoundingMember ? (
+                <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-4 leading-relaxed max-w-sm italic">
+                  “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ” — พี่ฟุ้ย
+                </p>
+              ) : (
+                <p className="text-[10px] md:text-xs font-bold text-slate-400 mt-4 leading-relaxed max-w-sm italic">
+                  “ขอบคุณที่สนับสนุนและร่วมเดินทางไปกับระบบช่วยออกแบบชีวิตนี้ คุณคือส่วนสำคัญในการพัฒนาแอปนี้ให้เติบโตครับ” — พี่ฟุ้ย
+                </p>
+              )}
 
               {/* Bottom Certificate Grid */}
-              <div className="flex items-end justify-between w-full mt-6 pt-4 border-t border-slate-100/80 gap-2">
+              <div className={`flex items-end justify-between w-full mt-6 pt-4 border-t gap-2 ${
+                userData?.isFoundingMember ? "border-slate-100/80" : "border-slate-800"
+              }`}>
                 {/* Member ID */}
                 <div className="text-left flex-1 min-w-0">
                   <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">MEMBER ID</span>
-                  <span className="text-base font-black bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 bg-clip-text text-transparent mt-1.5 block tabular-nums leading-none">
+                  <span className={`text-base font-black bg-gradient-to-r bg-clip-text text-transparent mt-1.5 block tabular-nums leading-none ${
+                    userData?.isFoundingMember
+                      ? "from-amber-500 via-orange-500 to-orange-600"
+                      : "from-violet-400 to-indigo-500"
+                  }`}>
                     PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
                   </span>
                 </div>
@@ -4696,14 +4751,35 @@ export default function DashboardPage() {
                 {/* Gold Seal */}
                 <div className="relative w-11 h-11 flex items-center justify-center shrink-0 mx-2 -translate-y-1 select-none">
                   {/* Ribbon Tails */}
-                  <div className="absolute bottom-[-6px] left-[15%] w-2.5 h-4 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                  <div className="absolute bottom-[-6px] right-[15%] w-2.5 h-4 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 -rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                  <div className={`absolute bottom-[-6px] left-[15%] w-2.5 h-4 rotate-[15deg] origin-top ${
+                    userData?.isFoundingMember
+                      ? "bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500"
+                      : "bg-gradient-to-b from-violet-400 to-indigo-500"
+                  }`} style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                  <div className={`absolute bottom-[-6px] right-[15%] w-2.5 h-4 -rotate-[15deg] origin-top ${
+                    userData?.isFoundingMember
+                      ? "bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500"
+                      : "bg-gradient-to-b from-violet-400 to-indigo-500"
+                  }`} style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
                   
                   {/* Main Seal Body */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 rounded-full shadow-[0_3px_8px_rgba(245,158,11,0.2)] flex items-center justify-center p-[1.5px]">
+                  <div className={`absolute inset-0 rounded-full shadow-lg flex items-center justify-center p-[1.5px] ${
+                    userData?.isFoundingMember
+                      ? "bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 shadow-[0_3px_8px_rgba(245,158,11,0.2)]"
+                      : "bg-gradient-to-br from-violet-400 to-indigo-500 shadow-[0_3px_8px_rgba(139,92,246,0.2)]"
+                  }`}>
                     <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-amber-300 border border-amber-400/30">
-                      <Crown size={10} className="fill-current text-amber-400" />
-                      <span className="text-[4px] font-black tracking-tighter text-amber-300 mt-[0.5px]">FOUNDER</span>
+                      {userData?.isFoundingMember ? (
+                        <>
+                          <Crown size={10} className="fill-current text-amber-400" />
+                          <span className="text-[4px] font-black tracking-tighter text-amber-300 mt-[0.5px]">FOUNDER</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={10} className="fill-current text-violet-400" />
+                          <span className="text-[4px] font-black tracking-tighter text-violet-300 mt-[0.5px]">PRO</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -4711,7 +4787,9 @@ export default function DashboardPage() {
                 {/* Verification */}
                 <div className="text-right flex-1 min-w-0">
                   <span className="text-[7.5px] font-bold text-emerald-600 uppercase tracking-widest block leading-none">VERIFIED BY</span>
-                  <span className="text-[8.5px] font-black text-slate-800 mt-1.5 block uppercase tracking-wide leading-none truncate">
+                  <span className={`text-[8.5px] font-black mt-1.5 block uppercase tracking-wide leading-none truncate ${
+                    userData?.isFoundingMember ? "text-slate-800" : "text-slate-300"
+                  }`}>
                     UPSKILL EVERYDAY
                   </span>
                 </div>
@@ -7216,53 +7294,159 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-400/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-violet-300">
-                          <Mail size={12} />
-                          จดหมายจากผู้พัฒนา
+                        {/* Toggle header inside modal for regular PRO */}
+                        <div className="flex justify-center gap-1.5 mb-5 bg-white/[0.04] p-1 border border-white/5 rounded-2xl max-w-[320px] mx-auto">
+                          <button
+                            type="button"
+                            onClick={() => setViewMode("cert")}
+                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                              viewMode === "cert"
+                                ? "bg-violet-600 text-white shadow-lg"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            ใบรับรอง
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setViewMode("letter")}
+                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                              viewMode === "letter"
+                                ? "bg-violet-600 text-white shadow-lg"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            จดหมาย
+                          </button>
                         </div>
 
-                        <div className="flex items-center gap-3 mb-5">
-                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
-                            <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-black text-white leading-tight">
-                              สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
-                            </h3>
-                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
-                          </div>
-                        </div>
+                        {viewMode === "cert" ? (
+                          /* --- Luxury Mini Certificate inside Modal (PRO MEMBER) --- */
+                          <div className="relative overflow-hidden rounded-3xl border border-violet-200/50 bg-slate-950 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] text-center flex flex-col items-center justify-center min-h-[300px] select-none">
+                            {/* Background premium glows */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
+                            
+                            {/* Left Chevron Wing */}
+                            <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
+                              <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-br from-violet-400 via-purple-500 to-indigo-600 rotate-[35deg] origin-top-left shadow-sm" />
+                              <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-tr from-violet-400 via-purple-500 to-indigo-600 -rotate-[35deg] origin-bottom-left shadow-sm" />
+                              <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+                              <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
+                              <div className="absolute left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-violet-300 to-indigo-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+                            </div>
 
-                        <div className="space-y-4 text-[13px] font-bold leading-relaxed text-slate-300 bg-white/[0.02] border border-white/5 rounded-3xl p-5 backdrop-blur-md">
-                          {isProMember ? (
-                            <>
-                              <p>
-                                ขอบคุณมากๆ ครับที่สนับสนุน Upskill Everyday! ❤️
+                            {/* Right Chevron Wing */}
+                            <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
+                              <div className="absolute top-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-bl from-violet-400 via-purple-500 to-indigo-600 -rotate-[35deg] origin-top-right shadow-sm" />
+                              <div className="absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-violet-400 via-purple-500 to-indigo-600 rotate-[35deg] origin-bottom-right shadow-sm" />
+                              <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
+                              <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
+                              <div className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-violet-300 to-indigo-500 rotate-45 border-2 border-slate-900 shadow-sm" />
+                            </div>
+
+                            {/* Content */}
+                            <div className="relative z-10 w-full px-5 flex flex-col items-center">
+                              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-violet-400/40 bg-violet-500/5 text-[7.5px] font-black uppercase tracking-[0.15em] text-violet-400">
+                                ⚡ PRO SUPPORTER
+                              </div>
+                              
+                              <h2 className="text-[11px] font-black text-white tracking-[0.12em] uppercase mt-2.5">
+                                Certificate of Appreciation
+                              </h2>
+                              
+                              <p className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest mt-3">
+                                PROUDLY PRESENTED TO
                               </p>
-                              <p>
-                                การสนับสนุนของคุณช่วยแบ่งเบาค่าเซิร์ฟเวอร์ ค่า API และเป็นแรงขับเคลื่อนที่ช่วยให้ผม (ฟุ้ย) ได้พัฒนาฟีเจอร์ใหม่ๆ ในทุกๆ วันครับ
+                              
+                              <h3 className="text-sm font-serif text-white font-extrabold italic mt-1 border-b border-violet-500/20 pb-0.5 px-3 leading-none w-full max-w-[200px] truncate select-all">
+                                {user?.displayName || "Pro Member"}
+                              </h3>
+                              
+                              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-3 leading-relaxed max-w-[240px] italic">
+                                “ขอบคุณที่สนับสนุนและร่วมเดินทางไปกับระบบช่วยออกแบบชีวิตนี้ คุณคือส่วนสำคัญในการพัฒนาแอปนี้ให้เติบโตครับ” — พี่ฟุ้ย
                               </p>
-                              <p>
-                                หากมีข้อแนะนำหรือฟีดแบ็กตรงไหน บอกผมได้เสมอเลยนะครับ ขอให้สนุกกับการพัฒนาตัวเองทุกวันครับ!
-                              </p>
-                              <p className="font-black text-white pt-1">
-                                รักและขอบคุณจากใจจริงครับ 🙏
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <p>
-                                แอปนี้เป็นโปรเจกต์ที่ผมตั้งใจสร้างและโค้ดมันขึ้นมาด้วยตัวคนเดียว 100% เพราะผมเชื่อว่าทุกคนควรมีระบบช่วยออกแบบชีวิตที่ดี โดยไม่ต้องจ่ายค่าโค้ชราคาแพง
-                              </p>
-                              <p>
-                                เงิน <span className="text-amber-300 font-black">149 บาท/เดือน</span> หรือ <span className="text-amber-300 font-black">990 บาท/ปี</span> ของคุณ ไม่ได้เป็นแค่ค่าฟีเจอร์โปร แต่มันคือ <span className="text-emerald-300 font-black">&apos;แรงใจและความเชื่อที่มีตัวตน&apos;</span> ที่ช่วยสนับสนุนให้นักพัฒนาตัวเล็ก ๆ คนนี้ ได้มีทุนพัฒนาฟีเจอร์ใหม่ ๆ และพัฒนาให้แอปนี้ดีขึ้นเพื่อคุณต่อไปครับ
-                              </p>
-                              <p className="font-black text-white pt-1">
-                                ขอบคุณจากใจจริงครับ 🙏
-                              </p>
-                            </>
-                          )}
-                        </div>
+
+                              {/* Bottom Certificate Grid */}
+                              <div className="flex items-end justify-between w-full mt-4 pt-3 border-t border-slate-800 gap-2">
+                                {/* Member ID */}
+                                <div className="text-left flex-1 min-w-0">
+                                  <span className="text-[6.5px] font-black text-slate-500 uppercase tracking-widest block leading-none">MEMBER ID</span>
+                                  <span className="text-[13px] font-black bg-gradient-to-r from-violet-400 to-indigo-500 bg-clip-text text-transparent mt-1 block tabular-nums leading-none">
+                                    PRO #{String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                                  </span>
+                                </div>
+
+                                {/* Seal */}
+                                <div className="relative w-8 h-8 flex items-center justify-center shrink-0 mx-1 -translate-y-0.5 select-none">
+                                  {/* Ribbon Tails */}
+                                  <div className="absolute bottom-[-4px] left-[15%] w-1.5 h-3 bg-gradient-to-b from-violet-400 to-indigo-500 rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                                  <div className="absolute bottom-[-4px] right-[15%] w-1.5 h-3 bg-gradient-to-b from-violet-400 to-indigo-500 -rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
+                                  
+                                  {/* Main Seal Body */}
+                                  <div className="absolute inset-0 bg-gradient-to-br from-violet-400 to-indigo-500 rounded-full shadow-lg flex items-center justify-center p-[1px]">
+                                    <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-violet-400 border border-violet-400/30">
+                                      <Sparkles size={8} className="fill-current text-violet-400" />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Verification */}
+                                <div className="text-right flex-1 min-w-0">
+                                  <span className="text-[6.5px] font-bold text-emerald-400 uppercase tracking-widest block leading-none">VERIFIED BY</span>
+                                  <span className="text-[7.5px] font-black text-slate-300 mt-1 block uppercase tracking-wide leading-none truncate">
+                                    UPSKILL EVERYDAY
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* --- Developer's Letter --- */
+                          <>
+                            <div className="flex items-center gap-3 mb-5">
+                              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
+                                <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-black text-white leading-tight">
+                                  สวัสดีครับ ผมฟุ้ย 👨🏻‍💻
+                                </h3>
+                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 mt-0.5">Creator of Upskill Everyday</p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4 text-[13px] font-bold leading-relaxed text-slate-300 bg-white/[0.02] border border-white/5 rounded-3xl p-5 backdrop-blur-md">
+                              {isProMember ? (
+                                <>
+                                  <p>
+                                    ขอบคุณมากๆ ครับที่สนับสนุน Upskill Everyday! ❤️
+                                  </p>
+                                  <p>
+                                    การสนับสนุนของคุณช่วยแบ่งเบาค่าเซิร์ฟเวอร์ ค่า API และเป็นแรงขับเคลื่อนที่ช่วยให้ผม (ฟุ้ย) ได้พัฒนาฟีเจอร์ใหม่ๆ ในทุกๆ วันครับ
+                                  </p>
+                                  <p>
+                                    หากมีข้อแนะนำหรือฟีดแบ็กตรงไหน บอกผมได้เสมอเลยนะครับ ขอให้สนุกกับการพัฒนาตัวเองทุกวันครับ!
+                                  </p>
+                                  <p className="font-black text-white pt-1">
+                                    รักและขอบคุณจากใจจริงครับ 🙏
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p>
+                                    แอปนี้เป็นโปรเจกต์ที่ผมตั้งใจสร้างและโค้ดมันขึ้นมาด้วยตัวคนเดียว 100% เพราะผมเชื่อว่าทุกคนควรมีระบบช่วยออกแบบชีวิตที่ดี โดยไม่ต้องจ่ายค่าโค้ชราคาแพง
+                                  </p>
+                                  <p>
+                                    เงิน <span className="text-amber-300 font-black">149 บาท/เดือน</span> หรือ <span className="text-amber-300 font-black">990 บาท/ปี</span> ของคุณ ไม่ได้เป็นแค่ค่าฟีเจอร์โปร แต่มันคือ <span className="text-emerald-300 font-black">&apos;แรงใจและความเชื่อที่มีตัวตน&apos;</span> ที่ช่วยสนับสนุนให้นักพัฒนาตัวเล็ก ๆ คนนี้ ได้มีทุนพัฒนาฟีเจอร์ใหม่ ๆ และพัฒนาให้แอปนี้ดีขึ้นเพื่อคุณต่อไปครับ
+                                  </p>
+                                  <p className="font-black text-white pt-1">
+                                    ขอบคุณจากใจจริงครับ 🙏
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
 
@@ -7275,7 +7459,9 @@ export default function DashboardPage() {
                           : "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:shadow-[0_0_20px_rgba(139,92,246,0.2)] text-white"
                       }`}
                     >
-                      {userData?.isFoundingMember ? "ปิดใบรับรอง" : isProMember ? "ปิดจดหมาย" : "ไปที่หน้าเลือกแผนเพื่อสมัคร PRO →"}
+                      {userData?.isFoundingMember 
+                        ? "ปิดใบรับรอง" 
+                        : (viewMode === "cert" ? "ปิดใบรับรอง" : "ปิดจดหมาย")}
                     </button>
                   </motion.div>
                 ) : isProMember ? (
@@ -7290,27 +7476,35 @@ export default function DashboardPage() {
                       ใช้งาน AI Mentor, ปรับ Quest และ Focus Room Lounge ได้เต็มตามสิทธิ์ PRO แล้วครับ
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowLetter(true)}
-                      className={`mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all ${
-                        userData?.isFoundingMember
-                          ? "border-amber-400/30 bg-amber-400/5 text-amber-300 hover:bg-amber-400/10"
-                          : "border-violet-400/20 bg-violet-400/5 text-violet-300 hover:bg-violet-400/10"
-                      }`}
-                    >
-                      {userData?.isFoundingMember ? (
-                        <>
-                          <Crown size={12} className="text-amber-400" />
-                          ใบรับรองผู้ร่วมบุกเบิก
-                        </>
-                      ) : (
-                        <>
-                          <Mail size={12} className="animate-pulse" />
-                          อ่านจดหมายจากผู้พัฒนา
-                        </>
-                      )}
-                    </button>
+                    {userData?.isFoundingMember ? (
+                      <button
+                        type="button"
+                        onClick={() => { setViewMode("cert"); setShowLetter(true); }}
+                        className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all border-amber-400/30 bg-amber-400/5 text-amber-300 hover:bg-amber-400/10"
+                      >
+                        <Crown size={12} className="text-amber-400" />
+                        ใบรับรองผู้ร่วมบุกเบิก
+                      </button>
+                    ) : (
+                      <div className="flex justify-center gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => { setViewMode("cert"); setShowLetter(true); }}
+                          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all border-violet-400/20 bg-violet-400/5 text-violet-300 hover:bg-violet-400/10"
+                        >
+                          <Sparkles size={12} className="text-violet-400" />
+                          ใบรับรองสมาชิก PRO
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setViewMode("letter"); setShowLetter(true); }}
+                          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] active:scale-95 transition-all border-slate-700 bg-white/5 text-slate-300 hover:bg-white/10"
+                        >
+                          <Mail size={12} className="text-slate-400" />
+                          จดหมายจากผู้พัฒนา
+                        </button>
+                      </div>
+                    )}
 
                     <div className="mt-6 rounded-[1.75rem] border border-amber-300/30 bg-gradient-to-br from-amber-300/14 via-white/[0.04] to-orange-500/10 p-5 text-left shadow-[0_24px_70px_rgba(245,158,11,0.10)]">
                       <div className="flex items-center justify-between gap-3">
