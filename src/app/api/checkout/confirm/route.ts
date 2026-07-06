@@ -48,7 +48,7 @@ async function updateUserSubscription({
         ? { currentPeriodEnd: new Date(currentPeriodEnd * 1000) }
         : {}),
       ...(typeof cancelAtPeriodEnd === "boolean" ? { cancelAtPeriodEnd } : {}),
-      isFoundingMember: plan?.startsWith("founding") || false,
+      isFoundingMember: plan?.startsWith("founding") || plan === "yearly" || plan === "lifetime" || false,
       isLifetimeMember: isLifetime,
       subscriptionUpdatedAt: FieldValue.serverTimestamp(),
     },
