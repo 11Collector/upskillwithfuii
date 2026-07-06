@@ -37,7 +37,7 @@ function BottomNavigationInner() {
   const isDashboardFlow =
     !!user && (
       pathname.startsWith('/dashboard') ||
-      (pathname.startsWith('/library') && enteredDashboard) ||
+      ((pathname.startsWith('/library') || pathname.startsWith('/tools')) && enteredDashboard) ||
       pathname === '/tools/deep-work' ||
       pathname === '/tools/focus-room' ||
       pathname === '/shop'
