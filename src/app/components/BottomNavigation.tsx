@@ -45,9 +45,12 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  const noNavPaths: string[] = [];
+  const noNavPaths = [
+    '/tools/soul-guide',
+    '/tools/ai-mentor',
+  ];
 
-  if (noNavPaths.includes(pathname)) return null;
+  if (noNavPaths.some(p => pathname.startsWith(p))) return null;
 
   if (isDashboardFlow) {
     const navItems = [
