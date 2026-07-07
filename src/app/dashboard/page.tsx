@@ -8027,7 +8027,7 @@ export default function DashboardPage() {
 
       {/* 💬 Floating AI Mentor Chat Button - Clean & Defined Version */}
       {isSoulGuideUnlocked && (
-      <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[90]">
+      <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[150]">
         <Link href="/tools/soul-guide">
           <motion.div
             whileHover={{ scale: 1.1, y: -4 }}
