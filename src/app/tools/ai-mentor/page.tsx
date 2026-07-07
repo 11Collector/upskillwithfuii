@@ -445,7 +445,7 @@ export default function SoulGuidePage() {
       </div>
 
       {/* Input Area (Pinned to bottom) */}
-      <footer className="w-full bg-zinc-950/95 backdrop-blur-md border-t border-white/5 px-6 pt-4 pb-14 z-50">
+      <footer className="w-full bg-zinc-950/95 backdrop-blur-md border-t border-white/5 px-6 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] z-50">
         <div className="max-w-3xl mx-auto flex flex-col items-center">
           <AnimatePresence>
             {!isLoading && dynamicButtons.length > 0 && (
