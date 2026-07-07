@@ -25,7 +25,7 @@ export const FloatingPremiumXP = ({
           initial={{ scale: 0.5, opacity: 0, rotate: -45 }}
           animate={{ scale: 1, opacity: 1, rotate: 0 }}
           exit={{ scale: 0.5, opacity: 0, rotate: 45 }}
-          className="fixed top-20 right-4 md:right-8 z-[90] pointer-events-auto"
+          className="fixed top-20 right-4 md:right-8 z-[150] pointer-events-auto"
         >
           <button
             onClick={(e) => {
