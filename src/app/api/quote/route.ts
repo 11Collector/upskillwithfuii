@@ -7,6 +7,7 @@ import { adminDb } from '@/lib/firebase-admin';
 
 const QuoteSchema = z.object({
   prompt: z.string().min(1).max(5000),
+  type: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -20,8 +21,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
   }
 
+  const body = await req.json().catch(() => null);
+  const parsed = QuoteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const { prompt, type } = parsed.data;
+
   // Check Daily Quota for Free Tier (authenticated users only)
-  if (!isAuthError(authResult)) {
+  if (!isAuthError(authResult) && type !== 'wheel') {
     const userRef = adminDb.collection("users").doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.exists ? userSnap.data() || {} : {};
@@ -49,13 +57,6 @@ export async function POST(req: Request) {
       }, { merge: true });
     }
   }
-
-  const body = await req.json().catch(() => null);
-  const parsed = QuoteSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
-  const { prompt } = parsed.data;
 
   try {
     const response = await fetch("https://api.deepseek.com/chat/completions", {

@@ -520,7 +520,7 @@ const analyzeWithAI = async () => {
           "Content-Type": "application/json",
           ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {}),
         },
-        body: JSON.stringify({ prompt: promptText })
+        body: JSON.stringify({ prompt: promptText, type: "wheel" })
       });
 
       const data = await response.json();
@@ -868,7 +868,7 @@ const analyzeWithAI = async () => {
               })()}
 
                 <div style={{ maxWidth: '450px', margin: '25px auto 0', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <AssessmentResultCTA currentUser={currentUser} />
+                <AssessmentResultCTA currentUser={currentUser} completedType="wheel" />
               </div>
             </div>
    

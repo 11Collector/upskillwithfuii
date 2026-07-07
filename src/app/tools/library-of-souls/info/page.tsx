@@ -197,6 +197,7 @@ function ResultView({ resultType }: { resultType: string }) {
       <div className="pb-10 px-2 md:px-6 mt-8">
         <AssessmentResultCTA
           currentUser={user}
+          completedType="library"
           secondaryActions={
             <div className="grid grid-cols-2 gap-2.5">
               <Link href="/tools/library-of-souls" className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[13px] hover:bg-slate-200 active:scale-95 transition-all">

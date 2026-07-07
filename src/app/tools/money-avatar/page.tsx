@@ -1008,7 +1008,7 @@ export default function Home() {
 
                   {/* 6️⃣ เครื่องมืออัปสกิลอื่นๆ */}
                   <div className="mb-6 mt-4">
-                    <AssessmentResultCTA currentUser={currentUser} />
+                    <AssessmentResultCTA currentUser={currentUser} completedType="money" />
                   </div>
 
                   <div className="mt-2 text-center text-stone-400 text-[9px] uppercase tracking-widest font-semibold pb-4">Created by อัพสกิลกับฟุ้ย</div>

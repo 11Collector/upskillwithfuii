@@ -645,7 +645,7 @@ export default function Home() {
                   <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
                   <div className="mb-6 mt-4">
-                    <AssessmentResultCTA currentUser={currentUser} />
+                    <AssessmentResultCTA currentUser={currentUser} completedType="disc" />
                   </div>
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">
