@@ -224,6 +224,8 @@ export default function DashboardPage() {
   const [improvement, setImprovement] = useState(0);
   const [isFirstWeek, setIsFirstWeek] = useState(true); // เพิ่มตัวนี้ (Default เป็น true ไว้ก่อน)
   const [showSuccessToast, setShowSuccessToast] = useState<string | null>(null);
+  const [completedToastText, setCompletedToastText] = useState<string | null>(null);
+  const [completedToastType, setCompletedToastType] = useState<string | null>(null);
   const [showProSuccessModal, setShowProSuccessModal] = useState(false);
   // 🌟 เพิ่ม State เก็บข้อมูล Week ปัจจุบันของผู้ใช้
   const [relativeWeekInfo, setRelativeWeekInfo] = useState({ id: "week-1", label: "สัปดาห์ที่ 1", range: "กำลังโหลด..." });
@@ -267,6 +269,29 @@ export default function DashboardPage() {
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete("membership");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      } catch {}
+    }
+
+    const completed = searchParams.get("completed");
+    if (completed) {
+      setCompletedToastType(completed);
+      if (completed === "wheel") {
+        setCompletedToastText("บันทึกในตัวตนแล้ว");
+      } else if (completed === "library") {
+        setCompletedToastText("ไปดูหนังสือแนะนำได้ที่ตัวตน");
+      } else if (completed === "disc") {
+        setCompletedToastText("บันทึกสไตล์การสื่อสาร DISC ในตัวตนแล้ว");
+      } else if (completed === "money") {
+        setCompletedToastText("บันทึกนิสัยการเงินในตัวตนแล้ว");
+      }
+      setTimeout(() => {
+        setCompletedToastText(null);
+        setCompletedToastType(null);
+      }, 3000);
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("completed");
         window.history.replaceState({}, "", url.pathname + url.search);
       } catch {}
     }
@@ -491,6 +516,7 @@ export default function DashboardPage() {
   const [randomWheelQuestTitle, setRandomWheelQuestTitle] = useState(""); // สำหรับ Randomized Wheel Quest (ID: 1)
   const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เปิด/ปิด Modal
   const [pendingDailySuccess, setPendingDailySuccess] = useState(false); // 👈 คิวรอโชว์ Daily Success
+  const [pendingStreakSavedToast, setPendingStreakSavedToast] = useState(false); // 👈 คิวรอโชว์ Streak Toast
   const [rerollCount, setRerollCount] = useState(0); // 👈 สถานะการสุ่มเควสใหม่
   const [lastRerollDate, setLastRerollDate] = useState(""); // 👈 วันที่สุ่มล่าสุด
   const [wheelCompletions, setWheelCompletions] = useState(0); // 👈 นับจำนวนวันที่ทำสำเร็จจริง
@@ -1128,6 +1154,17 @@ export default function DashboardPage() {
       return () => clearTimeout(timer);
     }
   }, [showLevelUp, pendingDailySuccess]);
+
+  useEffect(() => {
+    if (!showLevelUp && !showDailySuccess && !pendingDailySuccess && pendingStreakSavedToast) {
+      const timer = setTimeout(() => {
+        setShowStreakSavedToast(true);
+        setPendingStreakSavedToast(false);
+        setTimeout(() => setShowStreakSavedToast(false), 3000);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showLevelUp, showDailySuccess, pendingDailySuccess, pendingStreakSavedToast]);
 
   useEffect(() => {
     if (showPerfectWeekModal) {
@@ -2787,10 +2824,9 @@ export default function DashboardPage() {
           newStreak = 1; // ครั้งแรกสุดในระบบที่ทำครบ 3
         }
 
-        if (newStreak > streakCount && shouldShowPhaseJourney && !hasShownStreakSavedToastRef.current) {
+        if (streakCount === 0 && newStreak === 1 && !hasShownStreakSavedToastRef.current) {
           hasShownStreakSavedToastRef.current = true;
-          setShowStreakSavedToast(true);
-          setTimeout(() => setShowStreakSavedToast(false), 2600);
+          setPendingStreakSavedToast(true);
         }
 
         // โบนัสวินัย 7 วัน (เฉพาะตอนที่ Streak เพิ่งเพิ่ม)
@@ -3543,6 +3579,48 @@ export default function DashboardPage() {
     </button>
   );
 
+  const getCompletedToastStyles = () => {
+    switch (completedToastType) {
+      case 'wheel':
+        return {
+          border: 'border-rose-500/30',
+          shadow: 'shadow-[0_15px_40px_rgba(244,63,94,0.18)]',
+          emoji: '🧬',
+          bgEmoji: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
+        };
+      case 'library':
+        return {
+          border: 'border-emerald-500/30',
+          shadow: 'shadow-[0_15px_40px_rgba(16,185,129,0.18)]',
+          emoji: '🧬',
+          bgEmoji: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+        };
+      case 'disc':
+        return {
+          border: 'border-blue-500/30',
+          shadow: 'shadow-[0_15px_40px_rgba(59,130,246,0.18)]',
+          emoji: '🧬',
+          bgEmoji: 'bg-blue-500/15 border-blue-500/30 text-blue-400',
+        };
+      case 'money':
+        return {
+          border: 'border-amber-500/30',
+          shadow: 'shadow-[0_15px_40px_rgba(245,158,11,0.18)]',
+          emoji: '🧬',
+          bgEmoji: 'bg-amber-500/15 border-amber-500/30 text-amber-500',
+        };
+      default:
+        return {
+          border: 'border-white/10',
+          shadow: 'shadow-[0_15px_40px_rgba(0,0,0,0.25)]',
+          emoji: '🧬',
+          bgEmoji: 'bg-slate-800/20 border-slate-700/35 text-slate-400',
+        };
+    }
+  };
+
+  const toastStyle = getCompletedToastStyles();
+
   return (
     <div className="min-h-screen bg-transparent px-6 md:px-8 py-4 pb-28 md:pb-4">
       {/* 🚀 Floating Premium Circular XP */}
@@ -3662,8 +3740,8 @@ export default function DashboardPage() {
             { done: !!lastWheel, label: "Wheel of Life", shortDesc: "เช็กสมดุลชีวิต 8 ด้าน", path: "/tools/wheel-of-life", buttonClass: "from-red-500 to-orange-500" },
             { done: !!lastDisc, label: "DISC", shortDesc: "เข้าใจสไตล์การสื่อสารของคุณ", path: "/tools/disc", buttonClass: "from-blue-500 to-indigo-500" },
             { done: !!lastMoney, label: "Money Avatar", shortDesc: "ถอดรหัสนิสัยการเงิน", path: "/tools/money-avatar", buttonClass: "from-amber-400 to-orange-500" },
-            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านของคุณ", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
             { done: !!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2, label: `Daily Quests (${Math.min(completedQuests.length, 2)}/2)`, shortDesc: "ทำภารกิจสั้นๆ เพื่อจบ Phase 1", path: "/dashboard?tab=quests", buttonClass: "from-violet-500 to-cyan-400" },
+            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านของคุณ", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
           ];
           const phase2Steps = [
             { done: !!lastQuote, label: "คมสัดสัด", shortDesc: "สร้างคำคมจากความรู้สึกวันนี้", path: "/tools/khomsatsat", buttonClass: "from-fuchsia-500 to-violet-500" },
@@ -7752,16 +7830,36 @@ export default function DashboardPage() {
       <AnimatePresence>
         {showStreakSavedToast && (
           <motion.div
-            initial={{ opacity: 0, y: -18, scale: 0.96 }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -14, scale: 0.98 }}
-            className="fixed left-1/2 top-5 z-[100001] w-[calc(100%-2rem)] max-w-md -translate-x-1/2"
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className="fixed left-0 right-0 top-6 z-[100001] mx-auto w-fit max-w-[calc(100%-2rem)]"
           >
-            <div className="flex items-center gap-3 rounded-full border border-white/80 bg-white/90 px-5 py-3 text-slate-900 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <CheckCircle2 size={22} />
+            <div className="flex items-center gap-3 rounded-full border border-amber-500/30 bg-slate-950/95 px-5 py-3 text-white shadow-[0_15px_40px_rgba(245,158,11,0.2)] backdrop-blur-xl">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 border border-amber-500/30 text-xs">
+                👤
               </div>
-              <p className="text-sm font-black">บันทึก Streak ไว้ในแท็บ Avatar แล้ว</p>
+              <p className="text-xs font-black tracking-wide">บันทึก Streak ไว้ในแท็บ Avatar แล้ว</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {completedToastText && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className="fixed left-0 right-0 top-6 z-[100001] mx-auto w-fit max-w-[calc(100%-2rem)]"
+          >
+            <div className={`flex items-center gap-3 rounded-full border bg-slate-950/95 px-5 py-3 text-white backdrop-blur-xl ${toastStyle.border} ${toastStyle.shadow}`}>
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs border ${toastStyle.bgEmoji}`}>
+                {toastStyle.emoji}
+              </div>
+              <p className="text-xs font-black tracking-wide">{completedToastText}</p>
             </div>
           </motion.div>
         )}

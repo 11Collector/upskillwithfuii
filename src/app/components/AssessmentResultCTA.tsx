@@ -17,6 +17,7 @@ interface Props {
   variant?: 'light' | 'dark';
   /** ปุ่ม secondary ที่แสดงระหว่าง primary CTA กับ tertiary row (Line OA + หน้าแรก) */
   secondaryActions?: React.ReactNode;
+  completedType?: string;
 }
 
 const GoogleSVG = ({ size = 18 }: { size?: number }) => (
@@ -28,7 +29,7 @@ const GoogleSVG = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
-export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50, variant = 'light', secondaryActions }: Props) {
+export default function AssessmentResultCTA({ currentUser, showXpModal = true, xpAmount = 50, variant = 'light', secondaryActions, completedType }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -106,7 +107,7 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
         {/* Row 1 — Primary: Login หรือ Dashboard (full width) */}
         {currentUser ? (
           <Link
-            href="/dashboard"
+            href={completedType ? `/dashboard?completed=${completedType}` : "/dashboard"}
             className={`w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl font-black text-[15px] active:scale-95 transition-all shadow-lg ${
               isDark ? 'bg-white text-slate-900 hover:bg-slate-100' : 'bg-slate-900 text-white hover:bg-black'
             }`}
