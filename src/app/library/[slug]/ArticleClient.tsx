@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ChevronLeft, Share2, Calendar, Clock, ArrowLeft, ArrowRight,
+  ChevronLeft, Share2, Calendar, Clock, ArrowLeft,
   User, Sparkles, Crown, Target, CheckCircle2, Loader2,
   LayoutGrid, Lock
 } from "lucide-react";
@@ -49,7 +49,6 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
   const [copied, setCopied]                     = useState(false);
   const [isInAppBrowser, setIsInAppBrowser]     = useState(false);
   const [canClaimXP, setCanClaimXP]             = useState(false);
-  const [isProMember, setIsProMember]           = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -115,7 +114,6 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
         checkReadStatus(u.uid, slug);
       } else {
         setUser(null);
-        setIsProMember(false);
       }
     });
     return () => unsubscribe();
@@ -130,16 +128,6 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
         if (userData.readArticles?.includes(articleSlug)) {
           setXpClaimed(true);
         }
-
-        const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || "";
-        const subscriptionTier = userData.subscriptionTier || userData.subscription_tier || "";
-        const isPro =
-          userData.role === "premium" ||
-          subscriptionTier === "pro" ||
-          ["active", "trialing"].includes(subscriptionStatus) ||
-          Boolean(userData.isLifetimeMember) ||
-          Boolean(userData.isFoundingMember);
-        setIsProMember(isPro);
       }
     } catch { /* non-critical */ }
   };
@@ -358,141 +346,101 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
         </motion.header>
 
         {/* Article Content */}
-        <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="min-h-[300px]">
-          {!isProMember && article.isPro ? (
-            <div className="space-y-12">
-              {/* Blurred snippet */}
-              <div className="relative max-h-[220px] overflow-hidden select-none pointer-events-none opacity-40">
-                <article className="prose prose-invert prose-slate max-w-none
-                  prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
-                  prose-p:text-slate-300 prose-p:leading-[2.1] prose-p:text-lg prose-p:font-light">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {article.content.substring(0, 320) + "..."}
-                  </ReactMarkdown>
-                </article>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent pointer-events-none" />
-              </div>
-
-              {/* Upgrade paywall card */}
-              <div className="relative p-8 md:p-12 rounded-[2.5rem] border border-amber-500/20 bg-slate-950/80 backdrop-blur-xl text-center overflow-hidden shadow-[0_20px_50px_rgba(245,158,11,0.08)]">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
-                <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/25 rounded-full flex items-center justify-center text-amber-400">
-                    <Crown size={32} className="fill-amber-400/10" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white mb-2">บทความนี้เฉพาะสมาชิก PRO</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto">
-                      อัปเกรดเป็น PRO เพื่อเข้าถึงคลังสรุปหนังสือพัฒนาตัวเองและบทความวิเคราะห์เจาะลึกทั้งหมดแบบไม่จำกัด
-                    </p>
-                  </div>
-                  <Link
-                    href="/dashboard?membership=1"
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-amber-500 text-black font-black text-sm rounded-2xl hover:bg-amber-400 active:scale-95 transition-all shadow-xl shadow-amber-500/10 uppercase tracking-widest"
-                  >
-                    อัปเกรดเป็น PRO <ArrowRight size={16} />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <article className="prose prose-invert prose-slate max-w-none
-              prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
-              prose-h3:text-2xl prose-h3:text-amber-400 prose-h3:mt-14 prose-h3:mb-6
-              prose-p:text-slate-300 prose-p:leading-[2.1] prose-p:text-lg prose-p:font-light prose-p:mb-8
-              prose-strong:text-amber-400 prose-strong:font-bold
-              prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-3xl prose-blockquote:not-italic prose-blockquote:text-slate-200 prose-blockquote:my-10
-              prose-li:text-slate-300 prose-li:marker:text-amber-500 prose-li:mb-2
-              prose-code:text-amber-300 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {article.content}
-              </ReactMarkdown>
-            </article>
-          )}
+        <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="min-h-[400px]">
+          <article className="prose prose-invert prose-slate max-w-none
+            prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
+            prose-h3:text-2xl prose-h3:text-amber-400 prose-h3:mt-14 prose-h3:mb-6
+            prose-p:text-slate-300 prose-p:leading-[2.1] prose-p:text-lg prose-p:font-light prose-p:mb-8
+            prose-strong:text-amber-400 prose-strong:font-bold
+            prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-3xl prose-blockquote:not-italic prose-blockquote:text-slate-200 prose-blockquote:my-10
+            prose-li:text-slate-300 prose-li:marker:text-amber-500 prose-li:mb-2
+            prose-code:text-amber-300 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {article.content}
+            </ReactMarkdown>
+          </article>
         </motion.section>
 
         {/* XP Section */}
-        {!(!isProMember && article.isPro) && (
-          <div className="mt-20 pt-12 border-t border-white/5">
-            {!showSummary ? (
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowSummary(true)}
-                className="w-full py-10 rounded-[2.5rem] border border-dashed border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-all flex flex-col items-center gap-4 group"
-              >
-                <div className="p-4 bg-amber-500/20 rounded-full group-hover:rotate-12 transition-transform shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-                  <Sparkles className="text-amber-400" size={24} />
+        <div className="mt-20 pt-12 border-t border-white/5">
+          {!showSummary ? (
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowSummary(true)}
+              className="w-full py-10 rounded-[2.5rem] border border-dashed border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-all flex flex-col items-center gap-4 group"
+            >
+              <div className="p-4 bg-amber-500/20 rounded-full group-hover:rotate-12 transition-transform shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                <Sparkles className="text-amber-400" size={24} />
+              </div>
+              <div className="text-center">
+                <span className="block text-amber-400 font-black text-lg tracking-wide">ตกผลึกความรู้</span>
+                <span className="text-amber-500/40 text-[10px] font-black uppercase tracking-[0.3em] mt-2 block">
+                  {xpClaimed ? "XP CLAIMED" : "+5 XP Rewards"}
+                </span>
+              </div>
+            </motion.button>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-br from-amber-500/10 via-transparent to-transparent p-8 md:p-12 rounded-[3rem] border border-white/10 relative overflow-hidden"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+                  <Target size={14} /> The Elite Insight
                 </div>
-                <div className="text-center">
-                  <span className="block text-amber-400 font-black text-lg tracking-wide">ตกผลึกความรู้</span>
-                  <span className="text-amber-500/40 text-[10px] font-black uppercase tracking-[0.3em] mt-2 block">
-                    {xpClaimed ? "XP CLAIMED" : "+5 XP Rewards"}
-                  </span>
-                </div>
-              </motion.button>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-amber-500/10 via-transparent to-transparent p-8 md:p-12 rounded-[3rem] border border-white/10 relative overflow-hidden"
-              >
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">
-                    <Target size={14} /> The Elite Insight
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-white leading-[1.5] mb-10 italic pr-6 drop-shadow-sm">
-                    "{article.summary}"
-                  </h3>
-                  {isClaimedSuccess ? (
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="flex flex-col items-center gap-4 py-4"
+                <h3 className="text-2xl md:text-3xl font-bold text-white leading-[1.5] mb-10 italic pr-6 drop-shadow-sm">
+                  "{article.summary}"
+                </h3>
+                {isClaimedSuccess ? (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex flex-col items-center gap-4 py-4"
+                  >
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+                      <CheckCircle2 size={32} className="text-white" />
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-emerald-400 font-black text-xl">ยินดีด้วย! รับ +5 XP สำเร็จ</span>
+                      <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1 block">Your wisdom is growing</span>
+                    </div>
+                  </motion.div>
+                ) : !xpClaimed ? (
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleClaimXP}
+                      disabled={isClaiming || !canClaimXP}
+                      className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-amber-500 text-black text-sm font-black rounded-3xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-amber-500/20 uppercase tracking-[0.2em]"
                     >
-                      <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
-                        <CheckCircle2 size={32} className="text-white" />
-                      </div>
-                      <div className="text-center">
-                        <span className="block text-emerald-400 font-black text-xl">ยินดีด้วย! รับ +5 XP สำเร็จ</span>
-                        <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1 block">Your wisdom is growing</span>
-                      </div>
-                    </motion.div>
-                  ) : !xpClaimed ? (
-                    <div className="space-y-3">
-                      <button
-                        onClick={handleClaimXP}
-                        disabled={isClaiming || !canClaimXP}
-                        className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-amber-500 text-black text-sm font-black rounded-3xl hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-amber-500/20 uppercase tracking-[0.2em]"
-                      >
-                        {isClaiming ? (
-                          <Loader2 className="animate-spin" size={20} />
-                        ) : canClaimXP ? (
-                          <><Sparkles size={20} /> Claim +5 XP Now</>
-                        ) : (
-                          <><Lock size={20} /> XP Rewards ล็อกอยู่</>
-                        )}
-                      </button>
-                      {!canClaimXP && (
-                        <p className="text-center text-xs font-bold leading-relaxed text-slate-500">
-                          อ่านได้เลยครับ ส่วน XP จะเคลมได้หลังจบ Phase 2 และเข้าสู่ Phase 3
-                        </p>
+                      {isClaiming ? (
+                        <Loader2 className="animate-spin" size={20} />
+                      ) : canClaimXP ? (
+                        <><Sparkles size={20} /> Claim +5 XP Now</>
+                      ) : (
+                        <><Lock size={20} /> XP Rewards ล็อกอยู่</>
                       )}
+                    </button>
+                    {!canClaimXP && (
+                      <p className="text-center text-xs font-bold leading-relaxed text-slate-500">
+                        อ่านได้เลยครับ ส่วน XP จะเคลมได้หลังจบ Phase 2 และเข้าสู่ Phase 3
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-black bg-emerald-500/10 w-fit px-8 py-4 rounded-2xl border border-emerald-500/20 uppercase tracking-[0.2em]">
+                      <CheckCircle2 size={18} /> <span>คุณอ่านบทความนี้แล้ว</span>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3 py-4">
-                      <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-black bg-emerald-500/10 w-fit px-8 py-4 rounded-2xl border border-emerald-500/20 uppercase tracking-[0.2em]">
-                        <CheckCircle2 size={18} /> <span>คุณอ่านบทความนี้แล้ว</span>
-                      </div>
-                      <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">XP already claimed</span>
-                    </div>
-                  )}
-                </div>
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
-              </motion.div>
-            )}
-          </div>
-        )}
+                    <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">XP already claimed</span>
+                  </div>
+                )}
+              </div>
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
+            </motion.div>
+          )}
+        </div>
 
         {/* Footer */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-28 text-center pt-16 border-t border-white/5">

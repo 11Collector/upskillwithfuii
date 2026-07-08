@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
-  Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2, Lock
+  Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -290,7 +290,6 @@ export default function PremiumLibraryPage() {
             )}
             {filteredArticles.map((article) => {
               const theme = CATEGORY_THEMES[article.category] || CATEGORY_THEMES["ทั้งหมด"];
-              const isLocked = !isProMember && article.isPro;
               return (
                 <motion.div
                   key={article.id}
@@ -301,12 +300,8 @@ export default function PremiumLibraryPage() {
                   <Link href={`/library/${article.slug}`} className="group block h-full">
                     <div className="h-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 flex flex-col transition-all duration-500 hover:border-amber-500/30 hover:bg-[#151515] relative overflow-hidden shadow-2xl">
 
-                      {/* XP or Lock Badge */}
-                      {isLocked ? (
-                        <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
-                          <Lock size={10} /> LOCK
-                        </div>
-                      ) : readArticles.includes(article.slug) ? (
+                      {/* XP Badge */}
+                      {readArticles.includes(article.slug) ? (
                         <div className="absolute top-8 right-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[9px] font-black tracking-widest uppercase shadow-sm">
                           <BookMarked size={10} className="fill-emerald-400" /> อ่านแล้ว
                         </div>
@@ -324,12 +319,7 @@ export default function PremiumLibraryPage() {
                       </div>
 
                       <div className="flex-1">
-                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-1.5 ${theme.color}`}>
-                          {article.isPro && (
-                            <span className="inline-flex items-center gap-0.5 bg-amber-500 text-black px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase">
-                              <Crown size={8} className="fill-black" /> PRO
-                            </span>
-                          )}
+                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 block ${theme.color}`}>
                           {article.category} • {(() => {
                             const t = article.readTime?.trim() || '';
                             const m = t.match(/^(\d+)/);
@@ -348,11 +338,7 @@ export default function PremiumLibraryPage() {
                       <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
                         <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{article.date}</span>
                         <div className="flex items-center gap-2 text-xs font-black text-amber-500 group-hover:gap-3 transition-all uppercase tracking-tighter">
-                          {isLocked ? (
-                            <>Unlock PRO <Lock size={12} className="ml-0.5" /></>
-                          ) : (
-                            <>Read Insight <ChevronRight size={14} /></>
-                          )}
+                          Read Insight <ChevronRight size={14} />
                         </div>
                       </div>
                     </div>
