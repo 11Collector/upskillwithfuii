@@ -70,7 +70,8 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
 
     // 2. We'll need to fetch user docs to see returning/active if we don't have specific queries
     // Cap at 1000 docs - totalUsers uses count query which is always accurate
-    const usersQuery = await getDocs(query(usersRef, limit(1000)));
+    // Fetch newest 1000 users sorted by creation date
+    const usersQuery = await getDocs(query(usersRef, orderBy("createdAt", "desc"), limit(1000)));
     let returningUsers = 0;
     let activeUsers = 0; // users who logged in recently or have activity
 
@@ -135,7 +136,36 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
       });
     });
 
-    const topUsers = [...allUsersList].sort((a, b) => b.totalXP - a.totalXP).slice(0, 50);
+    // Fetch actual Top 50 Users by XP directly from Firestore
+    const topUsersQuery = await getDocs(query(usersRef, orderBy("totalXP", "desc"), limit(50)));
+    const topUsers: UserDetail[] = [];
+    topUsersQuery.forEach((docSnap) => {
+      const data = docSnap.data();
+      const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now());
+      const lastLoginAt = data.lastLoginAt?.toDate ? data.lastLoginAt.toDate() : null;
+      
+      let isReturning = false;
+      if (lastLoginAt) {
+        const createDay = createdAt.toLocaleDateString();
+        const loginDay = lastLoginAt.toLocaleDateString();
+        if (createDay !== loginDay) {
+          isReturning = true;
+        }
+      } else if (data.totalXP > 0) {
+        isReturning = true;
+      }
+
+      topUsers.push({
+        id: docSnap.id,
+        name: data.displayName || data.name || "ไม่ระบุชื่อ",
+        email: data.email || "-",
+        totalXP: data.totalXP || 0,
+        createdAt: createdAt.toLocaleDateString('th-TH'),
+        createdAtTs: createdAt.getTime(),
+        lastLoginAt: lastLoginAt ? lastLoginAt.toLocaleDateString('th-TH') : "ไม่ระบุ",
+        isReturning
+      });
+    });
 
     // 3. Tool usages using count queries
     
