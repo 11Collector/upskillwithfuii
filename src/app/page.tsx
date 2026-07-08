@@ -438,7 +438,7 @@ export default function Home() {
         };
 
         return (
-          <section className="relative mx-4 mb-12 max-w-6xl overflow-hidden rounded-[2.5rem] border border-slate-800 bg-slate-900 p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-10 md:mx-auto">
+          <section className="relative w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] mx-auto mb-12 max-w-6xl overflow-hidden rounded-[2.5rem] border border-slate-800 bg-slate-900 p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-10">
             {/* Glow Effects */}
             <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
             <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-red-500/10 blur-[100px] rounded-full pointer-events-none" />
