@@ -387,6 +387,7 @@ export default function DashboardPage() {
 
       await updateDoc(userRef, {
         wheelPlanDay: 1, // เริ่มที่ Day 1 ทันที
+        wheelPlanTarget: 7, // รีเซ็ตเป้าหมายกลับเป็น 7 วันเสมอ
         isRandomMode: false,
         completedQuestIds: [],
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
@@ -396,11 +397,124 @@ export default function DashboardPage() {
       });
 
       setWheelPlanDay(1);
+      setWheelPlanTarget(7);
       setCompletedQuests([]);
       setWheelCompletions(0);
-      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0 } : null);
+      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0, wheelPlanTarget: 7 } : null);
       alert("เริ่มรอบใหม่ (Day 1) ให้คุณแล้ว! ลุยกันต่อเลยครับ");
     } catch (e) { console.error(e); }
+  };
+ 
+  // 3. ฟังก์ชันขยายแผนปฏิบัติการเป็น 21 วัน
+  const handleExtendPlanTo21 = async () => {
+    if (!user || !lastWheel) return;
+    if (!isProMember) {
+      alert("✨ ฟีเจอร์ขยายแผน 21 วัน (สร้างนิสัย) ด้วย AI เป็นสิทธิ์เฉพาะสมาชิก PRO\n\nระบบกำลังเปิดหน้าอัปเดตสมาชิกให้ท่านครับ");
+      setShowMembershipModal(true);
+      return;
+    }
+    setIsExtending(true);
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const assessmentId = lastWheel.id;
+
+      // เช็กก่อนว่ามีข้อมูล Day 8-21 ในตัวเดิมอยู่แล้วหรือไม่
+      const alreadyExtended = lastWheel.analysis && lastWheel.analysis.match(/\bDay\s?21\b/i);
+
+      if (alreadyExtended) {
+        // ดึงของเดิมรันต่อได้เลย ไม่ต้องเรียก AI
+        await updateDoc(userRef, {
+          wheelPlanTarget: 21,
+          wheelPlanDay: 8,
+          completedQuestIds: [],
+        });
+
+        setWheelPlanTarget(21);
+        setWheelPlanDay(8);
+        setCompletedQuests([]);
+        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8 } : null);
+        alert("ขยายแผนต่อเนื่องเป็น 21 วันแล้ว! (ใช้แผนเดิมที่วิเคราะห์ไว้ก่อนหน้า) ลุยกันต่อเลยครับ");
+      } else {
+        // เจน AI เพิ่มเติม
+        const currentScores = lastWheel.currentScores || [];
+        const targetScores = lastWheel.targetScores || [];
+        const currentText = currentScores.map((score: number, i: number) => `${categoryNames[i]}: ${score}/10`).join(", ");
+        const targetText = targetScores.map((score: number, i: number) => `${categoryNames[i]}: ${score}/10`).join(", ");
+        const focusAreas = lastWheel.focusAreas || [];
+        const focusText = focusAreas.length > 0 ? focusAreas.map((idx: number) => categoryNames[idx]).join(", ") : "ไม่ได้ระบุเป็นพิเศษ";
+        const futureGoal = lastWheel.goal || "ไม่ได้ระบุ";
+        const originalPlanText = lastWheel.analysis || "";
+
+        const promptText = `คุณคือเพื่อนสนิทผู้ชาย ที่ฉลาดและมีความรู้เชิงลึกทั้ง 8 ด้านเป็นสไตล์ที่ปรึกษาอารมณ์และนักพัฒนาตัวเอง สไตล์การพูดคือเป็นกันเอง อบอุ่น จริงใจ ให้กำลังใจ 
+(กฎข้อห้ามสำคัญ: ห้ามมีคำลงท้ายหางเสียง เช่น จ๊ะ, จ้ะ, คะ, ค่ะ, ครับ เด็ดขาด และให้เรียกแทนอีกฝ่ายว่า "คุณ" เสมอ)
+
+ผู้ใช้ได้ผ่านการประเมินวงล้อชีวิต (Wheel of Life) และทำแผนปฏิบัติการ 7 วันแรกสำเร็จเรียบร้อยแล้ว!
+ข้อมูลแบบประเมินและเป้าหมายเดิมของเขา:
+- คะแนนปัจจุบัน: ${currentText}
+- เป้าหมาย 1 ปี: ${targetText}
+- สิ่งที่เลือกโฟกัสเป็นพิเศษ: [${focusText}]
+- เป้าหมายที่อยากทำสำเร็จ: ${futureGoal}
+
+แผนปฏิบัติการ 7 วันแรกที่เขาทำสำเร็จไปแล้วคือ:
+${originalPlanText}
+
+โปรดช่วยวิเคราะห์ต่อยอดเพื่อสร้างแผนปฏิบัติการต่อเนื่องสำหรับ Day 8 ถึง Day 21 (อีก 14 วันที่เหลือ) เพื่อพัฒนาพฤติกรรมนี้ให้กลายเป็นนิสัยที่แท้จริงตามหลักจิตวิทยา 21 วัน
+แผนต่อเนื่องนี้ต้องสร้างกิจกรรมใหม่ๆ หรือกิจกรรมที่เพิ่มระดับความเข้มข้นขึ้น โดยอ้างอิงจากแผนสัปดาห์แรก 
+
+กฎการตอบ (ต้องทำตามอย่างเคร่งครัด):
+1. ภาษาที่ใช้: ต้องเป็นภาษาไทย 100% เท่านั้น ห้ามสร้างข้อความที่มีตัวอักษรภาษาจีน (Chinese characters) ปะปนมาแม้แต่ตัวเดียวเด็ดขาด
+2. ให้ตอบเฉพาะหัวข้อแผนปฏิบัติการรายวันสำหรับ Day 8 ถึง Day 21 เท่านั้น โดยใช้รูปแบบ:
+📅 แผนปฏิบัติการต่อเนื่อง (Day 8-21):
+Day 8: [กิจกรรมสั้นๆ ที่ทำได้จริงใน 5 นาที]
+Day 9: [กิจกรรม]
+...
+Day 21: [กิจกรรม]
+3. Format: ห้ามใช้ Markdown แบบอื่นๆ เช่น Heading หรือ Italic`;
+
+        const idToken = await user.getIdToken();
+        const response = await fetch('/api/quote', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ prompt: promptText, type: "wheel" })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const generatedAnalysis = data.quote || "";
+        if (!generatedAnalysis) throw new Error("ไม่สามารถสร้างแผนต่อเนื่องได้");
+
+        const extendedAnalysis = `${originalPlanText}\n\n${generatedAnalysis}`;
+
+        // อัปเดต Assessments Collection
+        if (assessmentId) {
+          const assessmentRef = doc(db, "users", user.uid, "assessments", assessmentId);
+          await updateDoc(assessmentRef, { analysis: extendedAnalysis });
+        }
+
+        // อัปเดต User Profile
+        await updateDoc(userRef, {
+          wheelPlanTarget: 21,
+          wheelPlanDay: 8,
+          completedQuestIds: [],
+        });
+
+        setWheelPlanTarget(21);
+        setWheelPlanDay(8);
+        setCompletedQuests([]);
+        setLastWheel((prev: any) => prev ? { ...prev, analysis: extendedAnalysis } : null);
+        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8 } : null);
+        alert("✨ AI ได้วิเคราะห์และสร้างแผนสร้างนิสัยต่อเนื่อง (Day 8-21) ให้คุณเรียบร้อยแล้ว ลุยกันต่อเลยครับ!");
+      }
+    } catch (e: any) {
+      console.error(e);
+      alert(`ไม่สามารถขยายแผนได้: ${e.message || e}`);
+    } finally {
+      setIsExtending(false);
+    }
   };
 
   const router = useRouter();
@@ -551,6 +665,8 @@ export default function DashboardPage() {
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
   const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
+  const [wheelPlanTarget, setWheelPlanTarget] = useState<number>(7);
+  const [isExtending, setIsExtending] = useState<boolean>(false);
   const [wheelPlanSkips, setWheelPlanSkips] = useState<number>(0);
   const [perfectWeeks, setPerfectWeeks] = useState<number>(0);
   const [lastSkipDate, setLastSkipDate] = useState<string>("");
@@ -712,6 +828,7 @@ export default function DashboardPage() {
 
         setStreakCount(currentStreak);
         setWheelPlanDay(userData.wheelPlanDay || 0);
+        setWheelPlanTarget(userData.wheelPlanTarget || 7);
         setWheelPlanSkips(userData.wheelPlanSkips || 0);
         setLastSkipDate(userData.lastSkipDate || "");
         setLastChatDate(userData.lastChatDate || "");
@@ -791,17 +908,25 @@ export default function DashboardPage() {
           };
 
           let currentPlanDay = userData.wheelPlanDay || 0;
+          let wheelPlanTarget = userData.wheelPlanTarget || 7;
           let nextPlanDay = currentPlanDay;
 
-          if (currentPlanDay >= 7) {
-            nextPlanDay = 1;
+          if (currentPlanDay > wheelPlanTarget) {
+            // ค้างไว้ที่วันเดิมเพื่อรอให้ผู้ใช้เลือกเส้นทางใน Dashboard
+            nextPlanDay = currentPlanDay;
+            updates.wheelPlanDay = nextPlanDay;
+            updates.lastActiveDate = todayStr;
+            updates.completedQuestIds = [];
+          } else if (currentPlanDay === wheelPlanTarget) {
+            // จบแผนปัจจุบัน (7 วัน หรือ 21 วัน)
+            nextPlanDay = currentPlanDay + 1; // ไปที่ 8 หรือ 22
 
-            if (currentPlanDay === 7) {
-              const completions = userData.wheelCompletions || 0;
-              let bonusXP = 0;
-              let milestoneName = "";
-              let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
+            const completions = userData.wheelCompletions || 0;
+            let bonusXP = 0;
+            let milestoneName = "";
+            let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
 
+            if (wheelPlanTarget === 7) {
               if (completions >= 7) {
                 bonusXP = 100;
                 milestoneName = "PERFECT RUN!";
@@ -815,58 +940,72 @@ export default function DashboardPage() {
                 milestoneName = "GOOD RUN!";
                 modalType = "GOOD";
               }
-
-              const xpToAdd = bonusXP;
-              const perfectWeekInc = modalType === 'PERFECT' ? 1 : 0;
-
-              // 📊 Archive current week's weeklySavings to weekly_stats doc
-              try {
-                const weeklyRef = doc(db, "users", currentUser.uid, "weekly_stats", data.currentWeekInfo.id);
-                await setDoc(weeklyRef, {
-                  weeklySavings: userData.weeklySavings || 0,
-                  updatedAt: new Date()
-                }, { merge: true });
-              } catch (e) {
-                console.error("Failed to archive weeklySavings to weekly_stats:", e);
+            } else if (wheelPlanTarget === 21) {
+              // ช่วงขยายแผน Day 8-21 (รวม 14 วัน)
+              if (completions >= 12) {
+                bonusXP = 250;
+                milestoneName = "EXTRAORDINARY RUN!";
+                modalType = "PERFECT";
+              } else if (completions >= 8) {
+                bonusXP = 100;
+                milestoneName = "GREAT RUN (21 DAYS)!";
+                modalType = "GREAT";
+              } else if (completions >= 1) {
+                bonusXP = 50;
+                milestoneName = "GOOD RUN (21 DAYS)!";
+                modalType = "GOOD";
               }
+            }
 
-              updates.wheelPlanDay = nextPlanDay;
-              updates.lastActiveDate = todayStr;
-              updates.completedQuestIds = [];
-              updates.wheelCompletions = 0;
-              updates.weeklySavings = 0; // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
+            const xpToAdd = bonusXP;
+            const perfectWeekInc = (wheelPlanTarget === 7 && modalType === 'PERFECT') ? 1 : 0;
 
-              if (xpToAdd > 0) {
-                setRewardModalData({
-                  title: milestoneName,
-                  bonusXP: xpToAdd,
-                  message: `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองกลับไปประเมิน Wheel of Life อีกครั้งเพื่อเช็กพัฒนาการ และอัปเดตแผนสัปดาห์ใหม่ให้ตรงจุดยิ่งขึ้นนะครับ!`,
-                  type: modalType,
-                  weeklySavings: userData?.weeklySavings || 0
-                });
-                updates.totalXP = increment(xpToAdd);
+            // 📊 Archive current week's weeklySavings to weekly_stats doc
+            try {
+              const weeklyRef = doc(db, "users", currentUser.uid, "weekly_stats", data.currentWeekInfo.id);
+              await setDoc(weeklyRef, {
+                weeklySavings: userData.weeklySavings || 0,
+                updatedAt: new Date()
+              }, { merge: true });
+            } catch (e) {
+              console.error("Failed to archive weeklySavings to weekly_stats:", e);
+            }
+
+            updates.wheelPlanDay = nextPlanDay;
+            updates.lastActiveDate = todayStr;
+            updates.completedQuestIds = [];
+            updates.wheelCompletions = 0;
+            updates.weeklySavings = 0; // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
+
+            if (xpToAdd > 0) {
+              setRewardModalData({
+                title: milestoneName,
+                bonusXP: xpToAdd,
+                message: wheelPlanTarget === 7
+                  ? `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองขยายแผนเป็น 21 วันเพื่อสร้างนิสัยจริงต่อเนื่อง หรือเลือกประเมินใหม่เพื่อรับแผนใหม่กันครับ!`
+                  : `คุณรักษาวินัยต่อเนื่องจนครบ 21 วันสำเร็จ! (สำเร็จ ${completions} วันในรอบหลัง) เก่งสุดยอดระดับ Extraordinary เลยครับ!\n\n💡 แนะนำ: ได้เวลาประเมินวงล้อชีวิตอีกครั้งเพื่ออัปเดตสมดุลชีวิตและรับเป้าหมายชุดใหม่กันแล้ว!`,
+                type: modalType,
+                weeklySavings: userData?.weeklySavings || 0
+              });
+              updates.totalXP = increment(xpToAdd);
+              if (perfectWeekInc > 0) {
                 updates.perfectWeeks = increment(perfectWeekInc);
               }
+            }
 
-              if (xpToAdd > 0) {
-                const currentXP = (userData.totalXP || 0) + xpToClaim;
-                const newXP = currentXP + xpToAdd;
-                const oldLevel = Math.floor(currentXP / 100) + 1;
-                const newLevel = Math.floor(newXP / 100) + 1;
-                if (newLevel > oldLevel) {
-                  showLevelUpModal(newLevel);
-                }
-                setTotalXP(newXP);
-                setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
-                setShowPerfectWeekModal(true);
+            if (xpToAdd > 0) {
+              const currentXP = (userData.totalXP || 0) + xpToClaim;
+              const newXP = currentXP + xpToAdd;
+              const oldLevel = Math.floor(currentXP / 100) + 1;
+              const newLevel = Math.floor(newXP / 100) + 1;
+              if (newLevel > oldLevel) {
+                showLevelUpModal(newLevel);
               }
-
-            } else {
-              updates.wheelPlanDay = nextPlanDay;
-              updates.lastActiveDate = todayStr;
-              updates.completedQuestIds = [];
-              updates.wheelCompletions = 0;
-              updates.weeklySavings = 0; // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
+              setTotalXP(newXP);
+              if (perfectWeekInc > 0) {
+                setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
+              }
+              setShowPerfectWeekModal(true);
             }
 
             setWheelCompletions(0);
@@ -2471,30 +2610,46 @@ export default function DashboardPage() {
       wheelQuestSet = true;
     }
     if (!wheelQuestSet && lastWheel?.analysis) {
-      const planSection = lastWheel.analysis.split('📅')[1];
-      if (planSection) {
-        const planItems = planSection.split('\n')
-          .filter((l: string) => l.match(/^[1-7]\.|^-|\bDay\s?[1-7]\b/i))
-          .map((l: string) => l.replace(/^[1-7]\.\s*|^-\s*|\*\*/g, '').trim());
+      const isWheelDoneToday = completedQuests.includes(1);
+      const maxTarget = wheelPlanTarget || 7;
 
-        if (planItems.length > 0) {
-          const isWheelDoneToday = completedQuests.includes(1);
+      // ถ้าวันนี้ทำไปแล้ว แสดงว่า wheelPlanDay เพิ่งถูกเลื่อนขึ้นไปเป็นตัวถัดไป ให้ถอยกลับมาแสดงของอันเดิมก่อน
+      const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : wheelPlanDay;
 
-          // ถ้าวันนี้ทำไปแล้ว แสดงว่า wheelPlanDay เพิ่งถูกเลื่อนขึ้นไปเป็น 8 ให้ถอยกลับมาแสดงของอันเดิมก่อน
-          const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
+      if (displayDay > 0 && displayDay <= maxTarget) {
+        const lines = lastWheel.analysis.split('\n');
+        const dayLine = lines.find((l: string) => {
+          const cleanLine = l.replace(/^[\s\-\*•\d\.\(\)]+/, '').trim();
+          return cleanLine.toLowerCase().startsWith(`day ${displayDay}`);
+        });
 
-          if (displayDay > 0 && displayDay <= 7) {
-            const dayIdx = Math.min(6, displayDay - 1);
+        if (dayLine) {
+          const cleanText = dayLine
+            .replace(/^[\s\-\*•\d\.\(\)]+/, '') // ลบสัญลักษณ์นำหน้ารายการ
+            .replace(/^day\s*\d+\s*[:\-|\s]*/i, '') // ลบคำว่า Day X: หรือ Day X -
+            .replace(/\*\*/g, '') // ลบตัวหนา Markdown
+            .trim();
+
+          qList[0].title = `DAY ${displayDay}/${maxTarget} | ${cleanText}`;
+          wheelQuestSet = true;
+        } else {
+          // Fallback เผื่อหาบรรทัดตรงๆ ไม่เจอ ให้กรองหัวข้อรายการทั้งหมดแล้วจิ้มตาม index
+          const planItems = lastWheel.analysis.split('\n')
+            .filter((l: string) => l.match(/^\d+\.|^-|\bDay\s?\d+\b/i))
+            .map((l: string) => l.replace(/^\d+\.\s*|^-\s*|\*\*/g, '').trim());
+
+          if (planItems.length > 0) {
+            const dayIdx = Math.min(planItems.length - 1, displayDay - 1);
             let currentDayPlan = planItems[dayIdx] || planItems[0];
-            qList[0].title = `DAY ${displayDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
-            wheelQuestSet = true;
-          } else {
-            // จบแผนแล้ว (Day 8+)
-            qList[0].title = `🏆 จบแผน 7 วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
-            qList[0].xp = 0;
+            qList[0].title = `DAY ${displayDay}/${maxTarget} | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
             wheelQuestSet = true;
           }
         }
+      } else {
+        // จบแผนแล้ว (Day 8+ หรือ Day 22+)
+        qList[0].title = `🏆 จบแผน ${maxTarget} วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
+        qList[0].xp = 0;
+        wheelQuestSet = true;
       }
     }
 
@@ -5222,58 +5377,109 @@ export default function DashboardPage() {
                               )}
                             </div>
 
-                            {/* ⚡ ส่วนที่ 2: สถานะรายสัปดาห์ (เปลี่ยนตามสถานะ 7 วัน) */}
-                            {wheelPlanDay > 7 ? (
-                              !hasDoneWheelToday ? (
-                                /* 🎯 CASE 1: ครบ 7 วัน -> โชว์ 2 ปุ่มหลัก */
-                                <div
-                                  className="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl relative overflow-hidden z-20 cursor-default"
-                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                >
-                                  <p className="text-[13px] font-black text-amber-700 flex items-center gap-2 mb-1.5 relative z-10">
-                                    <Trophy size={16} className="text-amber-500" /> สิ้นสุดแผน 7 วัน!
-                                  </p>
-                                  <p className="text-[11px] text-amber-700/80 font-bold relative z-10 leading-relaxed mb-4">
-                                    คุณรักษาวินัยได้ยอดเยี่ยม! เลือกก้าวต่อไปกันครับ
-                                  </p>
-
-                                  <div className="grid grid-cols-2 gap-2 relative z-20">
-                                    <button
-                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/tools/wheel-of-life"); }}
-                                      className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-amber-200 hover:border-red-400 hover:bg-red-50/50 transition-all group/audit active:scale-95 shadow-sm"
-                                    >
-                                      <PieChart size={18} className="text-red-500 mb-1 group-hover/audit:scale-110" />
-                                      <span className="text-[9px] font-black uppercase text-slate-700">เริ่ม Audit</span>
-                                    </button>
-
-                                    <button
-                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRestartCycle(); }}
-                                      className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-amber-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all group/loop active:scale-95 shadow-sm"
-                                    >
-                                      <RotateCcw size={18} className="text-blue-500 mb-1 group-hover/loop:-rotate-45" />
-                                      <span className="text-[9px] font-black uppercase text-slate-700">ลุยแผนเดิม</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                /* 🎯 CASE 2: ครบ 7 วัน และวันนี้ทำเสร็จแล้ว -> ป้ายพักผ่อน */
-                                <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl relative overflow-hidden">
-                                  <p className="text-[13px] font-black text-slate-700 flex items-center gap-2 mb-1 relative z-10">
-                                    <CheckCircle2 size={16} className="text-green-500" /> สำเร็จเป้าหมายสัปดาห์นี้!
-                                  </p>
-                                  <p className="text-[11px] text-slate-500 font-bold relative z-10">
-                                    พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเลือกเส้นทางใหม่กันนะ
-                                  </p>
-                                </div>
-                              )
-                            ) : (
-                              /* 🎯 CASE 3: ยังไม่ครบ 7 วัน -> (ว่างไว้ หรือจะโชว์ Progress เล็กๆ ก็ได้ครับ) */
-                              <div className="px-1">
-                                <p className="text-[11px] text-slate-400 font-bold italic">
-                                  💡 เคล็ดลับ: ทำภารกิจรายวันให้ครบเพื่อขยับเข้าใกล้เป้าหมายใหญ่ครับ
-                                </p>
-                              </div>
-                            )}
+                             {/* ⚡ ส่วนที่ 2: สถานะรายสัปดาห์ (เปลี่ยนตามสถานะ 7 วัน) */}
+                             {wheelPlanDay > wheelPlanTarget ? (
+                               !hasDoneWheelToday ? (
+                                 wheelPlanTarget === 7 ? (
+                                   /* 🎯 CASE 1: ครบ 7 วัน -> โชว์ ปุ่มขยาย 21 วัน + ปุ่ม Audit + ปุ่มลุยแผนเดิม */
+                                   <div
+                                     className="bg-amber-50/70 border-2 border-amber-200 p-4 rounded-2xl relative overflow-hidden z-20 cursor-default"
+                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   >
+                                     <p className="text-[13px] font-black text-amber-700 flex items-center gap-2 mb-1.5 relative z-10">
+                                       <Trophy size={16} className="text-amber-500" /> สิ้นสุดแผน 7 วัน! 🏆
+                                     </p>
+                                     <p className="text-[11px] text-amber-700/80 font-bold relative z-10 leading-relaxed mb-4">
+                                       คุณรักษาวินัยได้ยอดเยี่ยม! เลือกก้าวต่อไปกันครับ
+                                     </p>
+ 
+                                     <button
+                                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleExtendPlanTo21(); }}
+                                       className="w-full py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white rounded-xl font-black text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5 mb-2 relative z-20"
+                                       disabled={isExtending}
+                                     >
+                                       {isExtending ? (
+                                         <>
+                                           <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                           กำลังวิเคราะห์แผนต่อเนื่อง...
+                                         </>
+                                       ) : (
+                                         <>
+                                           <Sparkles size={14} className="animate-pulse" />
+                                           ขยายเป้าหมายเป็น 21 วัน
+                                         </>
+                                       )}
+                                     </button>
+ 
+                                     <div className="grid grid-cols-2 gap-2 relative z-20">
+                                       <button
+                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/tools/wheel-of-life"); }}
+                                         className="flex flex-col items-center justify-center p-2.5 bg-white rounded-xl border border-amber-200 hover:border-red-400 hover:bg-red-50/50 transition-all group/audit active:scale-95 shadow-sm"
+                                       >
+                                         <PieChart size={16} className="text-red-500 mb-0.5 group-hover/audit:scale-110" />
+                                         <span className="text-[9px] font-black uppercase text-slate-700">เริ่ม Audit</span>
+                                       </button>
+ 
+                                       <button
+                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRestartCycle(); }}
+                                         className="flex flex-col items-center justify-center p-2.5 bg-white rounded-xl border border-amber-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all group/loop active:scale-95 shadow-sm"
+                                       >
+                                         <RotateCcw size={16} className="text-blue-500 mb-0.5 group-hover/loop:-rotate-45" />
+                                         <span className="text-[9px] font-black uppercase text-slate-700">ลุยแผนเดิม</span>
+                                       </button>
+                                     </div>
+                                   </div>
+                                 ) : (
+                                   /* 🎯 CASE 2: ครบ 21 วัน -> โชว์ ปุ่ม Audit + ลุยต่อรอบเดิม */
+                                   <div
+                                     className="bg-amber-50/70 border-2 border-amber-200 p-4 rounded-2xl relative overflow-hidden z-20 cursor-default"
+                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   >
+                                     <p className="text-[13px] font-black text-amber-700 flex items-center gap-2 mb-1.5 relative z-10">
+                                       <Trophy size={16} className="text-amber-500" /> สำเร็จเป้าหมาย 21 วัน! 🏆
+                                     </p>
+                                     <p className="text-[11px] text-amber-700/80 font-bold relative z-10 leading-relaxed mb-4">
+                                       สุดยอดผู้ชนะระดับ Extraordinary! แนะนำให้เริ่ม Audit เพื่อสแกนคะแนนชีวิตและรับเป้าหมายรอบใหม่กันครับ
+                                     </p>
+ 
+                                     <div className="grid grid-cols-2 gap-2 relative z-20">
+                                       <button
+                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/tools/wheel-of-life"); }}
+                                         className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-xl active:scale-95 hover:shadow-md transition-all font-black text-[9px] shadow-sm border border-transparent"
+                                       >
+                                         <PieChart size={18} className="mb-1" />
+                                         เริ่ม AUDIT ใหม่
+                                       </button>
+ 
+                                       <button
+                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRestartCycle(); }}
+                                         className="flex flex-col items-center justify-center p-3 bg-white text-slate-700 rounded-xl border border-slate-200 hover:border-slate-300 active:scale-95 transition-all font-black text-[9px] shadow-sm"
+                                       >
+                                         <RotateCcw size={18} className="text-slate-500 mb-1" />
+                                         ลุยต่อรอบเดิม
+                                       </button>
+                                     </div>
+                                   </div>
+                                 )
+                               ) : (
+                                 /* 🎯 CASE 3: ครบตามเป้าหมาย และวันนี้ทำเสร็จแล้ว -> ป้ายพักผ่อน */
+                                 <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl relative overflow-hidden">
+                                   <p className="text-[13px] font-black text-slate-700 flex items-center gap-2 mb-1 relative z-10">
+                                     <CheckCircle2 size={16} className="text-green-500" /> สำเร็จเป้าหมายรอบนี้!
+                                   </p>
+                                   <p className="text-[11px] text-slate-500 font-bold relative z-10">
+                                     พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเลือกเส้นทางใหม่กันนะ
+                                   </p>
+                                 </div>
+                               )
+                             ) : (
+                               /* 🎯 CASE 4: ยังไม่ครบเป้าหมาย -> (โชว์เคล็ดลับหรือแถบความคืบหน้า) */
+                               <div className="px-1">
+                                 <p className="text-[11px] text-slate-400 font-bold italic">
+                                   💡 เคล็ดลับ: ทำภารกิจรายวันให้ครบเพื่อสะสมรางวัลระดับ {wheelPlanTarget === 7 ? "PERFECT" : "EXTRAORDINARY"} ครับ
+                                 </p>
+                               </div>
+                             )}
                           </div>
                         ) : (
                           <div className="mb-6">
@@ -5282,18 +5488,18 @@ export default function DashboardPage() {
                         )}
 
                         {/* 🔘 ปุ่ม Action หลัก (จะซ่อนตัวอัตโนมัติถ้ามีแผง 3 ปุ่มโชว์อยู่) */}
-                        {!(lastWheel && wheelPlanDay > 7 && !hasDoneWheelToday) && (
+                        {!(lastWheel && wheelPlanDay > wheelPlanTarget && !hasDoneWheelToday) && (
                           <div className={`inline-flex items-center gap-1.5 px-6 py-3 rounded-full border text-[13px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm w-fit 
                       ${!lastWheel
                               ? 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(239,68,68,0.5)] hover:scale-[1.03]'
-                              : wheelPlanDay > 7
+                              : wheelPlanDay > wheelPlanTarget
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(16,185,129,0.5)] hover:scale-[1.03]'
                                 : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200'
                             }`}>
 
                             {!lastWheel ? (
                               <Sparkles size={14} />
-                            ) : wheelPlanDay > 7 ? (
+                            ) : wheelPlanDay > wheelPlanTarget ? (
                               <CheckCircle2 size={14} className="fill-white" />
                             ) : (
                               <RefreshCw size={14} />
@@ -5302,7 +5508,7 @@ export default function DashboardPage() {
                             <span>
                               {!lastWheel
                                 ? "เริ่มประเมินครั้งแรก (+50 XP)"
-                                : wheelPlanDay > 7
+                                : wheelPlanDay > wheelPlanTarget
                                   ? "พรุ่งนี้มาลุยต่อกัน"
                                   : "ประเมินใหม่"
                               }

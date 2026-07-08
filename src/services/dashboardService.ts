@@ -135,8 +135,11 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   // --- จัดการข้อมูลแบบประเมิน ---
   let wheelData = null;
   if (!authWheelSnap.empty) {
-    const latestWithAnalysis = authWheelSnap.docs.find((doc) => doc.data().analysis !== "");
-    wheelData = latestWithAnalysis ? latestWithAnalysis.data() : authWheelSnap.docs[0].data();
+    const latestDoc = authWheelSnap.docs.find((doc) => doc.data().analysis !== "") || authWheelSnap.docs[0];
+    wheelData = {
+      ...latestDoc.data(),
+      id: latestDoc.id
+    };
   }
 
   let discData = null;
