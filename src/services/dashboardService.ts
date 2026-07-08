@@ -32,6 +32,49 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
     if (Object.keys(needsUpdate).length > 0) {
       await setDoc(doc(db, "users", uid), needsUpdate, { merge: true });
     }
+
+    // 🔥 Auto-assign sequential memberNumber if they are PRO but do not have a memberNumber yet
+    const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || "";
+    const subscriptionTier = userData.subscriptionTier || userData.subscription_tier || "";
+    const isPro =
+      userData.role === "premium" ||
+      subscriptionTier === "pro" ||
+      ["active", "trialing"].includes(subscriptionStatus) ||
+      Boolean(userData.isLifetimeMember) ||
+      Boolean(userData.isFoundingMember);
+
+    if (isPro && (userData.memberNumber === undefined || userData.memberNumber === null)) {
+      try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, orderBy("memberNumber", "desc"), limit(1));
+        const highestSnap = await getDocs(q);
+        let highest = 0;
+        if (!highestSnap.empty) {
+          highest = highestSnap.docs[0].data().memberNumber || 0;
+        }
+        const nextNumber = highest + 1;
+        
+        const plan = userData.subscriptionPlan || "";
+        const shouldBeFounder =
+          plan.startsWith("founding") ||
+          plan === "yearly" ||
+          plan === "lifetime" ||
+          Boolean(userData.isLifetimeMember) ||
+          Boolean(userData.isFoundingMember);
+
+        // Save to Firestore
+        await setDoc(doc(db, "users", uid), { 
+          memberNumber: nextNumber,
+          isFoundingMember: shouldBeFounder
+        }, { merge: true });
+        
+        // Update local object in-memory
+        userData.memberNumber = nextNumber;
+        userData.isFoundingMember = shouldBeFounder;
+      } catch (err) {
+        console.error("Error auto-assigning memberNumber:", err);
+      }
+    }
   } else {
     await setDoc(doc(db, "users", uid), {
       createdAt: joinDate,

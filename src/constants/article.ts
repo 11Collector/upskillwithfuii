@@ -10,6 +10,7 @@ export interface Article {
   readTime: string;
   date: string;
   content: string;
+  isPro?: boolean;
 }
 
 export const mockArticles: Article[] = [
@@ -109,6 +110,7 @@ export const mockArticles: Article[] = [
     category: "ธุรกิจ",
     readTime: "6 นาที",
     date: "31 มี.ค. 2026",
+    isPro: true,
     content: `เพิ่งมีโอกาสได้ลงเรียน Workshop **One Person Business** ของพี่ทอย (DataRockie) มาครับ บอกเลยว่าเนื้อหาดีจนต้องรีบมาตกผลึกสรุป 5 ข้อสำคัญที่คนอยากอัพสกิลตัวเองเป็น 'บริษัท' ต้องรู้ครับ
 
 ### 1. Build a Company of One (ตัวเราคือโปรดักต์)
@@ -191,6 +193,7 @@ export const mockArticles: Article[] = [
     category: "การเงิน & ลงทุน",
     readTime: "6 นาที",
     date: "1 เม.ย. 2026",
+    isPro: true,
     content: `10 วิธีทำให้เงินงอกเงย สรุปมาให้แบบเนียนๆ โดย ฟุ้ย ครับ
 
 ### 1. ลงทุนในตัวเองก่อน (ความรู้ = Asset)
@@ -268,6 +271,7 @@ export const mockArticles: Article[] = [
     category: "ธุรกิจ",
     readTime: "6 นาที",
     date: "3 เม.ย. 2026",
+    isPro: true,
     content: `วิศวกรข้ามสายไปทำธุรกิจแล้วรุ่ง ไม่ใช่เรื่องบังเอิญครับ แต่มันคือการนำ "Core Competency" มาประยุกต์ใช้ในโลกที่ขับเคลื่อนด้วยข้อมูล สรุปมาให้แบบเจาะลึกโดย ฟุ้ย ครับ
 
 ### 1. ความได้เปรียบเชิงตัวเลข (Quantitative Edge)
