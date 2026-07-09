@@ -272,14 +272,23 @@ export default function PremiumLibraryPage() {
       const path = `users/${user.uid}/second_brain/${selectedNote.id}/${fileName}`;
       const fileRef = storageRef(storage, path);
       
-      const snapshot = await uploadBytes(fileRef, file);
+      // Set a 12-second timeout to prevent the upload from hanging indefinitely
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("การเชื่อมต่อหมดเวลา (Timeout) หรืออาจยังไม่ได้กดเริ่มต้นใช้งาน Storage ใน Firebase Console")), 12000)
+      );
+
+      const snapshot = await Promise.race([
+        uploadBytes(fileRef, file),
+        timeoutPromise
+      ]) as any;
+
       const downloadUrl = await getDownloadURL(snapshot.ref);
 
       const markdownImage = `\n![${file.name}](${downloadUrl})\n`;
       setNoteContent((prev) => prev + markdownImage);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to upload image:", error);
-      alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาตรวจสอบสิทธิ์การเขียน Storage หรือลองอัปใหม่อีกครั้งนะครับ");
+      alert(`อัปโหลดรูปภาพไม่สำเร็จ: ${error?.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ"} \n\nกรุณาตรวจสอบสิทธิ์การเขียน Storage หรือเปิด Developer Console เพื่อดูรหัสข้อผิดพลาดเพิ่มเติมนะครับ`);
     } finally {
       setIsImageUploading(false);
       e.target.value = "";
