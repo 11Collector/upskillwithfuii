@@ -85,7 +85,6 @@ export default function PremiumLibraryPage() {
   const [activeAiAction, setActiveAiAction] = useState<"summarize" | "coaching" | "quote" | null>(null);
   const [copyStatus, setCopyStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [isImageUploading, setIsImageUploading] = useState(false);
   const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
 
   useEffect(() => {
@@ -261,39 +260,7 @@ export default function PremiumLibraryPage() {
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !selectedNote) return;
 
-    setIsImageUploading(true);
-
-    try {
-      const fileName = `${Date.now()}_${file.name}`;
-      const path = `users/${user.uid}/second_brain/${selectedNote.id}/${fileName}`;
-      const fileRef = storageRef(storage, path);
-      
-      // Set a 12-second timeout to prevent the upload from hanging indefinitely
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("การเชื่อมต่อหมดเวลา (Timeout) หรืออาจยังไม่ได้กดเริ่มต้นใช้งาน Storage ใน Firebase Console")), 12000)
-      );
-
-      const snapshot = await Promise.race([
-        uploadBytes(fileRef, file),
-        timeoutPromise
-      ]) as any;
-
-      const downloadUrl = await getDownloadURL(snapshot.ref);
-
-      const markdownImage = `\n![${file.name}](${downloadUrl})\n`;
-      setNoteContent((prev) => prev + markdownImage);
-    } catch (error: any) {
-      console.error("Failed to upload image:", error);
-      alert(`อัปโหลดรูปภาพไม่สำเร็จ: ${error?.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ"} \n\nกรุณาตรวจสอบสิทธิ์การเขียน Storage หรือเปิด Developer Console เพื่อดูรหัสข้อผิดพลาดเพิ่มเติมนะครับ`);
-    } finally {
-      setIsImageUploading(false);
-      e.target.value = "";
-    }
-  };
 
   const handleCallAi = async (action: "summarize" | "quote" | "coaching") => {
     if (!user || !noteContent.trim()) return;
@@ -961,31 +928,8 @@ export default function PremiumLibraryPage() {
 
                     {/* Segment 2: Toolbar actions & stats */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                      {/* Left side: Upload image & note counter */}
+                      {/* Left side: Note counter */}
                       <div className="flex items-center gap-3">
-                        {/* 🖼️ Direct Image Uploader Button */}
-                        <label
-                          htmlFor="note-image-upload"
-                          className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
-                        >
-                          {isImageUploading ? (
-                            <>
-                              <Loader2 size={10} className="animate-spin text-indigo-700" />
-                              <span>กำลังอัปโหลด...</span>
-                            </>
-                          ) : (
-                            <span>🖼️ อัปโหลดรูปภาพ</span>
-                          )}
-                          <input
-                            id="note-image-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            disabled={isImageUploading}
-                          />
-                        </label>
-
                         <span className="text-[10px] text-slate-400 font-bold">
                           {charCount} ตัวอักษร ({wordCount} คำ)
                         </span>
