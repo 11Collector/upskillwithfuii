@@ -670,7 +670,7 @@ export default function PremiumLibraryPage() {
                   placeholder="ค้นหาบันทึกของคุณ..."
                   value={searchNoteQuery}
                   onChange={(e) => setSearchNoteQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-xs font-bold text-slate-750 placeholder-slate-400 focus:bg-white focus:border-slate-200 focus:outline-none transition-all duration-300"
+                  className="w-full pl-9 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-slate-200 focus:outline-none transition-all duration-300"
                 />
               </div>
 
@@ -683,7 +683,7 @@ export default function PremiumLibraryPage() {
                     className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all duration-300 border ${
                       filterNoteCategory === cat
                         ? "bg-slate-900 border-slate-950 text-white shadow-sm"
-                        : "bg-slate-50 border-slate-200/60 text-slate-550 hover:bg-slate-100 hover:text-slate-750"
+                        : "bg-slate-50 border-slate-200/60 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     }`}
                   >
                     {cat}
@@ -845,7 +845,7 @@ export default function PremiumLibraryPage() {
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
                       rows={14}
-                      className="w-full bg-transparent text-sm leading-loose text-slate-655 placeholder-slate-350 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px]"
+                      className="w-full bg-transparent text-sm leading-loose text-slate-600 placeholder-slate-400 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px]"
                     />
                   </div>
 
@@ -942,7 +942,7 @@ export default function PremiumLibraryPage() {
                         <button
                           onClick={() => handleCallAi("coaching")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 bg-gradient-to-r from-violet-650 to-indigo-650 hover:from-violet-750 hover:to-indigo-750 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isAiLoading ? (
                             <Loader2 size={11} className="animate-spin text-white" />
