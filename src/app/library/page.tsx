@@ -514,7 +514,7 @@ export default function PremiumLibraryPage() {
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
                 คลังสมอง <span className="text-amber-500">อัพสกิล</span>
               </h1>
-              <p className="text-slate-500 text-lg font-medium">สรุปหนังสือและบทความพรีเมียมคัดมาเพื่อคุณโดยเฉพาะ</p>
+              <p className="text-slate-500 text-sm md:text-lg font-medium">สรุปหนังสือและบทความพรีเมียมคัดมาเพื่อคุณโดยเฉพาะ</p>
             </header>
 
             {/* --- Ebook Banner --- */}
@@ -1050,36 +1050,36 @@ export default function PremiumLibraryPage() {
                 </>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-slate-400">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl mb-4 border border-slate-200 shadow-sm">
+                  <div className="w-24 h-24 rounded-full bg-[#f8fafc] flex items-center justify-center text-4xl mb-6 border border-slate-200/60 shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
                     🧠
                   </div>
-                  <h4 className="text-sm font-black text-slate-700 mb-1">พื้นที่สมองที่สอง (Second Brain)</h4>
-                  <p className="text-[11px] text-slate-400 font-medium max-w-xs text-center leading-relaxed mb-8">
+                  <h4 className="text-lg font-black text-slate-800 mb-2">พื้นที่สมองที่สอง (Second Brain)</h4>
+                  <p className="text-xs text-slate-400 font-medium max-w-sm text-center leading-relaxed mb-10">
                     เก็บบันทึกสรุปหนังสือ ไอเดียสร้างสรรค์ และบทเรียนพัฒนาตัวเอง เพื่อให้สมองจริงพร้อมจดจ่อกับปัจจุบัน
                   </p>
 
-                  {/* 3 Step Guidance Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg mb-8">
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
-                      <span className="text-lg mb-1 block">📝</span>
-                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">1. จดบันทึก / สรุป</h5>
-                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">บันทึกข้อคิดที่ได้เรียนรู้ ความฝัน หรือแผนงาน</p>
+                  {/* 3 Step Guidance Cards (Flex-wrap or row layout on mobile) */}
+                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl mb-10 px-4 sm:px-0">
+                    <div className="flex-1 bg-slate-50/60 p-5 rounded-[1.5rem] border border-slate-100 text-left shadow-sm">
+                      <span className="text-2xl mb-2.5 block">📝</span>
+                      <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-wider mb-1.5">1. จดบันทึก / สรุป</h5>
+                      <p className="text-[10px] text-slate-400 leading-relaxed font-medium">บันทึกข้อคิดที่ได้เรียนรู้ ความฝัน หรือแผนงาน</p>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
-                      <span className="text-lg mb-1 block">⚡</span>
-                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">2. ใช้เทมเพลตช่วย</h5>
-                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">กดเลือกเทมเพลตสรุปหนังสือ หรือทบทวนรายวันเพื่อเริ่มทันที</p>
+                    <div className="flex-1 bg-slate-50/60 p-5 rounded-[1.5rem] border border-slate-100 text-left shadow-sm">
+                      <span className="text-2xl mb-2.5 block">⚡</span>
+                      <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-wider mb-1.5">2. ใช้เทมเพลตช่วย</h5>
+                      <p className="text-[10px] text-slate-400 leading-relaxed font-medium">กดเลือกเทมเพลตสรุปหนังสือ หรือทบทวนรายวันเพื่อเริ่มทันที</p>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
-                      <span className="text-lg mb-1 block">🤖</span>
-                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">3. ให้ AI ร่วมคิด</h5>
-                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">สรุปใจความสำคัญ หรือขอคำแนะนำจากโค้ชพี่ฟุ้ย</p>
+                    <div className="flex-1 bg-slate-50/60 p-5 rounded-[1.5rem] border border-slate-100 text-left shadow-sm">
+                      <span className="text-2xl mb-2.5 block">🤖</span>
+                      <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-wider mb-1.5">3. ให้ AI ร่วมคิด</h5>
+                      <p className="text-[10px] text-slate-400 leading-relaxed font-medium">สรุปใจความสำคัญ หรือขอคำแนะนำจากโค้ชพี่ฟุ้ย</p>
                     </div>
                   </div>
 
                   <button
                     onClick={handleCreateNote}
-                    className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95"
+                    className="px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_10px_25px_rgba(15,23,42,0.15)] active:scale-95 flex items-center gap-2"
                   >
                     + สร้างบันทึกแรก
                   </button>
