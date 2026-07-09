@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Sparkles, ArrowLeft, Bot, User as UserIcon,
   MessageSquare, History, Zap, BrainCircuit, Lightbulb, Target, TrendingUp,
-  AlertCircle, Lock, Battery, Plus, Crown
+  AlertCircle, Lock, Battery, Plus, Crown, Copy, Check, Loader2, Brain
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -39,6 +39,9 @@ export default function SoulGuidePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [questSaved, setQuestSaved] = useState(false);
   const [isQuestAnalyzing, setIsQuestAnalyzing] = useState(false);
+  const [copiedMessageIdx, setCopiedMessageIdx] = useState<number | null>(null);
+  const [savingMessageIdx, setSavingMessageIdx] = useState<number | null>(null);
+  const [savedNotesMap, setSavedNotesMap] = useState<Record<number, string>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
@@ -309,6 +312,62 @@ export default function SoulGuidePage() {
     }
   };
 
+  const stripMarkdown = (mdText: string): string => {
+    return mdText
+      .replace(/(\*\*|__)(.*?)\1/g, '$2')          // bold
+      .replace(/(\*|_)(.*?)\1/g, '$2')             // italic
+      .replace(/`([^`]+)`/g, '$1')                 // inline code
+      .replace(/^#+\s+/gm, '')                     // headings
+      .replace(/^- \[ [x ] \]\s+/gm, '')           // checklists
+      .replace(/^-\s+/gm, '• ')                    // bullets
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')     // links
+      .replace(/```[a-z]*\n([\s\S]*?)\n```/g, '$1') // code blocks
+      .trim();
+  };
+
+  const handleCopyMessage = (text: string, idx: number) => {
+    const plainText = stripMarkdown(text);
+    navigator.clipboard.writeText(plainText);
+    setCopiedMessageIdx(idx);
+    setTimeout(() => setCopiedMessageIdx(null), 2000);
+  };
+
+  const handleSaveToSecondBrain = async (content: string, idx: number) => {
+    if (!user || savingMessageIdx !== null) return;
+    if (!isProMember) {
+      alert("✨ ฟีเจอร์ AI ดึงคำแนะนำจดลงสมองที่สอง เป็นสิทธิ์เฉพาะสมาชิก PRO\n\nสามารถอัปเดตสมาชิกที่หน้าแดชบอร์ดได้ครับ");
+      return;
+    }
+    setSavingMessageIdx(idx);
+    try {
+      const userToken = await auth.currentUser?.getIdToken(true);
+      const response = await fetch("/api/chat/extract-note", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          chatMessage: content,
+          userMessage: idx > 0 ? messages[idx - 1].content : undefined
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to save note");
+      }
+
+      const data = await response.json();
+      setSavedNotesMap(prev => ({ ...prev, [idx]: data.noteId }));
+    } catch (err: any) {
+      console.error("Error saving note:", err);
+      alert(err.message || "เกิดข้อผิดพลาดในการบันทึกโน้ต กรุณาลองใหม่อีกครั้งครับ");
+    } finally {
+      setSavingMessageIdx(null);
+    }
+  };
+
   const handleSendMessage = async (text?: string) => {
     const messageText = text || input;
     if (!messageText.trim() || isLoading) return;
@@ -559,6 +618,60 @@ export default function SoulGuidePage() {
                       {msg.content}
                     </ReactMarkdown>
                   </div>
+
+                  {msg.role === "assistant" && (
+                    <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-white/5 text-zinc-500">
+                      {/* Copy Message Button */}
+                      <button
+                        onClick={() => handleCopyMessage(msg.content, idx)}
+                        className="hover:text-white transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-wider active:scale-95"
+                        title="คัดลอกข้อความ"
+                      >
+                        {copiedMessageIdx === idx ? (
+                          <>
+                            <Check size={11} className="text-emerald-500" />
+                            <span className="text-emerald-500">คัดลอกแล้ว</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={11} />
+                            <span>คัดลอก</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Save to Second Brain Button */}
+                      {savedNotesMap[idx] ? (
+                        <Link
+                          href={`/library?noteId=${savedNotesMap[idx]}`}
+                          className="hover:text-amber-400 text-amber-500 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-widest active:scale-95"
+                        >
+                          <Brain size={11} />
+                          <span>เปิดดูบันทึก 🧠</span>
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => handleSaveToSecondBrain(msg.content, idx)}
+                          disabled={savingMessageIdx !== null}
+                          className="hover:text-sky-400 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-wider active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="บันทึกลงคลังสมองที่สอง"
+                        >
+                          {savingMessageIdx === idx ? (
+                            <>
+                              <Loader2 size={11} className="animate-spin text-sky-400" />
+                              <span className="text-sky-400">กำลังจดบันทึก...</span>
+                            </>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Brain size={11} />
+                              <span>บันทึกลงสมองที่สอง</span>
+                              {!isProMember && <Lock size={9} className="text-zinc-500/70" />}
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
