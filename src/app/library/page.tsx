@@ -269,7 +269,7 @@ export default function PremiumLibraryPage() {
 
     try {
       const fileName = `${Date.now()}_${file.name}`;
-      const path = `second_brain/${user.uid}/${selectedNote.id}/${fileName}`;
+      const path = `users/${user.uid}/second_brain/${selectedNote.id}/${fileName}`;
       const fileRef = storageRef(storage, path);
       
       const snapshot = await uploadBytes(fileRef, file);
