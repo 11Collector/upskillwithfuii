@@ -853,7 +853,7 @@ export default function PremiumLibraryPage() {
                     {/* Auto-save Hint Banner */}
                     <div className="text-[11px] text-slate-400 flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 font-medium">
                       <span>💡</span>
-                      <span>โน้ตจะ**เซฟอัตโนมัติ**ขณะพิมพ์ สามารถใช้เทมเพลตและ AI สรุปเนื้อหาด้านล่างได้ครับ</span>
+                      <span>โน้ตจะ <strong className="font-black text-slate-700">เซฟอัตโนมัติ</strong> ขณะพิมพ์ สามารถใช้เทมเพลตและ AI สรุปเนื้อหาด้านล่างได้ครับ</span>
                     </div>
 
                     {/* Note Title Input */}
