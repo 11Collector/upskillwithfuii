@@ -8,6 +8,8 @@ import {
   Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
@@ -60,7 +62,8 @@ const cardVariants: Variants = {
   show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 260, damping: 20 } }
 };
 
-export default function PremiumLibraryPage() {
+function LibraryContent() {
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [readArticles, setReadArticles] = useState<string[]>([]);
@@ -86,6 +89,20 @@ export default function PremiumLibraryPage() {
   const [copyStatus, setCopyStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
+  const [isCreatingNoteFromUrl, setIsCreatingNoteFromUrl] = useState(false);
+
+  // Derived state sync when newNote query param is present
+  const newNoteParam = searchParams.get("newNote") === "true";
+  const [prevNewNote, setPrevNewNote] = useState(false);
+
+  if (newNoteParam !== prevNewNote) {
+    setPrevNewNote(newNoteParam);
+    if (newNoteParam) {
+      setActiveView("notes");
+      setMobileNotesView("editor");
+      setIsCreatingNoteFromUrl(true);
+    }
+  }
 
   useEffect(() => {
     setIsMounted(true);
@@ -121,6 +138,52 @@ export default function PremiumLibraryPage() {
     });
 
     return () => unsubscribe();
+  }, [isMounted, user]);
+
+  // 🆕 Create note from query param
+  useEffect(() => {
+    if (!isMounted || !user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const shouldCreateNewNote = params.get("newNote") === "true";
+
+    if (shouldCreateNewNote) {
+      const createEmptyNote = async () => {
+        try {
+          const notesRef = collection(db, "users", user.uid, "second_brain");
+          const createdAtStr = new Date().toISOString();
+          const docRef = await addDoc(notesRef, {
+            title: "บันทึกที่ไม่มีชื่อ",
+            content: "",
+            category: "พัฒนาตัวเอง",
+            createdAt: createdAtStr,
+            updatedAt: createdAtStr
+          });
+
+          setActiveView("notes");
+          setMobileNotesView("editor");
+          setSelectedNote({
+            id: docRef.id,
+            title: "บันทึกที่ไม่มีชื่อ",
+            content: "",
+            category: "พัฒนาตัวเอง",
+            createdAt: createdAtStr,
+            updatedAt: createdAtStr
+          });
+
+          // Clear query param
+          params.delete("newNote");
+          const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+          window.history.replaceState(null, "", newRelativePathQuery);
+        } catch (err) {
+          console.error("Failed to auto-create note from query:", err);
+        } finally {
+          setIsCreatingNoteFromUrl(false);
+        }
+      };
+
+      createEmptyNote();
+    }
   }, [isMounted, user]);
 
   // Sync selected note fields to local input states
@@ -424,6 +487,19 @@ export default function PremiumLibraryPage() {
       || (statusFilter === "ยังไม่อ่าน" && !isRead);
     return matchesCategory && matchesStatus;
   });
+
+  if (!isMounted || isCreatingNoteFromUrl) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-amber-500" size={36} />
+        {isCreatingNoteFromUrl && (
+          <p className="text-slate-400 text-xs font-black uppercase tracking-widest animate-pulse">
+            กำลังสร้างโน้ตใหม่ในคลังสมองของคุณ... 🧠
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-500 font-sans overflow-x-hidden selection:bg-amber-500/30 p-6 md:p-10 ${
@@ -795,9 +871,10 @@ export default function PremiumLibraryPage() {
                               e.stopPropagation();
                               setShowDeleteConfirm(n.id);
                             }}
-                            className="absolute top-4 right-3 text-slate-400 hover:text-red-500 rounded-md p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300"
+                            className="absolute top-3 right-3 text-slate-400 hover:text-red-600 hover:bg-red-50 bg-slate-100 hover:border-red-200 border border-slate-200 rounded-xl p-2 transition-all duration-200 active:scale-95 shadow-sm z-20"
+                            title="ลบบันทึก"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={15} />
                           </button>
 
                           {/* Delete Confirmation Popup Inline */}
@@ -1049,5 +1126,20 @@ export default function PremiumLibraryPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function PremiumLibraryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <p className="text-slate-400 text-xs font-black uppercase tracking-widest animate-pulse">
+          กำลังโหลดคลังสมอง... 🧠
+        </p>
+      </div>
+    }>
+      <LibraryContent />
+    </Suspense>
   );
 }
