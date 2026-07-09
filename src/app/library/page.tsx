@@ -878,32 +878,35 @@ export default function PremiumLibraryPage() {
                   {/* Footer widgets: Stats, Templates and AI actions */}
                   <div className="mt-6 pt-4 border-t border-slate-100 space-y-4">
                     
-                    {/* Row 1: Templates & Copy action */}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      {/* Templates shortcuts */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">⚡ คัดลอกเทมเพลต:</span>
-                        <button
-                          onClick={() => handleApplyTemplate("book")}
-                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
-                        >
-                          📚 สรุปหนังสือ
-                        </button>
-                        <button
-                          onClick={() => handleApplyTemplate("daily")}
-                          className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
-                        >
-                          🌅 ทวนบันทึกรายวัน
-                        </button>
-                        <button
-                          onClick={() => handleApplyTemplate("idea")}
-                          className="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
-                        >
-                          💡 ไอเดียแล่น
-                        </button>
+                    {/* Segment 1: Templates List (Visually Grouped) */}
+                    <div className="flex items-center gap-1.5 flex-wrap bg-slate-50/50 p-2 rounded-xl border border-slate-100/60">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 pl-1">⚡ คัดลอกเทมเพลต:</span>
+                      <button
+                        onClick={() => handleApplyTemplate("book")}
+                        className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
+                      >
+                        📚 สรุปหนังสือ
+                      </button>
+                      <button
+                        onClick={() => handleApplyTemplate("daily")}
+                        className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
+                      >
+                        🌅 ทวนบันทึกรายวัน
+                      </button>
+                      <button
+                        onClick={() => handleApplyTemplate("idea")}
+                        className="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
+                      >
+                        💡 ไอเดียแล่น
+                      </button>
+                    </div>
 
+                    {/* Segment 2: Toolbar actions & stats */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      {/* Left side: Upload image & note counter */}
+                      <div className="flex items-center gap-3">
                         {/* 🖼️ Direct Image Uploader Button */}
-                        <label className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200 flex items-center gap-1 active:scale-95 cursor-pointer">
+                        <label className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 active:scale-95 cursor-pointer shadow-sm">
                           {isImageUploading ? (
                             <>
                               <Loader2 size={10} className="animate-spin text-indigo-700" />
@@ -920,34 +923,33 @@ export default function PremiumLibraryPage() {
                             disabled={isImageUploading}
                           />
                         </label>
-                      </div>
 
-                      {/* Character counters and copy */}
-                      <div className="flex items-center gap-3">
                         <span className="text-[10px] text-slate-400 font-bold">
                           {charCount} ตัวอักษร ({wordCount} คำ)
                         </span>
-                        <button
-                          onClick={handleCopyToClipboard}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors duration-200"
-                          title="คัดลอกข้อความทั้งหมด"
-                        >
-                          {copyStatus ? (
-                            <>
-                              <Check size={11} className="text-green-600" />
-                              <span className="text-green-600">คัดลอกแล้ว</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={11} />
-                              <span>คัดลอกโน้ต</span>
-                            </>
-                          )}
-                        </button>
                       </div>
+
+                      {/* Right side: Copy to clipboard action */}
+                      <button
+                        onClick={handleCopyToClipboard}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors duration-200"
+                        title="คัดลอกข้อความทั้งหมด"
+                      >
+                        {copyStatus ? (
+                          <>
+                            <Check size={11} className="text-green-600" />
+                            <span className="text-green-600">คัดลอกแล้ว</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={11} />
+                            <span>คัดลอกโน้ต</span>
+                          </>
+                        )}
+                      </button>
                     </div>
 
-                    {/* Row 2: AI Actions Bar (DeepSeek) */}
+                                        {/* Row 2: AI Actions Bar (DeepSeek) */}
                     <div className="flex flex-col gap-2.5 p-3.5 bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 rounded-2xl border border-violet-100 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-violet-200/10 blur-xl rounded-full pointer-events-none" />
                       
@@ -971,7 +973,7 @@ export default function PremiumLibraryPage() {
                         <button
                           onClick={() => handleCallAi("summarize")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-755 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isAiLoading ? (
                             <Loader2 size={11} className="animate-spin" />
