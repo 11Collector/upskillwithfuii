@@ -3085,6 +3085,11 @@ Day 21: [กิจกรรม]
         wheelPlanDay: newWheelDay
       };
 
+      if (!userData?.hasCompletedPhase1Quests && newCompleted.length >= 2) {
+        finalUpdates.hasCompletedPhase1Quests = true;
+        setUserData((prev: any) => prev ? { ...prev, hasCompletedPhase1Quests: true } : null);
+      }
+
       await setDoc(userRef, finalUpdates, { merge: true });
 
       // 📓 Quest log — บันทึกเมื่อ complete เท่านั้น (ไม่บันทึกตอน uncheck)
