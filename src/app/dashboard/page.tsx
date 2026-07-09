@@ -6605,7 +6605,7 @@ Day 21: [กิจกรรม]
                       </h2>
 
                       <p className="text-[14px] font-medium mb-8 px-6 leading-relaxed max-w-[280px] transition-colors text-slate-400">
-                        สรุปหนังสือและบทความเด็ดๆ <br /> ที่คัดมาเพื่อคุณโดยเฉพาะ
+                        สรุปบทความพัฒนาตัวเอง <br /> และสมองที่สองสำหรับจดบันทึกด้วย AI
                       </p>
 
                       <div className="w-full px-4 mt-auto">
