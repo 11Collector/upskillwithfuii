@@ -172,12 +172,21 @@ export default function PremiumLibraryPage() {
     if (!user) return;
     try {
       const notesRef = collection(db, "users", user.uid, "second_brain");
+      const createdAtStr = new Date().toISOString();
       const newDoc = await addDoc(notesRef, {
         title: "บันทึกที่ไม่มีชื่อ",
         content: "",
         category: "พัฒนาตัวเอง",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: createdAtStr,
+        updatedAt: createdAtStr
+      });
+      setSelectedNote({
+        id: newDoc.id,
+        title: "บันทึกที่ไม่มีชื่อ",
+        content: "",
+        category: "พัฒนาตัวเอง",
+        createdAt: createdAtStr,
+        updatedAt: createdAtStr
       });
       setMobileNotesView("editor");
     } catch (error) {
