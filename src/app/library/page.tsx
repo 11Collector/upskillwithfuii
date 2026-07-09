@@ -82,6 +82,7 @@ export default function PremiumLibraryPage() {
   const [filterNoteCategory, setFilterNoteCategory] = useState("ทั้งหมด");
   const [isSaving, setIsSaving] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [activeAiAction, setActiveAiAction] = useState<"summarize" | "coaching" | "quote" | null>(null);
   const [copyStatus, setCopyStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
@@ -279,6 +280,7 @@ export default function PremiumLibraryPage() {
     }
 
     setIsAiLoading(true);
+    setActiveAiAction(action);
     try {
       const idToken = await auth.currentUser?.getIdToken(true);
       let promptText = "";
@@ -321,6 +323,7 @@ export default function PremiumLibraryPage() {
       alert("ขออภัยครับ เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI ลองใหม่อีกครั้งนะครับ");
     } finally {
       setIsAiLoading(false);
+      setActiveAiAction(null);
     }
   };
 
@@ -975,7 +978,7 @@ export default function PremiumLibraryPage() {
                           disabled={isAiLoading || !noteContent.trim()}
                           className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isAiLoading ? (
+                          {activeAiAction === "summarize" ? (
                             <Loader2 size={11} className="animate-spin" />
                           ) : (
                             "💡 สรุป 3 ประเด็นโน้ต"
@@ -987,7 +990,7 @@ export default function PremiumLibraryPage() {
                           disabled={isAiLoading || !noteContent.trim()}
                           className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isAiLoading ? (
+                          {activeAiAction === "coaching" ? (
                             <Loader2 size={11} className="animate-spin text-white" />
                           ) : (
                             "💪 ขอคำแนะนำจากพี่ฟุ้ย"
