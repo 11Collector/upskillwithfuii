@@ -286,11 +286,9 @@ export default function PremiumLibraryPage() {
       let promptText = "";
 
       if (action === "summarize") {
-        promptText = `ช่วยสรุปเนื้อหาโน้ตต่อไปนี้ให้กระชับ ตกผลึกออกมาเป็นข้อๆ (Bullet points) ไม่เกิน 3 ข้อหลัก:\n\n${noteContent}`;
-      } else if (action === "quote") {
-        promptText = `ช่วยสกัดหัวใจสำคัญของโน้ตต่อไปนี้ ให้ออกมาเป็นคำคม (Quote) สั้นๆ 1 ประโยคทองคำที่คมคาย มีพลังดึงดูดใจตามสไตล์พัฒนาตัวเอง:\n\n${noteContent}`;
+        promptText = `ช่วยสรุปเนื้อหาโน้ตต่อไปนี้ให้กระชับ ตกผลึกออกมาเป็นข้อๆ ไม่เกิน 3 ข้อหลัก โดยเขียนในรูปแบบข้อความธรรมดา (Plain Text) เท่านั้น ห้ามใช้เครื่องหมายจัดฟอร์แมตที่เป็นมาร์กดาวน์ เช่น เครื่องหมายดอกจัน (**) หรือเครื่องหมายสี่เหลี่ยม (#) โดยเด็ดขาด ให้ใช้การขึ้นบรรทัดใหม่ธรรมดาและสัญลักษณ์หัวข้อ เช่น - หรือตัวเลขในการแบ่งข้อเพื่อความอ่านง่าย:\n\n${noteContent}`;
       } else if (action === "coaching") {
-        promptText = `ช่วยอ่านโน้ตต่อไปนี้ และเขียนฟีดแบ็กแนะนำพร้อมให้กำลังใจ ในฐานะโค้ชพี่ฟุ้ยผู้เชี่ยวชาญ คอยแนะนำแบบเป็นกันเอง อบอุ่น นำไปใช้ได้จริง ความยาวประมาณ 3-4 ประโยค:\n\n${noteContent}`;
+        promptText = `ช่วยอ่านโน้ตต่อไปนี้ และเขียนฟีดแบ็กแนะนำพร้อมให้กำลังใจ ในฐานะโค้ชพี่ฟุ้ยผู้เชี่ยวชาญ คอยแนะนำแบบเป็นกันเอง อบอุ่น นำไปใช้ได้จริง ความยาวประมาณ 3-4 ประโยค โดยเขียนในรูปแบบข้อความธรรมดา (Plain Text) เท่านั้น ห้ามใช้เครื่องหมายจัดฟอร์แมตที่เป็นมาร์กดาวน์ เช่น เครื่องหมายดอกจัน (**) หรือเครื่องหมายสี่เหลี่ยม (#) โดยเด็ดขาด:\n\n${noteContent}`;
       }
 
       const response = await fetch("/api/quote", {
@@ -312,9 +310,9 @@ export default function PremiumLibraryPage() {
       const data = await response.json();
       const aiResult = data.quote;
 
-      const dateHeader = `\n\n---\n🤖 **AI ${
-        action === "summarize" ? "สรุปประเด็น" : action === "quote" ? "คำคมที่สกัดได้" : "คำแนะนำจากพี่ฟุ้ย"
-      }** (${new Date().toLocaleDateString('th-TH', { hour: '2-digit', minute: '2-digit' })})\n`;
+      const dateHeader = `\n\n----------------------------------------\n🤖 AI ${
+        action === "summarize" ? "สรุปประเด็น" : "คำแนะนำจากพี่ฟุ้ย"
+      } (${new Date().toLocaleDateString('th-TH', { hour: '2-digit', minute: '2-digit' })})\n`;
       
       setNoteContent((prev) => prev + dateHeader + aiResult);
 
