@@ -13,9 +13,9 @@ import { Suspense } from "react";
 
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
-import { db, auth, storage } from "@/lib/firebase";
-import { doc, getDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { db, auth, storage, googleProvider } from "@/lib/firebase";
+import { doc, getDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, query, orderBy, setDoc, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // 🎨 2. Themes
@@ -91,6 +91,7 @@ function LibraryContent() {
   const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
   const [isCreatingNoteFromUrl, setIsCreatingNoteFromUrl] = useState(false);
   const [noteFontSize, setNoteFontSize] = useState<"sm" | "base" | "lg">("base");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Load note font size from localStorage
   useEffect(() => {
@@ -173,13 +174,23 @@ function LibraryContent() {
     setPrevNewNote(newNoteParam);
     setPrevTargetNoteId(targetNoteId);
     if (newNoteParam || targetNoteId) {
-      setActiveView("notes");
-      setMobileNotesView("editor");
-      if (newNoteParam) {
-        setIsCreatingNoteFromUrl(true);
+      if (user) {
+        setActiveView("notes");
+        setMobileNotesView("editor");
+        if (newNoteParam) {
+          setIsCreatingNoteFromUrl(true);
+        }
       }
     }
   }
+
+  // Trigger auth modal if query params are present but user is not logged in
+  useEffect(() => {
+    if (!isMounted) return;
+    if ((newNoteParam || targetNoteId) && !user) {
+      setShowAuthModal(true);
+    }
+  }, [isMounted, newNoteParam, targetNoteId, user]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -623,10 +634,38 @@ ${noteContent}`;
     return matchesCategory && matchesStatus;
   });
 
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const loggedInUser = result.user;
+
+      const userRef = doc(db, "users", loggedInUser.uid);
+      await setDoc(userRef, {
+        lastLoginAt: serverTimestamp(),
+      }, { merge: true });
+
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: loggedInUser.email,
+          displayName: loggedInUser.displayName,
+          photoURL: loggedInUser.photoURL,
+          role: "member",
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      setShowAuthModal(false);
+      setActiveView("notes");
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
   const handleToggleView = () => {
     if (activeView === "library") {
       if (!user) {
-        alert("กรุณาเข้าสู่ระบบเพื่อใช้งานสมองที่สอง (Second Brain) ครับ");
+        setShowAuthModal(true);
         return;
       }
       setActiveView("notes");
@@ -1299,8 +1338,84 @@ ${noteContent}`;
           </motion.div>
         </>
       )}
-
       </div>
+
+      {/* 🔐 Premium Google Login Modal */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            {/* Backdrop with premium blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAuthModal(false)}
+              className="absolute inset-0 bg-[#0A0A0A]/85 backdrop-blur-md animate-fade-in"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 shadow-2xl text-center overflow-hidden"
+            >
+              {/* Decorative premium glows */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 blur-[60px] rounded-full pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+              {/* Icon Badge */}
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6 text-indigo-400">
+                <Brain size={32} className="animate-pulse" />
+              </div>
+
+              {/* Title & Description */}
+              <h3 className="text-xl md:text-2xl font-black text-white tracking-tight mb-3">
+                บันทึกไว้ในสมองที่สอง
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed mb-8 max-w-xs mx-auto">
+                เข้าสู่ระบบด้วย Google เพื่อจดบันทึกความคิด สรุปความรู้ หรือแผนงานส่วนตัวคู่ไปกับ AI คู่คิด
+              </p>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={handleGoogleLogin}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-900 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                  <span>เข้าสู่ระบบด้วย Google</span>
+                </button>
+
+                <button
+                  onClick={() => setShowAuthModal(false)}
+                  className="w-full py-3 bg-transparent hover:bg-white/5 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-colors duration-200 cursor-pointer"
+                >
+                  กลับไปอ่านบทความ
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
