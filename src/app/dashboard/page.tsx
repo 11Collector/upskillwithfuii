@@ -6612,7 +6612,7 @@ Day 21: [กิจกรรม]
                         <div className="group/btn-library relative">
                           <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-library:scale-[1.02] group-hover/btn-library:shadow-amber-500/50 active:scale-95">
                             <Sparkles size={16} className="text-slate-950/80" />
-                            <span>เปิดอ่านคลังสมอง</span>
+                            <span>เปิดคลังสมอง</span>
                           </div>
                         </div>
                       </div>
