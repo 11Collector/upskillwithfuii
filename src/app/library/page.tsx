@@ -91,16 +91,21 @@ function LibraryContent() {
   const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
   const [isCreatingNoteFromUrl, setIsCreatingNoteFromUrl] = useState(false);
 
-  // Derived state sync when newNote query param is present
+  // Derived state sync when newNote or noteId query param is present
   const newNoteParam = searchParams.get("newNote") === "true";
+  const targetNoteId = searchParams.get("noteId");
   const [prevNewNote, setPrevNewNote] = useState(false);
+  const [prevTargetNoteId, setPrevTargetNoteId] = useState<string | null>(null);
 
-  if (newNoteParam !== prevNewNote) {
+  if (newNoteParam !== prevNewNote || targetNoteId !== prevTargetNoteId) {
     setPrevNewNote(newNoteParam);
-    if (newNoteParam) {
+    setPrevTargetNoteId(targetNoteId);
+    if (newNoteParam || targetNoteId) {
       setActiveView("notes");
       setMobileNotesView("editor");
-      setIsCreatingNoteFromUrl(true);
+      if (newNoteParam) {
+        setIsCreatingNoteFromUrl(true);
+      }
     }
   }
 
@@ -127,6 +132,11 @@ function LibraryContent() {
       setNotes(fetchedNotes);
 
       setSelectedNote((prev: any) => {
+        const urlNoteId = searchParams.get("noteId");
+        if (urlNoteId) {
+          const target = fetchedNotes.find((n) => n.id === urlNoteId);
+          if (target) return target;
+        }
         if (prev) {
           const updated = fetchedNotes.find((n) => n.id === prev.id);
           return updated || fetchedNotes[0] || null;
@@ -138,7 +148,7 @@ function LibraryContent() {
     });
 
     return () => unsubscribe();
-  }, [isMounted, user]);
+  }, [isMounted, user, searchParams]);
 
   // 🆕 Create note from query param
   useEffect(() => {
@@ -186,6 +196,18 @@ function LibraryContent() {
     }
   }, [isMounted, user]);
 
+  // 🆕 Clean noteId from query param once note is loaded
+  useEffect(() => {
+    if (!isMounted) return;
+    const urlNoteId = searchParams.get("noteId");
+    if (urlNoteId && selectedNote && selectedNote.id === urlNoteId) {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("noteId");
+      const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState(null, "", newRelativePathQuery);
+    }
+  }, [isMounted, selectedNote?.id, searchParams]);
+
   // Sync selected note fields to local input states
   useEffect(() => {
     if (selectedNote) {
@@ -230,8 +252,31 @@ function LibraryContent() {
     return () => clearTimeout(delayDebounce);
   }, [noteTitle, noteContent, noteCategory, user, selectedNote?.id]);
 
+  const deleteCurrentNoteIfEmpty = async () => {
+    if (!user || !selectedNote) return;
+    const isTitleDefault = !noteTitle.trim() || noteTitle === "บันทึกที่ไม่มีชื่อ";
+    const isContentEmpty = !noteContent.trim();
+    if (isTitleDefault && isContentEmpty) {
+      try {
+        const noteRef = doc(db, "users", user.uid, "second_brain", selectedNote.id);
+        await deleteDoc(noteRef);
+      } catch (error) {
+        console.error("Failed to delete empty note on exit:", error);
+      }
+    }
+  };
+
+  const handleSelectNote = async (n: any) => {
+    if (selectedNote && selectedNote.id !== n.id) {
+      await deleteCurrentNoteIfEmpty();
+    }
+    setSelectedNote(n);
+    setMobileNotesView("editor");
+  };
+
   const handleCreateNote = async () => {
     if (!user) return;
+    await deleteCurrentNoteIfEmpty();
     try {
       const notesRef = collection(db, "users", user.uid, "second_brain");
       const createdAtStr = new Date().toISOString();
@@ -838,8 +883,7 @@ function LibraryContent() {
                         <div
                           key={n.id}
                           onClick={() => {
-                            setSelectedNote(n);
-                            setMobileNotesView("editor");
+                            handleSelectNote(n);
                           }}
                           className={`group relative p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${
                             isSelected
@@ -911,7 +955,10 @@ function LibraryContent() {
                   <div className="space-y-4 flex flex-col">
                     {/* Back button for mobile view */}
                     <button
-                      onClick={() => setMobileNotesView("list")}
+                      onClick={async () => {
+                        await deleteCurrentNoteIfEmpty();
+                        setMobileNotesView("list");
+                      }}
                       className="md:hidden flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold mb-2 active:scale-95 transition-all self-start"
                     >
                       <ArrowRight size={14} className="rotate-180" />
