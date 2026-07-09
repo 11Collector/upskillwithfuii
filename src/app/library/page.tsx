@@ -1040,7 +1040,7 @@ function LibraryContent() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
                           <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
-                            ✨ AI คู่คิดช่วยวิเคราะห์
+                            ✨ คุยกับพี่ฟุ้ยช่วยวิเคราะห์
                           </span>
                           {!isProMember && (
                             <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 leading-none">
