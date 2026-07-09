@@ -11,9 +11,10 @@ import Link from "next/link";
 
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
-import { db, auth } from "@/lib/firebase";
+import { db, auth, storage } from "@/lib/firebase";
 import { doc, getDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // 🎨 2. Themes
 const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: string; borderColor: string }> = {
@@ -83,6 +84,7 @@ export default function PremiumLibraryPage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -242,6 +244,30 @@ export default function PremiumLibraryPage() {
       if (!prev.trim()) return templateText;
       return prev + "\n\n" + templateText;
     });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !selectedNote) return;
+
+    setIsImageUploading(true);
+
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const path = `second_brain/${user.uid}/${selectedNote.id}/${fileName}`;
+      const fileRef = storageRef(storage, path);
+      
+      const snapshot = await uploadBytes(fileRef, file);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+
+      const markdownImage = `\n![${file.name}](${downloadUrl})\n`;
+      setNoteContent((prev) => prev + markdownImage);
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาตรวจสอบสิทธิ์การเขียน Storage หรือลองอัปใหม่อีกครั้งนะครับ");
+    } finally {
+      setIsImageUploading(false);
+    }
   };
 
   const handleCallAi = async (action: "summarize" | "quote" | "coaching") => {
@@ -875,6 +901,25 @@ export default function PremiumLibraryPage() {
                         >
                           💡 ไอเดียแล่น
                         </button>
+
+                        {/* 🖼️ Direct Image Uploader Button */}
+                        <label className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200 flex items-center gap-1 active:scale-95 cursor-pointer">
+                          {isImageUploading ? (
+                            <>
+                              <Loader2 size={10} className="animate-spin text-indigo-700" />
+                              <span>กำลังอัปโหลด...</span>
+                            </>
+                          ) : (
+                            <span>🖼️ อัปโหลดรูปภาพ</span>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            disabled={isImageUploading}
+                          />
+                        </label>
                       </div>
 
                       {/* Character counters and copy */}
@@ -907,11 +952,17 @@ export default function PremiumLibraryPage() {
                       <div className="absolute top-0 right-0 w-32 h-32 bg-violet-200/10 blur-xl rounded-full pointer-events-none" />
                       
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 z-10">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
                           <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
                             ✨ AI คู่คิดช่วยวิเคราะห์ (DeepSeek)
                           </span>
+                          {!isProMember && (
+                            <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 leading-none">
+                              <Crown size={8} className="fill-white" />
+                              PRO
+                            </span>
+                          )}
                         </div>
                         <span className="text-[9px] text-slate-400 font-bold">ผลลัพธ์จะถูกเขียนเพิ่มต่อท้ายบันทึกของคุณอัตโนมัติ</span>
                       </div>
@@ -928,17 +979,7 @@ export default function PremiumLibraryPage() {
                             "💡 สรุป 3 ประเด็นโน้ต"
                           )}
                         </button>
-                        <button
-                          onClick={() => handleCallAi("quote")}
-                          disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-755 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isAiLoading ? (
-                            <Loader2 size={11} className="animate-spin" />
-                          ) : (
-                            "🎯 สกัดคำคม (Quote)"
-                          )}
-                        </button>
+
                         <button
                           onClick={() => handleCallAi("coaching")}
                           disabled={isAiLoading || !noteContent.trim()}
@@ -980,7 +1021,7 @@ export default function PremiumLibraryPage() {
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
                       <span className="text-lg mb-1 block">🤖</span>
                       <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">3. ให้ AI ร่วมคิด</h5>
-                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">ตกผลึกสรุป สกัดคำคม หรือขอคำแนะนำจากโค้ชพี่ฟุ้ย</p>
+                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">สรุปใจความสำคัญ หรือขอคำแนะนำจากโค้ชพี่ฟุ้ย</p>
                     </div>
                   </div>
 

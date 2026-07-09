@@ -27,10 +27,14 @@ const firebaseConfig = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+import { getStorage } from "firebase/storage";
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+const storage = getStorage(app);
 
 let analytics: Analytics | null = null;
 if (typeof window !== "undefined") {
@@ -41,4 +45,4 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { app, db, auth, googleProvider, analytics };
+export { app, db, auth, googleProvider, analytics, storage };
