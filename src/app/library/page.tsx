@@ -90,6 +90,21 @@ function LibraryContent() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
   const [isCreatingNoteFromUrl, setIsCreatingNoteFromUrl] = useState(false);
+  const [noteFontSize, setNoteFontSize] = useState<"sm" | "base" | "lg">("base");
+
+  // Load note font size from localStorage
+  useEffect(() => {
+    if (!isMounted) return;
+    const savedSize = localStorage.getItem("note_font_size");
+    if (savedSize === "sm" || savedSize === "base" || savedSize === "lg") {
+      setNoteFontSize(savedSize);
+    }
+  }, [isMounted]);
+
+  const handleFontSizeChange = (size: "sm" | "base" | "lg") => {
+    setNoteFontSize(size);
+    localStorage.setItem("note_font_size", size);
+  };
 
   // Derived state sync when newNote or noteId query param is present
   const newNoteParam = searchParams.get("newNote") === "true";
@@ -608,7 +623,7 @@ function LibraryContent() {
             {/* --- Header --- */}
             <header className="mb-10">
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-400 rounded-full text-[10px] font-black mb-6 border border-amber-500/20 uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-                <Crown size={14} /> <span>Exclusive Upskill Library</span>
+                <Crown size={14} /> <span>UPSKILL LIBRARY</span>
               </motion.div>
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
                 คลังสมอง <span className="text-amber-500">อัพสกิล</span>
@@ -982,19 +997,45 @@ function LibraryContent() {
                         )}
                       </div>
 
-                      {/* Note Category dropdown select */}
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">หมวดหมู่โน้ต:</span>
-                        <select
-                          value={noteCategory}
-                          onChange={(e) => setNoteCategory(e.target.value)}
-                          className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black rounded-lg px-2.5 py-1 border border-transparent focus:bg-white focus:border-slate-200 focus:outline-none transition-colors duration-200 cursor-pointer"
-                        >
-                          <option value="พัฒนาตัวเอง">พัฒนาตัวเอง</option>
-                          <option value="หนังสือ">หนังสือ</option>
-                          <option value="การเงิน & ลงทุน">การเงิน & ลงทุน</option>
-                          <option value="ธุรกิจ">ธุรกิจ</option>
-                        </select>
+                      <div className="flex flex-wrap items-center gap-4">
+                        {/* Note Category dropdown select */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">หมวดหมู่โน้ต:</span>
+                          <select
+                            value={noteCategory}
+                            onChange={(e) => setNoteCategory(e.target.value)}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black rounded-lg px-2.5 py-1 border border-transparent focus:bg-white focus:border-slate-200 focus:outline-none transition-colors duration-200 cursor-pointer"
+                          >
+                            <option value="พัฒนาตัวเอง">พัฒนาตัวเอง</option>
+                            <option value="หนังสือ">หนังสือ</option>
+                            <option value="การเงิน & ลงทุน">การเงิน & ลงทุน</option>
+                            <option value="ธุรกิจ">ธุรกิจ</option>
+                          </select>
+                        </div>
+
+                        {/* Font Size Selector */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">ขนาดอักษร:</span>
+                          <div className="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200/60">
+                            {(["sm", "base", "lg"] as const).map((size) => {
+                              const label = size === "sm" ? "เล็ก" : size === "base" ? "กลาง" : "ใหญ่";
+                              const isActive = noteFontSize === size;
+                              return (
+                                <button
+                                  key={size}
+                                  onClick={() => handleFontSizeChange(size)}
+                                  className={`px-2.5 py-0.5 rounded-md text-[9px] font-black transition-all ${
+                                    isActive
+                                      ? "bg-white text-slate-800 shadow-sm"
+                                      : "text-slate-500 hover:text-slate-800"
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -1019,7 +1060,13 @@ function LibraryContent() {
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
                       rows={14}
-                      className="w-full bg-transparent text-sm leading-loose text-slate-600 placeholder-slate-400 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px]"
+                      className={`w-full bg-transparent leading-loose text-slate-600 placeholder-slate-400 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px] ${
+                        noteFontSize === "sm"
+                          ? "text-sm"
+                          : noteFontSize === "base"
+                            ? "text-base"
+                            : "text-lg"
+                      }`}
                     />
                   </div>
 
