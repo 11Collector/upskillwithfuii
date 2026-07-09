@@ -5,9 +5,11 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
@@ -60,7 +62,8 @@ const cardVariants: Variants = {
   show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 260, damping: 20 } }
 };
 
-export default function PremiumLibraryPage() {
+function LibraryContent() {
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [readArticles, setReadArticles] = useState<string[]>([]);
@@ -86,6 +89,20 @@ export default function PremiumLibraryPage() {
   const [copyStatus, setCopyStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
+  const [isCreatingNoteFromUrl, setIsCreatingNoteFromUrl] = useState(false);
+
+  // Derived state sync when newNote query param is present
+  const newNoteParam = searchParams.get("newNote") === "true";
+  const [prevNewNote, setPrevNewNote] = useState(false);
+
+  if (newNoteParam !== prevNewNote) {
+    setPrevNewNote(newNoteParam);
+    if (newNoteParam) {
+      setActiveView("notes");
+      setMobileNotesView("editor");
+      setIsCreatingNoteFromUrl(true);
+    }
+  }
 
   useEffect(() => {
     setIsMounted(true);
@@ -121,6 +138,52 @@ export default function PremiumLibraryPage() {
     });
 
     return () => unsubscribe();
+  }, [isMounted, user]);
+
+  // 🆕 Create note from query param
+  useEffect(() => {
+    if (!isMounted || !user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const shouldCreateNewNote = params.get("newNote") === "true";
+
+    if (shouldCreateNewNote) {
+      const createEmptyNote = async () => {
+        try {
+          const notesRef = collection(db, "users", user.uid, "second_brain");
+          const createdAtStr = new Date().toISOString();
+          const docRef = await addDoc(notesRef, {
+            title: "บันทึกที่ไม่มีชื่อ",
+            content: "",
+            category: "พัฒนาตัวเอง",
+            createdAt: createdAtStr,
+            updatedAt: createdAtStr
+          });
+
+          setActiveView("notes");
+          setMobileNotesView("editor");
+          setSelectedNote({
+            id: docRef.id,
+            title: "บันทึกที่ไม่มีชื่อ",
+            content: "",
+            category: "พัฒนาตัวเอง",
+            createdAt: createdAtStr,
+            updatedAt: createdAtStr
+          });
+
+          // Clear query param
+          params.delete("newNote");
+          const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+          window.history.replaceState(null, "", newRelativePathQuery);
+        } catch (err) {
+          console.error("Failed to auto-create note from query:", err);
+        } finally {
+          setIsCreatingNoteFromUrl(false);
+        }
+      };
+
+      createEmptyNote();
+    }
   }, [isMounted, user]);
 
   // Sync selected note fields to local input states
@@ -424,6 +487,19 @@ export default function PremiumLibraryPage() {
       || (statusFilter === "ยังไม่อ่าน" && !isRead);
     return matchesCategory && matchesStatus;
   });
+
+  if (!isMounted || isCreatingNoteFromUrl) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-amber-500" size={36} />
+        {isCreatingNoteFromUrl && (
+          <p className="text-slate-400 text-xs font-black uppercase tracking-widest animate-pulse">
+            กำลังสร้างโน้ตใหม่ในคลังสมองของคุณ... 🧠
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-500 font-sans overflow-x-hidden selection:bg-amber-500/30 p-6 md:p-10 ${
@@ -795,9 +871,10 @@ export default function PremiumLibraryPage() {
                               e.stopPropagation();
                               setShowDeleteConfirm(n.id);
                             }}
-                            className="absolute top-4 right-3 text-slate-400 hover:text-red-500 rounded-md p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300"
+                            className="absolute top-3 right-3 text-slate-400 hover:text-red-600 hover:bg-red-50 bg-slate-100 hover:border-red-200 border border-slate-200 rounded-xl p-2 transition-all duration-200 active:scale-95 shadow-sm z-20"
+                            title="ลบบันทึก"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={15} />
                           </button>
 
                           {/* Delete Confirmation Popup Inline */}
@@ -963,7 +1040,7 @@ export default function PremiumLibraryPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
                           <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
-                            ✨ AI คู่คิดช่วยวิเคราะห์ (DeepSeek)
+                            ✨ คุยกับพี่ฟุ้ยช่วยวิเคราะห์
                           </span>
                           {!isProMember && (
                             <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 leading-none">
@@ -979,24 +1056,30 @@ export default function PremiumLibraryPage() {
                         <button
                           onClick={() => handleCallAi("summarize")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {activeAiAction === "summarize" ? (
                             <Loader2 size={11} className="animate-spin" />
                           ) : (
-                            "💡 สรุป 3 ประเด็นโน้ต"
+                            <span className="flex items-center gap-1">
+                              <span>💡 สรุป 3 ประเด็นโน้ต</span>
+                              {!isProMember && <Lock size={10} className="text-violet-500/70" />}
+                            </span>
                           )}
                         </button>
 
                         <button
                           onClick={() => handleCallAi("coaching")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {activeAiAction === "coaching" ? (
                             <Loader2 size={11} className="animate-spin text-white" />
                           ) : (
-                            "💪 ขอคำแนะนำจากพี่ฟุ้ย"
+                            <span className="flex items-center gap-1">
+                              <span>💪 ขอคำแนะนำจากพี่ฟุ้ย</span>
+                              {!isProMember && <Lock size={10} className="text-white/70" />}
+                            </span>
                           )}
                         </button>
                       </div>
@@ -1049,5 +1132,20 @@ export default function PremiumLibraryPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function PremiumLibraryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <p className="text-slate-400 text-xs font-black uppercase tracking-widest animate-pulse">
+          กำลังโหลดคลังสมอง... 🧠
+        </p>
+      </div>
+    }>
+      <LibraryContent />
+    </Suspense>
   );
 }
