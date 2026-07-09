@@ -5,7 +5,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -533,6 +533,18 @@ function LibraryContent() {
     return matchesCategory && matchesStatus;
   });
 
+  const handleToggleView = () => {
+    if (activeView === "library") {
+      if (!user) {
+        alert("กรุณาเข้าสู่ระบบเพื่อใช้งานสมองที่สอง (Second Brain) ครับ");
+        return;
+      }
+      setActiveView("notes");
+    } else {
+      setActiveView("library");
+    }
+  };
+
   if (!isMounted || isCreatingNoteFromUrl) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
@@ -566,42 +578,29 @@ function LibraryContent() {
 
       <div className="max-w-5xl mx-auto relative z-10">
 
-        {/* --- View Switcher Header --- */}
-        <div className="flex justify-center mb-10 pt-4">
-          <div className={`inline-flex rounded-full p-1 border transition-colors shadow-sm ${
-            activeView === "notes" ? "bg-slate-200/80 border-slate-300" : "bg-white/5 border-white/10"
-          }`}>
-            <button
-              onClick={() => setActiveView("library")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 ${
-                activeView === "library"
-                  ? "bg-[#f59e0b] text-black shadow-md"
-                  : activeView === "notes"
-                    ? "text-slate-600 hover:text-slate-900"
-                    : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <BookOpen size={14} />
-              คลังบทความ
-            </button>
-            <button
-              onClick={() => {
-                if (!user) {
-                  alert("กรุณาเข้าสู่ระบบเพื่อใช้งานสมองที่สอง (Second Brain) ครับ");
-                  return;
-                }
-                setActiveView("notes");
-              }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 ${
-                activeView === "notes"
-                  ? "bg-slate-900 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <FileText size={14} />
-              สมองที่สอง
-            </button>
-          </div>
+        {/* Toggle Switcher: Minimal Pill Button in Top-Right */}
+        <div className="absolute right-0 top-0 z-50">
+          <button
+            onClick={handleToggleView}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider ${
+              activeView === "notes"
+                ? "bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600 hover:text-slate-900"
+                : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
+            }`}
+            title={activeView === "library" ? "สลับไปหน้าสมองที่สอง" : "สลับไปหน้าคลังบทความ"}
+          >
+            {activeView === "library" ? (
+              <>
+                <Brain size={12} className="text-amber-500 animate-pulse" />
+                <span>สมองที่สอง</span>
+              </>
+            ) : (
+              <>
+                <BookOpen size={12} className="text-indigo-600" />
+                <span>คลังบทความ</span>
+              </>
+            )}
+          </button>
         </div>
 
         {activeView === "library" ? (
