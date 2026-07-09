@@ -796,21 +796,21 @@ export default function PremiumLibraryPage() {
                       {/* Saving status indication */}
                       <div className="flex items-center gap-2">
                         {isSaving ? (
-                          <span className="text-[10px] font-black text-slate-400 flex items-center gap-1.5">
-                            <Loader2 size={12} className="animate-spin text-slate-400" />
-                            กำลังบันทึก...
+                          <span className="text-[10px] font-black text-slate-400 flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" />
+                            กำลังบันทึกอัตโนมัติ...
                           </span>
                         ) : (
-                          <span className="text-[10px] font-black text-emerald-500 flex items-center gap-1.5">
-                            <CheckCircle2 size={12} className="fill-emerald-100" />
-                            บันทึกเรียบร้อยแล้ว
+                          <span className="text-[10px] font-black text-emerald-600 flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-full font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            บันทึกอัตโนมัติเรียบร้อย
                           </span>
                         )}
                       </div>
 
                       {/* Note Category dropdown select */}
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">หมวดหมู่:</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">หมวดหมู่โน้ต:</span>
                         <select
                           value={noteCategory}
                           onChange={(e) => setNoteCategory(e.target.value)}
@@ -824,22 +824,28 @@ export default function PremiumLibraryPage() {
                       </div>
                     </div>
 
+                    {/* Auto-save Hint Banner */}
+                    <div className="text-[11px] text-slate-400 flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 font-medium">
+                      <span>💡</span>
+                      <span>โน้ตจะ**เซฟอัตโนมัติ**ขณะพิมพ์ สามารถใช้เทมเพลตและ AI สรุปเนื้อหาด้านล่างได้ครับ</span>
+                    </div>
+
                     {/* Note Title Input */}
                     <input
                       type="text"
-                      placeholder="ป้อนหัวข้อบันทึก..."
+                      placeholder="หัวข้อบันทึก (เช่น สรุปหนังสือ Atomic Habits)..."
                       value={noteTitle}
                       onChange={(e) => setNoteTitle(e.target.value)}
-                      className="w-full text-2xl font-black text-slate-800 placeholder-slate-350 focus:outline-none bg-transparent"
+                      className="w-full text-2xl font-black text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent"
                     />
 
                     {/* Note Content Textarea */}
                     <textarea
-                      placeholder="เริ่มจดบันทึกสมองที่สองของคุณที่นี่..."
+                      placeholder="พิมพ์จดบันทึกความคิด สรุปความรู้ หรือแผนพัฒนาตัวเองที่นี่ได้เลย..."
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
                       rows={14}
-                      className="w-full bg-transparent text-sm leading-loose text-slate-650 placeholder-slate-350 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px]"
+                      className="w-full bg-transparent text-sm leading-loose text-slate-655 placeholder-slate-350 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px]"
                     />
                   </div>
 
@@ -848,10 +854,9 @@ export default function PremiumLibraryPage() {
                     
                     {/* Row 1: Templates & Copy action */}
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      
                       {/* Templates shortcuts */}
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">เทมเพลตจด:</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">⚡ คัดลอกเทมเพลต:</span>
                         <button
                           onClick={() => handleApplyTemplate("book")}
                           className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors duration-200"
@@ -898,48 +903,51 @@ export default function PremiumLibraryPage() {
                     </div>
 
                     {/* Row 2: AI Actions Bar (DeepSeek) */}
-                    <div className="flex flex-wrap items-center gap-2 p-3 bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 rounded-2xl border border-violet-100 shadow-sm relative overflow-hidden">
+                    <div className="flex flex-col gap-2.5 p-3.5 bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 rounded-2xl border border-violet-100 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-violet-200/10 blur-xl rounded-full pointer-events-none" />
                       
-                      <div className="flex items-center gap-1.5 z-10 shrink-0">
-                        <span className="w-2 h-2 rounded-full bg-violet-650 animate-pulse" />
-                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-1">
-                          ✨ AI ที่ปรึกษา (DeepSeek)
-                        </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 z-10">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
+                            ✨ AI คู่คิดช่วยวิเคราะห์ (DeepSeek)
+                          </span>
+                        </div>
+                        <span className="text-[9px] text-slate-400 font-bold">ผลลัพธ์จะถูกเขียนเพิ่มต่อท้ายบันทึกของคุณอัตโนมัติ</span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 flex-wrap z-10 ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                      <div className="flex items-center gap-1.5 flex-wrap z-10 mt-1 w-full sm:w-auto">
                         <button
                           onClick={() => handleCallAi("summarize")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-1.5 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-755 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isAiLoading ? (
                             <Loader2 size={11} className="animate-spin" />
                           ) : (
-                            "💡 สรุปใจความ"
+                            "💡 สรุป 3 ประเด็นโน้ต"
                           )}
                         </button>
                         <button
                           onClick={() => handleCallAi("quote")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-1.5 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-755 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isAiLoading ? (
                             <Loader2 size={11} className="animate-spin" />
                           ) : (
-                            "🎯 เจนคำคม"
+                            "🎯 สกัดคำคม (Quote)"
                           )}
                         </button>
                         <button
                           onClick={() => handleCallAi("coaching")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-1.5 bg-gradient-to-r from-violet-650 to-indigo-650 hover:from-violet-750 hover:to-indigo-750 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 bg-gradient-to-r from-violet-650 to-indigo-650 hover:from-violet-750 hover:to-indigo-750 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isAiLoading ? (
                             <Loader2 size={11} className="animate-spin text-white" />
                           ) : (
-                            "💪 โค้ชชิ่งจากพี่ฟุ้ย"
+                            "💪 ขอคำแนะนำจากพี่ฟุ้ย"
                           )}
                         </button>
                       </div>
@@ -948,17 +956,37 @@ export default function PremiumLibraryPage() {
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400">
+                <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-slate-400">
                   <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl mb-4 border border-slate-200 shadow-sm">
                     🧠
                   </div>
-                  <h4 className="text-sm font-black text-slate-700 mb-1">สมองที่สองของคุณยังว่างเปล่า</h4>
-                  <p className="text-[11px] text-slate-400 font-medium max-w-xs leading-relaxed mb-6">
-                    จดสรุปความรู้ ทบทวนตัวเองรายวัน หรือจดไอเดียดีๆ เพื่อไม่ให้มันหล่นหาย
+                  <h4 className="text-sm font-black text-slate-700 mb-1">พื้นที่สมองที่สอง (Second Brain)</h4>
+                  <p className="text-[11px] text-slate-400 font-medium max-w-xs text-center leading-relaxed mb-8">
+                    เก็บบันทึกสรุปหนังสือ ไอเดียสร้างสรรค์ และบทเรียนพัฒนาตัวเอง เพื่อให้สมองจริงพร้อมจดจ่อกับปัจจุบัน
                   </p>
+
+                  {/* 3 Step Guidance Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg mb-8">
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
+                      <span className="text-lg mb-1 block">📝</span>
+                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">1. จดบันทึก / สรุป</h5>
+                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">บันทึกข้อคิดที่ได้เรียนรู้ ความฝัน หรือแผนงาน</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
+                      <span className="text-lg mb-1 block">⚡</span>
+                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">2. ใช้เทมเพลตช่วย</h5>
+                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">กดเลือกเทมเพลตสรุปหนังสือ หรือทบทวนรายวันเพื่อเริ่มทันที</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 text-left">
+                      <span className="text-lg mb-1 block">🤖</span>
+                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">3. ให้ AI ร่วมคิด</h5>
+                      <p className="text-[9px] text-slate-400 leading-relaxed font-medium">ตกผลึกสรุป สกัดคำคม หรือขอคำแนะนำจากโค้ชพี่ฟุ้ย</p>
+                    </div>
+                  </div>
+
                   <button
                     onClick={handleCreateNote}
-                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95"
+                    className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95"
                   >
                     + สร้างบันทึกแรก
                   </button>
