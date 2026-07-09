@@ -86,6 +86,7 @@ export default function PremiumLibraryPage() {
   const [copyStatus, setCopyStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [mobileNotesView, setMobileNotesView] = useState<"list" | "editor">("list");
 
   useEffect(() => {
     setIsMounted(true);
@@ -178,6 +179,7 @@ export default function PremiumLibraryPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
+      setMobileNotesView("editor");
     } catch (error) {
       console.error("Error creating note:", error);
     }
@@ -268,6 +270,7 @@ export default function PremiumLibraryPage() {
       alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาตรวจสอบสิทธิ์การเขียน Storage หรือลองอัปใหม่อีกครั้งนะครับ");
     } finally {
       setIsImageUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -674,7 +677,9 @@ export default function PremiumLibraryPage() {
             className="w-full flex flex-col md:flex-row gap-8 bg-white rounded-[3rem] border border-slate-200 p-6 md:p-8 shadow-[0_30px_70px_rgba(15,23,42,0.06)] min-h-[640px]"
           >
             {/* 📁 Left Column: Sidebar List */}
-            <div className="w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6">
+            <div className={`w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6 ${
+              mobileNotesView === "list" ? "block" : "hidden md:flex"
+            }`}>
               
               {/* Sidebar Header & Add Note Button */}
               <div className="flex items-center justify-between gap-3 mb-6">
@@ -751,7 +756,10 @@ export default function PremiumLibraryPage() {
                       return (
                         <div
                           key={n.id}
-                          onClick={() => setSelectedNote(n)}
+                          onClick={() => {
+                            setSelectedNote(n);
+                            setMobileNotesView("editor");
+                          }}
                           className={`group relative p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${
                             isSelected
                               ? "bg-indigo-50/70 border-indigo-200 text-indigo-950 shadow-sm"
@@ -813,10 +821,21 @@ export default function PremiumLibraryPage() {
             </div>
 
             {/* 📝 Right Column: Main Editor Area */}
-            <div className="flex-1 flex flex-col justify-between">
+            <div className={`flex-1 flex flex-col justify-between ${
+              mobileNotesView === "editor" ? "block" : "hidden md:flex"
+            }`}>
               {selectedNote ? (
                 <>
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex flex-col">
+                    {/* Back button for mobile view */}
+                    <button
+                      onClick={() => setMobileNotesView("list")}
+                      className="md:hidden flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold mb-2 active:scale-95 transition-all self-start"
+                    >
+                      <ArrowRight size={14} className="rotate-180" />
+                      <span>กลับสู่รายการบันทึก</span>
+                    </button>
+                    
                     {/* Header bar of editor (Saving status and Category selector) */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                       
@@ -907,7 +926,10 @@ export default function PremiumLibraryPage() {
                       {/* Left side: Upload image & note counter */}
                       <div className="flex items-center gap-3">
                         {/* 🖼️ Direct Image Uploader Button */}
-                        <label className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 active:scale-95 cursor-pointer shadow-sm">
+                        <label
+                          htmlFor="note-image-upload"
+                          className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+                        >
                           {isImageUploading ? (
                             <>
                               <Loader2 size={10} className="animate-spin text-indigo-700" />
@@ -917,6 +939,7 @@ export default function PremiumLibraryPage() {
                             <span>🖼️ อัปโหลดรูปภาพ</span>
                           )}
                           <input
+                            id="note-image-upload"
                             type="file"
                             accept="image/*"
                             onChange={handleImageUpload}
