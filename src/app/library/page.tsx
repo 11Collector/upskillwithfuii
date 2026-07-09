@@ -5,7 +5,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -1040,7 +1040,7 @@ function LibraryContent() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
                           <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
-                            ✨ AI คู่คิดช่วยวิเคราะห์ (DeepSeek)
+                            ✨ AI คู่คิดช่วยวิเคราะห์
                           </span>
                           {!isProMember && (
                             <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 leading-none">
@@ -1056,24 +1056,30 @@ function LibraryContent() {
                         <button
                           onClick={() => handleCallAi("summarize")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {activeAiAction === "summarize" ? (
                             <Loader2 size={11} className="animate-spin" />
                           ) : (
-                            "💡 สรุป 3 ประเด็นโน้ต"
+                            <span className="flex items-center gap-1">
+                              <span>💡 สรุป 3 ประเด็นโน้ต</span>
+                              {!isProMember && <Lock size={10} className="text-violet-500/70" />}
+                            </span>
                           )}
                         </button>
 
                         <button
                           onClick={() => handleCallAi("coaching")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {activeAiAction === "coaching" ? (
                             <Loader2 size={11} className="animate-spin text-white" />
                           ) : (
-                            "💪 ขอคำแนะนำจากพี่ฟุ้ย"
+                            <span className="flex items-center gap-1">
+                              <span>💪 ขอคำแนะนำจากพี่ฟุ้ย</span>
+                              {!isProMember && <Lock size={10} className="text-white/70" />}
+                            </span>
                           )}
                         </button>
                       </div>
