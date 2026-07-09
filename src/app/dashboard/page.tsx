@@ -650,6 +650,7 @@ Day 21: [กิจกรรม]
   const [prevWeekDataState, setPrevWeekDataState] = useState<any>(null);
 
   const [userData, setUserData] = useState<any>(null);
+  const [secondBrainNotesCount, setSecondBrainNotesCount] = useState(0);
   const [showMementoModal, setShowMementoModal] = useState(false);
   const [pendingJourneyCompletionAfterMementoClose, setPendingJourneyCompletionAfterMementoClose] = useState(false);
   const [isCelebrating, setIsCelebrating] = useState(false);
@@ -693,10 +694,10 @@ Day 21: [กิจกรรม]
 
   const claimedReadArticlesCount = userData?.readArticles?.length || 0;
   const hasCompletedFocusRoom = !!userData?.hasCompletedFocusRoom || (userData?.focusReflections?.length || 0) > 0;
-  const isFocusRoomUnlocked = isPhase2Completed && claimedReadArticlesCount >= 3;
+  const isFocusRoomUnlocked = isPhase2Completed && claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1;
   const isMementoUnlocked = isFocusRoomUnlocked && hasCompletedFocusRoom;
   const hasCompletedMemento = !!userData?.hasCheckedMemento || !!userData?.birthdate || (userData?.mementoReflections?.length || 0) > 0;
-  const isPhase3Completed = simulatePhase3Done || (isPhase2Completed && claimedReadArticlesCount >= 3 && hasCompletedFocusRoom && hasCompletedMemento);
+  const isPhase3Completed = simulatePhase3Done || (isPhase2Completed && claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1 && hasCompletedFocusRoom && hasCompletedMemento);
   const isRealLifeEntered = simulateEnteredRealLife || !!userData?.enteredRealLife;
   const shouldShowPhaseJourney = activeTab === "home" && !isRealLifeEntered;
   const shouldShowHomeBento = activeTab !== "home" || isRealLifeEntered;
@@ -744,6 +745,16 @@ Day 21: [กิจกรรม]
     while (attempts < maxAttempts) {
       try {
         const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
+
+        // Fetch User's second_brain count (limit to 1 to check if there is at least one note)
+        try {
+          const notesRef = collection(db, "users", currentUser.uid, "second_brain");
+          const notesSnap = await getDocs(query(notesRef, limit(1)));
+          setSecondBrainNotesCount(notesSnap.size);
+        } catch (err) {
+          console.error("Error fetching second_brain notes count:", err);
+          setSecondBrainNotesCount(0);
+        }
 
       setChatQuota(data.chatQuota);
       setRelativeWeekInfo(data.currentWeekInfo);
@@ -3906,7 +3917,7 @@ Day 21: [กิจกรรม]
             { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-violet-500 to-indigo-500" },
           ];
           const phase3Steps = [
-            { done: claimedReadArticlesCount >= 3, label: `คลังสมอง 3 บทความ (${Math.min(claimedReadArticlesCount, 3)}/3)`, shortDesc: "อ่านและเคลม XP จากบทความ", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
+            { done: claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1, label: `คลังสมอง: อ่าน ${Math.min(claimedReadArticlesCount, 2)}/2 · จด ${Math.min(secondBrainNotesCount, 1)}/1`, shortDesc: "อ่านบทความและจดบันทึก", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
             { done: hasCompletedFocusRoom, label: "Focus Room", shortDesc: "ฝึกสมาธิและบันทึก reflection", path: "/tools/focus-room", buttonClass: "from-sky-500 to-blue-600" },
             { done: hasCompletedMemento, label: "Memento Mori", shortDesc: "ทบทวนเวลาชีวิตอย่างมีสติ", path: "/dashboard?memento=1", buttonClass: "from-amber-600 to-[#8B5A2B]" },
           ];
@@ -6496,7 +6507,7 @@ Day 21: [กิจกรรม]
                         </div>
                       </div>
                     </div>
-                    {!isFocusRoomUnlocked && renderLockedBentoOverlay("Focus Room Locked", "เคลม XP จากคลังสมองให้ครบ 3 บทความก่อน เพื่อปลดล็อก Focus Room")}
+                    {!isFocusRoomUnlocked && renderLockedBentoOverlay("Focus Room Locked", "เคลม XP คลังสมอง 2 บทความ + จดบันทึก 1 เรื่องก่อน เพื่อปลดล็อก Focus Room")}
                   </motion.div>
                 </Link>
 

@@ -136,6 +136,67 @@ export async function POST(req: Request) {
   }
 
   try {
+    // 🧠 1. Fetch and Retrieve relevant notes using LLM-based RAG
+    const notesRef = adminDb.collection("users").doc(authResult.uid).collection("second_brain");
+    const notesSnap = await notesRef.orderBy("updatedAt", "desc").limit(30).get();
+    
+    let relevantNotesContext = "";
+
+    if (!notesSnap.empty) {
+      const noteSummaries = notesSnap.docs.map((doc, index) => ({
+        index,
+        title: doc.data().title || "บันทึกที่ไม่มีชื่อ",
+        excerpt: (doc.data().content || "").substring(0, 150)
+      }));
+
+      const lastUserMessage = messages[messages.length - 1]?.content || "";
+
+      try {
+        const retrievalResponse = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              {
+                role: "system",
+                content: "คุณคือระบบวิเคราะห์ข้อมูล (Metadata Router) หน้าที่ของคุณคือวิเคราะห์คำถามล่าสุดของผู้ใช้ และเลือกโน้ตที่เกี่ยวข้องจากรายการโน้ตที่กำหนดให้ หากมีโน้ตที่เกี่ยวข้อง ให้ตอบกลับด้วย JSON Array ของรหัสดัชนี (index) เช่น [0, 2] หากไม่มีโน้ตใดเกี่ยวข้องเลย ให้ตอบกลับด้วย []. ห้ามตอบข้อความวิเคราะห์ใดๆ นอกเหนือจาก JSON เด็ดขาด"
+              },
+              {
+                role: "user",
+                content: `คำถามของผู้ใช้: "${lastUserMessage}"\n\nรายการโน้ต:\n${JSON.stringify(noteSummaries)}`
+              }
+            ],
+            stream: false,
+            temperature: 0.1,
+            max_tokens: 50
+          })
+        });
+
+        if (retrievalResponse.ok) {
+          const retrievalData = await retrievalResponse.json();
+          const retrievalText = retrievalData.choices[0].message.content.trim();
+          const matchedIndexes = JSON.parse(retrievalText.match(/\[.*\]/)?.[0] || "[]");
+          
+          if (Array.isArray(matchedIndexes) && matchedIndexes.length > 0) {
+            const matchedDocs = matchedIndexes
+              .map(idx => notesSnap.docs[idx])
+              .filter(Boolean);
+
+            relevantNotesContext = matchedDocs.map(doc => {
+              const data = doc.data();
+              return `--- บันทึกย่อ: ${data.title} ---\nหมวดหมู่: ${data.category || 'ทั่วไป'}\nเนื้อหา:\n${data.content || 'ไม่มีเนื้อหา'}\n`;
+            }).join("\n\n");
+          }
+        }
+      } catch (err) {
+        console.error("RAG Retrieval Failed:", err);
+      }
+    }
+
     const systemPrompt = `คุณคือ 'พี่ฟุ้ย (Fuii)' รุ่นพี่คนสนิทที่เป็น AI Personal Mentor และผู้ก่อตั้งแพลตฟอร์ม Upskill with Fuii คอยช่วยเหลือให้คำปรึกษาการพัฒนาตัวเองและชีวิตกับน้อง ${userData.displayName || 'นักเดินทาง'}
 
 !!! กฎเหล็ก (CRITICAL RULES) !!!:
@@ -208,10 +269,11 @@ export async function POST(req: Request) {
 - ข้อมูล Library Soul (Reading Soul Type): ${JSON.stringify(userData.lastLibrarySoul || 'ไม่มี')}
 - ผลแบบประเมิน Ghost in You (ความกลัวลึกๆ): ${(userData.lastGhostResult as any)?.primary || 'ไม่มี'}
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
+${relevantNotesContext ? `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n` : ''}
 
 คำแนะนำในการสนทนา:
 - ทักทายแบบปกติ เป็นกันเอง ตามประวัติการคุย
-- ใช้ข้อมูล Context เพื่อให้คำแนะนำที่ "ตรงจุด" กับนิสัยและสถานะของผู้ใช้ที่สุด โดยทำเหมือนว่าคุณแค่ "เดาใจเก่ง" เท่านั้นพอ
+- ใช้ข้อมูล Context และบันทึกส่วนตัว (Second Brain) ที่เชื่อมโยง เพื่อให้คำแนะนำที่ "ตรงจุด" และอ้างอิงถึงข้อมูลที่ผู้ใช้เคยจดบันทึกไว้ได้อย่างเป็นธรรมชาติที่สุด โดยทำให้เหมือนว่าคุณจำเรื่องราวและความคิดของเขาได้ คล้ายกับมีสมองส่วนขยายของตัวเองมาช่วยเตือนความจำ
 
 ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช้พูดถึงการปรับ / เปลี่ยน / ขอ Quest ใหม่):
 1. ถามทีละข้อ ไม่เกิน 3 ข้อ ดังนี้:
