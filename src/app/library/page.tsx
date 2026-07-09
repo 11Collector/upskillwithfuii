@@ -113,7 +113,7 @@ export default function PremiumLibraryPage() {
       setSelectedNote((prev: any) => {
         if (prev) {
           const updated = fetchedNotes.find((n) => n.id === prev.id);
-          return updated || null;
+          return updated || fetchedNotes[0] || null;
         }
         return fetchedNotes[0] || null;
       });
@@ -199,9 +199,6 @@ export default function PremiumLibraryPage() {
     try {
       const noteRef = doc(db, "users", user.uid, "second_brain", noteId);
       await deleteDoc(noteRef);
-      if (selectedNote?.id === noteId) {
-        setSelectedNote(null);
-      }
       setShowDeleteConfirm(null);
     } catch (error) {
       console.error("Error deleting note:", error);
