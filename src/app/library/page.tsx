@@ -5,7 +5,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain
 } from "lucide-react";
 import Link from "next/link";
 
@@ -677,26 +677,35 @@ export default function PremiumLibraryPage() {
             </motion.footer>
           </>
         ) : (
-          /* ========================================================
-             🧠 SECOND BRAIN VIEW: PREMIUM LIGHT THEME & CO-WRITER
-             ======================================================== */
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full flex flex-col md:flex-row gap-8 bg-white rounded-[3rem] border border-slate-200/80 p-6 md:p-8 shadow-[0_30px_70px_rgba(15,23,42,0.06)] min-h-[640px] relative overflow-hidden"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, rgba(99, 102, 241, 0.035) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(99, 102, 241, 0.035) 1px, transparent 1px)
-              `,
-              backgroundSize: '24px 24px',
-              backgroundColor: '#ffffff'
-            }}
-          >
-            {/* 📁 Left Column: Sidebar List */}
-            <div className={`w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6 ${
-              mobileNotesView === "list" ? "block" : "hidden md:flex"
-            }`}>
+          <>
+            {/* --- Notes Header --- */}
+            <header className="mb-10">
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-slate-200 rounded-full text-[10px] font-black mb-6 border border-slate-950 uppercase tracking-[0.2em] shadow-sm">
+                <Brain size={14} className="text-slate-400" /> <span>PERSONAL SECOND BRAIN</span>
+              </motion.div>
+              <h1 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight mb-4">
+                สมองที่สอง <span className="text-slate-500">จดบันทึก</span>
+              </h1>
+              <p className="text-slate-500 text-sm md:text-lg font-medium">เก็บบันทึกสรุปหนังสือและไอเดียพัฒนาตัวเอง</p>
+            </header>
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full flex flex-col md:flex-row gap-8 bg-white rounded-[3rem] border border-slate-200/80 p-6 md:p-8 shadow-[0_30px_70px_rgba(15,23,42,0.06)] min-h-[640px] relative overflow-hidden"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(99, 102, 241, 0.035) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(99, 102, 241, 0.035) 1px, transparent 1px)
+                `,
+                backgroundSize: '24px 24px',
+                backgroundColor: '#ffffff'
+              }}
+            >
+              {/* 📁 Left Column: Sidebar List */}
+              <div className={`w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6 ${
+                mobileNotesView === "list" ? "block" : "hidden md:flex"
+              }`}>
               
               {/* Sidebar Header & Add Note Button */}
               <div className="flex items-center justify-between gap-3 mb-6">
@@ -1079,7 +1088,8 @@ export default function PremiumLibraryPage() {
             </div>
 
           </motion.div>
-        )}
+        </>
+      )}
 
       </div>
     </div>
