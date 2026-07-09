@@ -252,8 +252,31 @@ function LibraryContent() {
     return () => clearTimeout(delayDebounce);
   }, [noteTitle, noteContent, noteCategory, user, selectedNote?.id]);
 
+  const deleteCurrentNoteIfEmpty = async () => {
+    if (!user || !selectedNote) return;
+    const isTitleDefault = !noteTitle.trim() || noteTitle === "บันทึกที่ไม่มีชื่อ";
+    const isContentEmpty = !noteContent.trim();
+    if (isTitleDefault && isContentEmpty) {
+      try {
+        const noteRef = doc(db, "users", user.uid, "second_brain", selectedNote.id);
+        await deleteDoc(noteRef);
+      } catch (error) {
+        console.error("Failed to delete empty note on exit:", error);
+      }
+    }
+  };
+
+  const handleSelectNote = async (n: any) => {
+    if (selectedNote && selectedNote.id !== n.id) {
+      await deleteCurrentNoteIfEmpty();
+    }
+    setSelectedNote(n);
+    setMobileNotesView("editor");
+  };
+
   const handleCreateNote = async () => {
     if (!user) return;
+    await deleteCurrentNoteIfEmpty();
     try {
       const notesRef = collection(db, "users", user.uid, "second_brain");
       const createdAtStr = new Date().toISOString();
@@ -860,8 +883,7 @@ function LibraryContent() {
                         <div
                           key={n.id}
                           onClick={() => {
-                            setSelectedNote(n);
-                            setMobileNotesView("editor");
+                            handleSelectNote(n);
                           }}
                           className={`group relative p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${
                             isSelected
@@ -933,7 +955,10 @@ function LibraryContent() {
                   <div className="space-y-4 flex flex-col">
                     {/* Back button for mobile view */}
                     <button
-                      onClick={() => setMobileNotesView("list")}
+                      onClick={async () => {
+                        await deleteCurrentNoteIfEmpty();
+                        setMobileNotesView("list");
+                      }}
                       className="md:hidden flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold mb-2 active:scale-95 transition-all self-start"
                     >
                       <ArrowRight size={14} className="rotate-180" />
