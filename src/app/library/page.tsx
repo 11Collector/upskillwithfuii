@@ -683,7 +683,15 @@ export default function PremiumLibraryPage() {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full flex flex-col md:flex-row gap-8 bg-white rounded-[3rem] border border-slate-200 p-6 md:p-8 shadow-[0_30px_70px_rgba(15,23,42,0.06)] min-h-[640px]"
+            className="w-full flex flex-col md:flex-row gap-8 bg-white rounded-[3rem] border border-slate-200/80 p-6 md:p-8 shadow-[0_30px_70px_rgba(15,23,42,0.06)] min-h-[640px] relative overflow-hidden"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(99, 102, 241, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(99, 102, 241, 0.035) 1px, transparent 1px)
+              `,
+              backgroundSize: '24px 24px',
+              backgroundColor: '#ffffff'
+            }}
           >
             {/* 📁 Left Column: Sidebar List */}
             <div className={`w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6 ${
