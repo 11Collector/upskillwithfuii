@@ -106,6 +106,63 @@ function LibraryContent() {
     localStorage.setItem("note_font_size", size);
   };
 
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+
+    if (e.key === "Tab") {
+      e.preventDefault();
+      // Insert 4 spaces
+      const newValue = value.substring(0, start) + "    " + value.substring(end);
+      setNoteContent(newValue);
+
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 4;
+      }, 0);
+    } else if (e.key === "Enter") {
+      // Find the current line the cursor is on
+      const beforeCursor = value.substring(0, start);
+      const lastNewLine = beforeCursor.lastIndexOf("\n");
+      const currentLine = beforeCursor.substring(lastNewLine + 1);
+
+      // Check if current line starts with bullet patterns, like "- ", "• ", "* ", "1/ ", "2/ ", "    " (indents)
+      const listMatch = currentLine.match(/^(\s*(?:-\s|•\s|\*\s|\d+\/\s))/);
+      if (listMatch) {
+        e.preventDefault();
+        const prefix = listMatch[1];
+        
+        // If the line is empty except for the prefix (e.g. user pressed enter on an empty bullet to exit), remove it
+        if (currentLine.trim() === prefix.trim()) {
+          const newValue = value.substring(0, lastNewLine + 1) + "\n" + value.substring(end);
+          setNoteContent(newValue);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = lastNewLine + 2;
+          }, 0);
+          return;
+        }
+
+        let nextPrefix = prefix;
+        // If it's a numbered list (e.g., "1/ "), increment it!
+        const numberMatch = prefix.match(/^(\s*)(\d+)(\/\s)/);
+        if (numberMatch) {
+          const indent = numberMatch[1];
+          const nextNum = parseInt(numberMatch[2], 10) + 1;
+          const suffix = numberMatch[3];
+          nextPrefix = `${indent}${nextNum}${suffix}`;
+        }
+
+        const newValue = value.substring(0, start) + "\n" + nextPrefix + value.substring(end);
+        setNoteContent(newValue);
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + nextPrefix.length;
+        }, 0);
+      }
+    }
+  };
+
   // Derived state sync when newNote or noteId query param is present
   const newNoteParam = searchParams.get("newNote") === "true";
   const targetNoteId = searchParams.get("noteId");
@@ -402,7 +459,25 @@ function LibraryContent() {
       if (action === "summarize") {
         promptText = `ช่วยสรุปเนื้อหาโน้ตต่อไปนี้ให้กระชับ ตกผลึกออกมาเป็นข้อๆ ไม่เกิน 3 ข้อหลัก โดยเขียนในรูปแบบข้อความธรรมดา (Plain Text) เท่านั้น ห้ามใช้เครื่องหมายจัดฟอร์แมตที่เป็นมาร์กดาวน์ เช่น เครื่องหมายดอกจัน (**) หรือเครื่องหมายสี่เหลี่ยม (#) โดยเด็ดขาด ให้ใช้การขึ้นบรรทัดใหม่ธรรมดาและสัญลักษณ์หัวข้อ เช่น - หรือตัวเลขในการแบ่งข้อเพื่อความอ่านง่าย:\n\n${noteContent}`;
       } else if (action === "coaching") {
-        promptText = `ช่วยอ่านโน้ตต่อไปนี้ และเขียนฟีดแบ็กแนะนำพร้อมให้กำลังใจ ในฐานะโค้ชพี่ฟุ้ยผู้เชี่ยวชาญ คอยแนะนำแบบเป็นกันเอง อบอุ่น นำไปใช้ได้จริง ความยาวประมาณ 3-4 ประโยค โดยเขียนในรูปแบบข้อความธรรมดา (Plain Text) เท่านั้น ห้ามใช้เครื่องหมายจัดฟอร์แมตที่เป็นมาร์กดาวน์ เช่น เครื่องหมายดอกจัน (**) หรือเครื่องหมายสี่เหลี่ยม (#) โดยเด็ดขาด:\n\n${noteContent}`;
+        promptText = `ช่วยอ่านโน้ตต่อไปนี้ และวิเคราะห์เพื่อเขียนคำแนะนำในฐานะ "พี่ฟุ้ย" (ที่ปรึกษาแนว Humble Expert ที่คิดเป็นระบบ เป็นพี่ชายที่เก่งกว่าเล่าให้ฟัง)
+
+เป้าหมาย:
+ให้ฟีดแบ็กที่ตรงประเด็นและมี "Action Plan" ที่ผู้ใช้สามารถนำไปใช้ปฏิบัติได้ทันที
+
+กฎเหล็กเรื่องน้ำเสียงและภาษา (สำคัญมาก):
+1. ใช้ภาษาเขียนที่เป็นกันเอง พูดตรงไปตรงมา แบบพี่ชายคุยกับน้อง หรือเพื่อนคุยกับเพื่อน (ไม่มีพิธีรีตอง)
+2. ห้ามใช้คำลงท้ายหวานหรือคำลงท้ายผู้หญิง เช่น "คะ", "ค่ะ", "นะ", "นะคะ" โดยเด็ดขาด
+3. หลีกเลี่ยงการพูดคำคมสร้างแรงบันดาลใจแบบลอยๆ แต่เน้นชี้เป้าหมายด้วยตรรกะความจริง (Reality Check)
+4. ห้ามใช้ภาษาทางการหรือภาษาวิชาการที่แข็งทื่อ
+
+โครงสร้างผลลัพธ์ (ห้ามใช้ Markdown เช่น ** หรือ # เด็ดขาด ให้ใช้ Plain Text และการขึ้นบรรทัดใหม่เท่านั้น):
+- Reality Check: (1-2 ประโยคสั้นๆ ที่จี้จุดสำคัญของโน้ตนี้ กระตุ้นให้เอะใจ)
+- Action Plan ที่ลงมือทำได้วันนี้ (เน้นสั้นกระชับที่สุด หัวข้อละไม่เกิน 1 ประโยคสั้นๆ 10-15 คำ):
+  1/ [กิจกรรมย่อยที่ 1 ลงมือทำได้ทันทีใน 5 นาที - สั้นกระชับมาก]
+  2/ [กิจกรรมย่อยที่ 2 (ถ้ามี) - สั้นกระชับมาก]
+
+โน้ตของผู้ใช้:
+${noteContent}`;
       }
 
       const response = await fetch("/api/quote", {
@@ -1056,9 +1131,11 @@ function LibraryContent() {
 
                     {/* Note Content Textarea */}
                     <textarea
+                      id="note-content-editor"
                       placeholder="พิมพ์จดบันทึกความคิด สรุปความรู้ หรือแผนพัฒนาตัวเองที่นี่ได้เลย..."
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       rows={14}
                       className={`w-full bg-transparent leading-loose text-slate-600 placeholder-slate-400 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px] ${
                         noteFontSize === "sm"
