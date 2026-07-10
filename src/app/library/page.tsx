@@ -1982,7 +1982,7 @@ ${noteContent}`;
             {/* --- Notes Header --- */}
             <header className="mb-10">
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-slate-200 rounded-full text-[10px] font-black mb-6 border border-slate-950 uppercase tracking-[0.2em] shadow-sm">
-                <Brain size={14} className="text-slate-400" /> <span>PERSONAL SECOND BRAIN</span>
+                <Brain size={14} className="text-slate-400" /> <span>SECOND BRAIN</span>
               </motion.div>
               <h1 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight mb-4">
                 สมองที่สอง <span className="text-slate-500">จดบันทึก</span>
