@@ -9,7 +9,7 @@ export default function ClientMainWrapper({ children }: { children: React.ReactN
   const pathname = usePathname();
   const isTools = pathname.startsWith('/tools/');
   const isDashboard = pathname.startsWith('/dashboard');
-  const noMobileHeader = isDashboard || pathname.startsWith('/library') || pathname.startsWith('/gallery') || pathname.startsWith('/shop');
+  const noMobileHeader = isDashboard || pathname.startsWith('/library') || pathname.startsWith('/second-brain') || pathname.startsWith('/gallery') || pathname.startsWith('/shop');
 
   // 🛡️ Global Auth Sync: Ensures user profile (email, name) is always registered in Firestore
   useEffect(() => {

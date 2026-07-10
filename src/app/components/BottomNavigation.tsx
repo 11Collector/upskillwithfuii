@@ -98,7 +98,7 @@ function BottomNavigationInner() {
     { id: 'life', label: 'ชีวิต', icon: PieChart, path: '/tools/wheel-of-life' },
     { id: 'work', label: 'ทำงาน', icon: Users, path: '/tools/disc' },
     { id: 'money', label: 'การเงิน', icon: Wallet, path: '/tools/money-avatar' },
-    { id: 'library', label: 'คลังสมอง', icon: Brain, path: '/second-brain' },
+    { id: 'library', label: 'คลังสมอง', icon: Brain, path: '/library' },
   ];
 
   const getActiveColor = (id: string) => {
