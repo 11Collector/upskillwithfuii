@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings, X, HelpCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -62,6 +62,914 @@ const cardVariants: Variants = {
   show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 260, damping: 20 } }
 };
 
+interface GraphNode {
+  id: string;
+  title: string;
+  category: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+}
+
+interface GraphLink {
+  source: string;
+  target: string;
+  type: "wiki" | "ai";
+  reason?: string;
+}
+
+interface GraphViewProps {
+  notes: any[];
+  onSelectNote: (note: any) => void;
+  onClose: () => void;
+  aiSuggestions: any[];
+  onTriggerAiScan: () => void;
+  isAiScanning: boolean;
+  isProMember: boolean;
+  freeScansUsed: number;
+}
+
+const GraphView: React.FC<GraphViewProps> = ({
+  notes,
+  onSelectNote,
+  onClose,
+  aiSuggestions,
+  onTriggerAiScan,
+  isAiScanning,
+  isProMember,
+  freeScansUsed
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  
+  const [scale, setScale] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [hoveredLink, setHoveredLink] = useState<GraphLink | null>(null);
+  const [showAiList, setShowAiList] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const handleUpgradeToPro = async () => {
+    if (isUpgrading) return;
+    if (!auth.currentUser) {
+      alert("กรุณาเข้าสู่ระบบก่อนครับ");
+      return;
+    }
+    try {
+      setIsUpgrading(true);
+      const idToken = await auth.currentUser.getIdToken(true);
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ plan: "monthly" }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("เกิดข้อผิดพลาด: " + (data.error || "ไม่สามารถติดต่อ Stripe ได้"));
+        setIsUpgrading(false);
+      }
+    } catch (error) {
+      console.error("Upgrade error:", error);
+      alert("ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง");
+      setIsUpgrading(false);
+    }
+  };
+
+  const nodesRef = useRef<GraphNode[]>([]);
+  const nodeRefs = useRef<Record<string, SVGGElement | null>>({});
+  const linkRefs = useRef<Record<string, SVGLineElement | null>>({});
+  const pulseRefs = useRef<Record<string, SVGCircleElement | null>>({});
+  const draggedNodeIndexRef = useRef<number>(-1);
+
+  // Parse links (Wiki + AI)
+  const links: GraphLink[] = [];
+  notes.forEach((note) => {
+    if (!note.content) return;
+    const wikiLinkRegex = /\[\[(.*?)\]\]/g;
+    let match;
+    while ((match = wikiLinkRegex.exec(note.content)) !== null) {
+      const targetTitle = match[1]?.trim();
+      if (targetTitle) {
+        const targetNote = notes.find((n: any) => n.title?.toLowerCase() === targetTitle.toLowerCase());
+        if (targetNote && targetNote.id !== note.id) {
+          const exists = links.some(
+            (l) =>
+              (l.source === note.id && l.target === targetNote.id) ||
+              (l.source === targetNote.id && l.target === note.id)
+          );
+          if (!exists) {
+            links.push({ source: note.id, target: targetNote.id, type: "wiki" });
+          }
+        }
+      }
+    }
+  });
+
+  aiSuggestions.forEach((sug) => {
+    const sourceExists = notes.some((n: any) => n.id === sug.source);
+    const targetExists = notes.some((n: any) => n.id === sug.target);
+    if (sourceExists && targetExists) {
+      const exists = links.some(
+        (l) =>
+          (l.source === sug.source && l.target === sug.target) ||
+          (l.source === sug.target && l.target === sug.source)
+      );
+      if (!exists) {
+        links.push({
+          source: sug.source,
+          target: sug.target,
+          type: "ai",
+          reason: sug.reason
+        });
+      }
+    }
+  });
+
+  // Setup nodes & simulation loop
+  useEffect(() => {
+    const w = containerRef.current?.clientWidth || 800;
+    const h = containerRef.current?.clientHeight || 600;
+
+    const existingNodes = nodesRef.current;
+    const newNodes: GraphNode[] = notes.map((note, index) => {
+      const found = existingNodes.find((n) => n.id === note.id);
+      const wordCount = (note.content || "").trim().split(/\s+/).length;
+      const radius = Math.max(8, Math.min(22, 8 + Math.sqrt(wordCount)));
+      if (found) {
+        return {
+          ...found,
+          title: note.title || "บันทึกไม่มีชื่อ",
+          category: note.category || "พัฒนาตัวเอง",
+          radius
+        };
+      }
+      const angle = notes.length > 0 ? (index / notes.length) * 2 * Math.PI : 0;
+      const dist = 100 + Math.random() * 80;
+      return {
+        id: note.id,
+        title: note.title || "บันทึกไม่มีชื่อ",
+        category: note.category || "พัฒนาตัวเอง",
+        x: w / 2 + Math.cos(angle) * dist,
+        y: h / 2 + Math.sin(angle) * dist,
+        vx: 0,
+        vy: 0,
+        radius,
+      };
+    });
+    nodesRef.current = newNodes;
+
+    // Spatial Hash Grid parameters
+    const cellSize = 120;
+    let animationFrameId = 0;
+    const timeStart = Date.now();
+
+    const animate = () => {
+      const currentW = containerRef.current?.clientWidth || 800;
+      const currentH = containerRef.current?.clientHeight || 600;
+      const time = (Date.now() - timeStart) * 0.005;
+
+      // 1. Clear and construct Spatial Grid
+      const grid: Record<string, GraphNode[]> = {};
+      newNodes.forEach((node) => {
+        const cellX = Math.floor(node.x / cellSize);
+        const cellY = Math.floor(node.y / cellSize);
+        const cellKey = `${cellX},${cellY}`;
+        if (!grid[cellKey]) grid[cellKey] = [];
+        grid[cellKey].push(node);
+      });
+
+      // 2. Repulsion forces using Spatial Hashing (O(N) average complexity)
+      newNodes.forEach((nodeA) => {
+        const cellX = Math.floor(nodeA.x / cellSize);
+        const cellY = Math.floor(nodeA.y / cellSize);
+
+        // Check self cell + 8 neighbor cells
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const neighborKey = `${cellX + dx},${cellY + dy}`;
+            const neighbors = grid[neighborKey];
+            if (neighbors) {
+              neighbors.forEach((nodeB) => {
+                if (nodeA.id === nodeB.id) return;
+                
+                const deltaX = nodeB.x - nodeA.x;
+                const deltaY = nodeB.y - nodeA.y;
+                const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) || 1;
+                const minDist = nodeA.radius + nodeB.radius + 65;
+                if (dist < minDist) {
+                  const force = (minDist - dist) * 0.06;
+                  const fx = (deltaX / dist) * force;
+                  const fy = (deltaY / dist) * force;
+                  nodeA.vx -= fx;
+                  nodeA.vy -= fy;
+                }
+              });
+            }
+          }
+        }
+      });
+
+      // 3. Spring attractive force for links
+      links.forEach((link) => {
+        const sourceNode = newNodes.find((n) => n.id === link.source);
+        const targetNode = newNodes.find((n) => n.id === link.target);
+        if (sourceNode && targetNode) {
+          const dx = targetNode.x - sourceNode.x;
+          const dy = targetNode.y - sourceNode.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const desiredDist = link.type === "ai" ? 140 : 100;
+          const stiffness = link.type === "ai" ? 0.03 : 0.045;
+          const force = (dist - desiredDist) * stiffness;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          sourceNode.vx += fx;
+          sourceNode.vy += fy;
+          targetNode.vx -= fx;
+          targetNode.vy -= fy;
+        }
+      });
+
+      // 4. Category soft clustering forces
+      const categories = ["พัฒนาตัวเอง", "หนังสือ", "การเงิน & ลงทุน", "ธุรกิจ"];
+      const categoryCenters: Record<string, { x: number; y: number; count: number }> = {};
+      categories.forEach((cat) => {
+        categoryCenters[cat] = { x: 0, y: 0, count: 0 };
+      });
+      newNodes.forEach((node) => {
+        if (categoryCenters[node.category]) {
+          categoryCenters[node.category].x += node.x;
+          categoryCenters[node.category].y += node.y;
+          categoryCenters[node.category].count += 1;
+        }
+      });
+      newNodes.forEach((node) => {
+        const center = categoryCenters[node.category];
+        if (center && center.count > 1) {
+          const avgX = center.x / center.count;
+          const avgY = center.y / center.count;
+          const dx = avgX - node.x;
+          const dy = avgY - node.y;
+          node.vx += dx * 0.006;
+          node.vy += dy * 0.006;
+        }
+      });
+
+      // 5. Apply velocities and damping
+      newNodes.forEach((node, idx) => {
+        if (idx === draggedNodeIndexRef.current) return;
+        const dx = currentW / 2 - node.x;
+        const dy = currentH / 2 - node.y;
+        node.vx += dx * 0.005;
+        node.vy += dy * 0.005;
+
+        node.x += node.vx;
+        node.y += node.vy;
+        node.vx *= 0.85;
+        node.vy *= 0.85;
+      });
+
+      // 6. Direct SVG DOM modifications for maximum performance (60 FPS bypass virtual DOM)
+      newNodes.forEach((node) => {
+        const gElem = nodeRefs.current[node.id];
+        if (gElem) {
+          gElem.setAttribute("transform", `translate(${node.x}, ${node.y})`);
+        }
+      });
+
+      links.forEach((link) => {
+        const sourceNode = newNodes.find((n) => n.id === link.source);
+        const targetNode = newNodes.find((n) => n.id === link.target);
+        if (sourceNode && targetNode) {
+          const lineKey = `${link.source}-${link.target}`;
+          const lineElem = linkRefs.current[lineKey];
+          if (lineElem) {
+            lineElem.setAttribute("x1", String(sourceNode.x));
+            lineElem.setAttribute("y1", String(sourceNode.y));
+            lineElem.setAttribute("x2", String(targetNode.x));
+            lineElem.setAttribute("y2", String(targetNode.y));
+          }
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [notes, aiSuggestions]);
+
+  // Dragging handlers
+  let isDraggingBg = false;
+  let dragStartMouseX = 0;
+  let dragStartMouseY = 0;
+  let dragStartPanX = 0;
+  let dragStartPanY = 0;
+
+  // Core unified dragging logic helpers (shared between Mouse and Touch events)
+  const simulateDown = (clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
+
+    const worldX = ((clickX - panX - rect.width / 2) / scale) + rect.width / 2;
+    const worldY = ((clickY - panY - rect.height / 2) / scale) + rect.height / 2;
+
+    const nodes = nodesRef.current;
+    let clickedNodeIndex = -1;
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const dx = worldX - node.x;
+      const dy = worldY - node.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= node.radius + 5) {
+        clickedNodeIndex = i;
+        break;
+      }
+    }
+
+    if (clickedNodeIndex !== -1) {
+      draggedNodeIndexRef.current = clickedNodeIndex;
+    } else {
+      isDraggingBg = true;
+      dragStartMouseX = clientX;
+      dragStartMouseY = clientY;
+      dragStartPanX = panX;
+      dragStartPanY = panY;
+    }
+  };
+
+  const simulateMove = (clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const mouseX = clientX - rect.left;
+    const mouseY = clientY - rect.top;
+
+    const worldX = ((mouseX - panX - rect.width / 2) / scale) + rect.width / 2;
+    const worldY = ((mouseY - panY - rect.height / 2) / scale) + rect.height / 2;
+
+    if (draggedNodeIndexRef.current !== -1) {
+      const node = nodesRef.current[draggedNodeIndexRef.current];
+      if (node) {
+        node.x = worldX;
+        node.y = worldY;
+        node.vx = 0;
+        node.vy = 0;
+      }
+    } else if (isDraggingBg) {
+      const dx = clientX - dragStartMouseX;
+      const dy = clientY - dragStartMouseY;
+      setPanX(dragStartPanX + dx);
+      setPanY(dragStartPanY + dy);
+    } else {
+      // 1. Check if hovering a node mathematically (with tap target padding)
+      let foundNode: GraphNode | null = null;
+      const nodes = nodesRef.current;
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        const dx = worldX - node.x;
+        const dy = worldY - node.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= node.radius + 15) { // 15px tap/hover buffer
+          foundNode = node;
+          break;
+        }
+      }
+      setHoveredNode(foundNode);
+
+      if (foundNode) {
+        setHoveredLink(null);
+      } else {
+        // Find hovered link (if no node hovered)
+        let hoveredL: GraphLink | null = null;
+        for (let i = 0; i < links.length; i++) {
+          const link = links[i];
+          const sourceNode = nodesRef.current.find((n) => n.id === link.source);
+          const targetNode = nodesRef.current.find((n) => n.id === link.target);
+          if (sourceNode && targetNode) {
+            const x0 = worldX;
+            const y0 = worldY;
+            const x1 = sourceNode.x;
+            const y1 = sourceNode.y;
+            const x2 = targetNode.x;
+            const y2 = targetNode.y;
+            
+            const l2 = (x2-x1)**2 + (y2-y1)**2;
+            let t = ((x0 - x1) * (x2 - x1) + (y0 - y1) * (y2 - y1)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            const projX = x1 + t * (x2 - x1);
+            const projY = y1 + t * (y2 - y1);
+            const distToLine = Math.sqrt((x0 - projX)**2 + (y0 - projY)**2);
+            
+            if (distToLine < 8) {
+              hoveredL = link;
+              break;
+            }
+          }
+        }
+        setHoveredLink(hoveredL);
+      }
+    }
+  };
+
+  const simulateUp = () => {
+    draggedNodeIndexRef.current = -1;
+    isDraggingBg = false;
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    simulateDown(e.clientX, e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    simulateMove(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    simulateUp();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches.length === 1) {
+      simulateDown(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches.length === 1) {
+      simulateMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    simulateUp();
+  };
+
+  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    const zoomIntensity = 0.08;
+    const zoomFactor = e.deltaY < 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+    setScale((prev) => Math.max(0.3, Math.min(3, prev * zoomFactor)));
+  };
+
+  const getNodeColor = (cat: string) => {
+    if (cat === "หนังสือ") return "#10b981"; // emerald
+    if (cat === "การเงิน & ลงทุน") return "#6366f1"; // indigo
+    if (cat === "ธุรกิจ") return "#8b5cf6"; // purple
+    return "#f59e0b"; // amber (พัฒนาตัวเอง)
+  };
+
+  return (
+    <div ref={containerRef} className="w-full flex-1 min-h-[500px] relative overflow-hidden bg-[#0B0F19] rounded-[2.5rem] border border-slate-800 shadow-inner flex flex-col justify-between select-none">
+      {/* 🌌 SVG Graph View */}
+      <svg
+        ref={svgRef}
+        className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onWheel={handleWheel}
+      >
+        <defs>
+          {/* Neon glow filters */}
+          {["#10b981", "#6366f1", "#8b5cf6", "#f59e0b", "#ec4899"].map((color) => (
+            <filter key={color} id={`glow-${color.toLowerCase().replace("#", "")}`} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          ))}
+        </defs>
+
+        {/* Space Grid Coordinates background */}
+        <g opacity="0.15">
+          <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(99,102,241,0.2)" strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#gridPattern)" />
+        </g>
+
+        {/* Transform Matrix Group (Zoom + Pan) */}
+        <g
+          transform={`translate(${panX + (svgRef.current?.clientWidth || 800) / 2}, ${panY + (svgRef.current?.clientHeight || 600) / 2}) scale(${scale}) translate(${-((svgRef.current?.clientWidth || 800) / 2)}, ${-((svgRef.current?.clientHeight || 600) / 2)})`}
+        >
+          {/* Explicit layer groups for strict depth-ordering (lines under circles) */}
+          <g id="links-layer">
+            {/* 1. Links / Connecting paths */}
+            {links.map((link, idx) => {
+              const lineKey = `${link.source}-${link.target}`;
+              const isHovered = hoveredLink === link ||
+                                (hoveredNode && (hoveredNode.id === link.source || hoveredNode.id === link.target));
+              const sourceNode = notes.find((n: any) => n.id === link.source);
+              const sourceColor = sourceNode ? getNodeColor(sourceNode.category) : "#6366f1";
+              const strokeColor = isHovered 
+                ? (link.type === "ai" ? "#ec4899" : sourceColor)
+                : (link.type === "ai" ? "rgba(236,72,153,0.25)" : "rgba(99,102,241,0.18)");
+              const filterVal = isHovered
+                ? `url(#glow-${(link.type === "ai" ? "#ec4899" : sourceColor).toLowerCase().replace("#", "")})`
+                : undefined;
+
+              const srcNodeState = nodesRef.current.find((n) => n.id === link.source);
+              const trgNodeState = nodesRef.current.find((n) => n.id === link.target);
+
+              return (
+                <g key={idx}>
+                  <line
+                    ref={(el) => { linkRefs.current[lineKey] = el; }}
+                    x1={srcNodeState ? srcNodeState.x : undefined}
+                    y1={srcNodeState ? srcNodeState.y : undefined}
+                    x2={trgNodeState ? trgNodeState.x : undefined}
+                    y2={trgNodeState ? trgNodeState.y : undefined}
+                    stroke={strokeColor}
+                    strokeWidth={isHovered ? (link.type === "ai" ? 2.5 : 2) : (link.type === "ai" ? 1.5 : 1)}
+                    strokeDasharray={link.type === "ai" ? "5,5" : undefined}
+                    filter={filterVal}
+                    pointerEvents="none"
+                    className="transition-[stroke,stroke-width,filter] duration-300"
+                  />
+                </g>
+              );
+            })}
+          </g>
+
+          <g id="nodes-layer">
+            {/* 2. Nodes / Cognitive Orbs */}
+            {notes.map((note) => {
+              const isHovered = hoveredNode?.id === note.id;
+              const color = getNodeColor(note.category);
+              const nodeState = nodesRef.current.find((n) => n.id === note.id);
+              const initialTransform = nodeState 
+                ? `translate(${nodeState.x}, ${nodeState.y})` 
+                : undefined;
+
+              return (
+                <g
+                  key={note.id}
+                  ref={(el) => { nodeRefs.current[note.id] = el; }}
+                  transform={initialTransform}
+                  className="cursor-pointer"
+                  onMouseEnter={() => {
+                    const node = nodesRef.current.find((n) => n.id === note.id);
+                    if (node) setHoveredNode(node);
+                  }}
+                  onMouseLeave={() => setHoveredNode(null)}
+                  onDoubleClick={() => onSelectNote(note)}
+                >
+                  {/* Glowing Outer Halo */}
+                  <circle
+                    r={isHovered ? 40 : 25}
+                    style={{ fill: color, opacity: isHovered ? 0.15 : 0.05 }}
+                    filter={`url(#glow-${color.toLowerCase().replace("#", "")})`}
+                    className="transition-all duration-300 animate-pulse-subtle"
+                  />
+                  {/* Core Circle with strict opaque fill inline override */}
+                  <circle
+                    r={isHovered ? 14 : 10}
+                    stroke={color}
+                    strokeWidth={isHovered ? 3 : 2}
+                    style={{ fill: isHovered ? "#FFFFFF" : "#131a2a", fillOpacity: 1 }}
+                    className="transition-all duration-300"
+                  />
+                  {/* Title */}
+                  <text
+                    y="22"
+                    textAnchor="middle"
+                    fill={isHovered ? "#FFFFFF" : "rgba(255,255,255,0.65)"}
+                    fontSize={isHovered ? "10px" : "8.5px"}
+                    fontWeight={isHovered ? "900" : "700"}
+                    className="transition-all duration-200 select-none pointer-events-none font-sans"
+                  >
+                    {note.title && note.title.length > 14
+                      ? note.title.substring(0, 12) + "..."
+                      : note.title || "ไม่มีชื่อ"}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        </g>
+      </svg>
+      {/* SYSTEM OVERLAYS */}
+      <div className="absolute top-4 left-4 md:left-6 z-10 flex items-center gap-4">
+        {/* Mobile-Friendly Back Button to Notes */}
+        <button
+          onClick={onClose}
+          className="py-1.5 px-3 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
+        >
+          <span>←</span> กลับไปหน้าโน้ต
+        </button>
+
+        {/* SCI-FI Stats Fluff (Desktop Only) */}
+        <div className="hidden md:flex items-center gap-3 select-none pointer-events-none opacity-40">
+          <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">SYSTEM: ACTIVE</span>
+          <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">COORD: {panX.toFixed(0)}, {panY.toFixed(0)}</span>
+          <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">ZOOM: {(scale * 100).toFixed(0)}%</span>
+        </div>
+      </div>
+
+      <div className="absolute top-4 right-4 md:right-6 z-10 flex items-center gap-1.5 md:gap-2">
+        <button
+          onClick={() => setScale((s) => Math.min(3, s + 0.15))}
+          className="w-8 h-8 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center justify-center text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer"
+          title="Zoom In"
+        >
+          ＋
+        </button>
+        <button
+          onClick={() => setScale((s) => Math.max(0.3, s - 0.15))}
+          className="w-8 h-8 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center justify-center text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer"
+          title="Zoom Out"
+        >
+          －
+        </button>
+        <button
+          onClick={() => { setScale(1); setPanX(0); setPanY(0); }}
+          className="px-2.5 h-8 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-slate-300 flex items-center justify-center text-[9px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
+        >
+          รีเซ็ต
+        </button>
+        {/* Desktop Close Button (Redundant) */}
+        <button
+          onClick={onClose}
+          className="hidden md:flex w-8 h-8 rounded-xl bg-red-650/80 border border-red-500/40 hover:bg-red-600 hover:border-red-500 text-white items-center justify-center shadow-md transition-all active:scale-95 cursor-pointer"
+          title="Close Graph"
+        >
+          <X size={14} />
+        </button>
+      </div>
+
+      {/* Interactive Mobile Tooltip: Tap node once to open edit */}
+      {hoveredNode && (
+        <div className="absolute top-16 left-4 right-4 md:right-auto md:left-6 z-10 bg-slate-900/95 border border-slate-700/60 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-auto select-text text-left">
+          <span className="inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 mb-2">
+            {hoveredNode.category}
+          </span>
+          <h4 className="text-xs font-black text-white leading-snug mb-1.5">{hoveredNode.title}</h4>
+          <p className="text-[10px] text-slate-400 font-medium leading-normal mb-2.5">
+            💡 ดับเบิลคลิก หรือกดปุ่มด้านล่างเพื่อแก้ไขโน้ตนี้
+          </p>
+          <button
+            onClick={() => onSelectNote(hoveredNode)}
+            className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider text-center cursor-pointer transition-colors"
+          >
+            เปิดแก้ไขโน้ต
+          </button>
+        </div>
+      )}
+
+      {!hoveredNode && hoveredLink?.type === "ai" && hoveredLink.reason && (
+        <div className="absolute top-16 left-4 right-4 md:right-auto md:left-6 z-10 bg-pink-950/90 border border-pink-700/50 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-none select-none text-left">
+          <span className="inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-900/60 text-pink-300 border border-pink-700/40 mb-2">
+            ✨ AI Semantic Link
+          </span>
+          <p className="text-[10px] text-pink-100 font-bold leading-relaxed">
+            {hoveredLink.reason}
+          </p>
+        </div>
+      )}
+
+      {/* ℹ️ Collapsible Legend Card */}
+      {!showLegend && !showAiList && (
+        <button
+          onClick={() => setShowLegend(true)}
+          className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-10 px-3 py-2 bg-slate-950/90 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+        >
+          <HelpCircle size={12} /> สัญลักษณ์
+        </button>
+      )}
+      
+      {showLegend && (
+        <div className="absolute bottom-4 left-4 right-4 md:right-auto md:bottom-6 md:left-6 z-10 bg-slate-950/95 border border-slate-800 p-4 rounded-3xl w-auto md:w-56 shadow-xl backdrop-blur-md text-left flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <h4 className="text-[9px] font-black uppercase tracking-wider text-slate-400">สัญลักษณ์แผนผัง</h4>
+              <button
+                onClick={() => setShowLegend(false)}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer p-0.5"
+              >
+                <X size={12} />
+              </button>
+            </div>
+            <div className="space-y-2 text-[9px] font-bold text-slate-300">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shadow-[0_0_8px_#f59e0b]" />
+                <span>พัฒนาตัวเอง</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]" />
+                <span>หนังสือ</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] shadow-[0_0_8px_#6366f1]" />
+                <span>การเงิน & ลงทุน</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shadow-[0_0_8px_#8b5cf6]" />
+                <span>ธุรกิจ</span>
+              </div>
+              <div className="h-px bg-slate-850 my-2" />
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-0.5 bg-[#6366f1]" />
+                <span>ลิงก์ที่คุณเขียน ([[ ]])</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-px border-t border-dashed border-[#ec4899]" />
+                <span>✨ วิเคราะห์เชื่อมโยงโดย AI</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowLegend(false)}
+            className="mt-3.5 py-1.5 w-full text-center bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer border border-slate-800 hover:border-slate-700"
+          >
+            ซ่อนคำอธิบาย
+          </button>
+        </div>
+      )}
+
+      {/* 🧠 Responsive AI suggestions panel */}
+      {!showAiList && !showLegend && (
+        <button
+          onClick={() => setShowAiList(true)}
+          className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10 px-3 py-2 bg-slate-950/90 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+        >
+          <span>✨</span> รายการเชื่อมโยง AI {aiSuggestions.length > 0 && `(${aiSuggestions.length})`}
+        </button>
+      )}
+      {showAiList && (
+        <div className="absolute bottom-4 right-4 left-4 md:left-auto md:bottom-6 md:right-6 z-10 bg-slate-950/95 border border-slate-800 p-4 rounded-3xl w-auto md:w-72 shadow-xl backdrop-blur-md text-left max-h-[250px] md:max-h-64 overflow-y-auto no-scrollbar flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <span>🧠</span> AI Brain Connection
+              </h4>
+              <button
+                onClick={() => setShowAiList(false)}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer p-0.5"
+                title="ปิด"
+              >
+                <X size={12} />
+              </button>
+            </div>
+            <p className="text-[9px] text-slate-500 font-bold mb-3">
+              สแกนสมองด้วย AI เพื่อค้นหาจุดเชื่อมโยงของไอเดียที่สัมพันธ์กันอย่างอัจฉริยะ
+            </p>
+
+            {aiSuggestions.length === 0 ? (
+              <div className="bg-slate-900/50 rounded-xl p-2.5 border border-slate-850 text-[9px] text-slate-400 font-medium leading-relaxed mb-3">
+                📝 <strong className="text-slate-300">วิธีสร้างลิงก์สมอง:</strong><br />
+                พิมพ์เครื่องหมาย <code className="text-indigo-400 bg-indigo-500/10 px-1 rounded">[[</code> ในช่องจดโน้ตเพื่อค้นหาและเชื่อมโยงโน้ตอื่นๆ เข้าหากันแบบคู่ความรู้
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-24 md:max-h-32 overflow-y-auto mb-3 pr-0.5 no-scrollbar">
+                <span className="text-[8px] font-black text-pink-500 block uppercase tracking-wider">เชื่อมโยงที่พบแล้ว ({aiSuggestions.length}):</span>
+                {aiSuggestions.map((sug: any, i: number) => {
+                  const srcNote = notes.find((n: any) => n.id === sug.source);
+                  const trgNote = notes.find((n: any) => n.id === sug.target);
+                  return (
+                    <div key={i} className="bg-pink-950/20 border border-pink-500/10 rounded-xl p-2 text-[9px] text-pink-100 font-semibold leading-snug">
+                      💡 <strong className="text-white">{srcNote?.title || "บันทึก A"}</strong> เชื่อมโยงกับ <strong className="text-white">{trgNote?.title || "บันทึก B"}</strong>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => {
+              if (!isProMember && freeScansUsed >= 3) {
+                setShowUpgradeModal(true);
+              } else {
+                onTriggerAiScan();
+              }
+            }}
+            disabled={isAiScanning}
+            className="w-full py-2 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isAiScanning ? (
+              <>
+                <Loader2 size={12} className="animate-spin" />
+                กำลังสแกนสมอง...
+              </>
+            ) : (
+              <>
+                <span>✨</span> AI Brain Scan {!isProMember && (freeScansUsed < 3 ? `(ฟรีอีก ${3 - freeScansUsed} ครั้ง)` : " (ต้องใช้ PRO)")}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* 👑 Sleek PRO Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-sm bg-gradient-to-b from-slate-900 to-slate-950 border border-violet-500/20 rounded-3xl p-5 shadow-2xl text-center flex flex-col justify-between overflow-hidden">
+            {/* Background Gradient Orbs */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-gradient-to-r from-violet-600 to-indigo-600 opacity-20 blur-3xl rounded-full pointer-events-none" />
+
+            <div>
+              {/* Close Button */}
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors p-1 cursor-pointer z-10"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Premium Crown Badge */}
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.4)] mb-3">
+                <Crown size={20} className="fill-white" />
+              </div>
+
+              {/* Title & Subtitle */}
+              <h3 className="text-sm font-black text-white tracking-wide mb-1.5">
+                ปลดล็อกสมองอัจฉริยะขั้นสุดด้วย PRO
+              </h3>
+              <p className="text-[9.5px] text-slate-400 font-bold leading-relaxed mb-4">
+                วิเคราะห์เชื่อมโยงความรู้ทุกมิติ ค้นหาจุดสัมพันธ์ของไอเดียที่คาดไม่ถึงด้วยระบบ AI Brain Scan
+              </p>
+
+              {/* Premium Value Props */}
+              <div className="space-y-2 text-left mb-5">
+                <div className="flex items-start gap-2.5 bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
+                  <span className="text-xs mt-0.5">🧠</span>
+                  <div>
+                    <h5 className="text-[9.5px] font-black text-violet-300 uppercase tracking-wide">AI Brain Scan</h5>
+                    <p className="text-[8.5px] text-slate-400 font-bold">สแกนเชื่อมโยงความสัมพันธ์ของความรู้ทั้งหมดในระบบด้วย AI</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
+                  <span className="text-xs mt-0.5">♾️</span>
+                  <div>
+                    <h5 className="text-[9.5px] font-black text-violet-300 uppercase tracking-wide">สร้างคลังความรู้ไม่จำกัด</h5>
+                    <p className="text-[8.5px] text-slate-400 font-bold">จดสรุปหนังสือ คอร์สเรียน และบันทึกความคิดได้จุใจไร้ขีดจำกัด</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
+                  <span className="text-xs mt-0.5">⚡</span>
+                  <div>
+                    <h5 className="text-[9.5px] font-black text-violet-300 uppercase tracking-wide">Interactive Graph View</h5>
+                    <p className="text-[8.5px] text-slate-400 font-bold">มองเห็นเครือข่ายไอเดียเชื่อมต่อถึงกันแบบ Visual ตอบสนองได้สมบูรณ์</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Actions */}
+            <div className="space-y-1.5 z-10">
+              <button
+                onClick={handleUpgradeToPro}
+                disabled={isUpgrading}
+                className="w-full py-2 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:shadow-violet-500/20 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isUpgrading ? (
+                  <>
+                    <Loader2 size={11} className="animate-spin" />
+                    กำลังไปหน้าชำระเงิน...
+                  </>
+                ) : (
+                  <>
+                    <Crown size={11} className="fill-white" /> อัปเกรดเป็น PRO ตอนนี้
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="w-full py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer border border-slate-850 transition-colors"
+              >
+                ยังไม่สนใจ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 function LibraryContent() {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
@@ -93,6 +1001,138 @@ function LibraryContent() {
   const [noteFontSize, setNoteFontSize] = useState<"sm" | "base" | "lg">("base");
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // --- 🛰️ Upgraded Brain Graph & Autocomplete States ---
+  const [showGraphView, setShowGraphView] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState("");
+  const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
+  const [autocompleteActiveIdx, setAutocompleteActiveIdx] = useState(0);
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const [freeScansUsed, setFreeScansUsed] = useState(0);
+
+  // Load cached AI suggestions
+  useEffect(() => {
+    if (!user) {
+      setAiSuggestions([]);
+      return;
+    }
+    const cached = localStorage.getItem(`ai_suggestions_${user.uid}`);
+    if (cached) {
+      try {
+        setAiSuggestions(JSON.parse(cached));
+      } catch (e) {
+        console.error("Failed to parse cached AI suggestions", e);
+      }
+    }
+  }, [user]);
+
+  const handleCallAiScan = async () => {
+    if (!user || notes.length < 2) {
+      alert("✨ กรุณาสร้างโน้ตอย่างน้อย 2 ใบขึ้นไปเพื่อทำการสแกนระบบความสัมพันธ์ครับ");
+      return;
+    }
+
+    // Bypass check: allow if Pro OR freeScansUsed is under 3
+    if (!isProMember && freeScansUsed >= 3) {
+      alert("✨ ฟีเจอร์ AI Brain Scan วิเคราะห์ความเชื่อมโยง เป็นสิทธิ์เฉพาะสมาชิก PRO\n\nสามารถอัปเดตสมาชิกที่หน้าแดชบอร์ดได้ครับ");
+      return;
+    }
+
+    setIsAiScanning(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken(true);
+      
+      const notesSummary = notes.map(n => ({
+        id: n.id,
+        title: n.title || "ไม่มีชื่อ",
+        category: n.category || "พัฒนาตัวเอง",
+        snippet: (n.content || "").replace(/[#*`_-]/g, "").slice(0, 100)
+      }));
+
+      const promptText = `นี่คือรายการโน้ตทั้งหมดในสมองที่สองของผู้ใช้:\n${JSON.stringify(notesSummary, null, 2)}\n\nโปรดทำการจับคู่เชื่อมโยงไอเดียที่สัมพันธ์กัน และส่งคำตอบคืนเป็น JSON เท่านั้นตามกฎ`;
+
+      const response = await fetch("/api/quote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          type: "second_brain_scan"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("AI Scan failed");
+      }
+
+      const data = await response.json();
+      let suggestions = [];
+      try {
+        const cleanedText = data.quote.replace(/```json|```/g, "").trim();
+        suggestions = JSON.parse(cleanedText);
+      } catch (parseErr) {
+        console.error("Failed to parse AI JSON response:", parseErr, data.quote);
+        const arrayMatch = data.quote.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (arrayMatch) {
+          suggestions = JSON.parse(arrayMatch[0]);
+        } else {
+          throw new Error("AI returned invalid JSON formatting");
+        }
+      }
+
+      if (Array.isArray(suggestions)) {
+        setAiSuggestions(suggestions);
+        localStorage.setItem(`ai_suggestions_${user.uid}`, JSON.stringify(suggestions));
+
+        // Increment freeScansUsed in Firestore for non-Pro members
+        if (!isProMember) {
+          const nextCount = freeScansUsed + 1;
+          setFreeScansUsed(nextCount);
+          try {
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, {
+              freeScansUsed: nextCount
+            });
+          } catch (dbErr) {
+            console.error("Failed to update freeScansUsed in Firestore:", dbErr);
+          }
+        }
+
+        alert("✨ AI สแกนวิเคราะห์ความเชื่อมโยงเสร็จสิ้นเรียบร้อย! สามารถดูเส้นประเรืองแสงในโหมดแผนผังได้เลยครับ");
+      } else {
+        throw new Error("Invalid output format");
+      }
+    } catch (error: any) {
+      console.error("AI Scan error:", error);
+      alert("❌ เกิดข้อผิดพลาดในการสแกนสมองด้วย AI: " + error.message);
+    } finally {
+      setIsAiScanning(false);
+    }
+  };
+
+  const handleSelectAutocomplete = (linkedNote: any) => {
+    const editor = document.getElementById("note-content-editor") as HTMLTextAreaElement;
+    if (!editor) return;
+    
+    const start = autocompleteIndex;
+    const end = editor.selectionStart;
+    const value = noteContent;
+    
+    const replacement = `[[${linkedNote.title}]] `;
+    const newValue = value.substring(0, start) + replacement + value.substring(end);
+    setNoteContent(newValue);
+    setShowAutocomplete(false);
+    
+    setTimeout(() => {
+      editor.focus();
+      const newCursorPos = start + replacement.length;
+      editor.selectionStart = editor.selectionEnd = newCursorPos;
+    }, 0);
+  };
+
   // Load note font size from localStorage
   useEffect(() => {
     if (!isMounted) return;
@@ -113,6 +1153,39 @@ function LibraryContent() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const value = textarea.value;
+
+    const matchingNotesForAutocomplete = notes.filter((n) => {
+      if (selectedNote && n.id === selectedNote.id) return false;
+      return n.title?.toLowerCase().includes(autocompleteQuery.toLowerCase());
+    });
+
+    if (showAutocomplete) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setAutocompleteActiveIdx((prev) => (prev + 1) % Math.max(1, matchingNotesForAutocomplete.length));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setAutocompleteActiveIdx((prev) => (prev - 1 + matchingNotesForAutocomplete.length) % Math.max(1, matchingNotesForAutocomplete.length));
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const targetNote = matchingNotesForAutocomplete[autocompleteActiveIdx];
+        if (targetNote) {
+          handleSelectAutocomplete(targetNote);
+        } else {
+          setShowAutocomplete(false);
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowAutocomplete(false);
+        return;
+      }
+    }
 
     if (e.key === "Tab") {
       e.preventDefault();
@@ -588,6 +1661,8 @@ ${noteContent}`;
               if (userData.readArticles) {
                 setReadArticles(userData.readArticles);
               }
+              const scans = userData?.freeScansUsed || 0;
+              setFreeScansUsed(scans);
               const subscriptionStatus = userData?.subscriptionStatus || userData?.subscription_status || "";
               const subscriptionTier = userData?.subscriptionTier || userData?.subscription_tier || "";
               const isPro =
@@ -616,6 +1691,7 @@ ${noteContent}`;
         setReadArticles([]);
         setIsProMember(false);
         setHasEbookAccess(false);
+        setFreeScansUsed(0);
       }
     });
 
@@ -938,14 +2014,32 @@ ${noteContent}`;
               {/* Sidebar Header & Add Note Button */}
               <div className="flex items-center justify-between gap-3 mb-6">
                 <h3 className="text-sm font-black text-slate-800 tracking-wide flex items-center gap-1.5">
-                  🧠 บันทึกสมองที่สอง ({notes.length})
+                  🧠 บันทึกสมอง ({notes.length})
                 </h3>
-                <button
-                  onClick={handleCreateNote}
-                  className="flex items-center justify-center gap-1 px-3.5 py-2 bg-slate-900 hover:bg-slate-850 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-95"
-                >
-                  <Plus size={12} /> เพิ่มโน้ต
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setShowGraphView(!showGraphView);
+                      if (!showGraphView && mobileNotesView === "list") {
+                        setMobileNotesView("editor");
+                      }
+                    }}
+                    className={`group px-3 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+                      showGraphView
+                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30"
+                        : "bg-white hover:bg-slate-50 text-slate-700 hover:text-indigo-600 border-slate-200/80 hover:border-indigo-200"
+                    }`}
+                  >
+                    <Brain size={12} className={showGraphView ? "animate-pulse text-white" : "text-slate-400 group-hover:text-indigo-500 transition-colors"} />
+                    <span>แผนผัง</span>
+                  </button>
+                  <button
+                    onClick={handleCreateNote}
+                    className="flex items-center justify-center gap-1 px-3 py-2 bg-slate-900 hover:bg-slate-850 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-95 cursor-pointer"
+                  >
+                    <Plus size={12} /> เพิ่มโน้ต
+                  </button>
+                </div>
               </div>
 
               {/* Note Search Input */}
@@ -1076,11 +2170,25 @@ ${noteContent}`;
 
             {/* 📝 Right Column: Main Editor Area */}
             <div className={`flex-1 flex flex-col justify-between ${
-              mobileNotesView === "editor" ? "block" : "hidden md:flex"
+              mobileNotesView === "editor" ? "flex" : "hidden md:flex"
             }`}>
-              {selectedNote ? (
+              {showGraphView ? (
+                <GraphView
+                  notes={notes}
+                  onSelectNote={(note) => {
+                    handleSelectNote(note);
+                    setShowGraphView(false);
+                  }}
+                  onClose={() => setShowGraphView(false)}
+                  aiSuggestions={aiSuggestions}
+                  onTriggerAiScan={handleCallAiScan}
+                  isAiScanning={isAiScanning}
+                  isProMember={isProMember}
+                  freeScansUsed={freeScansUsed}
+                />
+              ) : selectedNote ? (
                 <>
-                  <div className="space-y-4 flex flex-col">
+                  <div className="space-y-4 flex flex-col relative">
                     {/* Back button for mobile view */}
                     <button
                       onClick={async () => {
@@ -1127,31 +2235,32 @@ ${noteContent}`;
                           </select>
                         </div>
 
-                        {/* Font Size Selector */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">ขนาดอักษร:</span>
-                          <div className="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200/60">
-                            {(["sm", "base", "lg"] as const).map((size) => {
-                              const label = size === "sm" ? "เล็ก" : size === "base" ? "กลาง" : "ใหญ่";
-                              const isActive = noteFontSize === size;
-                              return (
-                                <button
-                                  key={size}
-                                  onClick={() => handleFontSizeChange(size)}
-                                  className={`px-2.5 py-0.5 rounded-md text-[9px] font-black transition-all ${
-                                    isActive
-                                      ? "bg-white text-slate-800 shadow-sm"
-                                      : "text-slate-500 hover:text-slate-800"
-                                  }`}
-                                >
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+
+                         {/* Font Size Selector */}
+                         <div className="flex items-center gap-1.5">
+                           <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">ขนาดอักษร:</span>
+                           <div className="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200/60">
+                             {(["sm", "base", "lg"] as const).map((size) => {
+                               const label = size === "sm" ? "เล็ก" : size === "base" ? "กลาง" : "ใหญ่";
+                               const isActive = noteFontSize === size;
+                               return (
+                                 <button
+                                   key={size}
+                                   onClick={() => handleFontSizeChange(size)}
+                                   className={`px-2.5 py-0.5 rounded-md text-[9px] font-black transition-all ${
+                                     isActive
+                                       ? "bg-white text-slate-800 shadow-sm"
+                                       : "text-slate-500 hover:text-slate-800"
+                                   }`}
+                                 >
+                                   {label}
+                                 </button>
+                               );
+                             })}
+                           </div>
+                         </div>
+                       </div>
+                     </div>
 
                     {/* Auto-save Hint Banner */}
                     <div className="text-[11px] text-slate-400 flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 font-medium">
@@ -1173,7 +2282,27 @@ ${noteContent}`;
                       id="note-content-editor"
                       placeholder="พิมพ์จดบันทึกความคิด สรุปความรู้ หรือแผนพัฒนาตัวเองที่นี่ได้เลย..."
                       value={noteContent}
-                      onChange={(e) => setNoteContent(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNoteContent(val);
+                        
+                        const selectionStart = e.target.selectionStart;
+                        const textBeforeCursor = val.substring(0, selectionStart);
+                        const openBracketIdx = textBeforeCursor.lastIndexOf("[[");
+                        const closeBracketIdx = textBeforeCursor.lastIndexOf("]]");
+                        
+                        if (openBracketIdx !== -1 && openBracketIdx > closeBracketIdx) {
+                          const queryText = textBeforeCursor.substring(openBracketIdx + 2);
+                          if (!queryText.includes("\n")) {
+                            setShowAutocomplete(true);
+                            setAutocompleteQuery(queryText);
+                            setAutocompleteIndex(openBracketIdx);
+                            setAutocompleteActiveIdx(0);
+                            return;
+                          }
+                        }
+                        setShowAutocomplete(false);
+                      }}
                       onKeyDown={handleKeyDown}
                       rows={14}
                       className={`w-full bg-transparent leading-loose text-slate-600 placeholder-slate-400 focus:outline-none resize-none font-medium pr-1 focus:ring-0 min-h-[320px] ${
@@ -1184,10 +2313,65 @@ ${noteContent}`;
                             : "text-lg"
                       }`}
                     />
+
+                    {/* Autocomplete dropdown overlay */}
+                    {showAutocomplete && (
+                      <div className="absolute z-50 bg-slate-900/95 border border-slate-700/80 rounded-2xl w-64 shadow-xl max-h-48 overflow-y-auto p-1.5 backdrop-blur-md animate-fade-in text-left"
+                           style={{
+                             bottom: "60px",
+                             left: "20px"
+                           }}>
+                        <div className="px-2 py-1 text-[8px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-800 mb-1 flex items-center justify-between">
+                          <span>พิมพ์ค้นหาโน้ต...</span>
+                          <span className="text-[7px] opacity-60">(พิมพ์ต่อหลัง [[ ได้เลย)</span>
+                        </div>
+                        {notes.filter((n) => {
+                          if (selectedNote && n.id === selectedNote.id) return false;
+                          return n.title?.toLowerCase().includes(autocompleteQuery.toLowerCase());
+                        }).length === 0 ? (
+                          <div className="px-2 py-1.5 text-[9px] text-slate-400 font-bold">
+                            ไม่พบชื่อบันทึก
+                          </div>
+                        ) : (
+                          notes
+                            .filter((n) => {
+                              if (selectedNote && n.id === selectedNote.id) return false;
+                              return n.title?.toLowerCase().includes(autocompleteQuery.toLowerCase());
+                            })
+                            .map((n, idx) => {
+                              const matchingNotes = notes.filter((x) => {
+                                if (selectedNote && x.id === selectedNote.id) return false;
+                                return x.title?.toLowerCase().includes(autocompleteQuery.toLowerCase());
+                              });
+                              const isActive = idx === autocompleteActiveIdx;
+                              return (
+                                <button
+                                  key={n.id}
+                                  onClick={() => handleSelectAutocomplete(n)}
+                                  className={`w-full px-2 py-1.5 rounded-xl text-left text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                                    isActive
+                                      ? "bg-indigo-600 text-white"
+                                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                  }`}
+                                >
+                                  <span className="line-clamp-1">{n.title || "ไม่มีชื่อ"}</span>
+                                  <span className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded-full ${
+                                    isActive ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-400"
+                                  }`}>
+                                    {n.category}
+                                  </span>
+                                </button>
+                              );
+                            })
+                        )}
+                      </div>
+                    )}
                   </div>
 
+
+
                   {/* Footer widgets: Stats, Templates and AI actions */}
-                  <div className="mt-6 pt-4 border-t border-slate-100 space-y-4">
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
                     
                     {/* Segment 1: Templates List (Visually Grouped) */}
                     <div className="flex items-center gap-1.5 flex-wrap bg-slate-50/50 p-2 rounded-xl border border-slate-100/60">
