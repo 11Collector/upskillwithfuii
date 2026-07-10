@@ -37,7 +37,7 @@ function BottomNavigationInner() {
   const isDashboardFlow =
     !!user && (
       pathname.startsWith('/dashboard') ||
-      ((pathname.startsWith('/library') || pathname.startsWith('/tools')) && enteredDashboard) ||
+      ((pathname.startsWith('/library') || pathname.startsWith('/second-brain') || pathname.startsWith('/tools')) && enteredDashboard) ||
       pathname === '/tools/deep-work' ||
       pathname === '/tools/focus-room' ||
       pathname === '/shop'
@@ -98,7 +98,7 @@ function BottomNavigationInner() {
     { id: 'life', label: 'ชีวิต', icon: PieChart, path: '/tools/wheel-of-life' },
     { id: 'work', label: 'ทำงาน', icon: Users, path: '/tools/disc' },
     { id: 'money', label: 'การเงิน', icon: Wallet, path: '/tools/money-avatar' },
-    { id: 'library', label: 'คลังสมอง', icon: Brain, path: '/library' },
+    { id: 'library', label: 'สมองที่สอง', icon: Brain, path: '/second-brain' },
   ];
 
   const getActiveColor = (id: string) => {

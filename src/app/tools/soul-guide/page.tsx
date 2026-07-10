@@ -643,7 +643,7 @@ export default function SoulGuidePage() {
                       {/* Save to Second Brain Button */}
                       {savedNotesMap[idx] ? (
                         <Link
-                          href={`/library?noteId=${savedNotesMap[idx]}`}
+                          href={`/second-brain?noteId=${savedNotesMap[idx]}`}
                           className="hover:text-amber-400 text-amber-500 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-widest active:scale-95"
                         >
                           <Brain size={11} />
