@@ -78,6 +78,7 @@ interface GraphLink {
   target: string;
   type: "wiki" | "ai";
   reason?: string;
+  score?: number;
 }
 
 interface GraphViewProps {
@@ -189,7 +190,8 @@ const GraphView: React.FC<GraphViewProps> = ({
           source: sug.source,
           target: sug.target,
           type: "ai",
-          reason: sug.reason
+          reason: sug.reason,
+          score: sug.score
         });
       }
     }
@@ -738,11 +740,11 @@ const GraphView: React.FC<GraphViewProps> = ({
       )}
 
       {!hoveredNode && hoveredLink?.type === "ai" && hoveredLink.reason && (
-        <div className="absolute top-16 left-4 right-4 md:right-auto md:left-6 z-10 bg-pink-950/90 border border-pink-700/50 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-none select-none text-left">
-          <span className="inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-900/60 text-pink-300 border border-pink-700/40 mb-2">
-            ✨ AI Semantic Link
+        <div className="absolute top-16 left-4 right-4 md:right-auto md:left-6 z-10 bg-slate-950/95 border border-cyan-800 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-none select-none text-left">
+          <span className="inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-700/40 mb-2">
+            ✨ AI Link {hoveredLink.score ? `• สัมพันธ์ ${hoveredLink.score}%` : ""}
           </span>
-          <p className="text-[10px] text-pink-100 font-bold leading-relaxed">
+          <p className="text-[10px] text-[#A5F3FC] font-bold leading-relaxed">
             {hoveredLink.reason}
           </p>
         </div>
@@ -1048,7 +1050,7 @@ function SecondBrainContent() {
         id: n.id,
         title: n.title || "ไม่มีชื่อ",
         category: n.category || "พัฒนาตัวเอง",
-        snippet: (n.content || "").replace(/[#*`_-]/g, "").slice(0, 100)
+        snippet: (n.content || "").replace(/[#*`_-]/g, "").slice(0, 1200)
       }));
 
       const promptText = `นี่คือรายการโน้ตทั้งหมดในสมองที่สองของผู้ใช้:\n${JSON.stringify(notesSummary, null, 2)}\n\nโปรดทำการจับคู่เชื่อมโยงไอเดียที่สัมพันธ์กัน และส่งคำตอบคืนเป็น JSON เท่านั้นตามกฎ`;
