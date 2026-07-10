@@ -528,8 +528,8 @@ const GraphView: React.FC<GraphViewProps> = ({
 
   const getNodeColor = (cat: string) => {
     if (cat === "หนังสือ") return "#10b981"; // emerald
-    if (cat === "การเงิน & ลงทุน") return "#6366f1"; // indigo
-    if (cat === "ธุรกิจ") return "#8b5cf6"; // purple
+    if (cat === "การเงิน & ลงทุน") return "#ec4899"; // rose
+    if (cat === "ธุรกิจ") return "#6366f1"; // indigo
     return "#f59e0b"; // amber (พัฒนาตัวเอง)
   };
 
@@ -550,7 +550,7 @@ const GraphView: React.FC<GraphViewProps> = ({
       >
         <defs>
           {/* Neon glow filters */}
-          {["#10b981", "#6366f1", "#8b5cf6", "#f59e0b", "#ec4899"].map((color) => (
+          {["#10b981", "#6366f1", "#ec4899", "#f59e0b", "#06b6d4"].map((color) => (
             <filter key={color} id={`glow-${color.toLowerCase().replace("#", "")}`} x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="6" result="blur" />
               <feMerge>
@@ -583,10 +583,10 @@ const GraphView: React.FC<GraphViewProps> = ({
               const sourceNode = notes.find((n: any) => n.id === link.source);
               const sourceColor = sourceNode ? getNodeColor(sourceNode.category) : "#6366f1";
               const strokeColor = isHovered 
-                ? (link.type === "ai" ? "#ec4899" : sourceColor)
-                : (link.type === "ai" ? "rgba(236,72,153,0.25)" : "rgba(99,102,241,0.18)");
+                ? (link.type === "ai" ? "#06b6d4" : sourceColor)
+                : (link.type === "ai" ? "rgba(6,182,212,0.45)" : `${sourceColor}60`);
               const filterVal = isHovered
-                ? `url(#glow-${(link.type === "ai" ? "#ec4899" : sourceColor).toLowerCase().replace("#", "")})`
+                ? `url(#glow-${(link.type === "ai" ? "#06b6d4" : sourceColor).toLowerCase().replace("#", "")})`
                 : undefined;
 
               const srcNodeState = nodesRef.current.find((n) => n.id === link.source);
@@ -601,7 +601,7 @@ const GraphView: React.FC<GraphViewProps> = ({
                     x2={trgNodeState ? trgNodeState.x : undefined}
                     y2={trgNodeState ? trgNodeState.y : undefined}
                     stroke={strokeColor}
-                    strokeWidth={isHovered ? (link.type === "ai" ? 2.5 : 2) : (link.type === "ai" ? 1.5 : 1)}
+                    strokeWidth={isHovered ? (link.type === "ai" ? 3.5 : 3) : (link.type === "ai" ? 2 : 1.8)}
                     strokeDasharray={link.type === "ai" ? "5,5" : undefined}
                     filter={filterVal}
                     pointerEvents="none"
@@ -780,20 +780,20 @@ const GraphView: React.FC<GraphViewProps> = ({
                 <span>หนังสือ</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] shadow-[0_0_8px_#6366f1]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ec4899] shadow-[0_0_8px_#ec4899]" />
                 <span>การเงิน & ลงทุน</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shadow-[0_0_8px_#8b5cf6]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] shadow-[0_0_8px_#6366f1]" />
                 <span>ธุรกิจ</span>
               </div>
               <div className="h-px bg-slate-850 my-2" />
               <div className="flex items-center gap-2">
-                <span className="w-4 h-0.5 bg-[#6366f1]" />
+                <span className="w-4 h-[3px] rounded bg-gradient-to-r from-amber-500 via-[#6366f1] to-emerald-500" />
                 <span>ลิงก์ที่คุณเขียน ([[ ]])</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-4 h-px border-t border-dashed border-[#ec4899]" />
+                <span className="w-4 h-[2px] border-t-2 border-dashed border-[#06b6d4]" />
                 <span>✨ วิเคราะห์เชื่อมโยงโดย AI</span>
               </div>
             </div>
