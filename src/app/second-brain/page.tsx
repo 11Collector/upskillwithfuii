@@ -970,7 +970,7 @@ const GraphView: React.FC<GraphViewProps> = ({
   );
 };
 
-function LibraryContent() {
+function SecondBrainContent() {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
@@ -984,7 +984,7 @@ function LibraryContent() {
   const [authLoading, setAuthLoading] = useState(true);
 
   // --- 🧠 Second Brain Notes States ---
-  const [activeView, setActiveView] = useState<"library" | "notes">("library");
+  const [activeView, setActiveView] = useState<"library" | "notes">("notes");
   const [notes, setNotes] = useState<any[]>([]);
   const [selectedNote, setSelectedNote] = useState<any | null>(null);
   const [noteTitle, setNoteTitle] = useState("");
@@ -1783,12 +1783,12 @@ ${noteContent}`;
         {/* Toggle Switcher: Minimal Pill Button in Top-Right */}
         <div className="absolute right-0 top-0 z-50">
           <Link
-            href="/second-brain"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-white/5 hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
-            title="สลับไปหน้าสมองที่สอง"
+            href="/library"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600 hover:text-slate-900"
+            title="สลับไปหน้าคลังบทความ"
           >
-            <Brain size={12} className="text-amber-500 animate-pulse" />
-            <span>สมองที่สอง</span>
+            <BookOpen size={12} className="text-indigo-600" />
+            <span>คลังบทความ</span>
           </Link>
         </div>
 
@@ -2588,17 +2588,17 @@ ${noteContent}`;
   );
 }
 
-export default function PremiumLibraryPage() {
+export default function SecondBrainPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-amber-500" size={32} />
         <p className="text-slate-400 text-xs font-black uppercase tracking-widest animate-pulse">
-          กำลังโหลดคลังสมอง... 🧠
+          กำลังโหลดสมองที่สอง... 🧠
         </p>
       </div>
     }>
-      <LibraryContent />
+      <SecondBrainContent />
     </Suspense>
   );
 }

@@ -8361,7 +8361,7 @@ Day 21: [กิจกรรม]
             {isFabOpen && (
               <>
                 {/* 1. ปุ่มจดโน้ตด่วน (บนสุด) */}
-                <Link href="/library?newNote=true" onClick={() => setIsFabOpen(false)}>
+                <Link href="/second-brain?newNote=true" onClick={() => setIsFabOpen(false)}>
                   <motion.div
                     initial={{ opacity: 0, y: 15, scale: 0.8 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -8439,7 +8439,7 @@ Day 21: [กิจกรรม]
       ) : (
         /* ปุ่มจดโน้ตอย่างเดียว กรณีที่ยังไม่ปลดล็อกแชทพี่ฟุ้ย */
         <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[150]">
-          <Link href="/library?newNote=true">
+          <Link href="/second-brain?newNote=true">
             <motion.div
               whileHover={{ scale: 1.1, y: -4 }}
               whileTap={{ scale: 0.9 }}
