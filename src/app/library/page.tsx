@@ -1991,7 +1991,7 @@ ${noteContent}`;
               }}
             >
               {/* 📁 Left Column: Sidebar List */}
-              <div className={`w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6 ${
+              <div className={`w-full md:w-80 shrink-0 flex flex-col border-r border-slate-100 pr-0 md:pr-6 relative ${
                 mobileNotesView === "list" ? "block" : "hidden md:flex"
               }`}>
               
@@ -2056,7 +2056,7 @@ ${noteContent}`;
               </div>
 
               {/* Notes List Scroll Container */}
-              <div className="flex-1 overflow-y-auto max-h-[480px] pr-1 space-y-2.5 no-scrollbar">
+              <div className="flex-1 overflow-y-auto max-h-[480px] pr-1 pb-14 space-y-2.5 no-scrollbar">
                 {notes.filter((n) => {
                   const matchesSearch =
                     (n.title || "").toLowerCase().includes(searchNoteQuery.toLowerCase()) ||
@@ -2150,6 +2150,9 @@ ${noteContent}`;
                     })
                 )}
               </div>
+
+              {/* Bottom Fade Mask */}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/85 to-transparent pointer-events-none z-10" />
             </div>
 
             {/* 📝 Right Column: Main Editor Area */}
