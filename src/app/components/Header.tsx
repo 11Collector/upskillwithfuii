@@ -126,7 +126,7 @@ function HeaderInner() {
                     { href: "/tools/wheel-of-life", label: "สมดุลชีวิต", icon: <PieChart size={17} />, activeColor: "text-red-600 bg-red-50" },
                     { href: "/tools/disc", label: "DISC", icon: <Users size={17} />, activeColor: "text-blue-600 bg-blue-50" },
                     { href: "/tools/money-avatar", label: "สไตล์การเงิน", icon: <Wallet size={17} />, activeColor: "text-amber-600 bg-amber-50" },
-                    { href: "/second-brain", label: "คลังสมอง", icon: <Brain size={17} />, activeColor: "text-amber-500 bg-amber-50" },
+                    { href: "/library", label: "คลังสมอง", icon: <Brain size={17} />, activeColor: "text-amber-500 bg-amber-50" },
                   ].map(({ href, label, icon, activeColor }) => {
                     const isActive = pathname.startsWith(href);
                     return (
