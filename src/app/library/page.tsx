@@ -981,6 +981,7 @@ function LibraryContent() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // --- 🧠 Second Brain Notes States ---
   const [activeView, setActiveView] = useState<"library" | "notes">("library");
@@ -1240,30 +1241,25 @@ function LibraryContent() {
   // Derived state sync when newNote or noteId query param is present
   const newNoteParam = searchParams.get("newNote") === "true";
   const targetNoteId = searchParams.get("noteId");
-  const [prevNewNote, setPrevNewNote] = useState(false);
-  const [prevTargetNoteId, setPrevTargetNoteId] = useState<string | null>(null);
-
-  if (newNoteParam !== prevNewNote || targetNoteId !== prevTargetNoteId) {
-    setPrevNewNote(newNoteParam);
-    setPrevTargetNoteId(targetNoteId);
-    if (newNoteParam || targetNoteId) {
-      if (user) {
-        setActiveView("notes");
-        setMobileNotesView("editor");
-        if (newNoteParam) {
-          setIsCreatingNoteFromUrl(true);
-        }
-      }
-    }
-  }
-
-  // Trigger auth modal if query params are present but user is not logged in
+  // Trigger auth modal if query params are present but user is not logged in and auth loading has completed
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || authLoading) return;
     if ((newNoteParam || targetNoteId) && !user) {
       setShowAuthModal(true);
     }
-  }, [isMounted, newNoteParam, targetNoteId, user]);
+  }, [isMounted, authLoading, newNoteParam, targetNoteId, user]);
+
+  // Handle auto-navigation to editor view when url query params are set and user is logged in
+  useEffect(() => {
+    if (!isMounted || authLoading) return;
+    if (user && (newNoteParam || targetNoteId)) {
+      setActiveView("notes");
+      setMobileNotesView("editor");
+      if (newNoteParam) {
+        setIsCreatingNoteFromUrl(true);
+      }
+    }
+  }, [isMounted, authLoading, user, newNoteParam, targetNoteId]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -1693,6 +1689,7 @@ ${noteContent}`;
         setHasEbookAccess(false);
         setFreeScansUsed(0);
       }
+      setAuthLoading(false);
     });
 
     return () => {
