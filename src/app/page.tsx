@@ -71,6 +71,7 @@ export default function Home() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [billingPlan, setBillingPlan] = useState<ProPlan>('monthly');
+  const [showIOSInstallGuide, setShowIOSInstallGuide] = useState(false);
 
   const [guideStep, setGuideStep] = useState(1);
   const [showGuide, setShowGuide] = useState(false);
@@ -298,7 +299,7 @@ export default function Home() {
             <motion.button
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              onClick={isIOS ? undefined : handleInstallClick}
+              onClick={isIOS ? () => setShowIOSInstallGuide(true) : handleInstallClick}
               className="absolute right-4 top-4 z-30 flex items-center gap-2.5 rounded-full border border-white/55 bg-slate-950/94 px-4 py-2.5 text-white shadow-[0_18px_42px_rgba(15,23,42,0.42),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl ring-1 ring-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-slate-900 md:right-7 md:top-7 md:px-5 md:py-3"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-400/14 text-sky-200 ring-1 ring-sky-200/20">
@@ -1507,6 +1508,77 @@ export default function Home() {
             </button>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* --- 📱 iOS Install Guide Modal --- */}
+      {showIOSInstallGuide && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowIOSInstallGuide(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-[360px] bg-[#0A0B10]/95 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-6 shadow-[0_0_80px_rgba(0,0,0,0.8)] text-left flex flex-col text-white"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/10 text-red-400 ring-1 ring-red-400/20">
+                  <Download size={14} />
+                </span>
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-100">ติดตั้งแอป iOS</h3>
+              </div>
+              <button
+                onClick={() => setShowIOSInstallGuide(false)}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-[12px] text-slate-300 font-bold mb-4 leading-relaxed">
+              สำหรับ iPhone และ iPad น้าสามารถติดตั้งแอปได้ง่ายๆ ตามขั้นตอนดังนี้ครับ:
+            </p>
+
+            <div className="space-y-3.5 text-[11px] font-bold text-slate-200">
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-850 text-[10px] font-black text-slate-300">1</span>
+                <div>
+                  กดปุ่ม <span className="text-red-400 font-black">แชร์ (Share)</span> ที่แถบด้านล่างของบราวเซอร์ Safari
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">ลักษณะเป็นรูปกล่องสี่เหลี่ยมมีลูกศรชี้ขึ้น [↑]</div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-850 text-[10px] font-black text-slate-300">2</span>
+                <div>
+                  เลื่อนลงมาด้านล่างแล้วเลือก <span className="text-red-400 font-black">"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</span>
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">ลักษณะเป็นรูปเครื่องหมายบวก [+] ในกรอบสี่เหลี่ยม</div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-850 text-[10px] font-black text-slate-300">3</span>
+                <div>
+                  กดปุ่ม <span className="text-red-400 font-black">"เพิ่ม" (Add)</span> ที่มุมขวาบนของหน้าจอ
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">แอปจะปรากฏเป็นไอคอนบนหน้าจอโฮมพร้อมใช้งานทันทีครับ 📱✨</div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowIOSInstallGuide(false)}
+              className="mt-6 py-3 w-full text-center bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors border border-white/5"
+            >
+              เข้าใจแล้ว 👌
+            </button>
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
     </>
