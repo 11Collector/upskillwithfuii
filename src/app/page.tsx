@@ -283,7 +283,7 @@ export default function Home() {
 
       {/* --- 1. Hero Section --- */}
       {!user ? (
-        <section className="relative mb-10 min-h-[720px] w-full overflow-hidden bg-amber-50 md:mb-14 md:min-h-[720px]">
+        <section className="relative mb-10 min-h-[720px] w-full overflow-hidden bg-amber-50 bg-noise md:mb-14 md:min-h-[720px]">
           <picture className="absolute inset-0 block h-full w-full">
             <source media="(max-width: 767px)" srcSet="/WallpaperMobile.png" />
             <img
@@ -292,6 +292,7 @@ export default function Home() {
               className="absolute -top-28 left-0 right-0 h-[calc(100%+7rem)] w-full object-cover object-[center_top] md:-top-14 md:inset-x-0 md:h-[calc(100%+3.5rem)] md:object-[33%_top] lg:inset-0 lg:h-full lg:object-center"
             />
           </picture>
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-50/96 via-amber-50/70 to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_28%_76%,rgba(15,23,42,0.22),transparent_42%)]" />
 
@@ -316,33 +317,73 @@ export default function Home() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, ease: "easeOut" }}
-              className="relative w-full max-w-[640px] overflow-hidden rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-white/76 via-orange-50/62 to-amber-100/54 px-5 py-6 text-white shadow-[0_28px_90px_rgba(15,23,42,0.20)] backdrop-blur-[38px] sm:px-8 sm:py-8 md:ml-[4vw] md:max-w-[680px] md:rounded-[2.35rem] md:px-10 md:py-9 lg:max-w-[680px]"
+              className="relative w-full max-w-[640px] px-5 py-6 sm:px-8 sm:py-8 md:ml-[4vw] md:max-w-[680px] md:px-10 md:py-9 lg:max-w-[680px]"
             >
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.52),transparent_42%,rgba(255,255,255,0.22)_70%)]" />
-              <h1 className="relative max-w-[680px] text-[2.55rem] font-black leading-[0.98] tracking-tight text-[#8b1a0f] drop-shadow-[0_2px_12px_rgba(255,255,255,0.45)] sm:text-6xl md:text-[4rem] lg:text-[4.1rem]">
-                การพัฒนาตัวเอง<br />
-                <span className="text-amber-50 drop-shadow-[0_3px_14px_rgba(92,46,11,0.42)]">สนุกกว่าที่คิด</span>
+              {/* Retro chunky title with outline and 3D shadows */}
+              <h1 className="relative max-w-[680px] text-[2.55rem] font-black leading-[1.02] tracking-tight select-none sm:text-6xl md:text-[4rem] lg:text-[4.1rem]">
+                <span className="block text-[#8b1a0f] drop-shadow-[0_2px_8px_rgba(255,255,255,0.85)]" style={{ textShadow: "0px 1px 4px rgba(255, 255, 255, 0.5)" }}>
+                  การพัฒนาตัวเอง
+                </span>
+                <span className="block text-amber-50 mt-2" style={{ textShadow: "0px 2px 10px rgba(45, 35, 30, 0.42), 0px 1px 2px rgba(45, 35, 30, 0.3)" }}>
+                  สนุกกว่าที่คิด
+                </span>
               </h1>
-              <p className="relative mt-5 max-w-[620px] text-[13px] sm:text-xl font-black leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(15,23,42,0.36)]">
+
+              {/* Hand-drawn squiggly SVG divider with a rotated red Star */}
+              <div className="relative my-6 flex items-center justify-center select-none">
+                <svg className="w-full h-3 text-[#2D231E]/20" fill="none" viewBox="0 0 400 12" preserveAspectRatio="none">
+                  <path d="M 0 6 Q 25 1, 50 6 T 100 6 T 150 6 T 200 6 T 250 6 T 300 6 T 350 6 T 400 6" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" />
+                </svg>
+                <div className="absolute bg-[#FAF6F0] border-2 border-[#2D231E] rounded-lg p-1 px-1.5 rotate-12 shadow-[2px_2px_0px_#2D231E]">
+                  <Star className="w-3.5 h-3.5 text-red-600 fill-red-600 animate-pulse" />
+                </div>
+              </div>
+
+              <p className="relative max-w-[620px] text-[13px] sm:text-xl font-black leading-relaxed text-white mb-2" style={{ textShadow: "0px 2px 12px rgba(45, 35, 30, 0.5), 0px 1px 3px rgba(45, 35, 30, 0.3)" }}>
                 Personal Growth OS ที่พาคุณสำรวจตัวเอง<br />
                 สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม
               </p>
 
-              <div className="relative mt-6 flex w-full gap-1 sm:gap-2 pb-1 select-none">
+              {/* Stamp badges with custom colors, thick borders, slight rotation and spring physics */}
+              <div className="relative mt-8 flex flex-wrap w-full gap-3 pb-1 select-none">
                 {[
-                  { icon: <BrainCircuit className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />, label: "PERSONALIZED", textClass: "text-[#4c1d95]", accent: "bg-[#8b5cf6]/10 text-[#6d28d9] ring-[#8b5cf6]/20" },
-                  { icon: <Zap className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />, label: "ACTIONABLE", textClass: "text-[#78350f]", accent: "bg-[#f59e0b]/10 text-[#b45309] ring-[#f59e0b]/20" },
-                  { icon: <Flame className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />, label: "XP & LEVEL", textClass: "text-[#0c4a6e]", accent: "bg-[#0ea5e9]/10 text-[#0369a1] ring-[#0ea5e9]/20" },
+                  { 
+                    icon: <BrainCircuit size={16} />, 
+                    label: "PERSONALIZED", 
+                    bgClass: "bg-[#EDE9FE]", 
+                    textClass: "text-[#5B21B6]",
+                    borderClass: "border-[#2D231E]",
+                    rotate: "-rotate-1"
+                  },
+                  { 
+                    icon: <Zap size={16} />, 
+                    label: "ACTIONABLE", 
+                    bgClass: "bg-[#FEF3C7]", 
+                    textClass: "text-[#B45309]",
+                    borderClass: "border-[#2D231E]",
+                    rotate: "rotate-2"
+                  },
+                  { 
+                    icon: <Flame size={16} />, 
+                    label: "XP & LEVEL", 
+                    bgClass: "bg-[#DBEAFE]", 
+                    textClass: "text-[#1E40AF]",
+                    borderClass: "border-[#2D231E]",
+                    rotate: "-rotate-2"
+                  },
                 ].map((badge) => (
-                  <div
+                  <motion.div
                     key={badge.label}
-                    className={`inline-flex h-7 sm:h-10 flex-1 sm:flex-none items-center justify-center gap-1 sm:gap-2 rounded-full border border-white/60 bg-white/20 px-1 sm:px-4 text-[7px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-normal sm:tracking-[0.16em] ${badge.textClass} shadow-sm backdrop-blur-md`}
+                    whileHover={{ scale: 1.06, rotate: parseFloat(badge.rotate) > 0 ? 0 : 2, y: -2 }}
+                    whileTap={{ scale: 0.96, rotate: -1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 14 }}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 ${badge.borderClass} ${badge.bgClass} ${badge.textClass} ${badge.rotate} font-black text-[10px] md:text-[11px] tracking-wide shadow-[4px_4px_0px_#2D231E] cursor-default`}
                   >
-                    <span className={`flex h-4 w-4 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full ring-1 ${badge.accent}`}>
+                    <span className="shrink-0">
                       {badge.icon}
                     </span>
-                    <span className="whitespace-nowrap">{badge.label}</span>
-                  </div>
+                    <span>{badge.label}</span>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -352,7 +393,7 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative mx-4 mt-6 mb-12 flex max-w-5xl flex-col items-center justify-between gap-8 overflow-hidden rounded-[3rem] border border-slate-100 bg-white p-8 shadow-[0_15px_40px_rgba(0,0,0,0.04)] group md:mx-auto md:flex-row md:p-10"
+          className="relative w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)] mx-auto mt-6 mb-12 flex max-w-5xl flex-col items-center justify-between gap-8 overflow-hidden rounded-[3rem] border border-slate-100 bg-white p-8 shadow-[0_15px_40px_rgba(0,0,0,0.04)] group md:flex-row md:p-10"
         >
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-red-500/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-red-500/10 transition-colors duration-700" />
 
