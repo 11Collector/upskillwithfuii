@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, RefreshCcw, Camera, AlertTriangle, ArrowLeft, ArrowRight, Loader2, Zap, Info, X, BookOpen, PieChart, Users, MessageCircle, LayoutDashboard
 } from "lucide-react";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 import Image from "next/image";
 import { Prompt } from "next/font/google";
 
@@ -579,7 +579,7 @@ export default function Home() {
     setIsCapturing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      const dataUrl = await toPng(printRef.current, { cacheBust: true, pixelRatio: 2, backgroundColor: "#FCFBF8" });
+      const dataUrl = await domToPng(printRef.current, { quality: 1, scale: 2, backgroundColor: "#FCFBF8" });
       
       let shared = false;
       

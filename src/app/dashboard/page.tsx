@@ -3283,7 +3283,7 @@ Day 21: [กิจกรรม]
   };
 
   const handleDownloadCard = async () => {
-    const { toPng } = await import("html-to-image");
+    const { domToPng } = await import("modern-screenshot");
     const element = document.getElementById("player-card");
 
     if (!element) return;
@@ -3296,15 +3296,16 @@ Day 21: [กิจกรรม]
 
       const currentBgColor = theme?.hexBg || '#0F172A';
 
-      const dataUrl = await toPng(element, {
-        pixelRatio: 3,
+      const dataUrl = await domToPng(element, {
+        quality: 1,
+        scale: 3,
         backgroundColor: currentBgColor,
-        cacheBust: true,
         style: {
           borderRadius: '2.5rem',
         },
+        features: { removeControlCharacter: true },
         filter: (node) => {
-          if (node.tagName === 'BUTTON' && node.innerText?.includes('Save')) return false;
+          if (node instanceof HTMLElement && node.tagName === 'BUTTON' && node.innerText?.includes('Save')) return false;
           return true;
         }
       });
@@ -8248,18 +8249,19 @@ Day 21: [กิจกรรม]
               <div className="mt-8 w-full flex flex-col gap-3">
                 <button
                   onClick={async () => {
-                    const { toPng } = await import("html-to-image");
+                    const { domToPng } = await import("modern-screenshot");
                     const cardElement = document.getElementById("daily-success-card");
                     if (!cardElement) return;
                     try {
                       setIsCapturing(true);
                       await new Promise(r => setTimeout(r, 150));
                       await document.fonts.ready;
-                      const dataUrl = await toPng(cardElement, {
-                        pixelRatio: 3,
+                      const dataUrl = await domToPng(cardElement, {
+                        quality: 1,
+                        scale: 3,
                         backgroundColor: '#0f172a',
-                        cacheBust: true,
-                        style: { borderRadius: '3rem' }
+                        style: { borderRadius: '3rem' },
+                        features: { removeControlCharacter: true }
                       });
                       const link = document.createElement("a");
                       link.href = dataUrl;
@@ -9197,17 +9199,18 @@ Day 21: [กิจกรรม]
                 <div className="w-full mt-6 space-y-2">
                   <button
                     onClick={async () => {
-                      const { toPng } = await import("html-to-image");
+                      const { domToPng } = await import("modern-screenshot");
                       const element = document.getElementById("happiness-ticket");
                       if (!element) return;
                       try {
-                        const dataUrl = await toPng(element, {
-                          pixelRatio: 3,
+                        const dataUrl = await domToPng(element, {
+                          quality: 1,
+                          scale: 3,
                           backgroundColor: '#090D16', // Sleek dark ticket background
-                          cacheBust: true,
                           style: {
                             borderRadius: '1.5rem',
-                          }
+                          },
+                          features: { removeControlCharacter: true }
                         });
                         const link = document.createElement("a");
                         link.href = dataUrl;

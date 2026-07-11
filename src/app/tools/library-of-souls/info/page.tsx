@@ -4,7 +4,7 @@ import React, { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { results as resultsData } from "@/data/librarySoulsResults";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, addDoc, doc, getDoc, setDoc, increment, serverTimestamp } from "firebase/firestore";
@@ -91,9 +91,9 @@ function ResultView({ resultType }: { resultType: string }) {
     setIsCapturing(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 150));
-      const dataUrl = await toPng(printRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
+      const dataUrl = await domToPng(printRef.current, {
+        quality: 1,
+        scale: 2,
         backgroundColor: "#F8FAFC",
       });
       
