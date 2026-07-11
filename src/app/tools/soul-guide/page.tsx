@@ -437,6 +437,7 @@ export default function SoulGuidePage() {
             mementoReflections: userData?.mementoReflections,
             currentDailyQuests: userData?.currentDailyQuests,
             completedQuests: userData?.completedQuestIds,
+            customQuestTitle: userData?.customQuestTitle,
           }
         })
       });
