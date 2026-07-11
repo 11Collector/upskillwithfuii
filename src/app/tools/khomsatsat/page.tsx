@@ -231,6 +231,7 @@ export default function SwipeQuoteApp() {
 
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const hasSavedQuote = useRef(false);
 
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
@@ -339,12 +340,38 @@ export default function SwipeQuoteApp() {
 
       if (!dataUrl) throw new Error("Failed to generate image data URL");
 
-      const link = document.createElement("a");
-      link.download = `khomsatsat-${Date.now()}.png`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      let shared = false;
+      
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `khomsatsat-${Date.now()}.png`, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "คำคมคมสัดสัดของฉัน",
+              text: "ดูคำคมฮีลใจของฉันบน Upskill with Fuii!"
+            });
+            shared = true;
+          }
+        } catch (shareErr) {
+          console.error("Web Share failed, fallback to modal/download:", shareErr);
+        }
+      }
+
+      if (!shared) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setCapturedImage(dataUrl);
+        } else {
+          const link = document.createElement("a");
+          link.download = `khomsatsat-${Date.now()}.png`;
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
 
     } catch (err: any) {
       console.error("Save image failed", err);
@@ -1106,6 +1133,61 @@ export default function SwipeQuoteApp() {
                   type="button"
                 >
                   ไว้ทีหลัง
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {capturedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setCapturedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white p-5 rounded-[2rem] shadow-2xl max-w-sm w-full border border-slate-100 flex flex-col items-center gap-4 relative text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setCapturedImage(null)}
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition-all shadow-md cursor-pointer z-10"
+              >
+                <X size={16} className="text-white" />
+              </button>
+
+              <div>
+                <h3 className="text-base font-black text-slate-800 mb-1">✨ บันทึกรูปภาพของคุณ</h3>
+                <p className="text-[11px] text-slate-500 font-bold leading-normal">
+                  กดค้างที่รูปภาพด้านล่างเพื่อ <span className="text-blue-600">"บันทึกไปยังแอพรูปภาพ"</span><br />
+                  หรือแคปหน้าจอเพื่อขิงลง Story ได้เลยครับ!
+                </p>
+              </div>
+
+              <div className="relative w-full max-h-[50vh] overflow-y-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-950">
+                <img
+                  src={capturedImage}
+                  alt="Khomsatsat Result"
+                  className="w-full h-auto object-contain rounded-2xl"
+                />
+              </div>
+
+              <div className="w-full flex gap-2">
+                <button
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.download = `khomsatsat-${Date.now()}.png`;
+                    link.href = capturedImage;
+                    link.click();
+                  }}
+                  className="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-all text-[12px] active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                >
+                  ดาวน์โหลดตรงอีกครั้ง
                 </button>
               </div>
             </motion.div>

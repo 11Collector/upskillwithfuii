@@ -357,6 +357,7 @@ export default function Home() {
   const [showInfo, setShowInfo] = useState(false);
   const [showJargon, setShowJargon] = useState(false);
   const [matrixRotation, setMatrixRotation] = useState(0);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   const printRef = useRef<HTMLDivElement>(null);
   const hasMemberSaved = useRef(false);
@@ -579,10 +580,37 @@ export default function Home() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 150));
       const dataUrl = await toPng(printRef.current, { cacheBust: true, pixelRatio: 2, backgroundColor: "#FCFBF8" });
-      const link = document.createElement("a");
-      link.download = `Money-DNA-${nickname}.png`;
-      link.href = dataUrl;
-      link.click();
+      
+      let shared = false;
+      
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `Money-DNA-${nickname}.png`, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "ผลลัพธ์ Money Avatar ของฉัน",
+              text: "ดูผลลัพธ์ Money Avatar ของฉันบน Upskill with Fuii!"
+            });
+            shared = true;
+          }
+        } catch (shareErr) {
+          console.error("Web Share failed, fallback to modal/download:", shareErr);
+        }
+      }
+
+      if (!shared) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setCapturedImage(dataUrl);
+        } else {
+          const link = document.createElement("a");
+          link.download = `Money-DNA-${nickname}.png`;
+          link.href = dataUrl;
+          link.click();
+        }
+      }
     } catch (err) {
       alert("เกิดข้อผิดพลาดในการเซฟรูป ลองแคปหน้าจอแทนนะครับ");
     } finally {
@@ -853,8 +881,8 @@ export default function Home() {
         {/* --- RESULT SCREEN --- */}
         {gameState === "result" && currentResult && matchStats && (
           <div className="flex-1 flex flex-col bg-[#FCFBF8] relative overflow-hidden">
-            <div className="flex-1 overflow-y-auto pb-60 custom-scrollbar">
-              <div ref={printRef} className="flex flex-col bg-[#FCFBF8] w-full relative">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pb-60 custom-scrollbar">
+              <div ref={printRef} className="flex flex-col bg-[#FCFBF8] w-full relative overflow-hidden">
                 <div className={`${currentResult.color} text-white p-6 min-h-[200px] pb-24 text-center flex flex-col items-center relative shadow-lg shrink-0 rounded-b-[2rem]`}>
                   <button onClick={() => setShowJargon(true)} className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 text-white rounded-full transition-all active:scale-90 backdrop-blur-sm border border-white/20 flex items-center justify-center z-20 shadow-sm">
                     <BookOpen size={18} />
@@ -1151,6 +1179,61 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {capturedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 bg-stone-950/80 backdrop-blur-md"
+            onClick={() => setCapturedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white p-5 rounded-[2rem] shadow-2xl max-w-sm w-full border border-stone-200 flex flex-col items-center gap-4 relative text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setCapturedImage(null)}
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-stone-900 border border-stone-700 flex items-center justify-center text-white hover:bg-stone-850 transition-all shadow-md cursor-pointer z-10"
+              >
+                <X size={16} className="text-white" />
+              </button>
+
+              <div>
+                <h3 className="text-base font-black text-stone-800 mb-1">✨ บันทึกรูปภาพของคุณ</h3>
+                <p className="text-[11px] text-stone-500 font-bold leading-normal">
+                  กดค้างที่รูปภาพด้านล่างเพื่อ <span className="text-blue-600">"บันทึกไปยังแอพรูปภาพ"</span><br />
+                  หรือแคปหน้าจอเพื่อขิงลง Story ได้เลยครับ!
+                </p>
+              </div>
+
+              <div className="relative w-full max-h-[50vh] overflow-y-auto rounded-2xl border border-stone-200 shadow-inner bg-[#FCFBF8]">
+                <img
+                  src={capturedImage}
+                  alt="Money Avatar Result"
+                  className="w-full h-auto object-contain rounded-2xl"
+                />
+              </div>
+
+              <div className="w-full flex gap-2">
+                <button
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.download = `Money-DNA-${nickname}.png`;
+                    link.href = capturedImage;
+                    link.click();
+                  }}
+                  className="flex-1 bg-stone-900 text-white font-bold py-3.5 rounded-xl hover:bg-stone-800 transition-all text-[12px] active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                >
+                  ดาวน์โหลดตรงอีกครั้ง
+                </button>
               </div>
             </motion.div>
           </motion.div>
