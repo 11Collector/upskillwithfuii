@@ -432,6 +432,9 @@ export default function SoulGuidePage() {
             totalFocusMinutes: userData?.totalFocusMinutes,
             characterTier: getCharacterTier(userData?.totalXP || 0),
             level: userData?.level,
+            birthdate: userData?.birthdate,
+            expectedAge: userData?.expectedAge,
+            mementoReflections: userData?.mementoReflections,
           }
         })
       });
