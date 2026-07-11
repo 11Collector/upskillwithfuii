@@ -301,13 +301,13 @@ export default function Home() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={isIOS ? () => setShowIOSInstallGuide(true) : handleInstallClick}
-              className="absolute right-4 top-4 z-30 flex items-center gap-2.5 rounded-full border border-white/55 bg-slate-950/94 px-4 py-2.5 text-white shadow-[0_18px_42px_rgba(15,23,42,0.42),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl ring-1 ring-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-slate-900 md:right-7 md:top-7 md:px-5 md:py-3"
+              className="absolute right-4 top-4 z-30 flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-black bg-black text-white hover:bg-zinc-900 font-black text-[10px] md:text-[11px] tracking-[0.16em] shadow-[2.5px_2.5px_0px_#2D231E] md:right-7 md:top-7 md:px-5 md:py-3 transition-all hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#2D231E]"
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-400/14 text-sky-200 ring-1 ring-sky-200/20">
-                <Download size={14} />
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-black shrink-0">
+                <Download size={12} strokeWidth={3} />
               </span>
-              <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.55)] md:text-[11px] md:tracking-[0.22em]">
-                {isIOS ? "APP DOWNLOAD" : "APP DOWNLOAD"}
+              <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white md:text-[11px]">
+                {isIOS ? "INSTALL APP" : "INSTALL APP"}
               </span>
             </motion.button>
           )}
