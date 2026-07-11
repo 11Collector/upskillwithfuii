@@ -327,7 +327,11 @@ export async function POST(req: Request) {
 - pixel: Imposter Syndrome → ด้อยค่าความสำเร็จตัวเอง รู้สึกไม่คู่ควร → reinforce ความสำเร็จที่ผ่านมา ให้น้ำหนักกับ evidence จริง
 - guardian: Comfort Zone → กลัวเปลี่ยนแปลง ยึดติดความปลอดภัย → ค่อยๆ normalize ความเสี่ยงเล็กๆ ไม่บีบให้เปลี่ยนเร็ว
 
-ข้อมูลประกอบการวิเคราะห์ (Secret Context - สำหรับคุณใช้ภายในเท่านั้น ห้ามพูดออกมา):
+ข้อมูลเควสและการทำภารกิจวันนี้ (ข้อมูลเปิดเผย - สามารถแจ้งและพูดคุยกับผู้ใช้ตรงๆ ได้):
+- ข้อมูลเควสรายวันของวันนี้ (Daily Quests): ${dailyQuestsContext}
+- ${recentQuestsContext}
+
+ข้อมูลประกอบการวิเคราะห์อื่นๆ (Secret Context - สำหรับคุณใช้ภายในเท่านั้น ห้ามพูดออกมาตรงๆ):
 - อารมณ์ล่าสุด: ${userData.lastMood || 'ปกติ'}
 - คำคมที่เพิ่งได้: "${userData.lastQuote || 'ไม่มี'}"
 - ข้อมูล DISC: ${JSON.stringify(userData.lastDisc || 'ไม่มี')}
@@ -337,8 +341,6 @@ export async function POST(req: Request) {
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 - ข้อมูล Memento Mori (เวลาชีวิต): วันเกิดคือ ${userData.birthdate || 'ไม่ได้ระบุ'}${currentAge ? ` (อายุปัจจุบัน ${currentAge} ปี)` : ''}, คาดการณ์อายุขัยคือ ${userData.expectedAge || 'ไม่ได้ระบุ'} ปี
 - บันทึกการทบทวนเวลาชีวิต (Memento Mori Reflections): ${userData.mementoReflections && Array.isArray(userData.mementoReflections) && userData.mementoReflections.length > 0 ? userData.mementoReflections.map((r: any) => `คำถาม: "${r.question}" -> คำตอบ: "${r.answer}"`).join(' | ') : 'ยังไม่มีการทบทวน'}
-- ข้อมูลเควสรายวันของวันนี้ (Daily Quests): ${dailyQuestsContext}
-- ${recentQuestsContext}
 ${relevantNotesContext ? `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n` : ''}
 
 คำแนะนำในการสนทนา:
