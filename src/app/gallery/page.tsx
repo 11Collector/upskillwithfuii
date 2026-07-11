@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Quote, Loader2, Heart, Share2, CheckCircle, Download } from "lucide-react";
 import Link from "next/link";
 import { Kanit } from "next/font/google";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -215,17 +215,17 @@ export default function GalleryPage() {
       element.style.transform = 'none';
       element.classList.remove('hover:scale-[1.02]');
 
-      const dataUrl = await toPng(element, {
+      const dataUrl = await domToPng(element, {
         quality: 1.0,
-        pixelRatio: 3,
+        scale: 3,
         // 💡 บังคับให้พื้นหลังเป็นสี slate-900 (สีทึบ) เสมอเวลาแบคกราวด์อ่านค่าเป็นใส
         backgroundColor: actualBgColor === 'rgba(0, 0, 0, 0)' ? '#0f172a' : actualBgColor,
-        cacheBust: true,
         style: {
           transform: 'scale(1)',
           margin: '0',
           borderRadius: '2.5rem',
         },
+        features: { removeControlCharacter: true },
         filter: (node) => {
           if (node instanceof HTMLElement && node.getAttribute('data-html2canvas-ignore') === 'true') {
             return false;

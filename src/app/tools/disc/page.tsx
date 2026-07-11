@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare, Trophy, RefreshCcw, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Wallet, LayoutDashboard
 } from "lucide-react";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 import { Kanit } from "next/font/google";
 import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 import Link from 'next/link';
@@ -329,7 +329,7 @@ export default function Home() {
     setIsCapturing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      const dataUrl = await toPng(printRef.current, { cacheBust: true, pixelRatio: 2, backgroundColor: "#F8FAFC" });
+      const dataUrl = await domToPng(printRef.current, { quality: 1, scale: 2, backgroundColor: "#F8FAFC" });
       
       let shared = false;
       

@@ -1050,17 +1050,18 @@ export default function PremiumShopPage() {
               <div className="w-full mt-6 space-y-2">
                 <button
                   onClick={async () => {
-                    const { toPng } = await import("html-to-image");
+                    const { domToPng } = await import("modern-screenshot");
                     const element = document.getElementById("happiness-ticket-wrapper");
                     if (!element) return;
                     try {
-                      const dataUrl = await toPng(element, {
-                        pixelRatio: 3,
+                      const dataUrl = await domToPng(element, {
+                        quality: 1,
+                        scale: 3,
                         backgroundColor: '#ffffff',
-                        cacheBust: true,
                         style: {
                           borderRadius: '1.5rem',
-                        }
+                        },
+                        features: { removeControlCharacter: true },
                       });
                       const link = document.createElement("a");
                       link.href = dataUrl;

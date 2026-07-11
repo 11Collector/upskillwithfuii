@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, RefreshCcw, Share2, Sparkles, LayoutDashboard, ChevronRight, Skull, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 import Image from "next/image";
 
 import Link from 'next/link';
@@ -140,10 +140,10 @@ export default function GhostInYouPage() {
     if (!resultCardRef.current) return;
     try {
       await new Promise(r => requestAnimationFrame(r));
-      const dataUrl = await toPng(resultCardRef.current, {
-        pixelRatio: 3,
-        cacheBust: true,
-        skipFonts: false,
+      const dataUrl = await domToPng(resultCardRef.current, {
+        quality: 1,
+        scale: 3,
+        features: { removeControlCharacter: true },
         style: { transform: "none" },
       });
       
