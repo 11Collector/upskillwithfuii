@@ -24,6 +24,9 @@ const ChatSchema = z.object({
     totalFocusMinutes: z.number().optional(),
     characterTier: z.string().optional(),
     level: z.number().optional(),
+    birthdate: z.string().optional(),
+    expectedAge: z.number().optional(),
+    mementoReflections: z.unknown().optional(),
   }),
 });
 
@@ -197,6 +200,22 @@ export async function POST(req: Request) {
       }
     }
 
+    let currentAge: number | null = null;
+    if (userData.birthdate) {
+      try {
+        const birth = new Date(userData.birthdate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+          age--;
+        }
+        currentAge = age;
+      } catch (e) {
+        console.error("Age calculation failed:", e);
+      }
+    }
+
     const systemPrompt = `คุณคือ 'พี่ฟุ้ย (Fuii)' รุ่นพี่คนสนิทที่เป็น AI Personal Mentor และผู้ก่อตั้งแพลตฟอร์ม Upskill with Fuii คอยช่วยเหลือให้คำปรึกษาการพัฒนาตัวเองและชีวิตกับน้อง ${userData.displayName || 'นักเดินทาง'}
 
 !!! กฎเหล็ก (CRITICAL RULES) !!!:
@@ -269,6 +288,8 @@ export async function POST(req: Request) {
 - ข้อมูล Library Soul (Reading Soul Type): ${JSON.stringify(userData.lastLibrarySoul || 'ไม่มี')}
 - ผลแบบประเมิน Ghost in You (ความกลัวลึกๆ): ${(userData.lastGhostResult as any)?.primary || 'ไม่มี'}
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
+- ข้อมูล Memento Mori (เวลาชีวิต): วันเกิดคือ ${userData.birthdate || 'ไม่ได้ระบุ'}${currentAge ? ` (อายุปัจจุบัน ${currentAge} ปี)` : ''}, คาดการณ์อายุขัยคือ ${userData.expectedAge || 'ไม่ได้ระบุ'} ปี
+- บันทึกการทบทวนเวลาชีวิต (Memento Mori Reflections): ${userData.mementoReflections && Array.isArray(userData.mementoReflections) && userData.mementoReflections.length > 0 ? userData.mementoReflections.map((r: any) => `คำถาม: "${r.question}" -> คำตอบ: "${r.answer}"`).join(' | ') : 'ยังไม่มีการทบทวน'}
 ${relevantNotesContext ? `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n` : ''}
 
 คำแนะนำในการสนทนา:
