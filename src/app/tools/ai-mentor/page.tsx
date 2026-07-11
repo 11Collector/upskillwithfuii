@@ -300,6 +300,8 @@ export default function SoulGuidePage() {
             birthdate: userData?.birthdate,
             expectedAge: userData?.expectedAge,
             mementoReflections: userData?.mementoReflections,
+            currentDailyQuests: userData?.currentDailyQuests,
+            completedQuests: userData?.completedQuests,
           }
         })
       });

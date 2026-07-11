@@ -27,6 +27,8 @@ const ChatSchema = z.object({
     birthdate: z.string().optional(),
     expectedAge: z.number().optional(),
     mementoReflections: z.unknown().optional(),
+    currentDailyQuests: z.unknown().optional(),
+    completedQuests: z.array(z.unknown()).optional(),
   }),
 });
 
@@ -200,6 +202,25 @@ export async function POST(req: Request) {
       }
     }
 
+    // Fetch last 10 completed quests from quest_log subcollection
+    let recentQuestsContext = "";
+    try {
+      const questLogRef = adminDb.collection("users").doc(authResult.uid).collection("quest_log");
+      const questLogSnap = await questLogRef.orderBy("createdAt", "desc").limit(10).get();
+      if (!questLogSnap.empty) {
+        const list = questLogSnap.docs.map(doc => {
+          const data = doc.data();
+          return `- ${data.title} (${data.type}) เมื่อวันที่ ${data.completedAt || 'ไม่ระบุ'}`;
+        });
+        recentQuestsContext = `--- ประวัติเควสสะสมที่เพิ่งทำสำเร็จ 10 ข้อล่าสุด ---\n${list.join("\n")}`;
+      } else {
+        recentQuestsContext = "ยังไม่มีประวัติเควสสะสมในระบบ";
+      }
+    } catch (questErr) {
+      console.error("Error fetching quest log:", questErr);
+      recentQuestsContext = "ไม่สามารถโหลดข้อมูลประวัติเควสได้";
+    }
+
     let currentAge: number | null = null;
     if (userData.birthdate) {
       try {
@@ -290,6 +311,8 @@ export async function POST(req: Request) {
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 - ข้อมูล Memento Mori (เวลาชีวิต): วันเกิดคือ ${userData.birthdate || 'ไม่ได้ระบุ'}${currentAge ? ` (อายุปัจจุบัน ${currentAge} ปี)` : ''}, คาดการณ์อายุขัยคือ ${userData.expectedAge || 'ไม่ได้ระบุ'} ปี
 - บันทึกการทบทวนเวลาชีวิต (Memento Mori Reflections): ${userData.mementoReflections && Array.isArray(userData.mementoReflections) && userData.mementoReflections.length > 0 ? userData.mementoReflections.map((r: any) => `คำถาม: "${r.question}" -> คำตอบ: "${r.answer}"`).join(' | ') : 'ยังไม่มีการทบทวน'}
+- ข้อมูลเควสรายวันของวันนี้ (Daily Quests): ${userData.currentDailyQuests && Array.isArray(userData.currentDailyQuests) ? userData.currentDailyQuests.map((q: any) => `เควส: "${q.title}" (ประเภท: ${q.type}) -> สถานะ: ${userData.completedQuests && Array.isArray(userData.completedQuests) && userData.completedQuests.map(id => String(id)).includes(String(q.id)) ? 'ทำเสร็จแล้ว' : 'ยังไม่เสร็จ'}`).join(' | ') : 'ไม่มีข้อมูลเควสวันนี้'}
+- ${recentQuestsContext}
 ${relevantNotesContext ? `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n` : ''}
 
 คำแนะนำในการสนทนา:

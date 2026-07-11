@@ -2756,6 +2756,26 @@ Day 21: [กิจกรรม]
     return qList;
   }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP]);
 
+  // Sync computed dailyQuests to Firestore for other systems (like AI Mentor chat) to access
+  useEffect(() => {
+    if (!user?.uid || !todayDateStr || !userData || dailyQuests.length === 0) return;
+
+    const storedQuests = userData.currentDailyQuests || [];
+    const storedDate = userData.lastQuestDate || "";
+
+    const needsUpdate = storedDate !== todayDateStr || 
+      storedQuests.length !== dailyQuests.length ||
+      dailyQuests.some((q, idx) => q.title !== storedQuests[idx]?.title);
+
+    if (needsUpdate) {
+      const userRef = doc(db, "users", user.uid);
+      updateDoc(userRef, {
+        currentDailyQuests: dailyQuests,
+        lastQuestDate: todayDateStr
+      }).catch((e) => console.error("Error syncing daily quests:", e));
+    }
+  }, [user?.uid, todayDateStr, userData, dailyQuests]);
+
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
       // 1. เควสพิเศษได้ 20 เสมอ
