@@ -25,8 +25,10 @@ import {
   RefreshCw as RefreshCwIcon,
   Share2 as Share2Icon,
   Camera as CameraIcon,
-  Loader2 as Loader2Icon
+  Loader2 as Loader2Icon,
+  X as XIcon
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function ResultView({ resultType }: { resultType: string }) {
   const data = resultsData[resultType];
@@ -34,6 +36,7 @@ function ResultView({ resultType }: { resultType: string }) {
   const hasMemberSaved = useRef(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [user, setUser] = React.useState<User | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
@@ -93,10 +96,37 @@ function ResultView({ resultType }: { resultType: string }) {
         pixelRatio: 2,
         backgroundColor: "#F8FAFC",
       });
-      const link = document.createElement("a");
-      link.download = `Library-of-Souls-${resultType}.png`;
-      link.href = dataUrl;
-      link.click();
+      
+      let shared = false;
+      
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `Library-of-Souls-${resultType}.png`, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "ผลลัพธ์ Library of Souls ของฉัน",
+              text: "ดูผลลัพธ์ Library of Souls ของฉันบน Upskill with Fuii!"
+            });
+            shared = true;
+          }
+        } catch (shareErr) {
+          console.error("Web Share failed, fallback to modal/download:", shareErr);
+        }
+      }
+
+      if (!shared) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setCapturedImage(dataUrl);
+        } else {
+          const link = document.createElement("a");
+          link.download = `Library-of-Souls-${resultType}.png`;
+          link.href = dataUrl;
+          link.click();
+        }
+      }
     } catch (err) {
       console.error("Save Image Error:", err);
       alert("ไม่สามารถเซฟภาพได้ในขณะนี้ กรุณาลองแคปหน้าจอแทนนะครับ");
@@ -113,9 +143,9 @@ function ResultView({ resultType }: { resultType: string }) {
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Printable Wrapper - Matches width for all sections */}
-      <div ref={printRef} className="space-y-12 bg-slate-50 p-2 md:p-6 rounded-[3.5rem]">
+      <div ref={printRef} className="space-y-12 bg-slate-50 p-2 md:p-6 rounded-[3.5rem] overflow-hidden">
 
         {/* 1. Result Hero Card */}
         <section className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl border border-emerald-100 relative overflow-hidden">
@@ -215,6 +245,62 @@ function ResultView({ resultType }: { resultType: string }) {
           }
         />
       </div>
+      <AnimatePresence>
+        {capturedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setCapturedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white p-5 rounded-[2rem] shadow-2xl max-w-sm w-full border border-slate-100 flex flex-col items-center gap-4 relative text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setCapturedImage(null)}
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-slate-950 border border-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition-all shadow-md cursor-pointer z-10"
+              >
+                <XIcon size={16} className="text-white" />
+              </button>
+
+              <div>
+                <h3 className="text-base font-black text-slate-800 mb-1">✨ บันทึกรูปภาพของคุณ</h3>
+                <p className="text-[11px] text-slate-500 font-bold leading-normal">
+                  กดค้างที่รูปภาพด้านล่างเพื่อ <span className="text-blue-600">"บันทึกไปยังแอพรูปภาพ"</span><br />
+                  หรือแคปหน้าจอเพื่อขิงลง Story ได้เลยครับ!
+                </p>
+              </div>
+
+              <div className="relative w-full max-h-[50vh] overflow-y-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-50">
+                <img
+                  src={capturedImage}
+                  alt="Library of Souls Result"
+                  className="w-full h-auto object-contain rounded-2xl"
+                />
+              </div>
+
+              <div className="w-full flex gap-2">
+                <button
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.download = `Library-of-Souls-${resultType}.png`;
+                    link.href = capturedImage;
+                    link.click();
+                  }}
+                  className="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-all text-[12px] active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                >
+                  ดาวน์โหลดตรงอีกครั้ง
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

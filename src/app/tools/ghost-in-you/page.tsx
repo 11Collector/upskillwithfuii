@@ -67,6 +67,7 @@ export default function GhostInYouPage() {
   const [googleSaving, setGoogleSaving] = useState(false);
   const [communityStats, setCommunityStats] = useState<Record<string, number> | null>(null);
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,7 +139,6 @@ export default function GhostInYouPage() {
   const handleShare = async () => {
     if (!resultCardRef.current) return;
     try {
-      // wait one frame so layout is stable
       await new Promise(r => requestAnimationFrame(r));
       const dataUrl = await toPng(resultCardRef.current, {
         pixelRatio: 3,
@@ -146,10 +146,37 @@ export default function GhostInYouPage() {
         skipFonts: false,
         style: { transform: "none" },
       });
-      const link = document.createElement("a");
-      link.download = `ghost-in-you-${result?.primary}.png`;
-      link.href = dataUrl;
-      link.click();
+      
+      let shared = false;
+      
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `ghost-in-you-${result?.primary}.png`, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "ผลลัพธ์ Ghost in You ของฉัน",
+              text: "ดูผลลัพธ์ Ghost in You ของฉันบน Upskill with Fuii!"
+            });
+            shared = true;
+          }
+        } catch (shareErr) {
+          console.error("Web Share failed, fallback to modal/download:", shareErr);
+        }
+      }
+
+      if (!shared) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setCapturedImage(dataUrl);
+        } else {
+          const link = document.createElement("a");
+          link.download = `ghost-in-you-${result?.primary}.png`;
+          link.href = dataUrl;
+          link.click();
+        }
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -733,6 +760,62 @@ export default function GhostInYouPage() {
           <p className="text-center text-zinc-800 text-[10px] mt-8 leading-relaxed">
             ผลนี้เป็นเพียงการสำรวจแนวโน้มทางจิตวิทยาเพื่อการพัฒนาตัวเอง ไม่ใช่การวินิจฉัยทางการแพทย์
           </p>
+          <AnimatePresence>
+            {capturedImage && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+                onClick={() => setCapturedImage(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.9, y: 20 }}
+                  className="bg-white p-5 rounded-[2rem] shadow-2xl max-w-sm w-full border border-slate-100 flex flex-col items-center gap-4 relative text-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => setCapturedImage(null)}
+                    className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition-all shadow-md cursor-pointer z-10"
+                  >
+                    <X size={16} className="text-white" />
+                  </button>
+
+                  <div>
+                    <h3 className="text-base font-black text-slate-800 mb-1">✨ บันทึกรูปภาพของคุณ</h3>
+                    <p className="text-[11px] text-slate-500 font-bold leading-normal">
+                      กดค้างที่รูปภาพด้านล่างเพื่อ <span className="text-blue-600">"บันทึกไปยังแอพรูปภาพ"</span><br />
+                      หรือแคปหน้าจอเพื่อขิงลง Story ได้เลยครับ!
+                    </p>
+                  </div>
+
+                  <div className="relative w-full max-h-[50vh] overflow-y-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-50">
+                    <img
+                      src={capturedImage}
+                      alt="Ghost in You Result"
+                      className="w-full h-auto object-contain rounded-2xl"
+                    />
+                  </div>
+
+                  <div className="w-full flex gap-2">
+                    <button
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.download = `ghost-in-you-${result?.primary}.png`;
+                        link.href = capturedImage;
+                        link.click();
+                      }}
+                      className="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-all text-[12px] active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                    >
+                      ดาวน์โหลดตรงอีกครั้ง
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     );
