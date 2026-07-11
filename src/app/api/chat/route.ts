@@ -249,6 +249,20 @@ export async function POST(req: Request) {
       }
     }
 
+    let dailyQuestsContext = "ไม่มีข้อมูลเควสวันนี้";
+    if (userData.currentDailyQuests && Array.isArray(userData.currentDailyQuests)) {
+      const completedList = userData.completedQuests && Array.isArray(userData.completedQuests)
+        ? userData.completedQuests.map(id => String(id))
+        : [];
+      
+      dailyQuestsContext = userData.currentDailyQuests.map((q: any) => {
+        const isDone = completedList.includes(String(q.id));
+        return `เควส: "${q.title}" (ประเภท: ${q.type}) -> สถานะ: ${isDone ? 'ทำเสร็จแล้ว' : 'ยังไม่เสร็จ'}`;
+      }).join(' | ');
+    }
+    console.log("=== DEBUG DAILY QUESTS PROMPT STR ===");
+    console.log(dailyQuestsContext);
+
     const systemPrompt = `คุณคือ 'พี่ฟุ้ย (Fuii)' รุ่นพี่คนสนิทที่เป็น AI Personal Mentor และผู้ก่อตั้งแพลตฟอร์ม Upskill with Fuii คอยช่วยเหลือให้คำปรึกษาการพัฒนาตัวเองและชีวิตกับน้อง ${userData.displayName || 'นักเดินทาง'}
 
 !!! กฎเหล็ก (CRITICAL RULES) !!!:
@@ -323,7 +337,7 @@ export async function POST(req: Request) {
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 - ข้อมูล Memento Mori (เวลาชีวิต): วันเกิดคือ ${userData.birthdate || 'ไม่ได้ระบุ'}${currentAge ? ` (อายุปัจจุบัน ${currentAge} ปี)` : ''}, คาดการณ์อายุขัยคือ ${userData.expectedAge || 'ไม่ได้ระบุ'} ปี
 - บันทึกการทบทวนเวลาชีวิต (Memento Mori Reflections): ${userData.mementoReflections && Array.isArray(userData.mementoReflections) && userData.mementoReflections.length > 0 ? userData.mementoReflections.map((r: any) => `คำถาม: "${r.question}" -> คำตอบ: "${r.answer}"`).join(' | ') : 'ยังไม่มีการทบทวน'}
-- ข้อมูลเควสรายวันของวันนี้ (Daily Quests): ${userData.currentDailyQuests && Array.isArray(userData.currentDailyQuests) ? userData.currentDailyQuests.map((q: any) => `เควส: "${q.title}" (ประเภท: ${q.type}) -> สถานะ: ${userData.completedQuests && Array.isArray(userData.completedQuests) && userData.completedQuests.map(id => String(id)).includes(String(q.id)) ? 'ทำเสร็จแล้ว' : 'ยังไม่เสร็จ'}`).join(' | ') : 'ไม่มีข้อมูลเควสวันนี้'}
+- ข้อมูลเควสรายวันของวันนี้ (Daily Quests): ${dailyQuestsContext}
 - ${recentQuestsContext}
 ${relevantNotesContext ? `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n` : ''}
 
