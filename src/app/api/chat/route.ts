@@ -29,6 +29,7 @@ const ChatSchema = z.object({
     mementoReflections: z.unknown().optional(),
     currentDailyQuests: z.unknown().optional(),
     completedQuests: z.array(z.unknown()).optional(),
+    customQuestTitle: z.string().optional(),
   }),
 });
 
@@ -255,10 +256,18 @@ export async function POST(req: Request) {
         ? userData.completedQuests.map(id => String(id))
         : [];
       
-      dailyQuestsContext = userData.currentDailyQuests.map((q: any) => {
+      const quests = userData.currentDailyQuests.map((q: any) => {
         const isDone = completedList.includes(String(q.id));
         return `เควส: "${q.title}" (ประเภท: ${q.type}) -> สถานะ: ${isDone ? 'ทำเสร็จแล้ว' : 'ยังไม่เสร็จ'}`;
-      }).join(' | ');
+      });
+
+      // ✏️ Add custom user quest (special-01) if defined
+      if (userData.customQuestTitle) {
+        const isCustomDone = completedList.includes("special-01");
+        quests.push(`เควส: "${userData.customQuestTitle}" (ประเภท: MY_QUEST) -> สถานะ: ${isCustomDone ? 'ทำเสร็จแล้ว' : 'ยังไม่เสร็จ'}`);
+      }
+
+      dailyQuestsContext = quests.join(' | ');
     }
     console.log("=== DEBUG DAILY QUESTS PROMPT STR ===");
     console.log(dailyQuestsContext);
