@@ -1429,7 +1429,10 @@ function SecondBrainContent() {
   };
 
   const handleCreateNote = async () => {
-    if (!user) return;
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     await deleteCurrentNoteIfEmpty();
     try {
       const notesRef = collection(db, "users", user.uid, "second_brain");
