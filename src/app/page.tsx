@@ -317,7 +317,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, ease: "easeOut" }}
-              className="relative w-full max-w-[640px] px-5 py-6 sm:px-8 sm:py-8 md:ml-[4vw] md:max-w-[680px] md:px-10 md:py-9 lg:max-w-[680px]"
+              className="relative w-full max-w-[640px] px-4 py-6 sm:px-8 sm:py-8 md:ml-[4vw] md:max-w-[680px] md:px-10 md:py-9 lg:max-w-[680px]"
             >
               {/* Retro chunky title with outline and 3D shadows */}
               <h1 className="relative max-w-[680px] text-[2.55rem] font-black leading-[1.02] tracking-tight select-none sm:text-6xl md:text-[4rem] lg:text-[4.1rem]">
@@ -345,10 +345,10 @@ export default function Home() {
               </p>
 
               {/* Stamp badges with custom colors, thick borders, slight rotation and spring physics */}
-              <div className="relative mt-8 flex flex-wrap w-full gap-3 pb-1 select-none">
+              <div className="relative mt-8 flex flex-nowrap w-full gap-1.5 [@media(min-width:375px)]:gap-2 [@media(min-width:430px)]:gap-3 pb-1 select-none">
                 {[
                   { 
-                    icon: <BrainCircuit size={16} />, 
+                    icon: <BrainCircuit className="w-3 h-3 [@media(min-width:375px)]:w-3.5 [@media(min-width:375px)]:h-3.5 [@media(min-width:430px)]:w-4 [@media(min-width:430px)]:h-4" />, 
                     label: "PERSONALIZED", 
                     bgClass: "bg-[#EDE9FE]", 
                     textClass: "text-[#5B21B6]",
@@ -356,7 +356,7 @@ export default function Home() {
                     rotate: "-rotate-1"
                   },
                   { 
-                    icon: <Zap size={16} />, 
+                    icon: <Zap className="w-3 h-3 [@media(min-width:375px)]:w-3.5 [@media(min-width:375px)]:h-3.5 [@media(min-width:430px)]:w-4 [@media(min-width:430px)]:h-4" />, 
                     label: "ACTIONABLE", 
                     bgClass: "bg-[#FEF3C7]", 
                     textClass: "text-[#B45309]",
@@ -364,7 +364,7 @@ export default function Home() {
                     rotate: "rotate-2"
                   },
                   { 
-                    icon: <Flame size={16} />, 
+                    icon: <Flame className="w-3 h-3 [@media(min-width:375px)]:w-3.5 [@media(min-width:375px)]:h-3.5 [@media(min-width:430px)]:w-4 [@media(min-width:430px)]:h-4" />, 
                     label: "XP & LEVEL", 
                     bgClass: "bg-[#DBEAFE]", 
                     textClass: "text-[#1E40AF]",
@@ -377,7 +377,7 @@ export default function Home() {
                     whileHover={{ scale: 1.06, rotate: parseFloat(badge.rotate) > 0 ? 0 : 2, y: -2 }}
                     whileTap={{ scale: 0.96, rotate: -1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 14 }}
-                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 ${badge.borderClass} ${badge.bgClass} ${badge.textClass} ${badge.rotate} font-black text-[10px] md:text-[11px] tracking-wide shadow-[4px_4px_0px_#2D231E] cursor-default`}
+                    className={`inline-flex items-center gap-1 [@media(min-width:375px)]:gap-1.5 [@media(min-width:430px)]:gap-2 px-2 py-1.5 [@media(min-width:375px)]:px-2.5 [@media(min-width:375px)]:py-2 [@media(min-width:430px)]:px-4 [@media(min-width:430px)]:py-2.5 rounded-2xl border-2 ${badge.borderClass} ${badge.bgClass} ${badge.textClass} ${badge.rotate} font-black text-[8.5px] [@media(min-width:375px)]:text-[9.5px] [@media(min-width:430px)]:text-[10px] md:text-[11px] tracking-tighter [@media(min-width:375px)]:tracking-tight [@media(min-width:430px)]:tracking-wide shadow-[2.5px_2.5px_0px_#2D231E] [@media(min-width:375px)]:shadow-[3px_3px_0px_#2D231E] [@media(min-width:430px)]:shadow-[4px_4px_0px_#2D231E] cursor-default whitespace-nowrap`}
                   >
                     <span className="shrink-0">
                       {badge.icon}
