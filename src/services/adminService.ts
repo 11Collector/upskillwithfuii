@@ -10,6 +10,8 @@ export interface UserDetail {
   createdAtTs: number;
   lastLoginAt: string;
   isReturning: boolean;
+  phase: string;
+  completedTools: string[];
 }
 
 export interface EbookLead {
@@ -59,7 +61,66 @@ export interface AdminStats {
   wheelAverages: number[];
   wheelFocusDistribution: number[];
   wheelTotalDocs: number;
+  phaseDistribution: Record<string, number>;
+  toolCompletionDistribution: Record<string, number>;
 }
+
+const calculateUserPhase = (data: any): string => {
+  const hasCompletedPhase1 =
+    !!data.hasWheelXP &&
+    !!data.hasDiscXP &&
+    !!data.hasMoneyXP &&
+    !!data.hasLibrarySoulXP;
+
+  const hasCompletedPhase1Quests =
+    !!data.hasCompletedPhase1Quests ||
+    (Array.isArray(data.completedQuestIds) && data.completedQuestIds.length >= 2) ||
+    (data.totalXP >= 300 && hasCompletedPhase1); // fallback approximation
+
+  const hasQuote = !!(data.lastQuoteDate || data.lastQuote || data.lastQuoteTime || data.hasQuoteXP);
+  const hasGhost = !!(data.lastGhostResult || data.lastGhostResultFull);
+  
+  const hasCompletedPhase2 =
+    hasCompletedPhase1 &&
+    hasCompletedPhase1Quests &&
+    hasQuote &&
+    hasGhost &&
+    !!(data.redeemedHistory && data.redeemedHistory.length > 0) &&
+    !!(data.hasChattedWithFuii || data.lastChatTime || data.lastChatDate);
+
+  const claimedReadArticlesCount = (data.readArticles && data.readArticles.length) || 0;
+  const hasCompletedFocusRoom = !!data.hasCompletedFocusRoom || (data.focusReflections && data.focusReflections.length > 0);
+  const hasCompletedMemento = !!data.hasCheckedMemento || !!data.birthdate || (data.mementoReflections && data.mementoReflections.length > 0);
+
+  const hasCompletedPhase3 =
+    hasCompletedPhase2 &&
+    claimedReadArticlesCount >= 2 &&
+    hasCompletedFocusRoom &&
+    hasCompletedMemento;
+
+  const enteredRealLife = !!data.enteredRealLife;
+
+  if (enteredRealLife) return "Real Life";
+  if (hasCompletedPhase3) return "Phase 3 Completed";
+  if (hasCompletedPhase2) return "Phase 3";
+  if (hasCompletedPhase1 && hasCompletedPhase1Quests) return "Phase 2";
+  if (hasCompletedPhase1) return "Phase 1 (Quests)";
+  return "Phase 1 (Assessments)";
+};
+
+const getCompletedTools = (data: any): string[] => {
+  const tools: string[] = [];
+  if (data.hasWheelXP || data.lastWheel || data.lastWheelDate || data.wheelGoal) tools.push("wheel");
+  if (data.hasDiscXP || data.lastDiscResult || data.discResult || data.discType) tools.push("disc");
+  if (data.hasMoneyXP || data.lastMoneyResult || data.moneyResult || data.moneyType) tools.push("money");
+  if (data.hasLibrarySoulXP || data.lastLibrarySoul || data.librarySoulType || data.librarySoul) tools.push("library");
+  if (data.lastQuoteDate || data.lastQuote || data.lastQuoteTime || data.hasQuoteXP) tools.push("quote");
+  if (data.lastGhostResult || data.lastGhostResultFull || data.ghostType) tools.push("ghost");
+  if (data.hasChattedWithFuii || data.lastChatTime || data.lastChatDate || data.dailyChatCount > 0) tools.push("ai_mentor");
+  if (data.hasCompletedFocusRoom || (data.focusReflections && data.focusReflections.length > 0)) tools.push("focus");
+  if (data.hasCheckedMemento || data.birthdate || (data.mementoReflections && data.mementoReflections.length > 0)) tools.push("memento");
+  return tools;
+};
 
 export const fetchAdminStats = async (): Promise<AdminStats> => {
   try {
@@ -68,9 +129,7 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
     const usersSnapshot = await getCountFromServer(usersRef);
     const totalUsers = usersSnapshot.data().count;
 
-    // 2. We'll need to fetch user docs to see returning/active if we don't have specific queries
-    // Cap at 1000 docs - totalUsers uses count query which is always accurate
-    // Fetch newest 1000 users sorted by creation date
+    // 2. Fetch newest 1000 users sorted by creation date
     const usersQuery = await getDocs(query(usersRef, orderBy("createdAt", "desc"), limit(1000)));
     let returningUsers = 0;
     let activeUsers = 0; // users who logged in recently or have activity
@@ -85,6 +144,27 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
 
     let dau = 0;
     let mau = 0;
+
+    const phaseDistribution: Record<string, number> = {
+      "Phase 1 (Assessments)": 0,
+      "Phase 1 (Quests)": 0,
+      "Phase 2": 0,
+      "Phase 3": 0,
+      "Phase 3 Completed": 0,
+      "Real Life": 0
+    };
+
+    const toolCompletionDistribution: Record<string, number> = {
+      wheel: 0,
+      disc: 0,
+      money: 0,
+      library: 0,
+      quote: 0,
+      ghost: 0,
+      ai_mentor: 0,
+      focus: 0,
+      memento: 0
+    };
 
     usersQuery.forEach((docSnap) => {
       const data = docSnap.data();
@@ -124,6 +204,14 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
         returningUsers++;
       }
 
+      const phase = calculateUserPhase(data);
+      const completedTools = getCompletedTools(data);
+
+      phaseDistribution[phase] = (phaseDistribution[phase] || 0) + 1;
+      completedTools.forEach((tool) => {
+        toolCompletionDistribution[tool] = (toolCompletionDistribution[tool] || 0) + 1;
+      });
+
       allUsersList.push({
         id: docSnap.id,
         name: data.displayName || data.name || "ไม่ระบุชื่อ",
@@ -132,7 +220,9 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
         createdAt: createdAt.toLocaleDateString('th-TH'),
         createdAtTs: createdAt.getTime(),
         lastLoginAt: lastLoginAt ? lastLoginAt.toLocaleDateString('th-TH') : "ไม่ระบุ",
-        isReturning
+        isReturning,
+        phase,
+        completedTools
       });
     });
 
@@ -155,6 +245,9 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
         isReturning = true;
       }
 
+      const phase = calculateUserPhase(data);
+      const completedTools = getCompletedTools(data);
+
       topUsers.push({
         id: docSnap.id,
         name: data.displayName || data.name || "ไม่ระบุชื่อ",
@@ -163,7 +256,9 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
         createdAt: createdAt.toLocaleDateString('th-TH'),
         createdAtTs: createdAt.getTime(),
         lastLoginAt: lastLoginAt ? lastLoginAt.toLocaleDateString('th-TH') : "ไม่ระบุ",
-        isReturning
+        isReturning,
+        phase,
+        completedTools
       });
     });
 
@@ -396,6 +491,8 @@ export const fetchAdminStats = async (): Promise<AdminStats> => {
       wheelAverages,
       wheelFocusDistribution,
       wheelTotalDocs,
+      phaseDistribution,
+      toolCompletionDistribution
     };
   } catch (error) {
     console.error("Error fetching admin stats:", error);
