@@ -111,6 +111,45 @@ const ghostLabels: Record<string, string> = {
   guardian: "🏺 ผีเฝ้าของเดิม"
 };
 
+const toolBadgeLabels: Record<string, { label: string; class: string }> = {
+  wheel: { label: "🎡 Wheel", class: "bg-red-500/15 text-red-300 border border-red-500/20" },
+  disc: { label: "📊 DISC", class: "bg-orange-500/15 text-orange-300 border border-orange-500/20" },
+  money: { label: "💰 Money", class: "bg-amber-500/15 text-amber-300 border border-amber-500/20" },
+  library: { label: "📚 Library", class: "bg-violet-500/15 text-violet-300 border border-violet-500/20" },
+  quote: { label: "✍️ คมสัดสัด", class: "bg-pink-500/15 text-pink-300 border border-pink-500/20" },
+  ghost: { label: "👻 Ghost", class: "bg-rose-500/15 text-rose-300 border border-rose-500/20" },
+  ai_mentor: { label: "🤖 Mentor", class: "bg-indigo-500/15 text-indigo-300 border border-indigo-500/20" },
+  focus: { label: "⏱️ Focus", class: "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20" },
+  memento: { label: "⏳ Memento", class: "bg-teal-500/15 text-teal-300 border border-teal-500/20" },
+};
+
+const phaseColors: Record<string, string> = {
+  "Phase 1 (Assessments)": "bg-slate-500/15 text-slate-300 border border-slate-500/25",
+  "Phase 1 (Quests)": "bg-blue-500/15 text-blue-300 border border-blue-500/25",
+  "Phase 2": "bg-amber-500/15 text-amber-300 border border-amber-500/25",
+  "Phase 3": "bg-purple-500/15 text-purple-300 border border-purple-500/25",
+  "Phase 3 Completed": "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25",
+  "Real Life": "bg-rose-500/15 text-rose-300 border border-rose-500/25",
+};
+
+const phaseProgressBarColors: Record<string, string> = {
+  "Phase 1 (Assessments)": "bg-slate-500",
+  "Phase 1 (Quests)": "bg-blue-500",
+  "Phase 2": "bg-amber-500",
+  "Phase 3": "bg-purple-500",
+  "Phase 3 Completed": "bg-emerald-500",
+  "Real Life": "bg-rose-500",
+};
+
+const phaseLabels: Record<string, string> = {
+  "Phase 1 (Assessments)": "Phase 1 (ทำแบบประเมิน)",
+  "Phase 1 (Quests)": "Phase 1 (ทำภารกิจอัพเลเวล)",
+  "Phase 2": "Phase 2 (ลุยความท้าทาย)",
+  "Phase 3": "Phase 3 (ขยายศักยภาพ)",
+  "Phase 3 Completed": "จบ Phase 3 (รอข้ามสะพาน)",
+  "Real Life": "Real Life (เข้าสู่ชีวิตจริง)"
+};
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -751,6 +790,81 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* --- 📊 New Section: Phase Distribution & Tool Completion Distribution --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+          {/* Phase Distribution */}
+          <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-[2rem] p-6 md:p-8 backdrop-blur-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-emerald-500/20 rounded-xl">
+                  <Activity className="text-emerald-400" size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">สัดส่วนผู้ใช้ในแต่ละ Phase</h2>
+                  <p className="text-neutral-400 text-xs mt-0.5">การเติบโตตามเส้นทางการพัฒนาตัวเอง (คิดจาก 1,000 คนล่าสุด)</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {Object.entries(stats.phaseDistribution || {})
+                  .map(([key, value]) => {
+                    const total = Object.values(stats.phaseDistribution || {}).reduce((a, b) => a + b, 0) || 1;
+                    const percent = Math.round((value / total) * 100);
+                    const label = phaseLabels[key] || key;
+                    const progressColor = phaseProgressBarColors[key] || "bg-indigo-500";
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-neutral-300 font-semibold">{label}</span>
+                          <span className="text-white font-bold">{value} คน ({percent}%)</span>
+                        </div>
+                        <div className="h-2.5 w-full bg-neutral-900 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${percent}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+
+          {/* Tool Completion Stats */}
+          <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-[2rem] p-6 md:p-8 backdrop-blur-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-amber-500/20 rounded-xl">
+                  <Zap className="text-amber-400" size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">จำนวนคนเล่นแต่ละเครื่องมือ (Tools)</h2>
+                  <p className="text-neutral-400 text-xs mt-0.5">เครื่องมือที่ผู้ใช้งานทำเสร็จแล้ว (คิดจาก 1,000 คนล่าสุด)</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {Object.entries(stats.toolCompletionDistribution || {})
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([key, value]) => {
+                    const total = Object.values(stats.phaseDistribution || {}).reduce((a, b) => a + b, 0) || 1;
+                    const percent = Math.round((value / total) * 100);
+                    const badgeInfo = toolBadgeLabels[key] || { label: key, class: "" };
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-neutral-300 font-semibold">{badgeInfo.label}</span>
+                          <span className="text-white font-bold">{value} คน ({percent}%)</span>
+                        </div>
+                        <div className="h-2.5 w-full bg-neutral-900 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-indigo-500" style={{ width: `${percent}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Top Users Section */}
         <div className="bg-neutral-800/40 border border-neutral-700/50 rounded-[2rem] p-6 md:p-8 backdrop-blur-sm mt-8">
           <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
@@ -789,6 +903,8 @@ export default function AdminDashboard() {
                   <th className="px-5 py-4">ชื่อ</th>
                   <th className="px-5 py-4">อีเมล</th>
                   <th className="px-5 py-4">XP ทั้งหมด</th>
+                  <th className="px-5 py-4">เฟสปัจจุบัน (Phase)</th>
+                  <th className="px-5 py-4">เครื่องมือที่เล่นแล้ว (Tools)</th>
                   <th className="px-5 py-4">วันที่สมัคร</th>
                   <th className="px-5 py-4">เข้าสู่ระบบล่าสุด</th>
                   <th className="px-5 py-4">สถานะ</th>
@@ -808,6 +924,27 @@ export default function AdminDashboard() {
                         {user.totalXP} XP
                       </span>
                     </td>
+                    <td className="px-5 py-4">
+                      <span className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${phaseColors[user.phase] || 'bg-neutral-800 text-neutral-400 border-neutral-700/50'}`}>
+                        {phaseLabels[user.phase] || user.phase}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap gap-1 max-w-[280px]">
+                        {user.completedTools && user.completedTools.length > 0 ? (
+                          user.completedTools.map((tId) => {
+                            const badge = toolBadgeLabels[tId] || { label: tId, class: "bg-neutral-800 text-neutral-400" };
+                            return (
+                              <span key={tId} className={`px-1.5 py-0.5 rounded-lg text-[10px] font-black ${badge.class}`}>
+                                {badge.label}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="text-neutral-600 text-xs">-</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-5 py-4 text-neutral-400">{user.createdAt}</td>
                     <td className="px-5 py-4 text-neutral-400">{user.lastLoginAt}</td>
                     <td className="px-5 py-4">
@@ -821,7 +958,7 @@ export default function AdminDashboard() {
                 )))}
                 {(!stats.topUsers || stats.topUsers.length === 0) && (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-neutral-500 font-medium">
+                    <td colSpan={9} className="px-5 py-8 text-center text-neutral-500 font-medium">
                       ไม่พบข้อมูลผู้ใช้งาน
                     </td>
                   </tr>

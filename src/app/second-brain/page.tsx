@@ -972,6 +972,49 @@ const GraphView: React.FC<GraphViewProps> = ({
   );
 };
 
+function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
+  if (typeof window === "undefined") {
+    return { top: 0, left: 0 };
+  }
+
+  const div = document.createElement("div");
+  const styles = window.getComputedStyle(element);
+  
+  const properties = [
+    "direction", "boxSizing", "width", "height", "overflowX", "overflowY",
+    "borderWidth", "borderStyle", "borderColor",
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
+    "fontFamily", "fontSize", "fontWeight", "fontStyle", "fontVariant",
+    "textTransform", "wordSpacing", "letterSpacing", "whiteSpace",
+    "wordBreak", "lineHeight"
+  ];
+  
+  properties.forEach(prop => {
+    (div.style as any)[prop] = (styles as any)[prop];
+  });
+  
+  div.style.position = "absolute";
+  div.style.visibility = "hidden";
+  div.style.whiteSpace = "pre-wrap";
+  div.style.wordWrap = "break-word";
+  
+  const textContent = element.value.substring(0, position);
+  div.textContent = textContent;
+  
+  const span = document.createElement("span");
+  span.textContent = "|";
+  div.appendChild(span);
+  
+  document.body.appendChild(div);
+  
+  const top = span.offsetTop - element.scrollTop;
+  const left = span.offsetLeft - element.scrollLeft;
+  
+  document.body.removeChild(div);
+  
+  return { top, left };
+}
+
 function SecondBrainContent() {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
@@ -1010,7 +1053,43 @@ function SecondBrainContent() {
   const [autocompleteQuery, setAutocompleteQuery] = useState("");
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
   const [autocompleteActiveIdx, setAutocompleteActiveIdx] = useState(0);
+  const [autocompleteCoords, setAutocompleteCoords] = useState({ top: 0, left: 0 });
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+
+  const checkAutocomplete = (val: string, selectionStart: number, textarea: HTMLTextAreaElement) => {
+    const textBeforeCursor = val.substring(0, selectionStart);
+    const openBracketIdx = textBeforeCursor.lastIndexOf("[[");
+    const closeBracketIdx = textBeforeCursor.lastIndexOf("]]");
+    
+    if (openBracketIdx !== -1 && openBracketIdx > closeBracketIdx) {
+      const queryText = textBeforeCursor.substring(openBracketIdx + 2);
+      if (!queryText.includes("\n")) {
+        setShowAutocomplete(true);
+        setAutocompleteQuery(queryText);
+        setAutocompleteIndex(openBracketIdx);
+        setAutocompleteActiveIdx(0);
+        
+        const caretCoords = getCaretCoordinates(textarea, selectionStart);
+        const isNearBottom = caretCoords.top > (textarea.clientHeight - 150);
+        const calculatedTop = isNearBottom
+          ? textarea.offsetTop + caretCoords.top - 200 // Position above (dropdown max height + spacing)
+          : textarea.offsetTop + caretCoords.top + 28; // Position below
+          
+        setAutocompleteCoords({
+          top: Math.max(textarea.offsetTop, calculatedTop),
+          left: Math.max(
+            textarea.offsetLeft,
+            Math.min(
+              textarea.offsetLeft + caretCoords.left,
+              textarea.offsetLeft + textarea.clientWidth - 260
+            )
+          )
+        });
+        return;
+      }
+    }
+    setShowAutocomplete(false);
+  };
   const [isAiScanning, setIsAiScanning] = useState(false);
   const [freeScansUsed, setFreeScansUsed] = useState(0);
 
@@ -2277,23 +2356,11 @@ ${noteContent}`;
                       onChange={(e) => {
                         const val = e.target.value;
                         setNoteContent(val);
-                        
-                        const selectionStart = e.target.selectionStart;
-                        const textBeforeCursor = val.substring(0, selectionStart);
-                        const openBracketIdx = textBeforeCursor.lastIndexOf("[[");
-                        const closeBracketIdx = textBeforeCursor.lastIndexOf("]]");
-                        
-                        if (openBracketIdx !== -1 && openBracketIdx > closeBracketIdx) {
-                          const queryText = textBeforeCursor.substring(openBracketIdx + 2);
-                          if (!queryText.includes("\n")) {
-                            setShowAutocomplete(true);
-                            setAutocompleteQuery(queryText);
-                            setAutocompleteIndex(openBracketIdx);
-                            setAutocompleteActiveIdx(0);
-                            return;
-                          }
-                        }
-                        setShowAutocomplete(false);
+                        checkAutocomplete(val, e.target.selectionStart, e.target);
+                      }}
+                      onSelect={(e) => {
+                        const target = e.currentTarget;
+                        checkAutocomplete(target.value, target.selectionStart, target);
                       }}
                       onKeyDown={handleKeyDown}
                       rows={14}
@@ -2310,8 +2377,8 @@ ${noteContent}`;
                     {showAutocomplete && (
                       <div className="absolute z-50 bg-slate-900/95 border border-slate-700/80 rounded-2xl w-64 shadow-xl max-h-48 overflow-y-auto p-1.5 backdrop-blur-md animate-fade-in text-left"
                            style={{
-                             bottom: "60px",
-                             left: "20px"
+                             top: `${autocompleteCoords.top}px`,
+                             left: `${autocompleteCoords.left}px`
                            }}>
                         <div className="px-2 py-1 text-[8px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-800 mb-1 flex items-center justify-between">
                           <span>พิมพ์ค้นหาโน้ต...</span>
