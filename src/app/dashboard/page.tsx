@@ -8248,7 +8248,7 @@ Day 21: [กิจกรรม]
                                     onClick={() => setShowTeaser(!showTeaser)}
                                     className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[8px] font-black rounded-full hover:bg-yellow-500/30 transition-all cursor-pointer select-none border border-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.1)] active:scale-95"
                                   >
-                                    {showTeaser ? "ปิด ✕" : "ส่องรางวัล 🎁"}
+                                    {showTeaser ? "ปิด ✕" : "ดูฟีเจอร์ปลดล็อก"}
                                   </button>
                                 )}
                               </div>
@@ -8267,22 +8267,22 @@ Day 21: [กิจกรรม]
                             className="mt-3 font-mono text-[10px] text-yellow-400 bg-gradient-to-r from-yellow-500/[0.03] to-amber-500/[0.07] border border-dashed border-yellow-500/30 p-3.5 rounded-xl leading-relaxed shadow-[0_0_15px_rgba(234,179,8,0.05)] relative overflow-hidden z-10"
                           >
                             <div className="absolute top-0 right-0 px-2 py-0.5 bg-yellow-500/10 text-yellow-400/70 text-[7px] font-black rounded-bl border-l border-b border-yellow-500/20 uppercase tracking-widest">
-                              LV.10 SYSTEM UNLOCK
+                              LV.10 UNLOCK
                             </div>
                             
-                            <div className="text-yellow-450 font-black tracking-wider uppercase mb-1.5 flex items-center gap-1">
+                            <div className="text-yellow-450 font-black tracking-wider uppercase mb-2 flex items-center gap-1">
                               <span>⚡</span>
-                              <span>SYSTEM REWARD PREVIEW //</span>
+                              <span>สิ่งที่ได้รับใน Tab ตัวตน //</span>
                             </div>
                             
                             <div className="space-y-1.5 font-sans font-medium text-slate-350">
                               <p className="flex items-start gap-1">
                                 <span className="text-yellow-400 font-bold shrink-0">▸</span>
-                                <span><strong className="text-white font-extrabold">Book Shelf (คลังออมมีสติ):</strong> ระบบบันทึกประวัติการพัฒนาตัวเองย้อนหลังในแถบตัวตน</span>
+                                <span><strong className="text-white font-bold">คลังออมมีสติ:</strong> ในการบันทึกรายจ่าย</span>
                               </p>
                               <p className="flex items-start gap-1">
                                 <span className="text-yellow-400 font-bold shrink-0">▸</span>
-                                <span><strong className="text-white font-extrabold">Pet Evolution:</strong> สิทธิ์การอัปเกรดสัตว์เลี้ยงคู่ใจเป็นร่างขั้นถัดไป</span>
+                                <span><strong className="text-white font-bold">Book Shelf:</strong> ในการบันทึกหนังสือที่อ่านจบแล้วหรือสนใจ</span>
                               </p>
                             </div>
                           </motion.div>
