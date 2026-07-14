@@ -13,9 +13,14 @@ const QuestAnalysisSchema = z.object({
 
 const emojiRegex = /^\p{Emoji}/u;
 
-function normalizeQuest(raw: string): string | null {
-  const normalized = raw.trim().replace(/^(\p{Emoji})\s*/u, '$1 ');
-  const isValid = emojiRegex.test(normalized) && normalized.length >= 5 && normalized.length <= 42;
+function normalizeQuest(raw: string, defaultEmoji: string): string | null {
+  let normalized = raw.trim();
+  if (!emojiRegex.test(normalized)) {
+    normalized = `${defaultEmoji} ${normalized}`;
+  } else {
+    normalized = normalized.replace(/^(\p{Emoji})\s*/u, '$1 ');
+  }
+  const isValid = normalized.length >= 5 && normalized.length <= 65;
   return isValid ? normalized : null;
 }
 
@@ -206,9 +211,9 @@ ${wheelAvoidRule}
       console.error("❌ [API Quest Analysis] Error parsing JSON from DeepSeek:", e, "Raw result was:", rawResult);
     }
 
-    const questTitle = normalizeQuest(challengeRaw);
-    const discTitle = normalizeQuest(personalityRaw);
-    const moneyTitle = normalizeQuest(moneyRaw);
+    const questTitle = normalizeQuest(challengeRaw, '🎯');
+    const discTitle = normalizeQuest(personalityRaw, '🧠');
+    const moneyTitle = normalizeQuest(moneyRaw, '🛒');
     console.log("🤖 [API Quest Analysis] Normalized fields:", { questTitle, discTitle, moneyTitle });
 
     logAiCall(authResult.uid, "quest_analysis").catch(() => {});

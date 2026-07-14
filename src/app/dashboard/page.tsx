@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown, Pencil } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown, Pencil, Battery } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -2613,11 +2613,11 @@ Day 21: [กิจกรรม]
     let wheelXp = 25;
     let otherXp = 20;
     if (energyLevel === "low") {
-      wheelXp = 15;
+      wheelXp = 25;
       otherXp = 10;
     } else if (energyLevel === "high") {
-      wheelXp = 35;
-      otherXp = 30;
+      wheelXp = 25;
+      otherXp = 25;
     }
 
     const qList = [
@@ -5120,14 +5120,19 @@ Day 21: [กิจกรรม]
                   <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                     Daily Quests
                     {userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel && (
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-lg text-white shadow-sm flex items-center gap-1 leading-none ${
+                      <span className={`text-[10px] font-black px-2.5 py-1 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border flex items-center gap-1.5 leading-none ${
                         userData.questEnergyLevel === 'low' 
-                          ? 'bg-emerald-500' 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
                           : userData.questEnergyLevel === 'high' 
-                            ? 'bg-red-500' 
-                            : 'bg-orange-500'
+                            ? 'bg-rose-50 text-rose-600 border-rose-200' 
+                            : 'bg-orange-50 text-orange-600 border-orange-200'
                       }`}>
-                        {userData.questEnergyLevel === 'low' ? '🔋 Low' : userData.questEnergyLevel === 'high' ? '🔥 High' : '⚡ Medium'}
+                        {userData.questEnergyLevel === 'low' && <Battery size={11} className="stroke-[2.5]" />}
+                        {userData.questEnergyLevel === 'medium' && <Zap size={11} className="fill-current stroke-[2.5]" />}
+                        {userData.questEnergyLevel === 'high' && <Flame size={11} className="fill-current stroke-[2.5]" />}
+                        <span>
+                          {userData.questEnergyLevel === 'low' ? 'Low' : userData.questEnergyLevel === 'high' ? 'High' : 'Medium'}
+                        </span>
                       </span>
                     )}
                   </h2>
@@ -5173,8 +5178,9 @@ Day 21: [กิจกรรม]
             {/* --- 🔋 Inline Energy Level Selector --- */}
             <div className="mb-6 bg-slate-50/70 backdrop-blur-sm p-4 sm:p-5 rounded-[1.8rem] border border-slate-200/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 flex items-center gap-1.5">
-                  ⚡ พลังงานของคุณวันนี้
+                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-450 flex items-center gap-1.5">
+                  <Zap size={11} className="fill-orange-400 stroke-orange-450" />
+                  พลังงานของคุณวันนี้
                   {completedQuests.length > 0 && <Lock size={10} className="text-slate-400" />}
                 </span>
                 <span className="text-xs font-bold text-slate-600 mt-0.5">
@@ -5184,7 +5190,7 @@ Day 21: [กิจกรรม]
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto sm:items-center">
                 {(["low", "medium", "high"] as const).map((level) => {
                   const hasChosenToday = userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel;
                   const isActive = (userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel === level) || (!userData?.questEnergyLevel && level === "medium");
@@ -5201,14 +5207,6 @@ Day 21: [กิจกรรม]
                     return "bg-white/80 text-slate-400 border-slate-200/60 hover:bg-white hover:text-slate-600 hover:border-slate-300 shadow-sm";
                   };
 
-                  const getEmoji = () => {
-                    switch (level) {
-                      case "low": return "🔋";
-                      case "high": return "🔥";
-                      default: return "⚡";
-                    }
-                  };
-
                   const getLabel = () => {
                     switch (level) {
                       case "low": return "Low";
@@ -5222,12 +5220,14 @@ Day 21: [กิจกรรม]
                       key={level}
                       disabled={isLocked || isSelectingEnergy}
                       onClick={() => handleSelectEnergy(level)}
-                      className={`px-3.5 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-2xl border transition-all duration-300 flex items-center gap-1.5 min-h-[40px] cursor-pointer active:scale-95 ${getButtonStyles()} ${
+                      className={`px-3 py-2.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider rounded-2xl border transition-all duration-300 flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer active:scale-95 w-full sm:w-auto ${getButtonStyles()} ${
                         isLocked ? "opacity-60 cursor-not-allowed" : ""
                       }`}
                       title={level === "low" ? "ก้าวเล็กๆ 2 นาที เจาะจงพฤติกรรมบำบัด" : level === "high" ? "เควสท้าทายลึกซึ้ง 15-30 นาที" : "เควสสมดุลปกติ 5-10 นาที"}
                     >
-                      <span>{getEmoji()}</span>
+                      {level === "low" && <Battery size={13} className="stroke-[2.5]" />}
+                      {level === "medium" && <Zap size={13} className="fill-current stroke-[2.5]" />}
+                      {level === "high" && <Flame size={13} className="fill-current stroke-[2.5]" />}
                       <span>{getLabel()}</span>
                     </button>
                   );
