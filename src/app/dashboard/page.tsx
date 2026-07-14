@@ -8750,32 +8750,41 @@ Day 21: [กิจกรรม]
                 </p>
 
                 {/* Energy Options Mock Display inside Popup */}
-                <div className="space-y-2 mb-8 text-left bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                <div className="space-y-2.5 mb-8 text-left bg-slate-950/40 p-4 rounded-2xl border border-white/5">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shrink-0">
                       <Battery size={16} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">พลังงานต่ำ (Low)</h4>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-slate-200">พลังงานต่ำ (Low)</h4>
+                        <span className="text-[9px] font-black px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded-md">10 XP</span>
+                      </div>
                       <p className="text-[10px] text-slate-500 font-medium">ก้าวเล็กๆ 2 นาที ทำได้ง่ายทันที</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
+                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20 shrink-0">
                       <Zap size={15} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">พลังงานปกติ (Medium)</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">ภารกิจสมดุล 5-10 นาที</p>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-slate-200">พลังงานปกติ (Medium)</h4>
+                        <span className="text-[9px] font-black px-1.5 py-0.2 bg-orange-500/20 text-orange-300 rounded-md">20 XP</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium">ภารกิจสมดุล 5-10 นาที กำลังดี</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20 shrink-0">
                       <Flame size={15} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">พลังงานสูง (High)</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">ความท้าทายลึกซึ้ง 15-30 นาที</p>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-slate-200">พลังงานสูง (High)</h4>
+                        <span className="text-[9px] font-black px-1.5 py-0.2 bg-rose-500/20 text-rose-300 rounded-md">25 XP</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium">เควสท้าทายลึกซึ้ง 15-30 นาที ได้รับแต้มสูงสุด</p>
                     </div>
                   </div>
                 </div>
