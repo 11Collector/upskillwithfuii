@@ -111,9 +111,10 @@ interface QuestItemProps {
   isDone: boolean;
   toggleQuest: (id: number, xp: number) => void;
   setShowWheelRulesModal: (show: boolean) => void;
+  wheelPlanTarget?: number;
 }
 
-export const QuestItem = ({ quest, isDone, toggleQuest, setShowWheelRulesModal }: QuestItemProps) => {
+export const QuestItem = ({ quest, isDone, toggleQuest, setShowWheelRulesModal, wheelPlanTarget = 7 }: QuestItemProps) => {
   const isNotice = quest.xp === 0; // 🚩 เช็กว่าเป็นประกาศแจ้งเตือนหรือไม่
 
   const getTypeStyles = (type: string) => {
@@ -180,7 +181,7 @@ export const QuestItem = ({ quest, isDone, toggleQuest, setShowWheelRulesModal }
             onClick={(e) => { e.stopPropagation(); setShowWheelRulesModal(true); }}
           >
             <div className="w-3.5 h-3.5 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center font-bold text-[9px]">i</div>
-            <span className="text-[10px] text-amber-800 font-bold underline decoration-amber-300 decoration-dashed underline-offset-2">กติกาแผน 7 วัน & โบนัส XP</span>
+            <span className="text-[10px] text-amber-800 font-bold underline decoration-amber-300 decoration-dashed underline-offset-2">กติกาแผน {wheelPlanTarget} วัน & โบนัส XP</span>
           </div>
         )}
       </div>

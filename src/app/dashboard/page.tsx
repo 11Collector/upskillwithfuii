@@ -5182,7 +5182,7 @@ Day 21: [กิจกรรม]
                           onClick={(e) => { e.stopPropagation(); setShowWheelRulesModal(true); }}
                         >
                           <div className="w-3.5 h-3.5 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center font-bold text-[9px]">i</div>
-                          <span className="text-[10px] text-amber-800 font-bold underline decoration-amber-300 decoration-dashed underline-offset-2">กติกาแผน 7 วัน & โบนัส XP</span>
+                          <span className="text-[10px] text-amber-800 font-bold underline decoration-amber-300 decoration-dashed underline-offset-2">กติกาแผน {wheelPlanTarget} วัน & โบนัส XP</span>
                         </div>
                       )}
                     </div>
@@ -8733,42 +8733,85 @@ Day 21: [กิจกรรม]
                 <PieChart size={24} />
               </div>
 
-              <h3 className="text-xl font-black text-slate-800 mb-2">กติกาแผน 7 วัน <br /><span className="text-orange-500">Wheel of Life</span></h3>
-              <p className="text-sm text-slate-600 mb-5 leading-relaxed">
-                ทำภารกิจรายวันที่ AI วิเคราะห์ให้ต่อเนื่อง 7 วัน เพื่อรับโบนัสสุดคุ้มตอนจบแผน!
-              </p>
+              {wheelPlanTarget === 7 ? (
+                <>
+                  <h3 className="text-xl font-black text-slate-800 mb-2">กติกาแผน 7 วัน <br /><span className="text-orange-500">Wheel of Life</span></h3>
+                  <p className="text-sm text-slate-600 mb-5 leading-relaxed">
+                    ทำภารกิจรายวันที่ AI วิเคราะห์ให้ต่อเนื่อง 7 วัน เพื่อรับโบนัสสุดคุ้มตอนจบแผน!
+                  </p>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
-                  <div className="text-2xl drop-shadow-sm">🏆</div>
-                  <div>
-                    <div className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Perfect Run (7/7 วัน)</div>
-                    <div className="text-sm font-black text-amber-600">รับ 100 XP</div>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                      <div className="text-2xl drop-shadow-sm">🏆</div>
+                      <div>
+                        <div className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Perfect Run (7/7 วัน)</div>
+                        <div className="text-sm font-black text-amber-600">รับ 100 XP</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-2xl drop-shadow-sm">🌟</div>
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Great Run (5-6 วัน)</div>
+                        <div className="text-sm font-black text-slate-700">รับโบนัส 50 XP</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-2xl drop-shadow-sm">👍</div>
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Good Run (1-4 วัน)</div>
+                        <div className="text-sm font-black text-slate-700">รับโบนัส 20 XP</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-2xl drop-shadow-sm">🌟</div>
-                  <div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Great Run (5-6 วัน)</div>
-                    <div className="text-sm font-black text-slate-700">รับโบนัส 50 XP</div>
+                  <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 mb-6">
+                    <p className="text-xs text-orange-800 font-medium leading-relaxed text-center">
+                      <span className="font-bold">💡 รู้หรือไม่?</span> ความสม่ำเสมอคือหัวใจสำคัญ! พยายามทำภารกิจให้ครบทุกวันเพื่อรับโบนัส XP ก้อนใหญ่ และสะสมรางวัลระดับ <span className="font-black">PERFECT</span> เมื่อจบแผน 7 วันนะครับ
+                    </p>
                   </div>
-                </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-black text-slate-800 mb-2">กติกาแผน 21 วัน <br /><span className="text-orange-500">ช่วงขยาย (วันที่ 8-21)</span></h3>
+                  <p className="text-sm text-slate-600 mb-5 leading-relaxed">
+                    ทำภารกิจช่วงขยายแผน (วันที่ 8-21 รวม 14 วัน) สะสมจำนวนวันสำเร็จเพื่อรับโบนัสก้อนโตขึ้น!
+                  </p>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-2xl drop-shadow-sm">👍</div>
-                  <div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Good Run (1-4 วัน)</div>
-                    <div className="text-sm font-black text-slate-700">รับโบนัส 20 XP</div>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                      <div className="text-2xl drop-shadow-sm">🏆</div>
+                      <div>
+                        <div className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Extraordinary Run (สำเร็จ 12-14 วัน)</div>
+                        <div className="text-sm font-black text-amber-600">รับโบนัส 250 XP</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-2xl drop-shadow-sm">🌟</div>
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Great Run (สำเร็จ 8-11 วัน)</div>
+                        <div className="text-sm font-black text-slate-700">รับโบนัส 100 XP</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-2xl drop-shadow-sm">👍</div>
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Good Run (สำเร็จ 1-7 วัน)</div>
+                        <div className="text-sm font-black text-slate-700">รับโบนัส 50 XP</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 mb-6">
-                <p className="text-xs text-orange-800 font-medium leading-relaxed text-center">
-                  <span className="font-bold">💡 รู้หรือไม่?</span> ความสม่ำเสมอคือหัวใจสำคัญ! พยายามทำภารกิจให้ครบทุกวันเพื่อรับโบนัส XP ก้อนใหญ่ และสะสมรางวัลระดับ <span className="font-black">PERFECT</span> เมื่อจบแผน 7 วันนะครับ
-                </p>
-              </div>
+                  <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 mb-6">
+                    <p className="text-xs text-orange-800 font-medium leading-relaxed text-center">
+                      <span className="font-bold">💡 รู้หรือไม่?</span> ในเฟสขยายแผนนี้ (วันที่ 8-21) จะนับวันสำเร็จแยกอีก 14 วันครับ! พยายามทำต่อเนื่องเพื่อรับรางวัลระดับ <span className="font-black">EXTRAORDINARY</span> นะครับ
+                    </p>
+                  </div>
+                </>
+              )}
 
               <button
                 onClick={() => setShowWheelRulesModal(false)}
