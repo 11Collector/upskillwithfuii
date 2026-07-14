@@ -1568,6 +1568,24 @@ function SecondBrainContent() {
   const handleDeleteNote = async (noteId: string) => {
     if (!user) return;
     try {
+      const noteToDelete = notes.find((n) => n.id === noteId);
+      if (noteToDelete) {
+        const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const cleanTitle = noteToDelete.title?.trim() || "";
+        const cleanContent = noteToDelete.content?.trim() || "";
+        const isMeaningful = cleanTitle !== "บันทึกที่ไม่มีชื่อ" && cleanTitle.length > 0 && cleanContent.length >= 100;
+        const isXpAlreadyAwarded = lastNoteXpDate === todayDateStr;
+
+        if (isMeaningful && isXpAlreadyAwarded) {
+          setLastNoteXpDate(null);
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            totalXP: increment(-10),
+            lastNoteXpDate: null
+          });
+        }
+      }
+
       const noteRef = doc(db, "users", user.uid, "second_brain", noteId);
       await deleteDoc(noteRef);
       setShowDeleteConfirm(null);
