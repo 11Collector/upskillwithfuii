@@ -621,6 +621,7 @@ Day 21: [กิจกรรม]
 
   const [hasClaimedQuoteToday, setHasClaimedQuoteToday] = useState(false);
   const [showWelcomeQuotePopup, setShowWelcomeQuotePopup] = useState(false);
+  const [showQuestEnergyPopup, setShowQuestEnergyPopup] = useState(false);
   const [isGoalExpanded, setIsGoalExpanded] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
@@ -739,6 +740,15 @@ Day 21: [กิจกรรม]
     setShowMoneyVault(false);
     setShowBookCollection(false);
   }, [hasHabitMasterTools]);
+
+  useEffect(() => {
+    if (activeTab === "quests" && !isPhase1Completed) {
+      const hasSeen = localStorage.getItem("hasSeenQuestEnergyPopup");
+      if (!hasSeen) {
+        setShowQuestEnergyPopup(true);
+      }
+    }
+  }, [activeTab, isPhase1Completed]);
 
   const loadDashboardData = useCallback(async (currentUser: User) => {
     setLoading(true);
@@ -8683,6 +8693,102 @@ Day 21: [กิจกรรม]
                   <div className="h-1 w-1 bg-indigo-500/30 rounded-full" />
                   <div className="h-1 w-1 bg-indigo-500/30 rounded-full" />
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ⚡️ Modal: Daily Quest Energy Level Selector Explanation */}
+      <AnimatePresence>
+        {showQuestEnergyPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100001] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl"
+            onClick={() => {
+              localStorage.setItem("hasSeenQuestEnergyPopup", "true");
+              setShowQuestEnergyPopup(false);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 40, opacity: 0 }}
+              animate={{
+                scale: 1, y: 0, opacity: 1,
+                transition: { type: "spring", damping: 20, stiffness: 200 }
+              }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="relative max-w-sm w-full bg-slate-900 rounded-[3rem] p-8 md:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] border border-white/10 text-center overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Decorative Border Line */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 via-orange-500 to-rose-500" />
+              <div className="absolute -top-32 -left-32 w-80 h-80 bg-orange-650/20 blur-[100px] rounded-full pointer-events-none" />
+              <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-emerald-650/10 blur-[100px] rounded-full pointer-events-none" />
+
+              <div className="relative z-10">
+                {/* Icon Section (Floating Battery/Zap/Flame mix) */}
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-24 h-24 bg-slate-800 rounded-[2.2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl border border-white/10 relative group"
+                >
+                  <Zap size={44} className="text-orange-400 fill-orange-400/20 -rotate-12 animate-pulse" />
+                </motion.div>
+
+                <h3 className="text-2xl font-black text-white mb-3 leading-[1.2] tracking-tight">
+                  เลือกภารกิจตาม <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-orange-400 to-rose-400">
+                    ระดับพลังงานของคุณ
+                  </span> ⚡️
+                </h3>
+
+                <p className="text-slate-400 text-xs md:text-sm font-medium mb-8 leading-relaxed px-2 opacity-95">
+                  เหนื่อยล้าหรือพลังงานล้นวันนี้? <br />
+                  สามารถปรับแต่งภารกิจประจำวันให้เหมาะกับสภาพร่างกายของคุณได้แล้วนะ!
+                </p>
+
+                {/* Energy Options Mock Display inside Popup */}
+                <div className="space-y-2 mb-8 text-left bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                      <Battery size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">พลังงานต่ำ (Low)</h4>
+                      <p className="text-[10px] text-slate-500 font-medium">ก้าวเล็กๆ 2 นาที ทำได้ง่ายทันที</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
+                      <Zap size={15} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">พลังงานปกติ (Medium)</h4>
+                      <p className="text-[10px] text-slate-500 font-medium">ภารกิจสมดุล 5-10 นาที</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
+                      <Flame size={15} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">พลังงานสูง (High)</h4>
+                      <p className="text-[10px] text-slate-500 font-medium">ความท้าทายลึกซึ้ง 15-30 นาที</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    localStorage.setItem("hasSeenQuestEnergyPopup", "true");
+                    setShowQuestEnergyPopup(false);
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white font-black rounded-2xl shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2 active:scale-95 text-xs tracking-widest uppercase"
+                >
+                  รับทราบ
+                </button>
               </div>
             </motion.div>
           </motion.div>
