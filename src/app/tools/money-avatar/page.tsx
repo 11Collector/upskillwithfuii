@@ -1043,7 +1043,7 @@ export default function Home() {
                                 </h4>
                                 <span className="text-[9px] font-bold text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md flex items-center gap-1"><Lock size={8} /> ล็อกอยู่</span>
                               </div>
-                              <p className="text-[10px] text-stone-450 mt-1">เงื่อนไข: Level 10 / ออมครบ 10 ครั้ง / ออมเงินสะสม ฿1,000</p>
+                              <p className="text-[10px] text-stone-500 mt-1">เงื่อนไข: ทำเควสการเงินสำเร็จสะสมครบ 10 ครั้ง</p>
                             </div>
                           </div>
 
@@ -1059,7 +1059,7 @@ export default function Home() {
                                 </h4>
                                 <span className="text-[9px] font-bold text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md flex items-center gap-1"><Lock size={8} /> ล็อกอยู่</span>
                               </div>
-                              <p className="text-[10px] text-stone-450 mt-1">เงื่อนไข: Level 20 / ออมครบ 30 ครั้ง / ออมเงินสะสม ฿5,000</p>
+                              <p className="text-[10px] text-stone-500 mt-1">เงื่อนไข: ทำเควสการเงินสะสม 20 ครั้ง + บันทึกออมเงิน 10 ครั้ง + ออมเงินสะสม ฿3,000</p>
                             </div>
                           </div>
                         </div>

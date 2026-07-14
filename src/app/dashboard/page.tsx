@@ -3279,12 +3279,32 @@ Day 21: [กิจกรรม]
         wheelPlanDay: newWheelDay
       };
 
+      if (quest?.type === "MONEY") {
+        const incVal = isDone ? -1 : 1;
+        finalUpdates.totalMoneyQuestsCompleted = increment(incVal);
+      }
+
       if (!userData?.hasCompletedPhase1Quests && newCompleted.length >= 2) {
         finalUpdates.hasCompletedPhase1Quests = true;
-        setUserData((prev: any) => prev ? { ...prev, hasCompletedPhase1Quests: true } : null);
       }
 
       await setDoc(userRef, finalUpdates, { merge: true });
+
+      // อัปเดตข้อมูลผู้ใช้ใน state ทันที
+      setUserData((prev: any) => {
+        if (!prev) return null;
+        const currentTotalMoney = prev.totalMoneyQuestsCompleted || 0;
+        const incVal = (quest?.type === "MONEY") ? (isDone ? -1 : 1) : 0;
+
+        const localUpdates = { ...finalUpdates };
+        delete localUpdates.totalMoneyQuestsCompleted;
+
+        return {
+          ...prev,
+          ...localUpdates,
+          totalMoneyQuestsCompleted: Math.max(0, currentTotalMoney + incVal)
+        };
+      });
 
       // 📓 Quest log — บันทึกเมื่อ complete เท่านั้น (ไม่บันทึกตอน uncheck)
       if (!isDone) {
@@ -6202,15 +6222,15 @@ Day 21: [กิจกรรม]
                             (() => {
                               const cumulativeSavings = (userData?.savingsLog || []).reduce((sum: number, log: any) => sum + (log.price || 0), 0);
                               const savingsCount = userData?.savingsLog?.length || 0;
-                              const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+                              const totalMoneyQuests = userData?.totalMoneyQuestsCompleted || 0;
 
                               let stage = 1;
                               let stageTitle = MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage1 || "";
 
-                              if (currentLevel >= 20 || savingsCount >= 30 || cumulativeSavings >= 5000) {
+                              if (totalMoneyQuests >= 20 && savingsCount >= 10 && cumulativeSavings >= 3000) {
                                 stage = 3;
                                 stageTitle = MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage3 || "";
-                              } else if (currentLevel >= 10 || savingsCount >= 10 || cumulativeSavings >= 1000) {
+                              } else if (totalMoneyQuests >= 10) {
                                 stage = 2;
                                 stageTitle = MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage2 || "";
                               }
@@ -6288,15 +6308,14 @@ Day 21: [กิจกรรม]
                                       {stage < 3 ? (
                                         <div>
                                           {(() => {
-                                            const nextTargetLevel = stage === 1 ? 10 : 20;
-                                            const nextTargetCount = stage === 1 ? 10 : 30;
-                                            const nextTargetSavings = stage === 1 ? 1000 : 5000;
+                                            const pctQuests = stage === 1 
+                                              ? Math.min((totalMoneyQuests / 10) * 100, 100) 
+                                              : Math.min((totalMoneyQuests / 20) * 100, 100);
+                                            
+                                            const pctCount = stage === 1 ? 0 : Math.min((savingsCount / 10) * 100, 100);
+                                            const pctSavings = stage === 1 ? 0 : Math.min((cumulativeSavings / 3000) * 100, 100);
 
-                                            const pctLevel = Math.min((currentLevel / nextTargetLevel) * 100, 100);
-                                            const pctCount = Math.min((savingsCount / nextTargetCount) * 100, 100);
-                                            const pctSavings = Math.min((cumulativeSavings / nextTargetSavings) * 100, 100);
-
-                                            const bestProgress = Math.max(pctLevel, pctCount, pctSavings);
+                                            const overallProgress = stage === 1 ? pctQuests : (pctQuests + pctCount + pctSavings) / 3;
                                             const nextStageTitle = stage === 1 ? MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage2 : MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage3;
 
                                             return (
@@ -6304,43 +6323,62 @@ Day 21: [กิจกรรม]
                                                 <div className="h-1.5 bg-slate-200/60 rounded-full overflow-hidden mb-3">
                                                   <div 
                                                     className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full shadow-[0_0_6px_rgba(245,158,11,0.2)] transition-all duration-700" 
-                                                    style={{ width: `${bestProgress}%` }}
+                                                    style={{ width: `${overallProgress}%` }}
                                                   />
                                                 </div>
 
-                                                <p className="text-[9px] text-slate-500 font-semibold mb-2 leading-relaxed">
-                                                  เงื่อนไขวิวัฒนาการเป็น <span className="text-slate-800 font-black">{nextStageTitle}</span> (สำเร็จข้อใดข้อหนึ่ง):
-                                                </p>
+                                                {stage === 1 ? (
+                                                  <div>
+                                                    <p className="text-[9px] text-slate-500 font-semibold mb-2 leading-relaxed">
+                                                      เงื่อนไขวิวัฒนาการเป็น <span className="text-slate-800 font-black">{nextStageTitle}</span>:
+                                                    </p>
+                                                    <div className="flex items-center justify-between text-[9px] text-slate-600 font-medium">
+                                                      <span className="flex items-center gap-1">
+                                                        <span className={`w-1 h-1 rounded-full ${totalMoneyQuests >= 10 ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                        ทำเควสการเงินสำเร็จสะสม (10 ครั้ง)
+                                                      </span>
+                                                      <span className={`font-bold ${totalMoneyQuests >= 10 ? "text-emerald-600" : "text-slate-500"}`}>
+                                                        {totalMoneyQuests} / 10
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <div>
+                                                    <p className="text-[9px] text-slate-500 font-semibold mb-2 leading-relaxed">
+                                                      เงื่อนไขวิวัฒนาการเป็น <span className="text-slate-800 font-black">{nextStageTitle}</span> (ต้องสำเร็จทุกข้อ):
+                                                    </p>
 
-                                                <div className="space-y-1.5 text-[9px] text-slate-600">
-                                                  <div className="flex items-center justify-between">
-                                                    <span className="flex items-center gap-1">
-                                                      <span className={`w-1 h-1 rounded-full ${currentLevel >= nextTargetLevel ? "bg-emerald-500" : "bg-slate-300"}`} />
-                                                      เลเวลตัวละครหลัก (เลเวล {nextTargetLevel})
-                                                    </span>
-                                                    <span className={`font-bold ${currentLevel >= nextTargetLevel ? "text-emerald-600" : "text-slate-500"}`}>
-                                                      {currentLevel} / {nextTargetLevel}
-                                                    </span>
+                                                    <div className="space-y-1.5 text-[9px] text-slate-600">
+                                                      <div className="flex items-center justify-between">
+                                                        <span className="flex items-center gap-1">
+                                                          <span className={`w-1 h-1 rounded-full ${totalMoneyQuests >= 20 ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                          ทำเควสการเงินสะสม (20 ครั้ง)
+                                                        </span>
+                                                        <span className={`font-bold ${totalMoneyQuests >= 20 ? "text-emerald-600" : "text-slate-500"}`}>
+                                                          {totalMoneyQuests} / 20
+                                                        </span>
+                                                      </div>
+                                                      <div className="flex items-center justify-between">
+                                                        <span className="flex items-center gap-1">
+                                                          <span className={`w-1 h-1 rounded-full ${savingsCount >= 10 ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                          บันทึกประหยัดเงินในคลัง (10 ครั้ง)
+                                                        </span>
+                                                        <span className={`font-bold ${savingsCount >= 10 ? "text-emerald-600" : "text-slate-500"}`}>
+                                                          {savingsCount} / 10
+                                                        </span>
+                                                      </div>
+                                                      <div className="flex items-center justify-between">
+                                                        <span className="flex items-center gap-1">
+                                                          <span className={`w-1 h-1 rounded-full ${cumulativeSavings >= 3000 ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                          ยอดเงินออมสะสม (฿3,000)
+                                                        </span>
+                                                        <span className={`font-bold ${cumulativeSavings >= 3000 ? "text-emerald-600" : "text-slate-500"}`}>
+                                                          ฿{cumulativeSavings.toLocaleString()} / ฿3,000
+                                                        </span>
+                                                      </div>
+                                                    </div>
                                                   </div>
-                                                  <div className="flex items-center justify-between">
-                                                    <span className="flex items-center gap-1">
-                                                      <span className={`w-1 h-1 rounded-full ${savingsCount >= nextTargetCount ? "bg-emerald-500" : "bg-slate-300"}`} />
-                                                      จำนวนครั้งประหยัดเงิน ({nextTargetCount} ครั้ง)
-                                                    </span>
-                                                    <span className={`font-bold ${savingsCount >= nextTargetCount ? "text-emerald-600" : "text-slate-500"}`}>
-                                                      {savingsCount} / {nextTargetCount}
-                                                    </span>
-                                                  </div>
-                                                  <div className="flex items-center justify-between">
-                                                    <span className="flex items-center gap-1">
-                                                      <span className={`w-1 h-1 rounded-full ${cumulativeSavings >= nextTargetSavings ? "bg-emerald-500" : "bg-slate-300"}`} />
-                                                      ยอดเงินออมสะสม (฿{nextTargetSavings.toLocaleString()})
-                                                    </span>
-                                                    <span className={`font-bold ${cumulativeSavings >= nextTargetSavings ? "text-emerald-600" : "text-slate-500"}`}>
-                                                      ฿{cumulativeSavings.toLocaleString()} / ฿{nextTargetSavings.toLocaleString()}
-                                                    </span>
-                                                  </div>
-                                                </div>
+                                                )}
                                               </div>
                                             );
                                           })()}
