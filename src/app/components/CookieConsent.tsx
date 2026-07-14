@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { initAnalyticsAfterConsent } from "@/lib/firebase";
 
 export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const consent = localStorage.getItem("cookie-consent");
@@ -18,6 +20,10 @@ export default function CookieConsent() {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  if (pathname === "/privacy") {
+    return null;
+  }
 
   const handleAcceptAll = () => {
     localStorage.setItem("cookie-consent", "accepted");
