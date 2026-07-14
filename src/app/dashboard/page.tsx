@@ -2942,6 +2942,13 @@ Day 21: [กิจกรรม]
         lastQuestEnergyDate: todayDateStr
       });
 
+      // Update local state immediately to lock buttons and show active badge
+      setUserData((prev: any) => prev ? {
+        ...prev,
+        questEnergyLevel: energy,
+        lastQuestEnergyDate: todayDateStr
+      } : null);
+
       // Compute wheelQuestTitle (same logic as in updateDailyQuestsIfNeeded)
       let computedWheelTitle = '';
       const lastWheel = userData?.lastWheel || null;
@@ -3043,6 +3050,10 @@ Day 21: [กิจกรรม]
             setAiGeneratedQuestTitle(questTitle || "");
             setAiGeneratedDiscTitle(discTitle || "");
             setAiGeneratedMoneyTitle(moneyTitle || "");
+            setUserData((prev: any) => prev ? {
+              ...prev,
+              ...updates
+            } : null);
           }
         }
       }
