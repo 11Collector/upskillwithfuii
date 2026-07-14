@@ -8789,6 +8789,19 @@ Day 21: [กิจกรรม]
                   </div>
                 </div>
 
+                {/* Dynamic Pro membership tip */}
+                <p className="text-[10px] text-slate-400 font-medium mb-5 opacity-90 px-1">
+                  {isProMember ? (
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-indigo-300 font-semibold">
+                      ✨ สิทธิ์ PRO: ปรับแต่งเนื้อหาเควสผ่านการแชทกับพี่ฟุ้ย AI ได้ตลอดเวลา!
+                    </span>
+                  ) : (
+                    <span>
+                      💡 <strong className="text-slate-300">สมาชิก PRO</strong> จะปลดล็อกปุ่ม <strong>"ปรับ Quest"</strong> เพื่อคุยกับพี่ฟุ้ย AI ในการคัสตอมเนื้อหาเควสเองได้ด้วยนะ!
+                    </span>
+                  )}
+                </p>
+
                 <button
                   onClick={() => {
                     localStorage.setItem("hasSeenQuestEnergyPopup", "true");
