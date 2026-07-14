@@ -8,6 +8,7 @@ import { ghostResults } from '@/data/ghostResults';
 const QuestAnalysisSchema = z.object({
   level: z.number().int().min(1).max(1000).optional(),
   wheelQuestTitle: z.string().optional(),
+  energyLevel: z.enum(['low', 'medium', 'high']).optional(),
 });
 
 const emojiRegex = /^\p{Emoji}/u;
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
     }
     const level = parsed.data.level ?? 1;
     const wheelQuestTitle = parsed.data.wheelQuestTitle || '';
+    const energyLevel = parsed.data.energyLevel || 'medium';
 
     // 1. ดึง chat history 30 ข้อความล่าสุด
     const historySnap = await adminDb
@@ -108,8 +110,22 @@ export async function POST(req: Request) {
 6. ห้ามใช้คำหลักหรือลักษณะกิจกรรมที่มีความคล้ายกันกับเควส Wheel ของผู้ใช้วันนี้อย่างเด็ดขาด`
       : '';
 
+    let energyInstructions = '';
+    if (energyLevel === 'low') {
+      energyInstructions = `
+- [กฎระดับพลังงาน: LOW 🔋] วันนี้ผู้ใช้เหนื่อยล้า/มีพลังงานน้อย เควสทั้ง 3 ข้อต้องออกแบบมาในสไตล์ "Tiny Habits" (พฤติกรรมจิ๋ว) ที่ใช้เวลาไม่เกิน 2 นาทีในการทำ ลงมือทำได้ทันที มีแรงต้านต่ำที่สุด แต่ได้แก้พฤติกรรมบำบัดตรงจุด (Micro-Behavioral Hack) ห้ามสั่งงานที่ต้องใช้ความพยายามสูงหรือใช้เวลานาน
+- ตัวอย่างเควส Low: "📵 คว่ำหน้าจอมือถือลงทันที 5 นาทีขณะเริ่มงาน", "ย้ายของในตระกร้าออนไลน์ออก 1 ชิ้นเพื่อลดรายจ่าย", "ถามความเห็นคนอื่น 1 ครั้งสั้นๆ ก่อนตัดสินใจ"`;
+    } else if (energyLevel === 'high') {
+      energyInstructions = `
+- [กฎระดับพลังงาน: HIGH 🔥] วันนี้ผู้ใช้ไฟแรงมาก เควสทั้ง 3 ข้อต้องออกแบบเป็น "Deep Growth Challenge" (เควสท้าทายลึกซึ้ง) ที่ใช้เวลาปฏิบัติ 15-30 นาที เพื่อผลักดันผู้ใช้ออกจากพื้นที่ปลอดภัย (Comfort Zone) อย่างแท้จริงและเกิดความเปลี่ยนแปลงเด่นชัด`;
+    } else {
+      energyInstructions = `
+- [กฎระดับพลังงาน: MEDIUM ⚡] วันนี้ผู้ใช้มีพลังงานปกติ เควสทั้ง 3 ข้อออกแบบเป็นระดับปานกลาง ใช้เวลาปฏิบัติ 5-10 นาที มีความท้าทายแต่ยังสามารถทำได้เสร็จในวันทำงานปกติ`;
+    }
+
     const combinedPrompt = `คุณเป็น AI โค้ชพัฒนาตัวเองและคนเขียนเควสเกมระบบ Premium
-วิเคราะห์ข้อมูลของผู้ใช้และประวัติการคุยด้านล่างนี้ เพื่อสร้าง Daily Quests จำนวน 3 ข้อที่แตกต่างกันโดยสิ้นเชิง:
+วิเคราะห์ข้อมูลของผู้ใช้และประวัติการคุยด้านล่างนี้ เพื่อสร้าง Daily Quests จำนวน 3 ข้อที่แตกต่างกันโดยสิ้นเชิง โดยอิงจากระดับพลังงานของผู้ใช้วันนี้ด้วย:
+${energyInstructions}
 
 1. เควสความท้าทายเฉพาะคุณ (Challenge):
 - อิงตามความต้องการพิเศษ แชทล่าสุด หรือเป้าหมายของยูสเซอร์

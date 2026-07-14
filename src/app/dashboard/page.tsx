@@ -523,6 +523,7 @@ Day 21: [กิจกรรม]
   const [newName, setNewName] = useState(""); // 👈 ประกาศเป็นค่าว่างไว้ก่อน
   const [loading, setLoading] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
+  const [isSelectingEnergy, setIsSelectingEnergy] = useState(false);
 
   useEffect(() => {
     (window as any).testResetFounder = async () => {
@@ -638,6 +639,7 @@ Day 21: [กิจกรรม]
   const [slotSeeds, setSlotSeeds] = useState<number[]>([0, 0, 0, 0, 0, 0]); // 👈 Seeds รายข้อ
   const [showRerollConfirm, setShowRerollConfirm] = useState(false); // 👈 เพิ่มสถานะ Modal ยืนยันสุ่มเควส
   const [showPerfectWeekModal, setShowPerfectWeekModal] = useState(false);
+  const [showTeaser, setShowTeaser] = useState(false);
   const [rewardModalData, setRewardModalData] = useState({
     title: "PERFECT WEEK!",
     bonusXP: 100,
@@ -2607,11 +2609,22 @@ Day 21: [กิจกรรม]
     };
 
 
+    const energyLevel = (userData?.lastQuestEnergyDate === todayDateStr) ? userData?.questEnergyLevel : null;
+    let wheelXp = 25;
+    let otherXp = 20;
+    if (energyLevel === "low") {
+      wheelXp = 15;
+      otherXp = 10;
+    } else if (energyLevel === "high") {
+      wheelXp = 35;
+      otherXp = 30;
+    }
+
     const qList = [
-      { id: 1, type: "WHEEL", title: "", xp: 25 },
-      { id: 2, type: "DISC", title: "", xp: 20 },
-      { id: 3, type: "MONEY", title: "", xp: 20 },
-      { id: 4, type: "CHALLENGE", title: "", xp: 20 },
+      { id: 1, type: "WHEEL", title: "", xp: wheelXp },
+      { id: 2, type: "DISC", title: "", xp: otherXp },
+      { id: 3, type: "MONEY", title: "", xp: otherXp },
+      { id: 4, type: "CHALLENGE", title: "", xp: otherXp },
     ];
 
     // 🎯 [NEW LOGIC] จัดการแผน AI: ให้เวลา 1 วันสำหรับ Audit
@@ -2754,7 +2767,7 @@ Day 21: [กิจกรรม]
     qList[3].title = aiGeneratedQuestTitle || getUniqueQuestSlot(QUEST_POOL.CHALLENGE, [qList[0].title, qList[1].title, qList[2].title], 6.8, 3);
 
     return qList;
-  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP]);
+  }, [todayDateStr, user?.uid, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP, userData?.questEnergyLevel, userData?.lastQuestEnergyDate]);
 
   // Sync computed dailyQuests to Firestore for other systems (like AI Mentor chat) to access
   useEffect(() => {
@@ -2801,7 +2814,7 @@ Day 21: [กิจกรรม]
 
   const getLevelTitle = (level: number) => {
     if (level < 10) return "Rookie Upskiller (ผู้เริ่มต้น)";
-    if (level < 20) return "Habit Master (เซียนระบบ)";
+    if (level < 20) return "Habit Master (เซียนระบบสร้างนิสัย)";
     if (level < 30) return "Life Architect (สถาปนิกออกแบบชีวิต)";
     return "Legacy Shaper (ผู้จารึกตำนานชีวิต)";
   };
@@ -2912,6 +2925,129 @@ Day 21: [กิจกรรม]
 
     setTotalXP(prev => prev + bonusXP);
     setShowPerfectWeekModal(true);
+  };
+
+  const handleSelectEnergy = async (energy: "low" | "medium" | "high") => {
+    if (!user || isSelectingEnergy) return;
+    setIsSelectingEnergy(true);
+    try {
+      const userRef = doc(db, "users", user.uid);
+      
+      // Update energy selection in Firestore immediately
+      await updateDoc(userRef, {
+        questEnergyLevel: energy,
+        lastQuestEnergyDate: todayDateStr
+      });
+
+      // Compute wheelQuestTitle (same logic as in updateDailyQuestsIfNeeded)
+      let computedWheelTitle = '';
+      const lastWheel = userData?.lastWheel || null;
+      let computedWheelArea = "การงาน";
+      if (lastWheel?.currentScores && lastWheel?.targetScores) {
+        const gaps = lastWheel.currentScores.map((current: number, i: number) => ({
+          index: i,
+          gap: (lastWheel.targetScores[i] || 0) - current,
+          label: categoryNames[i]
+        }));
+        const top3Gaps = [...gaps]
+          .sort((a, b) => b.gap - a.gap)
+          .slice(0, 3);
+        if (todayDateStr && top3Gaps.length > 0) {
+          const seed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+          const randomIndex = seed % top3Gaps.length;
+          computedWheelArea = top3Gaps[randomIndex].label;
+        }
+      }
+
+      let wheelQuestSet = false;
+      const isRandomMode = userData?.isRandomMode || false;
+      const randomWheelQuestTitle = userData?.randomWheelQuestTitle || '';
+      const wheelPlanDay = userData?.wheelPlanDay || 1;
+
+      if (!wheelQuestSet && isRandomMode && randomWheelQuestTitle) {
+        computedWheelTitle = randomWheelQuestTitle;
+        wheelQuestSet = true;
+      }
+      if (!wheelQuestSet && lastWheel?.analysis) {
+        const planSection = lastWheel.analysis.split('📅')[1];
+        if (planSection) {
+          const planItems = planSection.split('\n')
+            .filter((l: string) => l.match(/^[1-7]\.|^-|\bDay\s?[1-7]\b/i))
+            .map((l: string) => l.replace(/^[1-7]\.\s*|^-\s*|\*\*/g, '').trim());
+
+          if (planItems.length > 0) {
+            const isWheelDoneToday = completedQuests.includes(1);
+            const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
+
+            if (displayDay > 0 && displayDay <= 7) {
+              const dayIdx = Math.min(6, displayDay - 1);
+              let currentDayPlan = planItems[dayIdx] || planItems[0];
+              computedWheelTitle = `DAY ${displayDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
+              wheelQuestSet = true;
+            } else {
+              computedWheelTitle = `🏆 จบแผน 7 วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
+              wheelQuestSet = true;
+            }
+          }
+        }
+      }
+
+      if (!wheelQuestSet) {
+        const dateSeed = parseInt(todayDateStr.replace(/-/g, '')) || 1;
+        const userSeed = user.uid.split('').slice(-5).reduce((acc, accChar) => acc + accChar.charCodeAt(0), 0);
+        const wheelSeed = dateSeed + userSeed;
+        const wheelPool = QUEST_POOL.WHEEL[computedWheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
+        const x = Math.sin(wheelSeed * 1.5 * 12.9898 + 1.5 * 78.233) * 43758.5453123;
+        const wheelIdx = Math.floor((x - Math.floor(x)) * wheelPool.length);
+        computedWheelTitle = wheelPool[wheelIdx];
+      }
+
+      // Check if user has enough history / assessments to call AI quest analysis
+      const messagesSnap = await getDocs(
+        query(collection(db, "users", user.uid, "chat_history"), orderBy("createdAt", "desc"), limit(30))
+      );
+      const messages = messagesSnap.docs
+        .map(d => d.data())
+        .filter(d => d.role === "user" && d.content?.trim())
+        .map(d => d.content as string);
+
+      const hasPrefs = userData?.questPreferences && userData?.questPreferences.savedAt === todayDateStr;
+      const hasEnoughData = hasPrefs || messages.length >= 5 || userData?.lastDisc || userData?.lastWheel || userData?.lastLibrarySoul || userData?.lastGhostResult || userData?.lastMoney;
+
+      if (hasEnoughData) {
+        const idToken = await user.getIdToken();
+        const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+        const res = await fetch('/api/quest-analysis', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            level: currentLevel, 
+            wheelQuestTitle: computedWheelTitle,
+            energyLevel: energy
+          }),
+        });
+        
+        if (res.ok) {
+          const { questTitle, discTitle, moneyTitle } = await res.json();
+          if (questTitle || discTitle || moneyTitle) {
+            const updates: Record<string, string> = {
+              lastQuestAnalysisDate: todayDateStr,
+              aiGeneratedQuestTitle: questTitle || "",
+              aiGeneratedDiscTitle: discTitle || "",
+              aiGeneratedMoneyTitle: moneyTitle || ""
+            };
+            await updateDoc(userRef, updates);
+            setAiGeneratedQuestTitle(questTitle || "");
+            setAiGeneratedDiscTitle(discTitle || "");
+            setAiGeneratedMoneyTitle(moneyTitle || "");
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error setting energy level:", e);
+    } finally {
+      setIsSelectingEnergy(false);
+    }
   };
 
   const toggleQuest = async (id: number | string, xp: number) => {
@@ -4978,7 +5114,20 @@ Day 21: [กิจกรรม]
                   <Flame size={26} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Daily Quests</h2>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                    Daily Quests
+                    {userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel && (
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-lg text-white shadow-sm flex items-center gap-1 leading-none ${
+                        userData.questEnergyLevel === 'low' 
+                          ? 'bg-emerald-500' 
+                          : userData.questEnergyLevel === 'high' 
+                            ? 'bg-red-500' 
+                            : 'bg-orange-500'
+                      }`}>
+                        {userData.questEnergyLevel === 'low' ? '🔋 Low' : userData.questEnergyLevel === 'high' ? '🔥 High' : '⚡ Medium'}
+                      </span>
+                    )}
+                  </h2>
                   <p className="text-[10px] sm:text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
                     <Sparkles size={12} className="text-orange-400" /> ทำเพื่ออัพสกิลสัปดาห์นี้ของคุณ
                   </p>
@@ -5015,6 +5164,70 @@ Day 21: [กิจกรรม]
               <div className="flex flex-col">
                 <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Reward Today</span>
                 <span className="text-base sm:text-xl font-black text-slate-800">+{dailyXPGained} <span className="text-xs font-bold text-slate-400">XP</span></span>
+              </div>
+            </div>
+
+            {/* --- 🔋 Inline Energy Level Selector --- */}
+            <div className="mb-6 bg-slate-50/50 backdrop-blur-sm p-4 sm:p-5 rounded-3xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 flex items-center gap-1.5">
+                  ⚡ พลังงานของคุณวันนี้
+                  {completedQuests.length > 0 && <Lock size={10} className="text-slate-400" />}
+                </span>
+                <span className="text-xs font-bold text-slate-600 mt-0.5">
+                  {completedQuests.length > 0 
+                    ? "ล็อกระดับเป้าหมายแล้วสำหรับวันนี้" 
+                    : "เลือกสไตล์ภารกิจที่เข้ากับสภาพร่างกายวันนี้"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {(["low", "medium", "high"] as const).map((level) => {
+                  const isActive = (userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel === level) || (!userData?.questEnergyLevel && level === "medium");
+                  const isLocked = completedQuests.length > 0;
+                  
+                  const getButtonStyles = () => {
+                    if (isActive) {
+                      switch (level) {
+                        case "low": return "bg-emerald-500 text-white border-transparent shadow-sm";
+                        case "high": return "bg-red-500 text-white border-transparent shadow-sm";
+                        default: return "bg-orange-500 text-white border-transparent shadow-sm";
+                      }
+                    }
+                    return "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-700";
+                  };
+
+                  const getEmoji = () => {
+                    switch (level) {
+                      case "low": return "🔋";
+                      case "high": return "🔥";
+                      default: return "⚡";
+                    }
+                  };
+
+                  const getLabel = () => {
+                    switch (level) {
+                      case "low": return "Low";
+                      case "high": return "High";
+                      default: return "Medium";
+                    }
+                  };
+
+                  return (
+                    <button
+                      key={level}
+                      disabled={isLocked || isSelectingEnergy}
+                      onClick={() => handleSelectEnergy(level)}
+                      className={`px-3.5 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-2xl border transition-all duration-300 flex items-center gap-1.5 min-h-[40px] cursor-pointer active:scale-95 ${getButtonStyles()} ${
+                        isLocked ? "opacity-60 cursor-not-allowed" : ""
+                      }`}
+                      title={level === "low" ? "ก้าวเล็กๆ 2 นาที เจาะจงพฤติกรรมบำบัด" : level === "high" ? "เควสท้าทายลึกซึ้ง 15-30 นาที" : "เควสสมดุลปกติ 5-10 นาที"}
+                    >
+                      <span>{getEmoji()}</span>
+                      <span>{getLabel()}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -8014,21 +8227,49 @@ Day 21: [กิจกรรม]
                 <div className="grid grid-cols-1 gap-3 mb-8">
                   {[
                     { lv: "1-9", title: "Rookie Upskiller", color: "bg-slate-500", desc: "ผู้เริ่มต้น" },
-                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "Book Shelf / คลังออมมีสติ ในแถบตัวตน" },
+                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "เซียนระบบสร้างนิสัย" },
                     { lv: "20-29", title: "Life Architect", color: "bg-orange-500", desc: "สถาปนิกออกแบบชีวิต" },
                     { lv: "30+", title: "Legacy Shaper", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                        <div>
-                          <span className="text-[13px] font-black text-white block leading-none mb-1">{item.title}</span>
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{item.desc}</span>
+                  ].map((item, i) => {
+                    const isHabitMaster = item.title === "Habit Master";
+                    return (
+                      <div key={i} className="flex flex-col bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-2 h-2 rounded-full ${item.color} shrink-0`} />
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[13px] font-black text-white block leading-none">{item.title}</span>
+                                {isHabitMaster && (
+                                  <button
+                                    onClick={() => setShowTeaser(!showTeaser)}
+                                    className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[8px] font-black rounded-full hover:bg-yellow-500/30 transition-all cursor-pointer select-none"
+                                  >
+                                    {showTeaser ? "ปิด ✕" : "ส่องรางวัล 🎁"}
+                                  </button>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{item.desc}</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-black text-slate-400 bg-white/5 px-2 py-1 rounded-lg shrink-0">LV {item.lv}</span>
                         </div>
+
+                        {isHabitMaster && showTeaser && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-3 text-[10px] text-yellow-400/90 bg-yellow-500/5 border border-yellow-500/10 p-3 rounded-xl leading-relaxed font-bold"
+                          >
+                            🎁 สิทธิ์พิเศษที่จะปลดล็อกในเลเวล 10+:<br/>
+                            • ฟีเจอร์ **Book Shelf (คลังออมมีสติ)** ในแถบข้อมูลระบุตัวตน เพื่อบันทึกประวัติการพัฒนาตัวเองย้อนหลัง<br/>
+                            • สิทธิ์การปลดล็อกร่างอัปเกรดพิเศษของคู่หูสัตว์เลี้ยงพิทักษ์ใจ!
+                          </motion.div>
+                        )}
                       </div>
-                      <span className="text-[10px] font-black text-slate-400 bg-white/5 px-2 py-1 rounded-lg">LV {item.lv}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* 🔥 Streak Reward Section */}
