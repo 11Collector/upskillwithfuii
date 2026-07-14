@@ -39,10 +39,20 @@ const storage = getStorage(app);
 let analytics: Analytics | null = null;
 if (typeof window !== "undefined") {
   isSupported().then((yes) => {
-    if (yes) {
+    if (yes && localStorage.getItem("cookie-consent") === "accepted") {
       analytics = getAnalytics(app);
     }
   });
 }
+
+export const initAnalyticsAfterConsent = () => {
+  if (typeof window !== "undefined" && !analytics) {
+    isSupported().then((yes) => {
+      if (yes) {
+        analytics = getAnalytics(app);
+      }
+    });
+  }
+};
 
 export { app, db, auth, googleProvider, analytics, storage };

@@ -7,6 +7,7 @@ import PWALogic from "./components/PWALogic";
 import BottomNavigation from "./components/ClientBottomNavigation";
 import Header from "./components/Header";
 import ClientMainWrapper from "./components/ClientMainWrapper";
+import CookieConsent from "./components/CookieConsent";
 import { Suspense } from "react";
 import { PreloadAssets } from "./components/PreloadAssets";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
           <BottomNavigation />
         </Suspense>
 
+        <CookieConsent />
       </body>
     </html>
   );
