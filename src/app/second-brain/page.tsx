@@ -2081,8 +2081,11 @@ ${noteContent}`;
               
               {/* Sidebar Header & Add Note Button */}
               <div className="flex items-center justify-between gap-3 mb-6">
-                <h3 className="text-sm font-black text-slate-800 tracking-wide flex items-center gap-1.5">
-                  🧠 บันทึกสมอง ({notes.length})
+                <h3 className="text-sm font-semibold text-slate-700 tracking-wide flex items-center gap-2">
+                  <span>บันทึกสมอง</span>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[10px] font-medium">
+                    {notes.length}
+                  </span>
                 </h3>
                 <div className="flex items-center gap-1.5">
                   <button
@@ -2092,46 +2095,46 @@ ${noteContent}`;
                         setMobileNotesView("editor");
                       }
                     }}
-                    className={`group px-3 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+                    className={`group px-3 py-1.5 border rounded-lg text-xs font-medium transition-all duration-300 flex items-center gap-1 active:scale-95 cursor-pointer ${
                       showGraphView
-                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30"
-                        : "bg-white hover:bg-slate-50 text-slate-700 hover:text-indigo-600 border-slate-200/80 hover:border-indigo-200"
+                        ? "bg-slate-900 text-white border-transparent shadow-sm"
+                        : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
                     }`}
                   >
-                    <Brain size={12} className={showGraphView ? "animate-pulse text-white" : "text-slate-400 group-hover:text-indigo-500 transition-colors"} />
+                    <Brain size={13} className={showGraphView ? "text-white" : "text-slate-400 group-hover:text-slate-600 transition-colors"} />
                     <span>แผนผัง</span>
                   </button>
                   <button
                     onClick={handleCreateNote}
-                    className="flex items-center justify-center gap-1 px-3 py-2 bg-slate-900 hover:bg-slate-850 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-all duration-300 active:scale-95 cursor-pointer"
                   >
-                    <Plus size={12} /> เพิ่มโน้ต
+                    <Plus size={13} /> เพิ่มโน้ต
                   </button>
                 </div>
               </div>
 
               {/* Note Search Input */}
               <div className="relative mb-4">
-                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder="ค้นหาบันทึกของคุณ..."
                   value={searchNoteQuery}
                   onChange={(e) => setSearchNoteQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-slate-200 focus:outline-none transition-all duration-300"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200/60 rounded-lg text-xs font-medium text-slate-700 placeholder-slate-400 focus:bg-white focus:border-indigo-500/30 focus:ring-1 focus:ring-indigo-500/10 focus:outline-none transition-all duration-300"
                 />
               </div>
 
               {/* Filter Category Select (Horizontal scroll of tiny pills) */}
-              <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4 no-scrollbar border-b border-slate-100">
+              <div className="flex gap-1 overflow-x-auto pb-2.5 mb-4 no-scrollbar border-b border-slate-100">
                 {["ทั้งหมด", "พัฒนาตัวเอง", "การเงิน & ลงทุน", "ธุรกิจ", "หนังสือ"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setFilterNoteCategory(cat)}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all duration-300 border ${
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all duration-200 border ${
                       filterNoteCategory === cat
-                        ? "bg-slate-900 border-slate-950 text-white shadow-sm"
-                        : "bg-slate-50 border-slate-200/60 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        ? "bg-slate-900 border-slate-900 text-white shadow-sm"
+                        : "bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100/80 hover:text-slate-700"
                     }`}
                   >
                     {cat}
