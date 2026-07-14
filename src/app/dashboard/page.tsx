@@ -15,7 +15,7 @@ import { ghostResults } from "@/data/ghostResults";
 import { mockArticles } from "@/constants/article";
 
 import { MONEY_DATA, DISC_DATA, QUEST_POOL, categoryNames } from "@/data/quests";
-import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA, SHOP_ITEMS } from "@/data/constants";
+import { INSPIRATIONAL_MESSAGES, COMPLIMENTARY_MESSAGES, avatarImages, PET_DATA, SHOP_ITEMS, MONEY_AVATAR_STAGES } from "@/data/constants";
 
 import { formatAnalysisText, AvatarDisplay, calculateRelativeWeek } from "@/utils/dashboardHelpers";
 import { FloatingPremiumXP, QuestItem } from "./_components/DashboardUI";
@@ -6199,76 +6199,194 @@ Day 21: [กิจกรรม]
                             </div>
                           ) : (
                             /* 👤 โปรไฟล์แสดงตนปกติ */
-                            <div className="flex flex-col items-center w-full h-full">
-                              <div className="flex flex-col items-center mb-8">
-                                <div className="relative mb-6 mt-2">
-                                  <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
-                                  <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden">
-                                    {avatarImages[lastMoney.resultKey] ? (
-                                      <img
-                                        src={avatarImages[lastMoney.resultKey]}
-                                        alt="Avatar"
-                                        className="w-[85%] h-[85%] object-contain"
-                                      />
-                                    ) : (
-                                      <span className="text-5xl">
-                                        {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
+                            (() => {
+                              const cumulativeSavings = (userData?.savingsLog || []).reduce((sum: number, log: any) => sum + (log.price || 0), 0);
+                              const savingsCount = userData?.savingsLog?.length || 0;
+                              const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
 
-                                <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2.5"> MONEY AVATAR </h3>
+                              let stage = 1;
+                              let stageTitle = MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage1 || "";
 
-                                {/* ชื่อหลัก */}
-                                <h2 className="text-3xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
-                                  {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"}
-                                </h2>
+                              if (currentLevel >= 20 || savingsCount >= 30 || cumulativeSavings >= 5000) {
+                                stage = 3;
+                                stageTitle = MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage3 || "";
+                              } else if (currentLevel >= 10 || savingsCount >= 10 || cumulativeSavings >= 1000) {
+                                stage = 2;
+                                stageTitle = MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage2 || "";
+                              }
 
-                                {/* ✨ เพิ่ม Subtitle (Codename) ตรงนี้ครับ */}
-                                <p className="text-[11px] font-black text-amber-500/80 uppercase tracking-[0.2em] mb-4">
-                                  {MONEY_DATA[lastMoney.resultKey]?.subtitle || "The Explorer"}
-                                </p>
+                              const defaultImage = avatarImages[lastMoney.resultKey] || "/avatars/ant.png";
+                              const imageSuffix = stage === 1 ? "-stage1" : stage === 2 ? "-stage2" : "";
+                              const evolvedImage = defaultImage.replace(".png", `${imageSuffix}.png`);
 
-                                <div className="inline-flex items-center bg-amber-50 text-amber-700 text-[11px] font-black px-4 py-1.5 rounded-full mb-5 border border-amber-100/50 shadow-sm">
-                                  Match {lastMoney.primaryMatch || 100}%
-                                </div>
-
-                                <p className="text-[14px] font-medium text-slate-600 mb-8 px-2 leading-loose opacity-100 w-full italic">
-                                  "{MONEY_DATA[lastMoney.resultKey]?.motto}"
-                                </p>
-
-                                {/* 🎭 Secondary Persona */}
-                                {lastMoney.secondaryKey && MONEY_DATA[lastMoney.secondaryKey] && (
-                                  <div className="mb-6 py-2.5 px-5 rounded-2xl bg-slate-50/50 border border-slate-100/80 flex items-center gap-3 relative group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
-                                    <span className="text-xl shrink-0">{MONEY_DATA[lastMoney.secondaryKey].emoji}</span>
-                                    <div className="flex flex-col items-start leading-none gap-1">
-                                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ตัวตนรอง</span>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[12px] font-bold text-slate-700">
-                                          {MONEY_DATA[lastMoney.secondaryKey].title}
-                                        </span>
-                                        <span className="text-[10px] font-bold text-slate-300 italic">
-                                          {lastMoney.secondaryMatch}%
-                                        </span>
+                              return (
+                                <div className="flex flex-col items-center w-full h-full">
+                                  <div className="flex flex-col items-center mb-6 w-full">
+                                    <div className="relative mb-5 mt-2">
+                                      <div className="absolute inset-0 bg-amber-100 blur-3xl opacity-20" />
+                                      <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden">
+                                        {avatarImages[lastMoney.resultKey] ? (
+                                          <img
+                                            src={evolvedImage}
+                                            alt="Avatar"
+                                            className="w-[85%] h-[85%] object-contain"
+                                            onError={(e) => {
+                                              e.currentTarget.src = defaultImage;
+                                            }}
+                                          />
+                                        ) : (
+                                          <span className="text-5xl">
+                                            {MONEY_DATA[lastMoney.resultKey]?.emoji || "💰"}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
-                                  </div>
-                                )}
-                              </div>
 
-                              {/* 🔘 ปุ่มประเมินใหม่ */}
-                              <div className="w-full px-4 mt-auto">
-                                <Link href="/tools/money-avatar" className="w-full block">
-                                  <div className="group/btn-start relative">
-                                    <div className="flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[13px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
-                                      <RefreshCw size={16} className="text-white/80" />
-                                      <span>ประเมินใหม่</span>
+                                    <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-2"> MONEY AVATAR </h3>
+
+                                    {/* ชื่อหลัก */}
+                                    <h2 className="text-2xl font-black mb-1 leading-tight tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
+                                      {MONEY_DATA[lastMoney.resultKey]?.title || "นักวางแผน"}
+                                    </h2>
+
+                                    {/* Subtitle */}
+                                    <p className="text-[10px] font-black text-amber-500/80 uppercase tracking-[0.2em] mb-1">
+                                      {MONEY_DATA[lastMoney.resultKey]?.subtitle || "The Explorer"}
+                                    </p>
+
+                                    {/* Evolution Stage Indicator Badge */}
+                                    <p className="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-3">
+                                      {stageTitle ? `ร่าง ${stage}: ${stageTitle}` : `ร่าง ${stage}`}
+                                    </p>
+
+                                    <div className="inline-flex items-center bg-amber-50 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full mb-4 border border-amber-100/50 shadow-sm">
+                                      Match {lastMoney.primaryMatch || 100}%
                                     </div>
+
+                                    <p className="text-[12px] font-medium text-slate-500 mb-6 px-4 leading-relaxed opacity-95 w-full italic">
+                                      "{MONEY_DATA[lastMoney.resultKey]?.motto}"
+                                    </p>
+
+                                    {/* ⚡️ Evolution Progress Card */}
+                                    <div className="w-full bg-slate-50/80 border border-slate-100/60 p-4 rounded-[2rem] text-left relative overflow-hidden mb-5">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                                          <Zap size={12} className="text-amber-500 fill-amber-500/20" />
+                                          การวิวัฒนาการอวตาร
+                                        </h4>
+                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border leading-none ${
+                                          stage === 1 
+                                            ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                                            : stage === 2 
+                                              ? 'bg-blue-50 text-blue-600 border-blue-200' 
+                                              : 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-yellow-200'
+                                        }`}>
+                                          STAGE {stage}
+                                        </span>
+                                      </div>
+
+                                      {stage < 3 ? (
+                                        <div>
+                                          {(() => {
+                                            const nextTargetLevel = stage === 1 ? 10 : 20;
+                                            const nextTargetCount = stage === 1 ? 10 : 30;
+                                            const nextTargetSavings = stage === 1 ? 1000 : 5000;
+
+                                            const pctLevel = Math.min((currentLevel / nextTargetLevel) * 100, 100);
+                                            const pctCount = Math.min((savingsCount / nextTargetCount) * 100, 100);
+                                            const pctSavings = Math.min((cumulativeSavings / nextTargetSavings) * 100, 100);
+
+                                            const bestProgress = Math.max(pctLevel, pctCount, pctSavings);
+                                            const nextStageTitle = stage === 1 ? MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage2 : MONEY_AVATAR_STAGES[lastMoney.resultKey]?.stage3;
+
+                                            return (
+                                              <div>
+                                                <div className="h-1.5 bg-slate-200/60 rounded-full overflow-hidden mb-3">
+                                                  <div 
+                                                    className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full shadow-[0_0_6px_rgba(245,158,11,0.2)] transition-all duration-700" 
+                                                    style={{ width: `${bestProgress}%` }}
+                                                  />
+                                                </div>
+
+                                                <p className="text-[9px] text-slate-500 font-semibold mb-2 leading-relaxed">
+                                                  เงื่อนไขวิวัฒนาการเป็น <span className="text-slate-800 font-black">{nextStageTitle}</span> (สำเร็จข้อใดข้อหนึ่ง):
+                                                </p>
+
+                                                <div className="space-y-1.5 text-[9px] text-slate-600">
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="flex items-center gap-1">
+                                                      <span className={`w-1 h-1 rounded-full ${currentLevel >= nextTargetLevel ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                      เลเวลตัวละครหลัก (เลเวล {nextTargetLevel})
+                                                    </span>
+                                                    <span className={`font-bold ${currentLevel >= nextTargetLevel ? "text-emerald-600" : "text-slate-500"}`}>
+                                                      {currentLevel} / {nextTargetLevel}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="flex items-center gap-1">
+                                                      <span className={`w-1 h-1 rounded-full ${savingsCount >= nextTargetCount ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                      จำนวนครั้งประหยัดเงิน ({nextTargetCount} ครั้ง)
+                                                    </span>
+                                                    <span className={`font-bold ${savingsCount >= nextTargetCount ? "text-emerald-600" : "text-slate-500"}`}>
+                                                      {savingsCount} / {nextTargetCount}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="flex items-center gap-1">
+                                                      <span className={`w-1 h-1 rounded-full ${cumulativeSavings >= nextTargetSavings ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                                      ยอดเงินออมสะสม (฿{nextTargetSavings.toLocaleString()})
+                                                    </span>
+                                                    <span className={`font-bold ${cumulativeSavings >= nextTargetSavings ? "text-emerald-600" : "text-slate-500"}`}>
+                                                      ฿{cumulativeSavings.toLocaleString()} / ฿{nextTargetSavings.toLocaleString()}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          })()}
+                                        </div>
+                                      ) : (
+                                        <div className="text-center">
+                                          <p className="text-[9px] font-black text-amber-700 bg-amber-50/60 border border-amber-200/50 p-2.5 rounded-xl flex items-center justify-center gap-1.5 leading-none">
+                                            🎉 ยินดีด้วย! อวตารคุณอยู่ในร่างสูงสุดแล้ว
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* 🎭 Secondary Persona */}
+                                    {lastMoney.secondaryKey && MONEY_DATA[lastMoney.secondaryKey] && (
+                                      <div className="py-2 px-4 rounded-2xl bg-slate-50/50 border border-slate-100/80 flex items-center gap-2.5 transition-all duration-300 w-full justify-center">
+                                        <span className="text-lg shrink-0">{MONEY_DATA[lastMoney.secondaryKey].emoji}</span>
+                                        <div className="flex flex-col items-start leading-none gap-0.5">
+                                          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ตัวตนรอง</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-[11px] font-bold text-slate-700">
+                                              {MONEY_DATA[lastMoney.secondaryKey].title}
+                                            </span>
+                                            <span className="text-[9px] font-bold text-slate-300 italic">
+                                              {lastMoney.secondaryMatch}%
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                </Link>
-                              </div>
-                            </div>
+
+                                  {/* 🔘 ปุ่มประเมินใหม่ */}
+                                  <div className="w-full px-4 mt-auto">
+                                    <Link href="/tools/money-avatar" className="w-full block">
+                                      <div className="group/btn-start relative">
+                                        <div className="flex items-center justify-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-600 to-orange-500 text-white text-[12px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] group-hover/btn-start:scale-[1.02] group-hover/btn-start:shadow-amber-300 active:scale-95">
+                                          <RefreshCw size={14} className="text-white/80" />
+                                          <span>ประเมินใหม่</span>
+                                        </div>
+                                      </div>
+                                    </Link>
+                                  </div>
+                                </div>
+                              );
+                            })()
                           )}
                         </>
                       ) : (

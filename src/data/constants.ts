@@ -146,3 +146,15 @@ export const SHOP_ITEMS = [
   { id: 19, title: "ทริปต่างจังหวัด 2 วัน 1 คืน โรงแรมสวย", price: 350, tier: "epic", emoji: "🏖️" },
   { id: 20, title: "ตั๋วเครื่องบินไปเที่ยวต่างประเทศใกล้ๆ", price: 500, tier: "epic", emoji: "✈️" }
 ];
+
+export const MONEY_AVATAR_STAGES: Record<string, { stage1: string; stage2: string; stage3: string }> = {
+  "HIGH_RISK_HIGH_DISC": { stage1: "ลูกหมาป่าฝึกระบบ", stage2: "หมาป่าอัลฟ่านักเทรด", stage3: "จักรพรรดิหมาป่าครองระบบ" },
+  "MID_RISK_HIGH_DISC": { stage1: "มดน้อยฝึกซ้อม", stage2: "มดงานสร้างรัง", stage3: "ราชินีมดคุมพอร์ตหมื่นล้าน" },
+  "LOW_RISK_HIGH_DISC": { stage1: "หอยทากน้อยติดเกราะ", stage2: "หอยทากป้อมปราการ", stage3: "หอยทากราชันมหาปราการ" },
+  "HIGH_RISK_MID_DISC": { stage1: "ลิงจิ๋วตามกระแส", stage2: "ลิงลุยไฟใจถึง", stage3: "ราชันลิงปีนดอยเหินฟ้า" },
+  "MID_RISK_MID_DISC": { stage1: "คาปิป้าจอมชิล", stage2: "คาปิหัวหน้าแก๊ง", stage3: "เซนคาปิมงกุฎดอกไม้" },
+  "LOW_RISK_MID_DISC": { stage1: "เต่าน้อยกระดองบาง", stage2: "เต่าศิลาใจเย็น", stage3: "เต่าทิพยอายุยืนหมื่นปี" },
+  "HIGH_RISK_LOW_DISC": { stage1: "ไข่นกเรืองแสง", stage2: "นกไฟซิ่งตื่นรู้", stage3: "เทพนกฟีนิกซ์ทลายฟ้า" },
+  "MID_RISK_LOW_DISC": { stage1: "นกยูงขนนุ่ม", stage2: "นกยูงแฟชั่นนิสต้า", stage3: "จักรพรรดินกยูงรำแพนทอง" },
+  "LOW_RISK_LOW_DISC": { stage1: "กวางน้อยขี้ตกใจ", stage2: "กวางสู้ชีวิต", stage3: "พญาละมั่งเขาเงินผู้ฟื้นตัว" }
+};
