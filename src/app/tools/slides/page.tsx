@@ -1030,7 +1030,7 @@ export default function SlidesPage() {
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body, html {
-            background: ${activeTheme === "brand-cream" ? "#FDF2F2" : activeTheme === "brand-white" || activeTheme === "light-snow" ? "#fff" : "#0A0000"} !important;
+            background: ${activeTheme === "brand-cream" ? "#FDF2F2" : activeTheme === "brand-white" ? "#fff" : "#0A0000"} !important;
             margin: 0 !important;
             padding: 0 !important;
             -webkit-print-color-adjust: exact !important;
@@ -1054,8 +1054,8 @@ export default function SlidesPage() {
             padding: 2.5cm;
             position: relative;
             overflow: hidden;
-            background-color: ${activeTheme === "brand-cream" ? "#FDF2F2" : activeTheme === "brand-white" || activeTheme === "light-snow" ? "#fff" : "#0A0000"} !important;
-            color: ${activeTheme === "brand-cream" || activeTheme === "brand-white" || activeTheme === "light-snow" ? "#2D0A0A" : "#f8fafc"} !important;
+            background-color: ${activeTheme === "brand-cream" ? "#FDF2F2" : activeTheme === "brand-white" ? "#fff" : "#0A0000"} !important;
+            color: ${activeTheme === "brand-cream" || activeTheme === "brand-white" ? "#2D0A0A" : "#f8fafc"} !important;
           }
         }
         .print-slides-container {
