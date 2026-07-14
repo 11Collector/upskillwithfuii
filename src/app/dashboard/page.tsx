@@ -5325,6 +5325,12 @@ Day 21: [กิจกรรม]
 
             {/* 3. รายการ Quests (ปลดล็อกสีเทาออกแล้ว) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+              {isSelectingEnergy && (
+                <div className="absolute inset-0 bg-white/65 backdrop-blur-[2.5px] rounded-3xl flex flex-col items-center justify-center gap-3 z-30 transition-all duration-300 border border-slate-100/50 shadow-sm">
+                  <div className="w-9 h-9 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin shadow-sm" />
+                  <span className="text-[11px] font-black text-slate-500 tracking-wider animate-pulse uppercase">// Generating AI Quests...</span>
+                </div>
+              )}
 
 
               {dailyQuests.map((quest) => {
