@@ -3027,13 +3027,40 @@ Day 21: [กิจกรรม]
       if (hasEnoughData) {
         const idToken = await user.getIdToken();
         const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+
+        // Resolve reference pools from quests.ts
+        const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
+        const discPool = QUEST_POOL.DISC[discMainChar as keyof typeof QUEST_POOL.DISC] || QUEST_POOL.DISC["C"];
+        
+        const getMbtiQuadrant = (type: string): "NT" | "NF" | "SJ" | "SP" | null => {
+          if (!type) return null;
+          const t = type.toUpperCase();
+          if (t.includes("N") && t.includes("T")) return "NT";
+          if (t.includes("N") && t.includes("F")) return "NF";
+          if (t.includes("S") && t.includes("J")) return "SJ";
+          if (t.includes("S") && t.includes("P")) return "SP";
+          return null;
+        };
+        const mbtiType = lastLibrarySoul?.type || "";
+        const mbtiQuadrant = getMbtiQuadrant(mbtiType);
+        const libraryPool = mbtiQuadrant ? (QUEST_POOL.LIBRARY[mbtiQuadrant] || []) : [];
+        const combinedHabitPool = [...discPool, ...libraryPool];
+
+        const moneyKey = (lastMoney?.resultKey || "MID_RISK_MID_DISC") as keyof typeof QUEST_POOL.MONEY;
+        const moneyPool = QUEST_POOL.MONEY[moneyKey] || QUEST_POOL.MONEY["MID_RISK_MID_DISC"];
+
+        const challengePool = QUEST_POOL.CHALLENGE || [];
+
         const res = await fetch('/api/quest-analysis', {
           method: 'POST',
           headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             level: currentLevel, 
             wheelQuestTitle: computedWheelTitle,
-            energyLevel: energy
+            energyLevel: energy,
+            habitPool: combinedHabitPool,
+            moneyPool: moneyPool,
+            challengePool: challengePool
           }),
         });
         

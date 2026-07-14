@@ -9,6 +9,9 @@ const QuestAnalysisSchema = z.object({
   level: z.number().int().min(1).max(1000).optional(),
   wheelQuestTitle: z.string().optional(),
   energyLevel: z.enum(['low', 'medium', 'high']).optional(),
+  habitPool: z.array(z.string()).optional(),
+  moneyPool: z.array(z.string()).optional(),
+  challengePool: z.array(z.string()).optional(),
 });
 
 const emojiRegex = /^\p{Emoji}/u;
@@ -56,6 +59,9 @@ export async function POST(req: Request) {
     const level = parsed.data.level ?? 1;
     const wheelQuestTitle = parsed.data.wheelQuestTitle || '';
     const energyLevel = parsed.data.energyLevel || 'medium';
+    const habitPool = parsed.data.habitPool || [];
+    const moneyPool = parsed.data.moneyPool || [];
+    const challengePool = parsed.data.challengePool || [];
 
     // 1. ดึง chat history 30 ข้อความล่าสุด
     const historySnap = await adminDb
@@ -163,6 +169,16 @@ ${energyInstructions}
 - อิงตาม Money Avatar (${moneyKey}) ของผู้ใช้ ให้เข้ากับสถานการณ์ชีวิตของเขา
 - ต้องเกี่ยวกับการเงิน การลงทุน การประหยัดค่าใช้จ่ายจริง ๆ เท่านั้น
 - ห้ามนำหัวข้อที่ผู้ใช้แชทถึงแต่ไม่เกี่ยวกับการเงิน (เช่น การออกกำลังกาย, ฟิตเนส, การคุมอาหาร, การนอน) ไปผสมผสานเป็นหัวข้อในเควสการเงินเด็ดขาด เพื่อป้องกันไม่ให้เกิดความหมายที่ไม่มีอยู่จริงและอ่านแล้วแปลกประหลาด เช่น "หุ้นออกกำลังกาย", "กองทุนลดไขมัน", "เช็กสเตทเม้นต์แคลอรี่"
+
+คลังเควสต้นแบบจริงที่เป็นเป้าหมายตรงตัวตนของผู้ใช้คนนี้ (ให้ยึดหัวข้อและแนวคิดหลักในคลังเหล่านี้เป็น "แม่แบบและเกณฑ์อ้างอิงสูงสุด" ในการประยุกต์ ดัดแปลงคำ หรือย่อย/ขยายขนาดความท้าทายตามพลังงานของเขา ห้ามเขียนเควสหลุดแนวคิดหลักของคลังเหล่านี้เด็ดขาด):
+- คลังเควสพัฒนาตนเองและงานท้าทาย (Challenge Pool):
+${challengePool.length > 0 ? challengePool.map((q: string) => `  * "${q}"`).join('\n') : '(ไม่มี)'}
+
+- คลังเควสพฤติกรรมพัฒนาบุคลิกภาพ (Personality Pool):
+${habitPool.length > 0 ? habitPool.map((q: string) => `  * "${q}"`).join('\n') : '(ไม่มี)'}
+
+- คลังเควสวินัยการเงินและการลงทุน (Finance Pool):
+${moneyPool.length > 0 ? moneyPool.map((q: string) => `  * "${q}"`).join('\n') : '(ไม่มี)'}
 
 ${prefsSection}
 ข้อมูลบริบทผู้ใช้:
