@@ -1045,19 +1045,6 @@ Day 21: [กิจกรรม]
           setHasClaimedQuoteToday(true);
         } else {
           setHasClaimedQuoteToday(false);
-          const hasShownThisSession = sessionStorage.getItem('hasShownWelcomeQuotePopup');
-          const activeQuestIds = activeDateToCheck === todayStr ? (userData.completedQuestIds || []) : [];
-          const phase1CompleteForQuotePopup =
-            !!data.wheelData &&
-            !!data.discData &&
-            !!data.moneyData &&
-            !!data.librarySoulData &&
-            (!!userData.hasCompletedPhase1Quests || activeQuestIds.length >= 2);
-
-          if (!hasShownThisSession && phase1CompleteForQuotePopup) {
-            setShowWelcomeQuotePopup(true);
-            sessionStorage.setItem('hasShownWelcomeQuotePopup', 'true');
-          }
         }
       }
 
@@ -3450,7 +3437,7 @@ Day 21: [กิจกรรม]
   if (!lastLibrarySoul) missingAssessments.push("Library of Souls");
   if (!lastGhostResult) missingAssessments.push("Ghost in You");
 
-  const quoteText = lastQuote?.quote || "ยังไม่มีคำคมสะสมไว้ ลองไปกดสุ่ม 'คมสัดสัด' ดูสิ!";
+  const quoteText = lastQuote?.quote || "วันนี้รู้สึกยังไงบ้าง? ลองมาตกผลึกอารมณ์ของคุณเป็นคำคม 1 ประโยคกัน ✨";
 
   const getQuoteFontSize = (text: string) => {
     if (text.length > 200) return "text-[14px] leading-tight";      // ยาวมาก (บีบฟอนต์ + ชิดบรรทัด)
