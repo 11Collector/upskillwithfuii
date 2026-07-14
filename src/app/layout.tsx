@@ -19,7 +19,7 @@ const kanit = Kanit({
 export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
-    apple: '/logoapp.png',
+    apple: '/logoapp-v2.png',
   },
   title: { default: "อัพสกิลกับฟุ้ย | พัฒนาตัวเองทุกวัน", template: "%s | Upskill Everyday" },
   description: "เครื่องมือประเมินตัวเอง สรุปหนังสือ และคุยกับพี่ฟุ้ย (AI Mentor ส่วนตัว) ช่วยให้คุณเข้าใจตัวเองและพัฒนาได้ตรงจุด",
