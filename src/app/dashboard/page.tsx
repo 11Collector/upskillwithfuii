@@ -5326,9 +5326,22 @@ Day 21: [กิจกรรม]
             {/* 3. รายการ Quests (ปลดล็อกสีเทาออกแล้ว) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
               {isSelectingEnergy && (
-                <div className="absolute inset-0 bg-white/65 backdrop-blur-[2.5px] rounded-3xl flex flex-col items-center justify-center gap-3 z-30 transition-all duration-300 border border-slate-100/50 shadow-sm">
-                  <div className="w-9 h-9 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin shadow-sm" />
-                  <span className="text-[11px] font-black text-slate-500 tracking-wider animate-pulse uppercase">// Generating AI Quests...</span>
+                <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-md rounded-[2.2rem] flex flex-col items-center justify-center gap-4 z-40 transition-all duration-300 border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.25)]">
+                  {/* Glowing Sci-Fi Double Ring Spinner */}
+                  <div className="relative w-12 h-12 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-2 border-t-orange-500 border-r-orange-500/20 border-b-transparent border-l-transparent animate-spin [animation-duration:1s]" />
+                    <div className="absolute w-8 h-8 rounded-full border-2 border-b-yellow-400 border-l-yellow-400/20 border-t-transparent border-r-transparent animate-spin [animation-duration:0.7s] [animation-direction:reverse]" />
+                    <Sparkles size={12} className="text-orange-400 animate-pulse" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1 text-center px-4">
+                    <span className="text-[9px] font-mono font-black text-orange-400 tracking-[0.25em] uppercase animate-pulse">
+                      Generating Quests //
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      กำลังวิเคราะห์เป้าหมายและปรับแต่งระดับพลังงาน...
+                    </span>
+                  </div>
                 </div>
               )}
 
