@@ -5168,7 +5168,7 @@ Day 21: [กิจกรรม]
             </div>
 
             {/* --- 🔋 Inline Energy Level Selector --- */}
-            <div className="mb-6 bg-slate-50/50 backdrop-blur-sm p-4 sm:p-5 rounded-3xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            <div className="mb-6 bg-slate-50/70 backdrop-blur-sm p-4 sm:p-5 rounded-[1.8rem] border border-slate-200/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex flex-col">
                 <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 flex items-center gap-1.5">
                   ⚡ พลังงานของคุณวันนี้
@@ -5189,12 +5189,12 @@ Day 21: [กิจกรรม]
                   const getButtonStyles = () => {
                     if (isActive) {
                       switch (level) {
-                        case "low": return "bg-emerald-500 text-white border-transparent shadow-sm";
-                        case "high": return "bg-red-500 text-white border-transparent shadow-sm";
-                        default: return "bg-orange-500 text-white border-transparent shadow-sm";
+                        case "low": return "bg-emerald-500/10 text-emerald-600 border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
+                        case "high": return "bg-rose-500/10 text-rose-600 border-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.2)]";
+                        default: return "bg-orange-500/10 text-orange-600 border-orange-350 shadow-[0_0_15px_rgba(249,115,22,0.2)]";
                       }
                     }
-                    return "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-700";
+                    return "bg-white/80 text-slate-400 border-slate-200/60 hover:bg-white hover:text-slate-600 hover:border-slate-300 shadow-sm";
                   };
 
                   const getEmoji = () => {
@@ -8226,45 +8226,65 @@ Day 21: [กิจกรรม]
 
                 <div className="grid grid-cols-1 gap-3 mb-8">
                   {[
-                    { lv: "1-9", title: "Rookie Upskiller", color: "bg-slate-500", desc: "ผู้เริ่มต้น" },
-                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", desc: "เซียนระบบสร้างนิสัย" },
-                    { lv: "20-29", title: "Life Architect", color: "bg-orange-500", desc: "สถาปนิกออกแบบชีวิต" },
-                    { lv: "30+", title: "Legacy Shaper", color: "bg-red-500", desc: "ผู้จารึกตำนาน" }
+                    { lv: "1-9", title: "Rookie Upskiller", color: "bg-cyan-500", glowColor: "bg-cyan-400", desc: "ผู้เริ่มต้น", textTheme: "text-cyan-400 border-cyan-500/20 bg-cyan-500/5" },
+                    { lv: "10-19", title: "Habit Master", color: "bg-yellow-500", glowColor: "bg-yellow-400", desc: "เซียนระบบสร้างนิสัย", textTheme: "text-yellow-400 border-yellow-500/20 bg-yellow-500/5" },
+                    { lv: "20-29", title: "Life Architect", color: "bg-purple-500", glowColor: "bg-purple-400", desc: "สถาปนิกออกแบบชีวิต", textTheme: "text-purple-400 border-purple-500/20 bg-purple-500/5" },
+                    { lv: "30+", title: "Legacy Shaper", color: "bg-rose-500", glowColor: "bg-rose-400", desc: "ผู้จารึกตำนาน", textTheme: "text-rose-400 border-rose-500/20 bg-rose-500/5" }
                   ].map((item, i) => {
                     const isHabitMaster = item.title === "Habit Master";
                     return (
-                      <div key={i} className="flex flex-col bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div className="flex items-center justify-between w-full">
+                      <div key={i} className="flex flex-col bg-slate-900/60 backdrop-blur-md border border-white/10 p-4 rounded-3xl shadow-[0_4px_25px_rgba(0,0,0,0.15)] relative overflow-hidden">
+                        <div className="flex items-center justify-between w-full relative z-10">
                           <div className="flex items-center gap-4">
-                            <div className={`w-2 h-2 rounded-full ${item.color} shrink-0`} />
+                            <div className="relative flex h-2 w-2 shrink-0 items-center justify-center">
+                              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${item.glowColor}`} />
+                              <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${item.color}`} />
+                            </div>
                             <div>
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-[13px] font-black text-white block leading-none">{item.title}</span>
                                 {isHabitMaster && (
                                   <button
                                     onClick={() => setShowTeaser(!showTeaser)}
-                                    className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[8px] font-black rounded-full hover:bg-yellow-500/30 transition-all cursor-pointer select-none"
+                                    className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[8px] font-black rounded-full hover:bg-yellow-500/30 transition-all cursor-pointer select-none border border-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.1)] active:scale-95"
                                   >
                                     {showTeaser ? "ปิด ✕" : "ส่องรางวัล 🎁"}
                                   </button>
                                 )}
                               </div>
-                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1">{item.desc}</span>
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mt-1.5">{item.desc}</span>
                             </div>
                           </div>
-                          <span className="text-[10px] font-black text-slate-400 bg-white/5 px-2 py-1 rounded-lg shrink-0">LV {item.lv}</span>
+                          <span className={`text-[10px] font-black border px-2.5 py-1 rounded-xl shrink-0 ${item.textTheme}`}>LV {item.lv}</span>
                         </div>
 
                         {isHabitMaster && showTeaser && (
                           <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="mt-3 text-[10px] text-yellow-400/90 bg-yellow-500/5 border border-yellow-500/10 p-3 rounded-xl leading-relaxed font-bold"
+                            initial={{ opacity: 0, scale: 0.98, y: -2 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.98, y: -2 }}
+                            transition={{ duration: 0.2 }}
+                            className="mt-3 font-mono text-[10px] text-yellow-400 bg-gradient-to-r from-yellow-500/[0.03] to-amber-500/[0.07] border border-dashed border-yellow-500/30 p-3.5 rounded-xl leading-relaxed shadow-[0_0_15px_rgba(234,179,8,0.05)] relative overflow-hidden z-10"
                           >
-                            🎁 สิทธิ์พิเศษที่จะปลดล็อกในเลเวล 10+:<br/>
-                            • ฟีเจอร์ **Book Shelf (คลังออมมีสติ)** ในแถบข้อมูลระบุตัวตน เพื่อบันทึกประวัติการพัฒนาตัวเองย้อนหลัง<br/>
-                            • สิทธิ์การปลดล็อกร่างอัปเกรดพิเศษของคู่หูสัตว์เลี้ยงพิทักษ์ใจ!
+                            <div className="absolute top-0 right-0 px-2 py-0.5 bg-yellow-500/10 text-yellow-400/70 text-[7px] font-black rounded-bl border-l border-b border-yellow-500/20 uppercase tracking-widest">
+                              LV.10 SYSTEM UNLOCK
+                            </div>
+                            
+                            <div className="text-yellow-450 font-black tracking-wider uppercase mb-1.5 flex items-center gap-1">
+                              <span>⚡</span>
+                              <span>SYSTEM REWARD PREVIEW //</span>
+                            </div>
+                            
+                            <div className="space-y-1.5 font-sans font-medium text-slate-350">
+                              <p className="flex items-start gap-1">
+                                <span className="text-yellow-400 font-bold shrink-0">▸</span>
+                                <span><strong className="text-white font-extrabold">Book Shelf (คลังออมมีสติ):</strong> ระบบบันทึกประวัติการพัฒนาตัวเองย้อนหลังในแถบตัวตน</span>
+                              </p>
+                              <p className="flex items-start gap-1">
+                                <span className="text-yellow-400 font-bold shrink-0">▸</span>
+                                <span><strong className="text-white font-extrabold">Pet Evolution:</strong> สิทธิ์การอัปเกรดสัตว์เลี้ยงคู่ใจเป็นร่างขั้นถัดไป</span>
+                              </p>
+                            </div>
                           </motion.div>
                         )}
                       </div>
