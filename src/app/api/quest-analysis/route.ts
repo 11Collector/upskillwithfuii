@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     }
     const level = parsed.data.level ?? 1;
     const wheelQuestTitle = parsed.data.wheelQuestTitle || '';
-    const energyLevel = parsed.data.energyLevel || 'medium';
+    let energyLevel = parsed.data.energyLevel;
     const habitPool = parsed.data.habitPool || [];
     const moneyPool = parsed.data.moneyPool || [];
     const challengePool = parsed.data.challengePool || [];
@@ -82,11 +82,31 @@ export async function POST(req: Request) {
     const userData = userSnap.data() || {};
     const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     const questPreferences = (userData.questPreferences && userData.questPreferences.savedAt === todayCA) ? userData.questPreferences : null;
+    
+    // Resolve energy level: fallback to user's saved energyLevel from Firestore for today
+    energyLevel = energyLevel || 
+                  ((userData.lastQuestEnergyDate === todayCA) ? userData.questEnergyLevel : null) || 
+                  'medium';
     const discType = userData.lastDisc?.finalResult?.charAt(0) || userData.lastDisc?.result?.charAt(0) || null;
     const wheelGoal = userData.lastWheel?.goal || null;
     const soulType = userData.lastLibrarySoul?.type || null;
     const ghostType = userData.lastGhostResult || null;
     const moneyKey = userData.lastMoney?.resultKey || 'MID_RISK_MID_DISC';
+
+    const currentDailyQuests = userData.currentDailyQuests || [];
+    const currentChallenge = currentDailyQuests.find((q: any) => q.id === 4)?.title || userData.aiGeneratedQuestTitle || "";
+    const currentPersonality = currentDailyQuests.find((q: any) => q.id === 2)?.title || userData.aiGeneratedDiscTitle || "";
+    const currentFinance = currentDailyQuests.find((q: any) => q.id === 3)?.title || userData.aiGeneratedMoneyTitle || "";
+
+    let targetSlot = "challenge"; // default target
+    if (questPreferences) {
+      const focusStr = (questPreferences.focus || "").toLowerCase();
+      if (focusStr.includes("เงิน") || focusStr.includes("finance") || focusStr.includes("money") || focusStr.includes("ลงทุน") || focusStr.includes("finance/investment") || focusStr.includes("wealth") || focusStr.includes("เหรียญ") || focusStr.includes("coin") || focusStr.includes("token")) {
+        targetSlot = "finance";
+      } else if (focusStr.includes("อ่าน") || focusStr.includes("บุคลิก") || focusStr.includes("นิสัย") || focusStr.includes("personality") || focusStr.includes("disc") || focusStr.includes("mbti") || focusStr.includes("library")) {
+        targetSlot = "personality";
+      }
+    }
 
     // 3. ถ้าไม่มี preferences และมีข้อความน้อยเกินไป และไม่มีผลประเมินใดๆเลย → ไม่ทำ analysis
     const hasEnoughData = questPreferences || messages.length >= 5 || discType || wheelGoal || soulType || ghostType || userData.lastMoney;
@@ -96,12 +116,26 @@ export async function POST(req: Request) {
 
     const chatSummary = messages.slice(0, 15).join('\n');
 
+    const currentQuestsContext = (currentChallenge || currentPersonality || currentFinance)
+      ? `เควสปัจจุบันของวันนี้:
+- Challenge: "${currentChallenge}"
+- Personality: "${currentPersonality}"
+- Finance: "${currentFinance}"\n`
+      : '';
+
     const prefsSection = questPreferences
-      ? `ความต้องการพิเศษของ user (ให้ความสำคัญสูงสุด):
-- ด้านที่สนใจ: ${questPreferences.focus || 'ไม่ระบุ'}
-- เรื่องค้างคา/เป้าหมาย: ${questPreferences.challenge || 'ไม่ระบุ'}
-- ระยะเวลาที่ยอมรับ: ${questPreferences.duration || 'ไม่ระบุ'}
-สร้าง Quest ให้ตรงกับความต้องการนี้โดยตรง\n`
+      ? `ความต้องการพิเศษของผู้ใช้ (ต้องการให้ปรับปรุงเฉพาะด้าน):
+- ด้านที่สนใจต้องการปรับปรุง: ${questPreferences.focus || 'ไม่ระบุ'} (ตรงกับเควสข้อ: ${targetSlot === 'finance' ? 'Finance (การเงิน)' : targetSlot === 'personality' ? 'Personality (บุคลิกภาพ)' : 'Challenge (ความท้าทาย)'})
+- รายละเอียดเรื่องค้างคา/เป้าหมายที่อยากทำ: ${questPreferences.challenge || 'ไม่ระบุ'}
+- ระยะเวลา: ${questPreferences.duration || 'ไม่ระบุ'}
+
+กฎเหล็กสำหรับการปรับเควส:
+1. ให้คุณสร้างเควสขึ้นมาใหม่เฉพาะข้อที่ถูกเลือกปรับปรุงเท่านั้น (ข้อ ${targetSlot}) โดยให้สอดคล้องกับรายละเอียดความต้องการใหม่ของผู้ใช้
+2. สำหรับอีก 2 ข้อที่เหลือ คุณห้ามเขียนใหม่หรือดัดแปลงแก้ไขเด็ดขาด! ให้ตอบกลับด้วยข้อความเดิมที่ได้รับจาก "เควสปัจจุบันของวันนี้" เป๊ะๆ ทุกอักขระและ Emoji:
+   - หากไม่ได้ปรับปรุง Challenge ให้ตอบกลับฟิลด์ "challenge" ด้วยค่าเดิมนี้เท่านั้น: "${currentChallenge}"
+   - หากไม่ได้ปรับปรุง Personality ให้ตอบกลับฟิลด์ "personality" ด้วยค่าเดิมนี้เท่านั้น: "${currentPersonality}"
+   - หากไม่ได้ปรับปรุง Finance ให้ตอบกลับฟิลด์ "finance" ด้วยค่าเดิมนี้เท่านั้น: "${currentFinance}"
+\n`
       : '';
 
     // ดึงรายละเอียดข้อมูล Ghost
@@ -180,6 +214,7 @@ ${habitPool.length > 0 ? habitPool.map((q: string) => `  * "${q}"`).join('\n') :
 - คลังเควสวินัยการเงินและการลงทุน (Finance Pool):
 ${moneyPool.length > 0 ? moneyPool.map((q: string) => `  * "${q}"`).join('\n') : '(ไม่มี)'}
 
+${currentQuestsContext}
 ${prefsSection}
 ข้อมูลบริบทผู้ใช้:
 - Level: ${level}
