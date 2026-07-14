@@ -3,7 +3,7 @@ import { collection, addDoc, updateDoc, serverTimestamp, doc, setDoc, getDoc, in
 import { useState, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Trophy, RefreshCcw, Camera, AlertTriangle, ArrowLeft, ArrowRight, Loader2, Zap, Info, X, BookOpen, PieChart, Users, MessageCircle, LayoutDashboard, Lock
+  Trophy, RefreshCcw, Camera, AlertTriangle, ArrowLeft, ArrowRight, Loader2, Zap, Info, X, BookOpen, PieChart, Users, MessageCircle, LayoutDashboard
 } from "lucide-react";
 import { domToPng } from "modern-screenshot";
 import Image from "next/image";
@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { scenarios } from "@/data/moneyScenarios";
 import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
 import { resultData } from "@/data/moneyResult";
-import { MONEY_AVATAR_STAGES } from "@/data/constants";
 import DisclaimerFooter from '@/app/components/DisclaimerFooter';
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -994,78 +993,6 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-
-                  {/* 4️⃣ เส้นทางวิวัฒนาการอวตาร */}
-                  {(() => {
-                    const stageNames = MONEY_AVATAR_STAGES[matchStats.primary.id];
-                    if (!stageNames) return null;
-                    return (
-                      <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4 overflow-hidden">
-                        <div className="border-b border-stone-100 pb-3 mb-4 flex items-center justify-between">
-                          <h3 className="font-bold text-stone-800 text-[13px] flex items-center gap-2">
-                            <span className="text-[16px]">⚡️</span> เส้นทางวิวัฒนาการอวตาร
-                          </h3>
-                          <span className="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md font-bold tracking-wide">
-                            3 STAGES
-                          </span>
-                        </div>
-
-                        <p className="text-[11px] text-stone-500 text-left mb-5 leading-relaxed">
-                          อวตารการเงินของคุณสามารถสะสมพลังเพื่อวิวัฒนาการร่างใหม่ที่แข็งแกร่งและสง่างามยิ่งขึ้นได้! เริ่มออมเงินหรือเคลียร์ภารกิจรายวันเพื่อปลดล็อกร่างถัดไปในหน้า Dashboard ของคุณ
-                        </p>
-
-                        <div className="space-y-3.5 text-left relative pl-4 before:absolute before:left-6 before:top-2 before:bottom-2 before:w-[2px] before:bg-stone-100">
-                          {/* Stage 1 */}
-                          <div className="flex items-start gap-3.5 relative z-10">
-                            <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 shadow-[0_0_10px_rgba(245,158,11,0.3)]">
-                              1
-                            </div>
-                            <div className="flex-1 bg-amber-50/50 border border-amber-200/60 p-3 rounded-xl">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1">
-                                  {stageNames.stage1} 🐣
-                                </h4>
-                                <span className="text-[9px] font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded-md">ปลดล็อกแล้ว</span>
-                              </div>
-                              <p className="text-[10px] text-stone-400 mt-1">ร่างแรกเริ่มจากการเสร็จสิ้นการประเมินวิเคราะห์การเงิน</p>
-                            </div>
-                          </div>
-
-                          {/* Stage 2 */}
-                          <div className="flex items-start gap-3.5 relative z-10">
-                            <div className="w-5 h-5 rounded-full bg-stone-200 text-stone-500 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                              2
-                            </div>
-                            <div className="flex-1 bg-stone-50/80 border border-stone-200/60 p-3 rounded-xl">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-stone-600 flex items-center gap-1">
-                                  {stageNames.stage2} 🛡️
-                                </h4>
-                                <span className="text-[9px] font-bold text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md flex items-center gap-1"><Lock size={8} /> ล็อกอยู่</span>
-                              </div>
-                              <p className="text-[10px] text-stone-450 mt-1">เงื่อนไข: Level 10 / ออมครบ 10 ครั้ง / ออมเงินสะสม ฿1,000</p>
-                            </div>
-                          </div>
-
-                          {/* Stage 3 */}
-                          <div className="flex items-start gap-3.5 relative z-10">
-                            <div className="w-5 h-5 rounded-full bg-stone-200 text-stone-500 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                              3
-                            </div>
-                            <div className="flex-1 bg-stone-50/80 border border-stone-200/60 p-3 rounded-xl">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-stone-600 flex items-center gap-1">
-                                  {stageNames.stage3} 👑
-                                </h4>
-                                <span className="text-[9px] font-bold text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md flex items-center gap-1"><Lock size={8} /> ล็อกอยู่</span>
-                              </div>
-                              <p className="text-[10px] text-stone-450 mt-1">เงื่อนไข: Level 20 / ออมครบ 30 ครั้ง / ออมเงินสะสม ฿5,000</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
 
                   {/* 5️⃣ Asset ที่แนะนำสำหรับสไตล์คุณ (Primary + Secondary) */}
                   <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4">
