@@ -14,7 +14,7 @@ import { Suspense } from "react";
 // ✅ 1. นำเข้าข้อมูล
 import { mockArticles } from "@/constants/article";
 import { db, auth, storage, googleProvider } from "@/lib/firebase";
-import { doc, getDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, query, orderBy, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, query, orderBy, setDoc, serverTimestamp, increment } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -1046,6 +1046,8 @@ function SecondBrainContent() {
   const [isCreatingNoteFromUrl, setIsCreatingNoteFromUrl] = useState(false);
   const [noteFontSize, setNoteFontSize] = useState<"sm" | "base" | "lg">("base");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [lastNoteXpDate, setLastNoteXpDate] = useState<string | null>(null);
+  const [showXpToast, setShowXpToast] = useState(false);
 
   // --- 🛰️ Upgraded Brain Graph & Autocomplete States ---
   const [showGraphView, setShowGraphView] = useState(false);
@@ -1475,6 +1477,32 @@ function SecondBrainContent() {
           category: noteCategory,
           updatedAt: new Date().toISOString()
         });
+
+        // Award +10 XP bonus for first note of the day (minimum 100 characters, non-default title)
+        const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const cleanTitle = noteTitle.trim();
+        const cleanContent = noteContent.trim();
+        const isMeaningful = cleanTitle !== "บันทึกที่ไม่มีชื่อ" && cleanTitle.length > 0 && cleanContent.length >= 100;
+        const isXpAlreadyAwarded = lastNoteXpDate === todayDateStr;
+
+        if (isMeaningful && !isXpAlreadyAwarded) {
+          setLastNoteXpDate(todayDateStr);
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            totalXP: increment(10),
+            lastNoteXpDate: todayDateStr
+          });
+          setShowXpToast(true);
+          setTimeout(() => setShowXpToast(false), 3000);
+        } else if (!isMeaningful && isXpAlreadyAwarded) {
+          // Deduct XP if user deletes text below 100 characters on the same day
+          setLastNoteXpDate(null);
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            totalXP: increment(-10),
+            lastNoteXpDate: null
+          });
+        }
       } catch (error) {
         console.error("Error auto-saving note:", error);
       } finally {
@@ -1540,6 +1568,24 @@ function SecondBrainContent() {
   const handleDeleteNote = async (noteId: string) => {
     if (!user) return;
     try {
+      const noteToDelete = notes.find((n) => n.id === noteId);
+      if (noteToDelete) {
+        const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const cleanTitle = noteToDelete.title?.trim() || "";
+        const cleanContent = noteToDelete.content?.trim() || "";
+        const isMeaningful = cleanTitle !== "บันทึกที่ไม่มีชื่อ" && cleanTitle.length > 0 && cleanContent.length >= 100;
+        const isXpAlreadyAwarded = lastNoteXpDate === todayDateStr;
+
+        if (isMeaningful && isXpAlreadyAwarded) {
+          setLastNoteXpDate(null);
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            totalXP: increment(-10),
+            lastNoteXpDate: null
+          });
+        }
+      }
+
       const noteRef = doc(db, "users", user.uid, "second_brain", noteId);
       await deleteDoc(noteRef);
       setShowDeleteConfirm(null);
@@ -1687,6 +1733,7 @@ ${noteContent}`;
 
   const charCount = noteContent.length;
   const wordCount = noteContent.trim() ? noteContent.trim().split(/\s+/).length : 0;
+  const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
   // 1. Fetch Articles from Firestore
   useEffect(() => {
@@ -1741,6 +1788,7 @@ ${noteContent}`;
               if (userData.readArticles) {
                 setReadArticles(userData.readArticles);
               }
+              setLastNoteXpDate(userData?.lastNoteXpDate || null);
               const scans = userData?.freeScansUsed || 0;
               setFreeScansUsed(scans);
               const subscriptionStatus = userData?.subscriptionStatus || userData?.subscription_status || "";
@@ -1772,6 +1820,7 @@ ${noteContent}`;
         setIsProMember(false);
         setHasEbookAccess(false);
         setFreeScansUsed(0);
+        setLastNoteXpDate(null);
       }
       setAuthLoading(false);
     });
@@ -2460,11 +2509,28 @@ ${noteContent}`;
 
                     {/* Segment 2: Toolbar actions & stats */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                      {/* Left side: Note counter */}
-                      <div className="flex items-center gap-3">
+                      {/* Left side: Note counter & XP Status */}
+                      <div className="flex flex-wrap items-center gap-3">
                         <span className="text-[10px] text-slate-400 font-bold">
                           {charCount} ตัวอักษร ({wordCount} คำ)
                         </span>
+                        
+                        {/* 🌟 Daily Note XP Indicator */}
+                        {user && (
+                          <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wide px-2.5 py-0.5 rounded-full select-none border transition-all duration-300 ${
+                            lastNoteXpDate === todayDateStr
+                              ? "text-yellow-600 bg-yellow-50 border-yellow-200/40"
+                              : charCount >= 100
+                                ? "text-green-600 bg-green-50 border-green-200/40 animate-pulse"
+                                : "text-slate-400 bg-slate-100 border-slate-200/40"
+                          }`}>
+                            {lastNoteXpDate === todayDateStr ? (
+                              <span>🎉 รับ +10 XP วันนี้แล้ว</span>
+                            ) : (
+                              <span>✍️ เขียนครบ 100 ตัวอักษรเพื่อรับ 10 XP ({charCount}/100)</span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Right side: Copy to clipboard action */}
@@ -2660,6 +2726,27 @@ ${noteContent}`;
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* 🎉 XP Toast Notification */}
+      <AnimatePresence>
+        {showXpToast && (
+          <motion.div
+            initial={{ opacity: 0, x: "-50%", y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, x: "-50%", y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: "-50%", y: -20, scale: 0.9 }}
+            className="fixed top-6 left-1/2 z-[999999] w-full max-w-xs sm:max-w-sm px-4"
+          >
+            <div className="flex items-center gap-3 rounded-full border border-yellow-500/30 bg-slate-950/95 px-5 py-3 text-white shadow-[0_10px_30px_-5px_rgba(234,179,8,0.2)] backdrop-blur-xl justify-center">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs border border-yellow-500/20 bg-yellow-500/10">
+                ✨
+              </div>
+              <p className="text-xs font-black tracking-wide">
+                สมองแรกของวันสำเร็จ! รับ <span className="text-yellow-400 font-black">+10 XP</span> 🧠
+              </p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
