@@ -1660,6 +1660,7 @@ Day 21: [กิจกรรม]
         lastQuestAnalysisDate: "",
         questEnergyLevel: deleteField(),
         lastQuestEnergyDate: deleteField(),
+        lastNoteXpDate: deleteField(),
         questPrefsBlockDate: "",
         questPreferences: null,
         bookMatchCache: null,
