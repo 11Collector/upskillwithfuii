@@ -1658,6 +1658,8 @@ Day 21: [กิจกรรม]
         aiGeneratedDiscTitle: "",
         aiGeneratedMoneyTitle: "",
         lastQuestAnalysisDate: "",
+        questEnergyLevel: deleteField(),
+        lastQuestEnergyDate: deleteField(),
         questPrefsBlockDate: "",
         questPreferences: null,
         bookMatchCache: null,
@@ -1743,8 +1745,11 @@ Day 21: [กิจกรรม]
         subscriptionPlan: null,
         isFoundingMember: false,
         isLifetimeMember: false,
+        questEnergyLevel: null,
+        lastQuestEnergyDate: null,
       }));
       localStorage.removeItem('hasSeenDashboardTutorial');
+      localStorage.removeItem('hasSeenQuestEnergyPopup');
       setShowTutorial(true);
       setTutorialStep(1);
 
@@ -2596,7 +2601,11 @@ Day 21: [กิจกรรม]
     const getSeedForSlot = (slotIdx: number) => {
       const base = dateSeed + userSeed;
       const extra = (slotSeeds[slotIdx] || 0) * 137;
-      return base + extra;
+      
+      const energyLevel = (userData?.lastQuestEnergyDate === todayDateStr) ? userData?.questEnergyLevel : null;
+      const energyModifier = energyLevel === "low" ? 73 : energyLevel === "high" ? 197 : 0;
+      
+      return base + extra + energyModifier;
     };
 
     const pseudoRandomSlot = (max: number, salt: number, slotIdx: number) => {
@@ -2720,14 +2729,32 @@ Day 21: [กิจกรรม]
     };
 
     const getUniqueQuestSlot = (pool: string[], existingTitles: string[], salt: number, slotIdx: number) => {
-      let index = pseudoRandomSlot(pool.length, salt, slotIdx);
-      let selectedQuest = pool[index];
+      const energyLevel = (userData?.lastQuestEnergyDate === todayDateStr) ? userData?.questEnergyLevel : null;
+      
+      let subPool = pool;
+      if (pool.length >= 3) {
+        const sliceSize = Math.floor(pool.length / 3);
+        if (energyLevel === "low") {
+          subPool = pool.slice(0, Math.max(2, sliceSize));
+        } else if (energyLevel === "high") {
+          subPool = pool.slice(pool.length - Math.max(2, sliceSize));
+        } else {
+          // medium or default
+          subPool = pool.slice(Math.max(1, sliceSize), pool.length - Math.max(1, sliceSize));
+        }
+        if (subPool.length === 0) {
+          subPool = pool;
+        }
+      }
+
+      let index = pseudoRandomSlot(subPool.length, salt, slotIdx);
+      let selectedQuest = subPool[index];
       let attempts = 0;
       const activeExisting = existingTitles.filter(Boolean);
 
       while (activeExisting.some(title => isSimilar(title, selectedQuest)) && attempts < 15) {
-        index = (index + 1) % pool.length;
-        selectedQuest = pool[index];
+        index = (index + 1) % subPool.length;
+        selectedQuest = subPool[index];
         attempts++;
       }
       return selectedQuest;
@@ -4107,8 +4134,8 @@ Day 21: [กิจกรรม]
             { done: !!lastWheel, label: "Wheel of Life", shortDesc: "เช็กสมดุลชีวิต 8 ด้าน", path: "/tools/wheel-of-life", buttonClass: "from-red-500 to-orange-500" },
             { done: !!lastDisc, label: "DISC", shortDesc: "เข้าใจสไตล์การสื่อสารของคุณ", path: "/tools/disc", buttonClass: "from-blue-500 to-indigo-500" },
             { done: !!lastMoney, label: "Money Avatar", shortDesc: "ถอดรหัสนิสัยการเงิน", path: "/tools/money-avatar", buttonClass: "from-amber-400 to-orange-500" },
-            { done: !!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2, label: `Daily Quests (${Math.min(completedQuests.length, 2)}/2)`, shortDesc: "ทำภารกิจสั้นๆ เพื่อจบ Phase 1", path: "/dashboard?tab=quests", buttonClass: "from-violet-500 to-cyan-400" },
-            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านของคุณ", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
+            { done: !!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2, label: `Daily Quests (${Math.min(completedQuests.length, 2)}/2)`, shortDesc: "ทำภารกิจสั้นๆ ประจำวัน", path: "/dashboard?tab=quests", buttonClass: "from-violet-500 to-cyan-400" },
+            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านเพื่อจบ Phase 1", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
           ];
           const phase2Steps = [
             { done: !!lastQuote, label: "คมสัดสัด", shortDesc: "สร้างคำคมจากความรู้สึกวันนี้", path: "/tools/khomsatsat", buttonClass: "from-fuchsia-500 to-violet-500" },
