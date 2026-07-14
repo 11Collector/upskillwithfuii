@@ -2929,6 +2929,9 @@ Day 21: [กิจกรรม]
 
   const handleSelectEnergy = async (energy: "low" | "medium" | "high") => {
     if (!user || isSelectingEnergy) return;
+    if (userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel) {
+      return;
+    }
     setIsSelectingEnergy(true);
     try {
       const userRef = doc(db, "users", user.uid);
@@ -5183,8 +5186,9 @@ Day 21: [กิจกรรม]
 
               <div className="flex items-center gap-2">
                 {(["low", "medium", "high"] as const).map((level) => {
+                  const hasChosenToday = userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel;
                   const isActive = (userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel === level) || (!userData?.questEnergyLevel && level === "medium");
-                  const isLocked = completedQuests.length > 0;
+                  const isLocked = completedQuests.length > 0 || hasChosenToday;
                   
                   const getButtonStyles = () => {
                     if (isActive) {
