@@ -5864,7 +5864,11 @@ Day 21: [กิจกรรม]
 
                   <motion.div
                     whileHover={{ y: -6, scale: 1.01 }}
-                    className="flex-1 bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 relative overflow-hidden flex flex-col group hover:shadow-xl hover:border-indigo-200 transition-all duration-500"
+                    className={`flex-1 rounded-[2.5rem] shadow-sm relative overflow-hidden flex flex-col group transition-all duration-500 hover:shadow-xl hover:border-indigo-200
+                      ${!hasClaimedQuoteToday && isKhomsatsatUnlocked
+                        ? 'border-2 border-indigo-400 bg-gradient-to-b from-white to-indigo-50/20 shadow-[0_8px_30px_rgba(99,102,241,0.08)] animate-[pulse_4s_infinite]'
+                        : 'bg-white border border-indigo-50'
+                      }`}
                   >
                     {/* ✨ แสงฟุ้ง (Glowing Blobs) */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none z-0 group-hover:scale-110 transition-transform duration-700" />
@@ -5880,7 +5884,15 @@ Day 21: [กิจกรรม]
                           </div>
                           <div>
                             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-0.5">Khomsatsat</span>
-                            <h2 className="text-xl font-black text-slate-800 leading-none">คมสัดสัด</h2>
+                            <div className="flex items-center gap-2">
+                              <h2 className="text-xl font-black text-slate-800 leading-none">คมสัดสัด</h2>
+                              {!hasClaimedQuoteToday && isKhomsatsatUnlocked && (
+                                <span className="flex h-2.5 w-2.5 relative">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
