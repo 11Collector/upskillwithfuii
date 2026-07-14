@@ -5211,64 +5211,68 @@ Day 21: [กิจกรรม]
             </div>
 
             {/* --- 🔋 Inline Energy Level Selector --- */}
-            <div className="mb-6 bg-slate-50/70 backdrop-blur-sm p-4 sm:p-5 rounded-[1.8rem] border border-slate-200/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-450 flex items-center gap-1.5">
-                  <Zap size={11} className="fill-orange-400 stroke-orange-450" />
-                  พลังงานของคุณวันนี้
-                  {completedQuests.length > 0 && <Lock size={10} className="text-slate-400" />}
-                </span>
-                <span className="text-xs font-bold text-slate-600 mt-0.5">
-                  {completedQuests.length > 0 
-                    ? "ล็อกระดับเป้าหมายแล้วสำหรับวันนี้" 
-                    : "เลือกสไตล์ภารกิจที่เข้ากับสภาพร่างกายวันนี้"}
-                </span>
-              </div>
+            {(() => {
+              const hasChosenToday = userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel;
+              const isLocked = completedQuests.length > 0 || hasChosenToday;
+              return (
+                <div className="mb-6 bg-slate-50/70 backdrop-blur-sm p-4 sm:p-5 rounded-[1.8rem] border border-slate-200/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-450 flex items-center gap-1.5">
+                      <Zap size={11} className="fill-orange-400 stroke-orange-450" />
+                      พลังงานของคุณวันนี้
+                      {isLocked && <Lock size={10} className="text-slate-400" />}
+                    </span>
+                    <span className="text-xs font-bold text-slate-600 mt-0.5">
+                      {isLocked 
+                        ? "ล็อกระดับเป้าหมายแล้วสำหรับวันนี้" 
+                        : "เลือกสไตล์ภารกิจที่เข้ากับสภาพร่างกายวันนี้"}
+                    </span>
+                  </div>
 
-              <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto sm:items-center">
-                {(["low", "medium", "high"] as const).map((level) => {
-                  const hasChosenToday = userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel;
-                  const isActive = (userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel === level) || (!userData?.questEnergyLevel && level === "medium");
-                  const isLocked = completedQuests.length > 0 || hasChosenToday;
-                  
-                  const getButtonStyles = () => {
-                    if (isActive) {
-                      switch (level) {
-                        case "low": return "bg-emerald-500/10 text-emerald-600 border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
-                        case "high": return "bg-rose-500/10 text-rose-600 border-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.2)]";
-                        default: return "bg-orange-500/10 text-orange-600 border-orange-350 shadow-[0_0_15px_rgba(249,115,22,0.2)]";
-                      }
-                    }
-                    return "bg-white/80 text-slate-400 border-slate-200/60 hover:bg-white hover:text-slate-600 hover:border-slate-300 shadow-sm";
-                  };
+                  <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto sm:items-center">
+                    {(["low", "medium", "high"] as const).map((level) => {
+                      const isActive = (userData?.lastQuestEnergyDate === todayDateStr && userData?.questEnergyLevel === level) || (!userData?.questEnergyLevel && level === "medium");
+                      
+                      const getButtonStyles = () => {
+                        if (isActive) {
+                          switch (level) {
+                            case "low": return "bg-emerald-500/10 text-emerald-600 border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
+                            case "high": return "bg-rose-500/10 text-rose-600 border-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.2)]";
+                            default: return "bg-orange-500/10 text-orange-600 border-orange-350 shadow-[0_0_15px_rgba(249,115,22,0.2)]";
+                          }
+                        }
+                        return "bg-white/80 text-slate-400 border-slate-200/60 hover:bg-white hover:text-slate-600 hover:border-slate-300 shadow-sm";
+                      };
 
-                  const getLabel = () => {
-                    switch (level) {
-                      case "low": return "Low";
-                      case "high": return "High";
-                      default: return "Medium";
-                    }
-                  };
+                      const getLabel = () => {
+                        switch (level) {
+                          case "low": return "Low";
+                          case "high": return "High";
+                          default: return "Medium";
+                        }
+                      };
 
-                  return (
-                    <button
-                      key={level}
-                      disabled={isLocked || isSelectingEnergy}
-                      onClick={() => handleSelectEnergy(level)}
-                      className={`px-3 py-2.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider rounded-2xl border transition-all duration-300 flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer active:scale-95 w-full sm:w-auto ${getButtonStyles()} ${
-                        isLocked ? "opacity-60 cursor-not-allowed" : ""
-                      }`}
-                      title={level === "low" ? "ก้าวเล็กๆ 2 นาที เจาะจงพฤติกรรมบำบัด" : level === "high" ? "เควสท้าทายลึกซึ้ง 15-30 นาที" : "เควสสมดุลปกติ 5-10 นาที"}
-                    >
-                      {level === "low" && <Battery size={13} className="stroke-[2.5]" />}
-                      {level === "medium" && <Zap size={13} className="fill-current stroke-[2.5]" />}
-                      {level === "high" && <Flame size={13} className="fill-current stroke-[2.5]" />}
-                      <span>{getLabel()}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                      return (
+                        <button
+                          key={level}
+                          disabled={isLocked || isSelectingEnergy}
+                          onClick={() => handleSelectEnergy(level)}
+                          className={`px-3 py-2.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider rounded-2xl border transition-all duration-300 flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer active:scale-95 w-full sm:w-auto ${getButtonStyles()} ${
+                            isLocked ? "opacity-60 cursor-not-allowed" : ""
+                          }`}
+                          title={level === "low" ? "ก้าวเล็กๆ 2 นาที เจาะจงพฤติกรรมบำบัด" : level === "high" ? "เควสท้าทายลึกซึ้ง 15-30 นาที" : "เควสสมดุลปกติ 5-10 นาที"}
+                        >
+                          {level === "low" && <Battery size={13} className="stroke-[2.5]" />}
+                          {level === "medium" && <Zap size={13} className="fill-current stroke-[2.5]" />}
+                          {level === "high" && <Flame size={13} className="fill-current stroke-[2.5]" />}
+                          <span>{getLabel()}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Progress Bar แบบ Super State (Full at 3, Bonus after) */}
             <div className="mb-10 bg-slate-50/80 backdrop-blur-sm p-5 rounded-3xl border border-slate-100 shadow-inner relative z-10">
