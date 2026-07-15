@@ -3580,6 +3580,48 @@ Day 21: [กิจกรรม]
 
   const memberLabel = isProMember ? "PRO MEMBER" : "STARTER MEMBER";
 
+  const plan = userData?.subscriptionPlan || (userData?.isLifetimeMember ? "lifetime" : userData?.isFoundingMember ? "yearly" : "monthly");
+  const isFounding = !!userData?.isFoundingMember;
+
+  const planInfo = {
+    badge: plan === "lifetime"
+      ? "👑 LIFETIME MEMBER"
+      : plan === "yearly"
+        ? (isFounding ? "🔥 FOUNDING YEARLY" : "🔥 YEARLY MEMBER")
+        : (isFounding ? "⚡ FOUNDING MEMBER" : "⚡ PRO MEMBER"),
+    badgeColor: plan === "lifetime"
+      ? "border-amber-400/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-300 shadow-[0_2px_8px_rgba(245,158,11,0.15)]"
+      : plan === "yearly"
+        ? "border-orange-500/30 bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-400 shadow-[0_2px_8px_rgba(249,115,22,0.15)]"
+        : "border-rose-400/30 bg-gradient-to-r from-rose-500/10 to-purple-500/10 text-rose-300 shadow-[0_2px_8px_rgba(244,63,94,0.15)]",
+    glowColor: plan === "lifetime"
+      ? "from-amber-500/12 via-orange-500/6 to-yellow-500/12"
+      : plan === "yearly"
+        ? "from-red-500/12 via-orange-500/6 to-rose-600/12"
+        : "from-rose-500/12 via-purple-500/6 to-rose-600/12",
+    glowColorFull: plan === "lifetime"
+      ? "from-amber-400/20 via-orange-500/20 to-yellow-400/20"
+      : plan === "yearly"
+        ? "from-red-500/20 via-orange-500/20 to-rose-500/20"
+        : "from-rose-500/20 via-purple-500/20 to-cyan-400/20",
+    accentText: plan === "lifetime"
+      ? "text-amber-400 border-amber-500/10"
+      : plan === "yearly"
+        ? "text-orange-400 border-orange-500/10"
+        : "text-rose-400 border-rose-500/10",
+    memberPrefix: "PRO",
+    borderColor: plan === "lifetime"
+      ? "border-amber-500/20"
+      : plan === "yearly"
+        ? "border-orange-500/20"
+        : "border-rose-500/20",
+    sealIcon: plan === "lifetime"
+      ? <Crown size={12} className="fill-current text-amber-400" />
+      : plan === "yearly"
+        ? <Flame size={12} className="fill-current text-orange-400" />
+        : <Sparkles size={12} className="fill-current text-rose-400" />
+  };
+
   const renderPlayerCardCanvas = (id?: string, isCompact?: boolean) => (
     <div
       id={id}
@@ -7185,6 +7227,13 @@ Day 21: [กิจกรรม]
                 <div className="overflow-y-auto flex-1 p-5 space-y-3">
                   {bookMatchLoading ? (
                     <div className="flex flex-col items-center justify-center py-14 gap-4">
+                      {/* App Logo Holographic Seal */}
+                      <div className="relative w-14 h-14 flex items-center justify-center select-none shrink-0 mb-4">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/20 to-cyan-500/20 rounded-full blur-md" />
+                        <div className="absolute inset-0 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-xl flex items-center justify-center overflow-hidden">
+                          <img src="/logoapp-v2.png" alt="App Logo" className="w-full h-full object-cover rounded-full scale-100 brightness-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.25)]" />
+                        </div>
+                      </div>
                       <div className="relative w-12 h-12">
                         <motion.div
                           animate={{ rotate: 360 }}
@@ -7603,79 +7652,114 @@ Day 21: [กิจกรรม]
                   >
                     {userData?.isFoundingMember ? (
                       /* --- Luxury Mini Certificate inside Modal --- */
-                      <div className="relative overflow-hidden rounded-3xl border border-amber-200 bg-[#fbfbfb] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] text-center flex flex-col items-center justify-center min-h-[300px] select-none">
+                      <div 
+                        className="relative overflow-hidden rounded-3xl border border-white/[0.15] p-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),_0_0_50px_rgba(225,29,72,0.15),_inset_0_0_20px_rgba(255,255,255,0.02)] text-center flex flex-col items-center justify-center min-h-[320px] select-none"
+                        style={{
+                          backgroundImage: "radial-gradient(circle at center, #3d070b 0%, #150204 70%, #0a0001 100%)"
+                        }}
+                      >
                         {/* Background premium glows */}
-                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-200/20 blur-[60px] rounded-full pointer-events-none" />
-                        
-                        {/* Left Chevron Wing */}
-                        <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
-                          <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-top-left shadow-sm" />
-                          <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-bottom-left shadow-sm" />
-                          <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-                          <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
-                          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
-                        </div>
+                        <div className={`absolute -top-24 -right-24 w-52 h-52 bg-gradient-to-br ${planInfo.glowColor} blur-[75px] rounded-full pointer-events-none z-0`} />
+                        <div className="absolute -bottom-24 -left-24 w-52 h-52 bg-rose-500/[0.08] blur-[75px] rounded-full pointer-events-none z-0" />
 
-                        {/* Right Chevron Wing */}
-                        <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
-                          <div className="absolute top-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-bl from-amber-300 via-amber-400 to-yellow-500 -rotate-[35deg] origin-top-right shadow-sm" />
-                          <div className="absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-amber-300 via-amber-400 to-yellow-500 rotate-[35deg] origin-bottom-right shadow-sm" />
-                          <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
-                          <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
-                          <div className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-amber-300 to-yellow-500 rotate-45 border-2 border-slate-900 shadow-sm" />
-                        </div>
+                        {/* Minimal Dot Grid Texture */}
+                        <div 
+                          className="absolute inset-0 z-0 opacity-40 pointer-events-none" 
+                          style={{
+                            backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)',
+                            backgroundSize: '20px 20px'
+                          }}
+                        />
+
+                        {/* Noise Texture Overlay */}
+                        <div 
+                          className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none mix-blend-overlay"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                          }}
+                        />
+
+                        {/* Holographic Sheen & Foil Overlays */}
+                        <div 
+                          className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-90 z-[2]" 
+                          style={{
+                            backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0) 15%, rgba(236,72,153,0.12) 35%, rgba(59,130,246,0.12) 45%, rgba(168,85,247,0.12) 55%, rgba(255,255,255,0) 75%)"
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none z-[2]" />
+
+                        {/* Glossy Plastic Laminate & Sheen Overlay */}
+                        <div 
+                          className="absolute inset-0 pointer-events-none z-[3]"
+                          style={{
+                            backgroundImage: "linear-gradient(110deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 30%, rgba(255,255,255,0) 45%, rgba(255,255,255,0) 100%)"
+                          }}
+                        />
+                        <div 
+                          className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-75 z-[3]"
+                          style={{
+                            backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0) 35%, rgba(255,255,255,0.15) 46%, rgba(255,255,255,0.22) 48%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 65%)"
+                          }}
+                        />
 
                         {/* Content */}
-                        <div className="relative z-10 w-full px-5 flex flex-col items-center">
-                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-amber-300/40 bg-amber-500/5 text-[7.5px] font-black uppercase tracking-[0.15em] text-amber-700">
-                            👑 GOLD PRO SUPPORTER
+                        <div className="relative z-10 w-full px-2 flex flex-col items-center">
+                          {/* App Logo Holographic Coin */}
+                          <div className="relative w-16 h-16 flex items-center justify-center select-none shrink-0 mb-4 z-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.65)]">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/25 via-purple-500/15 to-cyan-500/25 rounded-full animate-spin-slow blur-[2px]" />
+                            <div className="absolute inset-0 rounded-full border border-white/20 bg-white/[0.03] backdrop-blur-xl flex items-center justify-center overflow-hidden">
+                              <img src="/logoapp-maskable.png" alt="App Logo" className="w-full h-full object-cover rounded-full scale-100 brightness-110" />
+                            </div>
+                          </div>
+
+                          <div className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border ${planInfo.badgeColor} text-[9px] font-black uppercase tracking-[0.2em]`}>
+                            {planInfo.badge}
                           </div>
                           
-                          <h2 className="text-[11px] font-black text-slate-800 tracking-[0.12em] uppercase mt-2.5">
+                          <h2 className="text-[10px] font-black text-slate-300 tracking-[0.25em] uppercase mt-3">
                             Certificate of Appreciation
                           </h2>
                           
-                          <p className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest mt-3">
+                          <p className="text-[7px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-3 mb-1">
                             PROUDLY PRESENTED TO
                           </p>
                           
-                          <h3 className="text-sm font-serif text-slate-900 font-extrabold italic mt-1 border-b border-amber-500/20 pb-0.5 px-3 leading-none w-full max-w-[200px] truncate select-all">
+                          <h3 className="text-[16px] font-sans text-white font-black tracking-widest border-b border-white/10 pb-1.5 px-4 leading-none w-full max-w-[220px] truncate select-all uppercase">
                             {user?.displayName || "Pro Member"}
                           </h3>
                           
-                          <p className="text-[9px] md:text-[10px] font-bold text-slate-500 mt-3 leading-relaxed max-w-[240px] italic">
-                            “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ” — พี่ฟุ้ย
+                          <p className="text-[10px] font-medium text-slate-200/90 mt-4 leading-relaxed max-w-[260px] italic">
+                            “ขอบคุณที่เชื่อมั่นและร่วมสนับสนุนระบบช่วยออกแบบชีวิตนี้ให้มีตัวตนขึ้นมาได้จริง คุณคือหนึ่งในรากฐานที่สำคัญที่สุดของแอปนี้ครับ”
+                          </p>
+                          <p className="text-[9px] font-bold text-rose-400 mt-1 tracking-wider uppercase">
+                            — พี่ฟุ้ย
                           </p>
 
                           {/* Bottom Certificate Grid */}
-                          <div className="flex items-end justify-between w-full mt-4 pt-3 border-t border-slate-100/80 gap-2">
+                          <div className="flex items-end justify-between w-full mt-6 pt-4 border-t border-white/[0.06] gap-2">
                             {/* Member ID */}
                             <div className="text-left flex-1 min-w-0">
-                              <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">MEMBER ID</span>
-                              <span className="text-[13px] font-black bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 bg-clip-text text-transparent mt-1 block tabular-nums leading-none">
-                                PRO #{userData?.memberNumber ? String(userData.memberNumber).padStart(3, '0') : String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                              <span className="text-[7px] font-bold text-slate-400 tracking-[0.2em] block leading-none">MEMBER ID</span>
+                              <span className="text-[12px] font-black text-white mt-1.5 block tabular-nums leading-none">
+                                {planInfo.memberPrefix} #{userData?.memberNumber ? String(userData.memberNumber).padStart(3, '0') : String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
                               </span>
                             </div>
 
-                            {/* Gold Seal */}
-                            <div className="relative w-8 h-8 flex items-center justify-center shrink-0 mx-1 -translate-y-0.5 select-none">
-                              {/* Ribbon Tails */}
-                              <div className="absolute bottom-[-4px] left-[15%] w-1.5 h-3 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                              <div className="absolute bottom-[-4px] right-[15%] w-1.5 h-3 bg-gradient-to-b from-amber-300 via-yellow-400 to-orange-500 -rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                              
-                              {/* Main Seal Body */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 rounded-full shadow-[0_2px_6px_rgba(245,158,11,0.2)] flex items-center justify-center p-[1px]">
-                                <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-amber-300 border border-amber-400/30">
-                                  <Crown size={8} className="fill-current text-amber-400" />
+                            {/* Golden Medallion Seal */}
+                            <div className="relative w-9 h-9 flex items-center justify-center shrink-0 mx-2 select-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                              <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/40 via-orange-500/30 to-yellow-500/40 rounded-full blur-[1px]" />
+                              <div className="absolute inset-0 border border-amber-400/35 bg-gradient-to-br from-amber-600 via-orange-700 to-yellow-500 rounded-full flex items-center justify-center p-[1px]">
+                                <div className="w-full h-full bg-[#120102] rounded-full flex items-center justify-center border border-amber-400/20">
+                                  {planInfo.sealIcon}
                                 </div>
                               </div>
                             </div>
 
                             {/* Verification */}
                             <div className="text-right flex-1 min-w-0">
-                              <span className="text-[6.5px] font-bold text-emerald-600 uppercase tracking-widest block leading-none">VERIFIED BY</span>
-                              <span className="text-[7.5px] font-black text-slate-800 mt-1 block uppercase tracking-wide leading-none truncate">
-                                UPSKILL EVERYDAY
+                              <span className="text-[7px] font-bold text-emerald-400/95 tracking-[0.2em] block leading-none">STATUS</span>
+                              <span className="text-[8px] font-black text-emerald-300 mt-1.5 block uppercase tracking-wider leading-none">
+                                VERIFIED MEMBER
                               </span>
                             </div>
                           </div>
@@ -7713,79 +7797,114 @@ Day 21: [กิจกรรม]
 
                         {isProMember && viewMode === "cert" ? (
                           /* --- Luxury Mini Certificate inside Modal (PRO MEMBER) --- */
-                          <div className="relative overflow-hidden rounded-3xl border border-violet-200/50 bg-slate-950 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] text-center flex flex-col items-center justify-center min-h-[300px] select-none">
+                          <div 
+                            className="relative overflow-hidden rounded-3xl border border-white/[0.15] p-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),_0_0_50px_rgba(225,29,72,0.15),_inset_0_0_20px_rgba(255,255,255,0.02)] text-center flex flex-col items-center justify-center min-h-[320px] select-none"
+                            style={{
+                              backgroundImage: "radial-gradient(circle at center, #3d070b 0%, #150204 70%, #0a0001 100%)"
+                            }}
+                          >
                             {/* Background premium glows */}
-                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
-                            
-                            {/* Left Chevron Wing */}
-                            <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
-                              <div className="absolute top-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-br from-violet-400 via-purple-500 to-indigo-600 rotate-[35deg] origin-top-left shadow-sm" />
-                              <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[60%] bg-gradient-to-tr from-violet-400 via-purple-500 to-indigo-600 -rotate-[35deg] origin-bottom-left shadow-sm" />
-                              <div className="absolute top-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-                              <div className="absolute bottom-0 left-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 0 0)" }} />
-                              <div className="absolute left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-violet-300 to-indigo-500 rotate-45 border-2 border-slate-900 shadow-sm" />
-                            </div>
+                            <div className={`absolute -top-24 -right-24 w-52 h-52 bg-gradient-to-br ${planInfo.glowColor} blur-[75px] rounded-full pointer-events-none z-0`} />
+                            <div className="absolute -bottom-24 -left-24 w-52 h-52 bg-rose-500/[0.08] blur-[75px] rounded-full pointer-events-none z-0" />
 
-                            {/* Right Chevron Wing */}
-                            <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none overflow-hidden select-none">
-                              <div className="absolute top-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-bl from-violet-400 via-purple-500 to-indigo-600 -rotate-[35deg] origin-top-right shadow-sm" />
-                              <div className="absolute bottom-[-10%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-violet-400 via-purple-500 to-indigo-600 rotate-[35deg] origin-bottom-right shadow-sm" />
-                              <div className="absolute top-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
-                              <div className="absolute bottom-0 right-0 w-[82%] h-[48%] bg-slate-900" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }} />
-                              <div className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-gradient-to-br from-violet-300 to-indigo-500 rotate-45 border-2 border-slate-900 shadow-sm" />
-                            </div>
+                            {/* Minimal Dot Grid Texture */}
+                            <div 
+                              className="absolute inset-0 z-0 opacity-40 pointer-events-none" 
+                              style={{
+                                backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)',
+                                backgroundSize: '20px 20px'
+                              }}
+                            />
+
+                            {/* Noise Texture Overlay */}
+                            <div 
+                              className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none mix-blend-overlay"
+                              style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                              }}
+                            />
+
+                            {/* Holographic Sheen & Foil Overlays */}
+                            <div 
+                              className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-90 z-[2]" 
+                              style={{
+                                backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0) 15%, rgba(236,72,153,0.12) 35%, rgba(59,130,246,0.12) 45%, rgba(168,85,247,0.12) 55%, rgba(255,255,255,0) 75%)"
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none z-[2]" />
+
+                            {/* Glossy Plastic Laminate & Sheen Overlay */}
+                            <div 
+                              className="absolute inset-0 pointer-events-none z-[3]"
+                              style={{
+                                backgroundImage: "linear-gradient(110deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 30%, rgba(255,255,255,0) 45%, rgba(255,255,255,0) 100%)"
+                              }}
+                            />
+                            <div 
+                              className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-75 z-[3]"
+                              style={{
+                                backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0) 35%, rgba(255,255,255,0.15) 46%, rgba(255,255,255,0.22) 48%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 65%)"
+                              }}
+                            />
 
                             {/* Content */}
-                            <div className="relative z-10 w-full px-5 flex flex-col items-center">
-                              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-violet-400/40 bg-violet-500/5 text-[7.5px] font-black uppercase tracking-[0.15em] text-violet-400">
-                                ⚡ PRO SUPPORTER
+                            <div className="relative z-10 w-full px-2 flex flex-col items-center">
+                              {/* App Logo Holographic Coin */}
+                              <div className="relative w-16 h-16 flex items-center justify-center select-none shrink-0 mb-4 z-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.65)]">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/25 via-purple-500/15 to-cyan-500/25 rounded-full animate-spin-slow blur-[2px]" />
+                                <div className="absolute inset-0 rounded-full border border-white/20 bg-white/[0.03] backdrop-blur-xl flex items-center justify-center overflow-hidden">
+                                  <img src="/logoapp-maskable.png" alt="App Logo" className="w-full h-full object-cover rounded-full scale-100 brightness-110" />
+                                </div>
+                              </div>
+
+                              <div className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border ${planInfo.badgeColor} text-[9px] font-black uppercase tracking-[0.2em]`}>
+                                {planInfo.badge}
                               </div>
                               
-                              <h2 className="text-[11px] font-black text-white tracking-[0.12em] uppercase mt-2.5">
+                              <h2 className="text-[10px] font-black text-slate-300 tracking-[0.25em] uppercase mt-3">
                                 Certificate of Appreciation
                               </h2>
                               
-                              <p className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest mt-3">
+                              <p className="text-[7px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-3 mb-1">
                                 PROUDLY PRESENTED TO
                               </p>
                               
-                              <h3 className="text-sm font-serif text-white font-extrabold italic mt-1 border-b border-violet-500/20 pb-0.5 px-3 leading-none w-full max-w-[200px] truncate select-all">
+                              <h3 className="text-[16px] font-sans text-white font-black tracking-widest border-b border-white/10 pb-1.5 px-4 leading-none w-full max-w-[220px] truncate select-all uppercase">
                                 {user?.displayName || "Pro Member"}
                               </h3>
                               
-                              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-3 leading-relaxed max-w-[240px] italic">
-                                “ขอบคุณที่สนับสนุนและร่วมเดินทางไปกับระบบช่วยออกแบบชีวิตนี้ คุณคือส่วนสำคัญในการพัฒนาแอปนี้ให้เติบโตครับ” — พี่ฟุ้ย
+                              <p className="text-[10px] font-medium text-slate-200/90 mt-4 leading-relaxed max-w-[260px] italic">
+                                “ขอบคุณที่สนับสนุนและร่วมเดินทางไปกับระบบช่วยออกแบบชีวิตนี้ คุณคือส่วนสำคัญในการพัฒนาแอปนี้ให้เติบโตครับ”
+                              </p>
+                              <p className="text-[9px] font-bold text-rose-450/80 mt-1 tracking-wider uppercase">
+                                — พี่ฟุ้ย
                               </p>
 
                               {/* Bottom Certificate Grid */}
-                              <div className="flex items-end justify-between w-full mt-4 pt-3 border-t border-slate-800 gap-2">
+                              <div className="flex items-end justify-between w-full mt-6 pt-4 border-t border-white/[0.06] gap-2">
                                 {/* Member ID */}
                                 <div className="text-left flex-1 min-w-0">
-                                  <span className="text-[6.5px] font-black text-slate-500 uppercase tracking-widest block leading-none">MEMBER ID</span>
-                                  <span className="text-[13px] font-black bg-gradient-to-r from-violet-400 to-indigo-500 bg-clip-text text-transparent mt-1 block tabular-nums leading-none">
-                                    PRO #{userData?.memberNumber ? String(userData.memberNumber).padStart(3, '0') : String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
+                                  <span className="text-[7px] font-bold text-slate-400 tracking-[0.2em] block leading-none">MEMBER ID</span>
+                                  <span className="text-[12px] font-black text-white mt-1.5 block tabular-nums leading-none">
+                                    {planInfo.memberPrefix} #{userData?.memberNumber ? String(userData.memberNumber).padStart(3, '0') : String(Math.abs(userData?.createdAt?.seconds % 1000 || 42)).padStart(3, '0')}
                                   </span>
                                 </div>
 
-                                {/* Seal */}
-                                <div className="relative w-8 h-8 flex items-center justify-center shrink-0 mx-1 -translate-y-0.5 select-none">
-                                  {/* Ribbon Tails */}
-                                  <div className="absolute bottom-[-4px] left-[15%] w-1.5 h-3 bg-gradient-to-b from-violet-400 to-indigo-500 rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                                  <div className="absolute bottom-[-4px] right-[15%] w-1.5 h-3 bg-gradient-to-b from-violet-400 to-indigo-500 -rotate-[15deg] origin-top" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)" }} />
-                                  
-                                  {/* Main Seal Body */}
-                                  <div className="absolute inset-0 bg-gradient-to-br from-violet-400 to-indigo-500 rounded-full shadow-lg flex items-center justify-center p-[1px]">
-                                    <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center text-violet-400 border border-violet-400/30">
-                                      <Sparkles size={8} className="fill-current text-violet-400" />
+                                {/* Golden Medallion Seal */}
+                                <div className="relative w-9 h-9 flex items-center justify-center shrink-0 mx-2 select-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                                  <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/40 via-orange-500/30 to-yellow-500/40 rounded-full blur-[1px]" />
+                                  <div className="absolute inset-0 border border-amber-400/35 bg-gradient-to-br from-amber-600 via-orange-700 to-yellow-500 rounded-full flex items-center justify-center p-[1px]">
+                                    <div className="w-full h-full bg-[#120102] rounded-full flex items-center justify-center border border-amber-400/20">
+                                      {planInfo.sealIcon}
                                     </div>
                                   </div>
                                 </div>
 
                                 {/* Verification */}
                                 <div className="text-right flex-1 min-w-0">
-                                  <span className="text-[6.5px] font-bold text-emerald-400 uppercase tracking-widest block leading-none">VERIFIED BY</span>
-                                  <span className="text-[7.5px] font-black text-slate-300 mt-1 block uppercase tracking-wide leading-none truncate">
-                                    UPSKILL EVERYDAY
+                                  <span className="text-[7px] font-bold text-emerald-400/95 tracking-[0.2em] block leading-none">STATUS</span>
+                                  <span className="text-[8px] font-black text-emerald-300 mt-1.5 block uppercase tracking-wider leading-none">
+                                    VERIFIED MEMBER
                                   </span>
                                 </div>
                               </div>
