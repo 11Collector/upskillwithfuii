@@ -8891,15 +8891,15 @@ Day 21: [กิจกรรม]
                 transition: { type: "spring", damping: 25, stiffness: 250 }
               }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative max-w-sm w-full max-h-[85vh] overflow-y-auto bg-slate-900 rounded-[2.5rem] p-6 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] border border-white/10 text-center scrollbar-none"
+              className="relative max-w-sm w-full bg-slate-900 rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] border border-white/10 text-center overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Decorative Border Line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-orange-500 to-rose-500" />
-              <div className="absolute -top-32 -left-32 w-80 h-80 bg-orange-650/20 blur-[100px] rounded-full pointer-events-none" />
-              <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-emerald-650/10 blur-[100px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-orange-500 to-rose-500 z-20" />
+              <div className="absolute -top-32 -left-32 w-80 h-80 bg-orange-650/20 blur-[100px] rounded-full pointer-events-none z-0" />
+              <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-emerald-650/10 blur-[100px] rounded-full pointer-events-none z-0" />
 
-              <div className="relative z-10">
+              <div className="max-h-[80vh] overflow-y-auto p-6 relative z-10 scrollbar-none">
                 {/* Icon Section (Floating Battery/Zap/Flame mix) */}
                 <motion.div
                   animate={{ y: [0, -4, 0] }}
