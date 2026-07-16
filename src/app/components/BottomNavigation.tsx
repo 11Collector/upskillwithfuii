@@ -94,7 +94,7 @@ function BottomNavigationInner() {
 
   // Standard Navigation
   const standardItems = [
-    { id: 'home', label: 'หน้าหลัก', icon: Home, path: user ? '/dashboard' : '/' },
+    { id: 'home', label: 'หน้าหลัก', icon: Home, path: '/' },
     { id: 'life', label: 'ชีวิต', icon: PieChart, path: '/tools/wheel-of-life' },
     { id: 'work', label: 'ทำงาน', icon: Users, path: '/tools/disc' },
     { id: 'money', label: 'การเงิน', icon: Wallet, path: '/tools/money-avatar' },
