@@ -55,6 +55,11 @@ export default function FloatingFAB() {
     "/tools/ai-mentor",
     "/tools/focus-room",
     "/tools/deep-work",
+    "/tools/disc",
+    "/tools/money-avatar",
+    "/tools/wheel-of-life",
+    "/tools/library-of-souls",
+    "/tools/khomsatsat",
     "/admin",
     "/privacy",
     "/report-review"
