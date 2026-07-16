@@ -11,6 +11,8 @@ const FREE_DAILY_CHAT_LIMIT = 3;
 const ChatSchema = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant", "system"]), content: z.string() })),
   isQuestMode: z.boolean().optional(),
+  noteContext: z.object({ title: z.string(), content: z.string() }).optional(),
+  articleContext: z.object({ title: z.string() }).optional(),
   userData: z.object({
     displayName: z.string().optional(),
     lastDisc: z.unknown().optional(),
@@ -126,7 +128,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
   }
-  const { messages, userData, isQuestMode } = parsed.data;
+  const { messages, userData, isQuestMode, noteContext, articleContext } = parsed.data;
   const quota = await reserveFreeChatQuota(authResult.uid);
 
   if (!quota.allowed) {
@@ -272,6 +274,37 @@ export async function POST(req: Request) {
     console.log("=== DEBUG DAILY QUESTS PROMPT STR ===");
     console.log(dailyQuestsContext);
 
+    let notesInfoStr = "";
+    if (noteContext) {
+      notesInfoStr = `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่ผู้ใช้ต้องการให้คุณวิเคราะห์ด่วน:
+--- บันทึกย่อ: ${noteContext.title} ---
+เนื้อหาบันทึก:
+${noteContext.content}
+
+[คำแนะนำ/กฎเหล็กพิเศษในการตอบกลับสำหรับโน้ตนี้]:
+โปรดวิเคราะห์และให้คำปรึกษาแก่ผู้ใช้ตามบันทึกข้างต้นของเขาโดยตรง ดังนี้:
+1. ตอบกลับด้วยคำแนะนำที่สั้น กระชับ มี "Action Plan" ที่ใช้งานได้จริงทันที แบ่งเป็นข้อย่อยๆ เช่น 1/ และ 2/ หัวข้อละไม่เกิน 1 ประโยคสั้นๆ (10-15 คำ) เท่านั้น
+2. ห้ามใช้คำลงท้ายหวานหรือคำลงท้ายแบบผู้หญิง เช่น "คะ", "ค่ะ", "นะคะ" โดยเด็ดขาด
+3. หลีกเลี่ยงคำคมสร้างแรงบันดาลใจแบบอ้อมๆ แต่ให้ทำการชี้เป้าหมายด้วยตรรกะความจริงแบบตรงไปตรงมา (Reality Check)
+4. ฟอร์แมตโครงสร้างผลลัพธ์การตอบกลับให้แบ่งเป็นหัวข้อ Plain Text ชัดเจน (ห้ามใช้ Markdown เช่น # หรือ ** โดยเด็ดขาด):
+- Reality Check: (1-2 ประโยคสั้นๆ ที่จี้จุดสำคัญของบันทึกนี้ กระตุ้นให้เอะใจ)
+- Action Plan ที่ลงมือทำได้วันนี้ (เน้นสั้นกระชับที่สุด หัวข้อละไม่เกิน 1 ประโยคสั้นๆ 10-15 คำ):
+  1/ [กิจกรรมย่อยที่ 1 ลงมือทำได้ทันทีใน 5 นาที - สั้นกระชับมาก]
+  2/ [กิจกรรมย่อยที่ 2 (ถ้ามี) - สั้นกระชับมาก]\n`;
+    } else if (relevantNotesContext) {
+      notesInfoStr = `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n`;
+    }
+
+    let articleInfoStr = "";
+    if (articleContext) {
+      articleInfoStr = `- ข้อมูลบทความในคลังความรู้ (Library) ที่ผู้ใช้ชวนคุยอยู่ตอนนี้:
+บทความเรื่อง: "${articleContext.title}"
+
+[คำแนะนำพิเศษในการคุยเรื่องบทความนี้]:
+ผู้ใช้กำลังสนใจและต้องการขอคำปรึกษาเพิ่มเติมเกี่ยวกับบทความเรื่อง "${articleContext.title}" นี้
+โปรดให้คำปรึกษาและช่วยตีความ/ขยายประเด็นคิดดีๆ จากในบทความนี้ เพื่อชวนให้ฉุกคิด ท้าทายกระบวนการเดิมๆ และชี้เป้าหมายในการอัพสกิลจากบทความนี้แบบเป็นกันเองและคมคาย\n`;
+    }
+
     const systemPrompt = `คุณคือ 'พี่ฟุ้ย (Fuii)' รุ่นพี่คนสนิทที่เป็น AI Personal Mentor และผู้ก่อตั้งแพลตฟอร์ม Upskill with Fuii คอยช่วยเหลือให้คำปรึกษาการพัฒนาตัวเองและชีวิตกับน้อง ${userData.displayName || 'นักเดินทาง'}
 
 !!! กฎเหล็ก (CRITICAL RULES) !!!:
@@ -350,7 +383,8 @@ export async function POST(req: Request) {
 - เป้าหมายชีวิต: ${(userData.lastWheel as any)?.goal || 'ไม่ได้ระบุ'}
 - ข้อมูล Memento Mori (เวลาชีวิต): วันเกิดคือ ${userData.birthdate || 'ไม่ได้ระบุ'}${currentAge ? ` (อายุปัจจุบัน ${currentAge} ปี)` : ''}, คาดการณ์อายุขัยคือ ${userData.expectedAge || 'ไม่ได้ระบุ'} ปี
 - บันทึกการทบทวนเวลาชีวิต (Memento Mori Reflections): ${userData.mementoReflections && Array.isArray(userData.mementoReflections) && userData.mementoReflections.length > 0 ? userData.mementoReflections.map((r: any) => `คำถาม: "${r.question}" -> คำตอบ: "${r.answer}"`).join(' | ') : 'ยังไม่มีการทบทวน'}
-${relevantNotesContext ? `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n` : ''}
+${notesInfoStr}
+${articleInfoStr}
 
 คำแนะนำในการสนทนา:
 - ทักทายแบบปกติ เป็นกันเอง ตามประวัติการคุย

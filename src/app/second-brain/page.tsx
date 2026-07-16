@@ -8,7 +8,7 @@ import {
   Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings, X, HelpCircle
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
 // ✅ 1. นำเข้าข้อมูล
@@ -1017,6 +1017,7 @@ function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
 
 function SecondBrainContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [readArticles, setReadArticles] = useState<string[]>([]);
@@ -2564,18 +2565,32 @@ ${noteContent}`;
                         </button>
 
                         <button
-                          onClick={() => handleCallAi("coaching")}
-                          disabled={isAiLoading || !noteContent.trim()}
+                          onClick={() => {
+                            if (!user) {
+                              alert("กรุณาเข้าสู่ระบบเพื่อใช้งานฟีเจอร์นี้ครับ");
+                              return;
+                            }
+                            if (!isProMember) {
+                              alert("✨ ฟีเจอร์ AI วิเคราะห์บันทึกสมองที่สอง เป็นสิทธิ์เฉพาะสมาชิก PRO\n\nสามารถอัปเดตสมาชิกที่หน้าแดชบอร์ดได้ครับ");
+                              return;
+                            }
+                            if (!noteContent.trim()) {
+                              alert("กรุณาเขียนโน้ตก่อนขอคำแนะนำครับ");
+                              return;
+                            }
+                            const title = noteTitle || "บันทึกที่ไม่มีชื่อ";
+                            if (typeof window !== "undefined") {
+                              sessionStorage.setItem("pendingNoteCoaching_title", title);
+                              sessionStorage.setItem("pendingNoteCoaching_content", noteContent);
+                            }
+                            router.push(`/tools/soul-guide?ref=note&t=${Date.now()}`);
+                          }}
                           className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {activeAiAction === "coaching" ? (
-                            <Loader2 size={11} className="animate-spin text-white" />
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <span>💪 ขอคำแนะนำจากพี่ฟุ้ย</span>
-                              {!isProMember && <Lock size={10} className="text-white/70" />}
-                            </span>
-                          )}
+                          <span className="flex items-center gap-1">
+                            <span>💪 ขอคำแนะนำจากพี่ฟุ้ย</span>
+                            {!isProMember && <Lock size={10} className="text-white/70" />}
+                          </span>
                         </button>
                       </div>
                     </div>
