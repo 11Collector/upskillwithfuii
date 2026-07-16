@@ -208,16 +208,9 @@ export default function SoulGuidePage() {
         if (!messagesInitialized.current) {
           messagesInitialized.current = true;
 
-          const activeNoteTitle = incomingContextRef.current?.noteTitle || "";
-          const activeArticleTitle = incomingContextRef.current?.articleTitle || "";
-
           const welcomeMessage: Message = {
               role: "assistant",
-              content: activeNoteTitle
-                ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณต้องการคำแนะนำจากพี่เกี่ยวกับบันทึกเรื่อง **"${activeNoteTitle}"**\n\nพี่พร้อมช่วยวิเคราะห์และเสนอแนวทางการลงมือทำ (Action Plan) จากบันทึกนี้แล้วครับ คุณสามารถพิมพ์คุยหรือถามคำถามกับพี่ได้เลยนะ!`
-                : activeArticleTitle
-                ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณกำลังสนใจและอ่านบทความเรื่อง **"${activeArticleTitle}"** อยู่\n\nบทความนี้ให้มุมคิดยังไงกับคุณบ้าง หรือมีส่วนไหนในเนื้อหาที่อยากชวนพี่วิเคราะห์เป็นพิเศษมั้ยครับ? บอกพี่ได้เลยนะ`
-                : `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
+              content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
           };
 
           // Clear is now handled solely in the mount useEffect to prevent race conditions
@@ -335,8 +328,6 @@ export default function SoulGuidePage() {
 
   const generateDynamicButtons = (data: any) => {
     const buttons = [];
-    if (noteTitle) buttons.push("คุยเรื่องบันทึกนี้กัน 🧠");
-    if (articleTitle) buttons.push("คุยเรื่องบทความนี้กัน 📚");
     if (isQuestMode) buttons.push("อยากปรับ Quest วันนี้ครับ 🎯");
     if (data.lastMood) buttons.push(`คุยเรื่องความรู้สึกตอนนี้`);
     if (data.lastWheel?.goal) buttons.push(`สรุปเป้าหมาย`);
@@ -486,8 +477,8 @@ export default function SoulGuidePage() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 25000);
 
-      const isSendingNoteCoaching = messageText.includes("คุยเรื่องบันทึกนี้กัน");
-      const isSendingArticleCoaching = messageText.includes("คุยเรื่องบทความนี้กัน");
+      const hasNoteContext = !!noteTitle;
+      const hasArticleContext = !!articleTitle;
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -496,10 +487,10 @@ export default function SoulGuidePage() {
         body: JSON.stringify({
           messages: nextMessages,
           isQuestMode,
-          noteContext: isSendingNoteCoaching && noteTitle 
+          noteContext: hasNoteContext && noteTitle 
             ? { title: noteTitle, content: noteContent || "" } 
             : undefined,
-          articleContext: isSendingArticleCoaching && articleTitle 
+          articleContext: hasArticleContext && articleTitle 
             ? { title: articleTitle } 
             : undefined,
           userData: {
@@ -529,7 +520,7 @@ export default function SoulGuidePage() {
 
       const data = await response.json();
       if (data.success) {
-        if (isSendingNoteCoaching) {
+        if (hasNoteContext) {
           setNoteTitle("");
           setNoteContent("");
           if (incomingContextRef.current) {
@@ -537,7 +528,7 @@ export default function SoulGuidePage() {
             incomingContextRef.current.noteContent = "";
           }
         }
-        if (isSendingArticleCoaching) {
+        if (hasArticleContext) {
           if (typeof window !== "undefined") {
             sessionStorage.removeItem("last_viewed_article_title");
           }
