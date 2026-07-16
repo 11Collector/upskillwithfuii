@@ -104,10 +104,23 @@ export default function SoulGuidePage() {
   const messagesRef = useRef<Message[]>([]);
   const hasLocalChatActivityRef = useRef(false);
   const todayDateStr = new Date().toISOString().split('T')[0];
+  const autoSentRef = useRef(false);
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    if (!user || isLoading) return;
+    if (messagesInitialized.current && (noteTitle || articleTitle) && !autoSentRef.current) {
+      autoSentRef.current = true;
+      if (noteTitle) {
+        handleSendMessage(`ช่วยวิเคราะห์และให้คำแนะนำจากบันทึก "${noteTitle}" หน่อยครับ 🧠`);
+      } else if (articleTitle) {
+        handleSendMessage(`ช่วยวิเคราะห์และถอดบทเรียนจากบทความ "${articleTitle}" หน่อยครับ 📚`);
+      }
+    }
+  }, [messages, noteTitle, articleTitle, user, isLoading]);
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
