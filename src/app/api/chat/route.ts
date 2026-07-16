@@ -144,20 +144,29 @@ export async function POST(req: Request) {
   }
 
   try {
-    // 🧠 1. Fetch and Retrieve relevant notes using LLM-based RAG
+    // 🧠 1. Fetch relevant data (notes & quest log) in parallel to optimize latency
     const notesRef = adminDb.collection("users").doc(authResult.uid).collection("second_brain");
-    const notesSnap = await notesRef.orderBy("updatedAt", "desc").limit(30).get();
+    const questLogRef = adminDb.collection("users").doc(authResult.uid).collection("quest_log");
+
+    const [notesSnap, questLogSnap] = await Promise.all([
+      notesRef.orderBy("updatedAt", "desc").limit(30).get().catch(() => null),
+      questLogRef.orderBy("createdAt", "desc").limit(10).get().catch(() => null)
+    ]);
     
     let relevantNotesContext = "";
 
-    if (!notesSnap.empty) {
+    // Check if the user's message is a simple greeting or short talk to skip RAG retrieval
+    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const cleanedMessage = lastUserMessage.trim().toLowerCase();
+    const isGreeting = /^(hello|hi|hey|สวัสดี|หวัดดี|ทักทาย|ดีครับ|ดีค่ะ|ครับ|ค่ะ|ok|โอเค|yes|no|ใช่|ไม่|เริ่ม)/i.test(cleanedMessage);
+    const skipRAG = isGreeting || cleanedMessage.length < 8;
+
+    if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && !skipRAG) {
       const noteSummaries = notesSnap.docs.map((doc, index) => ({
         index,
         title: doc.data().title || "บันทึกที่ไม่มีชื่อ",
         excerpt: (doc.data().content || "").substring(0, 150)
       }));
-
-      const lastUserMessage = messages[messages.length - 1]?.content || "";
 
       try {
         const retrievalResponse = await fetch("https://api.deepseek.com/chat/completions", {
@@ -219,21 +228,14 @@ export async function POST(req: Request) {
 
     // Fetch last 10 completed quests from quest_log subcollection
     let recentQuestsContext = "";
-    try {
-      const questLogRef = adminDb.collection("users").doc(authResult.uid).collection("quest_log");
-      const questLogSnap = await questLogRef.orderBy("createdAt", "desc").limit(10).get();
-      if (!questLogSnap.empty) {
-        const list = questLogSnap.docs.map(doc => {
-          const data = doc.data();
-          return `- ${data.title} (${data.type}) เมื่อวันที่ ${data.completedAt || 'ไม่ระบุ'}`;
-        });
-        recentQuestsContext = `--- ประวัติเควสสะสมที่เพิ่งทำสำเร็จ 10 ข้อล่าสุด ---\n${list.join("\n")}`;
-      } else {
-        recentQuestsContext = "ยังไม่มีประวัติเควสสะสมในระบบ";
-      }
-    } catch (questErr) {
-      console.error("Error fetching quest log:", questErr);
-      recentQuestsContext = "ไม่สามารถโหลดข้อมูลประวัติเควสได้";
+    if (questLogSnap && !questLogSnap.empty) {
+      const list = questLogSnap.docs.map(doc => {
+        const data = doc.data();
+        return `- ${data.title} (${data.type}) เมื่อวันที่ ${data.completedAt || 'ไม่ระบุ'}`;
+      });
+      recentQuestsContext = `--- ประวัติเควสสะสมที่เพิ่งทำสำเร็จ 10 ข้อล่าสุด ---\n${list.join("\n")}`;
+    } else {
+      recentQuestsContext = "ยังไม่มีประวัติเควสสะสมในระบบ";
     }
 
     let currentAge: number | null = null;
