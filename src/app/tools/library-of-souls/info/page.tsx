@@ -464,20 +464,13 @@ function PageContent() {
   );
 }
 export default function LibraryOfSoulsInfoPage() {
-  const [user, setUser] = React.useState<User | null>(null);
-
-  React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsubscribe();
-  }, []);
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-20">
       {/* --- Navbar --- */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-sm">
-            <ArrowLeftIcon size={18} /> {user ? "กลับ Dashboard" : "กลับหน้าหลัก"}
+          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-sm">
+            <ArrowLeftIcon size={18} /> กลับหน้าหลัก
           </Link>
         </div>
       </nav>
