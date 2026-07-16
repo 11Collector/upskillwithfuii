@@ -8,7 +8,7 @@ import {
   AlertCircle, Lock, Battery, Plus, Crown, Copy, Check, Loader2, Brain
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
 import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, setDoc, increment, addDoc, serverTimestamp, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -25,8 +25,50 @@ interface Message {
 
 export default function SoulGuidePage() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const hasClearedForIncomingRef = useRef(false);
   const isQuestMode = searchParams.get('quest') === '1';
+  const [articleTitle, setArticleTitle] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
+
+  // Retrieve note and article context from sessionStorage on route/search parameter change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      hasClearedForIncomingRef.current = false;
+      // 1. Handle Note Context
+      const storedNoteTitle = sessionStorage.getItem("pendingNoteCoaching_title") || "";
+      const storedNoteContent = sessionStorage.getItem("pendingNoteCoaching_content") || "";
+      if (storedNoteTitle) {
+        setNoteTitle(storedNoteTitle);
+        setNoteContent(storedNoteContent);
+        // Clear immediately after loading to prevent leakage
+        sessionStorage.removeItem("pendingNoteCoaching_title");
+        sessionStorage.removeItem("pendingNoteCoaching_content");
+      } else {
+        const ref = searchParams.get('ref');
+        if (ref !== "note") {
+          // If not routed via note reference and storage is empty, reset states
+          setNoteTitle("");
+          setNoteContent("");
+        }
+      }
+
+      // 2. Handle Article Context
+      const urlArticleTitle = searchParams.get('articleTitle') || "";
+      if (urlArticleTitle) {
+        setArticleTitle(urlArticleTitle);
+      } else {
+        const storedArticleTitle = sessionStorage.getItem("last_viewed_article_title") || "";
+        if (storedArticleTitle) {
+          setArticleTitle(storedArticleTitle);
+        } else {
+          setArticleTitle("");
+        }
+      }
+    }
+  }, [searchParams, pathname]);
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -141,18 +183,53 @@ export default function SoulGuidePage() {
         unsubs.push(unsubQuote);
 
         // 7. Load Chat History once (no real-time listener to avoid race conditions)
-        const historySnap = await getDocs(query(collection(db, "users", currentUser.uid, "chat_history"), orderBy("createdAt", "desc"), limit(50)));
-        const history = historySnap.docs.map(doc => ({
+        const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
+        const historySnap = await getDocs(query(chatHistoryRef, orderBy("createdAt", "desc"), limit(50)));
+        let history = historySnap.docs.map(doc => ({
           role: doc.data().role as "user" | "assistant",
           content: doc.data().content,
         })).filter(msg => msg.content).reverse();
 
+        // ⚡ Clear previous chat history if entering from a new note or article coaching click
+        const pendingNote = typeof window !== "undefined" && sessionStorage.getItem("pendingNoteCoaching_title");
+        const pendingArticle = typeof window !== "undefined" && sessionStorage.getItem("last_viewed_article_title");
+        const hasIncomingContext = pendingNote || pendingArticle;
+
+        if (hasIncomingContext && !hasClearedForIncomingRef.current) {
+          hasClearedForIncomingRef.current = true;
+          try {
+            const deletePromises = historySnap.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(deletePromises);
+            history = [];
+          } catch (deleteErr) {
+            console.error("Error clearing chat history for context:", deleteErr);
+          }
+        }
+
         if (!messagesInitialized.current) {
           messagesInitialized.current = true;
+
+
+          let activeNoteTitle = noteTitle;
+          if (!activeNoteTitle && typeof window !== "undefined") {
+            activeNoteTitle = sessionStorage.getItem("pendingNoteCoaching_title") || "";
+          }
+
+          let activeArticleTitle = articleTitle;
+          if (!activeArticleTitle) {
+            activeArticleTitle = searchParams.get('articleTitle') || (typeof window !== "undefined" ? sessionStorage.getItem("last_viewed_article_title") || "" : "");
+          }
+
           const welcomeMessage: Message = {
               role: "assistant",
-              content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
+              content: activeNoteTitle
+                ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณต้องการคำแนะนำจากพี่เกี่ยวกับบันทึกเรื่อง **"${activeNoteTitle}"**\n\nพี่พร้อมช่วยวิเคราะห์และเสนอแนวทางการลงมือทำ (Action Plan) จากบันทึกนี้แล้วครับ กดปุ่มสีม่วงไฮไลต์ด้านล่างเพื่อเริ่มคุยกันได้เลย!`
+                : activeArticleTitle
+                ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณกำลังสนใจและอ่านบทความเรื่อง **"${activeArticleTitle}"** อยู่\n\nบทความนี้ให้มุมคิดยังไงกับคุณบ้าง หรือมีส่วนไหนในเนื้อหาที่อยากชวนพี่วิเคราะห์เป็นพิเศษมั้ยครับ? บอกพี่ได้เลยนะ`
+                : `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
           };
+
+          // Clear is now handled solely in the mount useEffect to prevent race conditions
 
           setMessages((prev) => {
             const base = history.length > 0 ? history : [welcomeMessage];
@@ -263,10 +340,12 @@ export default function SoulGuidePage() {
     if (userData) {
       generateDynamicButtons(userData);
     }
-  }, [userData]);
+  }, [userData, articleTitle, noteTitle]);
 
   const generateDynamicButtons = (data: any) => {
     const buttons = [];
+    if (noteTitle) buttons.push("คุยเรื่องบันทึกนี้กัน 🧠");
+    if (articleTitle) buttons.push("คุยเรื่องบทความนี้กัน 📚");
     if (isQuestMode) buttons.push("อยากปรับ Quest วันนี้ครับ 🎯");
     if (data.lastMood) buttons.push(`คุยเรื่องความรู้สึกตอนนี้`);
     if (data.lastWheel?.goal) buttons.push(`สรุปเป้าหมาย`);
@@ -299,7 +378,11 @@ export default function SoulGuidePage() {
       const userName = user.displayName || 'นักเดินทาง';
       setMessages([{
         role: "assistant",
-        content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
+        content: noteTitle
+          ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณต้องการคำแนะนำจากพี่เกี่ยวกับบันทึกเรื่อง **"${noteTitle}"**\n\nพี่พร้อมช่วยวิเคราะห์และเสนอแนวทางการลงมือทำ (Action Plan) จากบันทึกนี้แล้วครับ กดปุ่มสีม่วงไฮไลต์ด้านล่างเพื่อเริ่มคุยกันได้เลย!`
+          : articleTitle
+          ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณกำลังสนใจและอ่านบทความเรื่อง **"${articleTitle}"** อยู่\n\nบทความนี้ให้มุมคิดยังไงกับคุณบ้าง หรือมีส่วนไหนในเนื้อหาที่อยากชวนพี่วิเคราะห์เป็นพิเศษมั้ยครับ? บอกพี่ได้เลยนะ`
+          : `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
       }]);
 
       setTimeout(() => {
@@ -412,6 +495,9 @@ export default function SoulGuidePage() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 25000);
 
+      const isSendingNoteCoaching = messageText.includes("คุยเรื่องบันทึกนี้กัน");
+      const isSendingArticleCoaching = messageText.includes("คุยเรื่องบทความนี้กัน");
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
@@ -419,6 +505,12 @@ export default function SoulGuidePage() {
         body: JSON.stringify({
           messages: nextMessages,
           isQuestMode,
+          noteContext: isSendingNoteCoaching && noteTitle 
+            ? { title: noteTitle, content: noteContent || "" } 
+            : undefined,
+          articleContext: isSendingArticleCoaching && articleTitle 
+            ? { title: articleTitle } 
+            : undefined,
           userData: {
             displayName: userData?.displayName,
             lastDisc: userData?.lastDisc,
@@ -446,6 +538,17 @@ export default function SoulGuidePage() {
 
       const data = await response.json();
       if (data.success) {
+        if (isSendingNoteCoaching) {
+          setNoteTitle("");
+          setNoteContent("");
+        }
+        if (isSendingArticleCoaching) {
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem("last_viewed_article_title");
+          }
+          setArticleTitle("");
+        }
+
         if (typeof data.remainingFreeMessages === "number") {
           setChatQuota({ used: 3 - data.remainingFreeMessages, total: 3 });
         }
@@ -719,15 +822,24 @@ export default function SoulGuidePage() {
           <AnimatePresence>
             {!isLoading && dynamicButtons.length > 0 && (
               <div className="flex overflow-x-auto gap-3 mb-5 w-full no-scrollbar pb-2">
-                {dynamicButtons.map((btn) => (
-                  <button
-                    key={btn}
-                    onClick={() => handleSendMessage(btn)}
-                    className="whitespace-nowrap flex-shrink-0 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-bold text-zinc-400 hover:text-white hover:bg-white/10 hover:border-blue-500/30 transition-all uppercase tracking-wider shadow-lg text-center active:scale-95"
-                  >
-                    {btn}
-                  </button>
-                ))}
+                {dynamicButtons.map((btn) => {
+                  const isArticleBtn = btn === "คุยเรื่องบทความนี้กัน 📚";
+                  const isNoteBtn = btn === "คุยเรื่องบันทึกนี้กัน 🧠";
+                  const isHighlighted = isArticleBtn || isNoteBtn;
+                  return (
+                    <button
+                      key={btn}
+                      onClick={() => handleSendMessage(btn)}
+                      className={
+                        isHighlighted
+                          ? "whitespace-nowrap flex-shrink-0 px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 border border-violet-500/30 text-[11px] font-black text-white hover:opacity-90 hover:shadow-[0_0_20px_rgba(124,58,237,0.6)] transition-all uppercase tracking-wider shadow-lg text-center active:scale-95 relative"
+                          : "whitespace-nowrap flex-shrink-0 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-bold text-zinc-400 hover:text-white hover:bg-white/10 hover:border-blue-500/30 transition-all uppercase tracking-wider shadow-lg text-center active:scale-95"
+                      }
+                    >
+                      {btn}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </AnimatePresence>

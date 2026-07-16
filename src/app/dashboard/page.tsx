@@ -630,7 +630,6 @@ Day 21: [กิจกรรม]
   const [showSpecialQuestModal, setShowSpecialQuestModal] = useState(false);
   const [customQuestTitle, setCustomQuestTitle] = useState(""); // สำหรับ Personalized Mission (ID: special-01)
   const [randomWheelQuestTitle, setRandomWheelQuestTitle] = useState(""); // สำหรับ Randomized Wheel Quest (ID: 1)
-  const [isFabOpen, setIsFabOpen] = useState(false);
   const [showCustomInputModal, setShowCustomInputModal] = useState(false); // เปิด/ปิด Modal
   const [pendingDailySuccess, setPendingDailySuccess] = useState(false); // 👈 คิวรอโชว์ Daily Success
   const [pendingStreakSavedToast, setPendingStreakSavedToast] = useState(false); // 👈 คิวรอโชว์ Streak Toast
@@ -1324,6 +1323,17 @@ Day 21: [กิจกรรม]
     }
     return () => document.body.classList.remove('hide-bottom-nav');
   }, [showPerfectWeekModal]);
+
+  // Sync Soul Guide unlock status to localStorage for the global FAB
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const currentVal = localStorage.getItem("isSoulGuideUnlocked") === "true";
+      if (currentVal !== isSoulGuideUnlocked) {
+        localStorage.setItem("isSoulGuideUnlocked", String(isSoulGuideUnlocked));
+        window.dispatchEvent(new Event("soulGuideUnlockStatusChange"));
+      }
+    }
+  }, [isSoulGuideUnlocked]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -8968,120 +8978,7 @@ Day 21: [กิจกรรม]
         )}
       </AnimatePresence>
 
-      {/* Background overlay to close open Speed Dial FAB */}
-      {isFabOpen && (
-        <div 
-          className="fixed inset-0 z-[140] bg-transparent" 
-          onClick={() => setIsFabOpen(false)}
-        />
-      )}
 
-      {/* 💬 Floating Speed Dial FAB (Chat / Note Selector) */}
-      {isSoulGuideUnlocked ? (
-        <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[150] flex flex-col items-end gap-3">
-          <AnimatePresence>
-            {isFabOpen && (
-              <>
-                {/* 1. ปุ่มจดโน้ตด่วน (บนสุด) */}
-                <Link href="/second-brain?newNote=true" onClick={() => setIsFabOpen(false)}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 15, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 15, scale: 0.8 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    className="flex items-center gap-3 group"
-                  >
-                    <span className="bg-white text-slate-800 text-[11px] font-black tracking-wider px-4 py-2 rounded-2xl border border-slate-200 shadow-md">
-                      จดบันทึก 🧠
-                    </span>
-                    <div className="w-12 h-12 bg-white border border-slate-300 hover:border-indigo-500 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] rounded-full flex items-center justify-center shadow-lg transition-colors">
-                      <Pencil size={20} className="text-indigo-600" />
-                    </div>
-                  </motion.div>
-                </Link>
-
-                {/* 2. ปุ่มคุยกับพี่ฟุ้ย (ตรงกลาง) */}
-                <Link href="/tools/soul-guide" onClick={() => setIsFabOpen(false)}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 25, delay: 0.05 }}
-                    className="flex items-center gap-3 group"
-                  >
-                    <span className="bg-white text-slate-800 text-[11px] font-black tracking-wider px-4 py-2 rounded-2xl border border-slate-200 shadow-md">
-                      คุยกับพี่ฟุ้ย 💬
-                    </span>
-                    <div className="w-12 h-12 bg-white border border-slate-300 hover:border-indigo-500 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] rounded-full flex items-center justify-center shadow-lg transition-colors">
-                      <MessageSquare size={20} className="text-indigo-600" />
-                    </div>
-                  </motion.div>
-                </Link>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* ปุ่มหลัก (ล่างสุด) */}
-          <button
-            onClick={() => setIsFabOpen(!isFabOpen)}
-            className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-300 focus:outline-none transition-all duration-300 hover:border-indigo-500 hover:scale-105 active:scale-95 relative group"
-          >
-            {/* Glow Effect */}
-            <div className="absolute inset-0 bg-indigo-500/10 blur-2xl group-hover:opacity-30 transition-opacity rounded-full" />
-            
-            <AnimatePresence mode="wait">
-              {isFabOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <X size={26} className="text-slate-500" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="open"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="relative flex items-center justify-center"
-                >
-                  <MessageSquare size={26} className="text-indigo-600" />
-                  <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100 shadow-sm">
-                    <Zap size={10} className="text-indigo-500 fill-indigo-400" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        </div>
-      ) : (
-        /* ปุ่มจดโน้ตอย่างเดียว กรณีที่ยังไม่ปลดล็อกแชทพี่ฟุ้ย */
-        <div className="fixed bottom-[7.5rem] md:bottom-12 right-6 z-[150]">
-          <Link href="/second-brain?newNote=true">
-            <motion.div
-              whileHover={{ scale: 1.1, y: -4 }}
-              whileTap={{ scale: 0.9 }}
-              initial={{ opacity: 0, scale: 0.5, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="relative group"
-            >
-              <div className="absolute inset-0 bg-indigo-500/10 blur-2xl group-hover:opacity-30 transition-opacity rounded-full" />
-              <div className="relative w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-300 overflow-hidden hover:border-indigo-500 transition-all duration-500">
-                <Pencil size={26} className="text-indigo-600" />
-              </div>
-              <div className="absolute right-full mr-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500">
-                <div className="bg-white/95 backdrop-blur-xl text-slate-900 text-[11px] font-bold tracking-wider px-5 py-3 rounded-[1.8rem] border-2 border-slate-100 shadow-2xl whitespace-nowrap">
-                  จดบันทึก 🧠
-                </div>
-              </div>
-            </motion.div>
-          </Link>
-        </div>
-      )}
 
       {/* 🎲 Modal: ยืนยันการสุ่มเควสใหม่ (Luxury Spring Style) */}
       <AnimatePresence>

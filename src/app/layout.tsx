@@ -11,6 +11,8 @@ import CookieConsent from "./components/CookieConsent";
 import { Suspense } from "react";
 import { PreloadAssets } from "./components/PreloadAssets";
 
+import FloatingFAB from "./components/FloatingFAB";
+
 // ตั้งค่าฟอนต์ Kanit
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -56,6 +58,10 @@ export default function RootLayout({
 
         <Suspense fallback={<div className="h-[5.5rem]" />}>
           <BottomNavigation />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <FloatingFAB />
         </Suspense>
 
         <CookieConsent />
