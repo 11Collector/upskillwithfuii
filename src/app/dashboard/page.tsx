@@ -3145,6 +3145,16 @@ Day 21: [กิจกรรม]
     if (!user || isToggling) return;
     setIsToggling(true);
 
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+    // 🌟 [NEW] ป้องกันข้ามวันแล้วไม่ยอมรีเซ็ตเควส
+    if (userData?.lastActiveDate && userData.lastActiveDate !== todayStr) {
+      console.log("Day change detected in toggleQuest! Running loadDashboardData to reset daily quests.");
+      await loadDashboardData(user);
+      setIsToggling(false);
+      return;
+    }
+
     const isDone = completedQuests.includes(id);
 
     if (!isDone) {
@@ -3162,7 +3172,6 @@ Day 21: [กิจกรรม]
     }
 
 
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     const userRef = doc(db, "users", user.uid);
 
     // 1. หาข้อมูลเควส
@@ -3332,8 +3341,12 @@ Day 21: [กิจกรรม]
 
       if (!userData?.hasCompletedPhase1Quests && newCompleted.length >= 2) {
         finalUpdates.hasCompletedPhase1Quests = true;
-        setUserData((prev: any) => prev ? { ...prev, hasCompletedPhase1Quests: true } : null);
       }
+
+      // 🌟 [NEW] อัปเดตข้อมูลของ userData ใน memory ให้เป็นปัจจุบันที่สุด
+      const stateUpdates = { ...finalUpdates };
+      delete stateUpdates.lastActiveAt;
+      setUserData((prev: any) => prev ? { ...prev, ...stateUpdates } : null);
 
       await setDoc(userRef, finalUpdates, { merge: true });
 

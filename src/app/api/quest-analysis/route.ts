@@ -116,7 +116,7 @@ export async function POST(req: Request) {
 
     const chatSummary = messages.slice(0, 15).join('\n');
 
-    const currentQuestsContext = (currentChallenge || currentPersonality || currentFinance)
+    const currentQuestsContext = (questPreferences && (currentChallenge || currentPersonality || currentFinance))
       ? `เควสปัจจุบันของวันนี้:
 - Challenge: "${currentChallenge}"
 - Personality: "${currentPersonality}"
