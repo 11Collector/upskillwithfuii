@@ -670,9 +670,12 @@ export default function SoulGuidePage() {
       {/* Header - ซ่อนเมื่อมี Modal ยืนยันล้างแชท */}
       {!showResetConfirm && (
         <header className="w-full max-w-4xl px-6 py-8 flex items-center justify-between z-20 sticky top-0 bg-zinc-950/50 backdrop-blur-md border-b border-white/5">
-          <Link href="/dashboard" className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all text-zinc-400 hover:text-white">
+          <button
+            onClick={() => router.back()}
+            className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all text-zinc-400 hover:text-white"
+          >
             <ArrowLeft size={18} />
-          </Link>
+          </button>
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-2 h-2 rounded-full animate-pulse ${isTyping ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />

@@ -76,23 +76,7 @@ export default function FloatingFAB() {
     // If chat is unlocked, show ONLY a single direct chat button to consult with P'Fuii
     const handleFABClick = (e: React.MouseEvent) => {
       e.preventDefault();
-      let activeTitle = "";
-      let activeContent = "";
-
-      if (typeof document !== "undefined") {
-        const titleInput = document.querySelector('input[placeholder*="หัวข้อบันทึก"]') as HTMLInputElement;
-        const contentTextarea = document.getElementById("note-content-editor") as HTMLTextAreaElement;
-
-        if (titleInput) activeTitle = titleInput.value;
-        if (contentTextarea) activeContent = contentTextarea.value;
-      }
-
-      if (activeTitle.trim() || activeContent.trim()) {
-        sessionStorage.setItem("pendingNoteCoaching_title", activeTitle.trim() || "บันทึกที่ไม่มีชื่อ");
-        sessionStorage.setItem("pendingNoteCoaching_content", activeContent);
-      }
-
-      router.push(`/tools/soul-guide?ref=note&t=${Date.now()}`);
+      router.push("/tools/soul-guide");
     };
 
     return (
