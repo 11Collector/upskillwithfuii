@@ -668,6 +668,7 @@ Day 21: [กิจกรรม]
 
   const [gender, setGender] = useState<"male" | "female">("male");
   const [streakCount, setStreakCount] = useState<number>(0);
+  const [lastQuestDate, setLastQuestDate] = useState<string>("");
   const [wheelPlanDay, setWheelPlanDay] = useState<number>(0);
   const [wheelPlanTarget, setWheelPlanTarget] = useState<number>(7);
   const [isExtending, setIsExtending] = useState<boolean>(false);
@@ -850,6 +851,7 @@ Day 21: [กิจกรรม]
         }
 
         setStreakCount(currentStreak);
+        setLastQuestDate(userData.lastQuestDate || "");
         setWheelPlanDay(userData.wheelPlanDay || 0);
         setWheelPlanTarget(userData.wheelPlanTarget || 7);
         setWheelPlanSkips(userData.wheelPlanSkips || 0);
@@ -1693,6 +1695,7 @@ Day 21: [กิจกรรม]
       setTotalXP(0);
       setPotXP(0);
       setStreakCount(0);
+      setLastQuestDate("");
       setWheelPlanDay(0);
       setWheelPlanSkips(0);
       setWheelCompletions(0); // 🎡 ล้างตัวนับความสำเร็จ
@@ -3216,8 +3219,7 @@ Day 21: [กิจกรรม]
 
       // 🔥 [Logic Streak ใหม่: ต้องครบ 3 ถึงนับเป็น 1 วัน] 🔥
       if (!isDone && oldCount < 3 && newCount >= 3) {
-        const userSnap = await getDoc(userRef);
-        const lastDate = userSnap.data()?.lastQuestDate;
+        const lastDate = lastQuestDate;
 
         if (lastDate) {
           const last = new Date(lastDate);
@@ -3273,12 +3275,12 @@ Day 21: [กิจกรรม]
       else {
         // กรณีทำข้อที่ 1, 2, 4, 5 หรือกดยกเลิกข้อที่ 4, 5 ให้รักษาค่าเดิม
         newStreak = streakCount;
-        const userSnap = await getDoc(userRef);
-        newLastQuestDate = userSnap.data()?.lastQuestDate || "";
+        newLastQuestDate = lastQuestDate;
       }
 
       // อัปเดตหลอดไฟสตรีคหน้าจอ
       setStreakCount(newStreak);
+      setLastQuestDate(newLastQuestDate);
 
       // 🌟 [RELATIVE WEEK LOGIC]
       const weekId = relativeWeekInfo.id;
