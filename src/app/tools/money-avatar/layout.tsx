@@ -25,5 +25,24 @@ export const metadata: Metadata = {
 };
 
 export default function MoneyAvatarLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Money Avatar | เครื่องมือประเมินทัศนคติและพฤติกรรมทางการเงิน",
+    "url": "https://www.upskilleveryday.com/tools/money-avatar",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires HTML5 support",
+    "description": "ถอดรหัสความสัมพันธ์ของคุณกับเงิน ค้นพบสไตล์ทางการเงิน (Money Avatar) และแนวทางการจัดการเงินของตัวคุณ"
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }

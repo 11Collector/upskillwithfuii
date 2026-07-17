@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   icons: {
     apple: '/logoapp.png',
   },
-  title: { default: "อัพสกิลกับฟุ้ย | พัฒนาตัวเองทุกวัน", template: "%s | Upskill Everyday" },
-  description: "เครื่องมือประเมินตัวเอง สรุปหนังสือ และคุยกับพี่ฟุ้ย (AI Mentor ส่วนตัว) ช่วยให้คุณเข้าใจตัวเองและพัฒนาได้ตรงจุด",
-  keywords: ["พัฒนาตัวเอง", "mindset", "upskill", "DISC", "wheel of life", "การเงิน", "สรุปหนังสือ", "AI mentor"],
+  title: { default: "Upskill Everyday | อัพสกิลกับฟุ้ย - พัฒนาตัวเองและทักษะชีวิตทุกวัน", template: "%s | Upskill Everyday" },
+  description: "การพัฒนาตัวเองสนุกกว่าที่คิด - Personal Growth OS ที่พาคุณสำรวจตัวเอง สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม",
+  keywords: ["upskill", "อัพสกิล", "พัฒนาตัวเอง", "upskill ตัวเอง", "upskilleveryday", "wheel of life ภาษาไทย", "แบบทดสอบ DISC", "money avatar", "สรุปหนังสือพัฒนาตัวเอง", "AI mentor พัฒนาตัวเอง", "reskill"],
   metadataBase: new URL("https://www.upskilleveryday.com"),
   openGraph: {
     siteName: "Upskill Everyday",
@@ -42,9 +42,27 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Upskill Everyday",
+    "alternateName": ["อัพสกิลกับฟุ้ย", "Upskill with Fuii"],
+    "url": "https://www.upskilleveryday.com",
+    "description": "การพัฒนาตัวเองสนุกกว่าที่คิด - Personal Growth OS ที่พาคุณสำรวจตัวเอง สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.upskilleveryday.com/library?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <html lang="th">
       <body className={`${kanit.className} bg-slate-50 text-slate-800 antialiased overflow-x-hidden`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <PWALogic />
         <PreloadAssets />
 

@@ -25,5 +25,24 @@ export const metadata: Metadata = {
 };
 
 export default function LibraryOfSoulsLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Library of Souls | เครื่องมือค้นหาหนังสือพัฒนาตัวเองที่ใช่สำหรับคุณ",
+    "url": "https://www.upskilleveryday.com/tools/library-of-souls",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires HTML5 support",
+    "description": "ทดสอบประเภทการอ่านและตัวตนในแบบ Library of Souls เพื่อค้นหาหนังสือที่ตรงกับไลฟ์สไตล์และทิศทางการพัฒนาตัวเองของคุณ"
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }

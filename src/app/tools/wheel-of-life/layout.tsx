@@ -25,5 +25,24 @@ export const metadata: Metadata = {
 };
 
 export default function WheelOfLifeLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Wheel of Life Assessment | เครื่องมือเช็คสมดุลชีวิต 8 ด้าน",
+    "url": "https://www.upskilleveryday.com/tools/wheel-of-life",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires HTML5 support",
+    "description": "ประเมินสมดุลชีวิตของคุณใน 8 มิติ ตั้งแต่สุขภาพ ความสัมพันธ์ การเงิน ไปจนถึงการพัฒนาตัวเอง พร้อมคำแนะนำด้วย AI"
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }

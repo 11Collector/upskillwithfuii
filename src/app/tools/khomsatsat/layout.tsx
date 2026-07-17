@@ -25,5 +25,24 @@ export const metadata: Metadata = {
 };
 
 export default function KhomsatsatLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "คมสัดๆ | เครื่องมือสร้างแรงบันดาลใจและคำคมพัฒนาตัวเอง",
+    "url": "https://www.upskilleveryday.com/tools/khomsatsat",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires HTML5 support",
+    "description": "ค้นหาแนวคิด คำคม และแรงบันดาลใจเพื่อฮีลใจและสร้างพลังงานบวกในสไตล์คนรุ่นใหม่"
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }
