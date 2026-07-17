@@ -848,7 +848,7 @@ export default function Home() {
                 </span>
                 <div className="flex flex-wrap gap-2.5 justify-center">
                   {[
-                    { name: "คมสัสๆ (Quotes)", icon: <Quote size={18} className="text-purple-600" />, color: "bg-purple-50 border-purple-200" },
+                    { name: "คมสัดสัด (Quotes)", icon: <Quote size={18} className="text-purple-600" />, color: "bg-purple-50 border-purple-200" },
                     { name: "ผีในตัวคุณ (Ghost In You)", icon: <Ghost size={18} className="text-red-600" />, color: "bg-red-50 border-red-200" },
                     { name: "ความสุขระหว่างทาง (Happiness Shop)", icon: <ShoppingBag size={18} className="text-pink-600" />, color: "bg-pink-50 border-pink-200" },
                     { name: "คุยกับพี่ฟุ้ย (AI Mentor)", icon: <MessageSquareMore size={18} className="text-slate-600" />, color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]" }
