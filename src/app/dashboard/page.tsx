@@ -2820,7 +2820,7 @@ Day 21: [กิจกรรม]
     if (!user?.uid || !todayDateStr || !userData || dailyQuests.length === 0) return;
 
     const storedQuests = userData.currentDailyQuests || [];
-    const storedDate = userData.lastQuestDate || "";
+    const storedDate = userData.lastActiveDate || "";
 
     const needsUpdate = storedDate !== todayDateStr || 
       storedQuests.length !== dailyQuests.length ||
@@ -2830,7 +2830,7 @@ Day 21: [กิจกรรม]
       const userRef = doc(db, "users", user.uid);
       updateDoc(userRef, {
         currentDailyQuests: dailyQuests,
-        lastQuestDate: todayDateStr
+        lastActiveDate: todayDateStr
       }).catch((e) => console.error("Error syncing daily quests:", e));
     }
   }, [user?.uid, todayDateStr, userData, dailyQuests]);
