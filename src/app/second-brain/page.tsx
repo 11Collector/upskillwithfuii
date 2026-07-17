@@ -2193,7 +2193,7 @@ ${noteContent}`;
                       const isSelected = selectedNote?.id === n.id;
                       const hasText = n.content && n.content.trim().length > 0;
                       const excerpt = hasText
-                        ? n.content.replace(/[#*`_-]/g, "").slice(0, 45) + (n.content.length > 45 ? "..." : "")
+                        ? n.content.replace(/[#*`_-]/g, "").slice(0, 120) + (n.content.length > 120 ? "..." : "")
                         : "ไม่มีเนื้อหาจดบันทึก...";
 
                       return (
@@ -2208,19 +2208,19 @@ ${noteContent}`;
                               : "bg-slate-50 hover:bg-slate-100/70 border-slate-200/50 text-slate-700 hover:border-slate-300"
                           }`}
                         >
-                          <div className="pr-6">
-                            <span className={`inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-1.5 ${
+                          <div className="pr-12">
+                            <span className={`inline-block text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-1.5 ${
                               isSelected ? "bg-indigo-200/50 text-indigo-800" : "bg-slate-200 text-slate-600"
                             }`}>
                               {n.category || "พัฒนาตัวเอง"}
                             </span>
-                            <h4 className="text-xs font-bold leading-snug line-clamp-1 mb-1">
+                            <h4 className="text-xs sm:text-sm font-bold leading-snug line-clamp-2 mb-1">
                               {n.title || "บันทึกที่ไม่มีชื่อ"}
                             </h4>
-                            <p className="text-[10px] text-slate-400 font-medium line-clamp-1 leading-normal">
+                            <p className="text-[10px] sm:text-xs text-slate-400 font-medium line-clamp-2 leading-relaxed">
                               {excerpt}
                             </p>
-                            <span className="block text-[8px] text-slate-400 font-bold mt-2 uppercase tracking-wide">
+                            <span className="block text-[8px] sm:text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-wide">
                               {n.updatedAt ? new Date(n.updatedAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' }) : "ไม่มีวันที่"}
                             </span>
                           </div>
@@ -2548,11 +2548,11 @@ ${noteContent}`;
                         <span className="text-[9px] text-slate-400 font-bold">ผลลัพธ์จะถูกเขียนเพิ่มต่อท้ายบันทึกของคุณอัตโนมัติ</span>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 z-10 mt-1 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items-stretch gap-2 z-10 mt-1 w-full">
                         <button
                           onClick={() => handleCallAi("summarize")}
                           disabled={isAiLoading || !noteContent.trim()}
-                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full sm:flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {activeAiAction === "summarize" ? (
                             <Loader2 size={11} className="animate-spin" />
@@ -2585,10 +2585,10 @@ ${noteContent}`;
                             }
                             router.push(`/tools/soul-guide?ref=note&t=${Date.now()}`);
                           }}
-                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full sm:flex-1 flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border border-transparent rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="flex items-center gap-1">
-                            <span>💪 ขอคำแนะนำจากพี่ฟุ้ย</span>
+                            <span>💬 ขอคำแนะนำจากพี่ฟุ้ย</span>
                             {!isProMember && <Lock size={10} className="text-white/70" />}
                           </span>
                         </button>
