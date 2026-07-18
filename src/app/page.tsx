@@ -24,17 +24,17 @@ const t = {
   logout: "Logout",
   toolsHeader: "📌 เครื่องมือเฉพาะสำหรับคุณ",
   toolsDetailBtn: "รายละเอียด",
-  pitchBeta: "Early Access (Free Beta)",
-  pitchTitle1: "ปลดล็อก Dashboard",
-  pitchTitle2: "เพื่อเก็บสถิติส่วนตัว",
+  pitchBeta: "YOUR PERSONAL GROWTH OS",
+  pitchTitle1: "ระบบปฏิบัติการ",
+  pitchTitle2: "พัฒนาชีวิตส่วนตัวของคุณ",
   pitchList: [
-    "Hub รวมทุกผลทดสอบตัวตนในที่เดียว",
-    "สะสม XP อัพ Level ให้ตัวเอง",
-    "Smart Insight เจาะลึกจุดอัพสกิล",
-    "คุยกับพี่ฟุ้ย ช่วยวางแผนพัฒนาตัวเอง"
+    "Identity OS — ถอดรหัสตัวตน ค้นหาเป้าหมายชีวิต",
+    "XP & Quests — ทำเควสต์รายวัน อัพเลเวลให้เก่งขึ้น",
+    "Growth Insights — ติดตามสถิติโฟกัส & สภาวะจิตใจ",
+    "AI Mentor — คุยปรับ Mindset กับพี่ฟุ้ยได้ 24 ชม."
   ],
-  loginGoogle: "เข้าสู่ระบบด้วย Google",
-  loginRemark: "* เข้าร่วมฟรีในช่วง Beta พร้อมใช้ Dashboard สุด Exclusive",
+  loginGoogle: "เริ่มต้นใช้งาน",
+  loginRemark: "สมัครฟรีใน 5 วินาที · ข้อมูลส่วนตัวปลอดภัย 100%",
   footer: "© 2026 อัพสกิลกับฟุ้ย",
   tools: {
     wheel: { name: "Wheel Of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", gimmick: "500K+ Views บน Social" },
@@ -52,6 +52,7 @@ export default function Home() {
   const [isPro, setIsPro] = useState(false);
   const [isProLoaded, setIsProLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [onePercentDay, setOnePercentDay] = useState(365);
 
@@ -152,8 +153,9 @@ export default function Home() {
   }, [user]); // ทำงานเฉพาะเมื่อตัวแปร user มีการเปลี่ยนแปลง
 
   const handleLogin = async () => {
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
     try {
-      setIsProLoaded(false);
       const result = await signInWithPopup(auth, googleProvider);
       const loggedInUser = result.user;
 
@@ -998,21 +1000,32 @@ export default function Home() {
           <div className="relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 p-8 sm:p-20 items-center">
 
             <div className="max-w-md mx-auto md:mx-0 text-left">
-              <span className="text-amber-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-4 block">
-                {t.pitchBeta}
-              </span>
-              <h2 className="text-4xl md:text-5xl font-black mb-6 text-white leading-[1.1]">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-amber-400 font-bold text-[10px] uppercase tracking-[0.3em]">
+                  {t.pitchBeta}
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 text-white leading-[1.1]">
                 {t.pitchTitle1} <br />
-                <span className="text-blue-400">{t.pitchTitle2}</span>
+                <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-amber-300 bg-clip-text text-transparent">{t.pitchTitle2}</span>
               </h2>
+              <p className="text-slate-400 text-xs md:text-sm font-bold mb-7 leading-relaxed">
+                ครบทุกเครื่องมือค้นหาตัวตน สร้างนิสัย และเติบโตในแบบของคุณ
+              </p>
 
-              <ul className="space-y-4 mb-10">
-                {t.pitchList.map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300 text-sm font-medium">
-                    <div className="bg-amber-400/10 p-1.5 rounded-lg border border-amber-400/20 shrink-0">
-                      <Star size={16} className="text-amber-400 fill-amber-400/20" />
+              <ul className="space-y-3.5 mb-10">
+                {[
+                  { icon: <Users size={15} className="text-blue-400" />, text: t.pitchList[0] },
+                  { icon: <Flame size={15} className="text-orange-400" />, text: t.pitchList[1] },
+                  { icon: <PieChart size={15} className="text-emerald-400" />, text: t.pitchList[2] },
+                  { icon: <MessageSquareMore size={15} className="text-purple-400" />, text: t.pitchList[3] }
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-slate-200 text-xs md:text-sm font-bold">
+                    <div className="bg-slate-800 p-2 rounded-xl border border-white/10 shrink-0 shadow-sm">
+                      {item.icon}
                     </div>
-                    <span>{item}</span>
+                    <span>{item.text}</span>
                   </li>
                 ))}
               </ul>
@@ -1024,14 +1037,23 @@ export default function Home() {
                     <p className="text-slate-400 text-xs leading-relaxed">Google ไม่อนุญาตให้ Login ผ่าน in-app browser (Messenger, LINE ฯลฯ)<br />กรุณากด <strong className="text-white">เปิดใน Chrome หรือ Safari</strong> ก่อนแล้วค่อย Login ครับ</p>
                   </div>
                 ) : (
-                  <button onClick={handleLogin} className="w-full sm:w-auto bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm hover:bg-amber-50 transition-all active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3 group">
-                    <svg width="20" height="20" viewBox="0 0 48 48">
-                      <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
-                      <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
-                      <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
-                      <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C40.486,35.33,44,30.075,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
-                    </svg>
-                    {t.loginGoogle}
+                  <button onClick={handleLogin} disabled={isLoggingIn} className="w-full sm:w-auto bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm hover:bg-amber-50 transition-all active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3 group disabled:opacity-70">
+                    {isLoggingIn ? (
+                      <>
+                        <Loader2 size={20} className="animate-spin text-slate-900" />
+                        <span>กำลังเข้าสู่ระบบ...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="20" height="20" viewBox="0 0 48 48">
+                          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C40.486,35.33,44,30.075,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                        </svg>
+                        {t.loginGoogle}
+                      </>
+                    )}
                   </button>
                 )}
 
@@ -1054,6 +1076,12 @@ export default function Home() {
 
             {/* Right Side: Decorative Mockup */}
             <div className="hidden md:flex justify-end relative h-full items-center">
+              {/* Floating OS Widgets */}
+              <div className="absolute top-1/2 -right-4 z-30 bg-slate-900/90 border border-amber-500/30 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 text-[10px] font-black text-amber-300">
+                <Flame size={12} className="text-amber-400 fill-amber-400" />
+                XP +50 TODAY
+              </div>
+
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
