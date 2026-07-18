@@ -4,8 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle, ShoppingBag, Ghost, Hourglass, Brain, Map } from "lucide-react";
-import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle, ShoppingBag, Ghost, Hourglass, Brain, Map, Copy } from "lucide-react";
+import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
 import { usePWAInstall } from "@/lib/pwa";
@@ -58,7 +58,7 @@ export default function Home() {
 
   useEffect(() => {
     const ua = navigator.userAgent;
-    const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter/i.test(ua);
+    const inApp = /FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat|GSA\/|Gmail/i.test(ua);
     setIsInAppBrowser(inApp);
   }, []);
 
@@ -1032,9 +1032,24 @@ export default function Home() {
 
               <div className="flex flex-col items-start gap-4 w-full">
                 {isInAppBrowser ? (
-                  <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-4 flex flex-col gap-2">
-                    <p className="text-amber-400 text-sm font-black">⚠️ เปิดในเบราว์เซอร์ก่อนนะครับ</p>
-                    <p className="text-slate-400 text-xs leading-relaxed">Google ไม่อนุญาตให้ Login ผ่าน in-app browser (Messenger, LINE ฯลฯ)<br />กรุณากด <strong className="text-white">เปิดใน Chrome หรือ Safari</strong> ก่อนแล้วค่อย Login ครับ</p>
+                  <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-4 flex flex-col gap-2.5">
+                    <p className="text-amber-400 text-sm font-black flex items-center gap-2">
+                      <span>⚠️</span> เปิดใน Safari หรือ Chrome ก่อนนะครับ
+                    </p>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Google ไม่อนุญาตให้ Login ผ่าน In-App Browser (LINE, IG, Messenger ฯลฯ)<br />
+                      กรุณากดมุมขวาบน <strong className="text-white">"เปิดในเบราว์เซอร์" (Safari / Chrome)</strong> หรือกดคัดลอกลิงก์ด้านล่าง
+                    </p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert("คัดลอกลิงก์เรียบร้อย! กรุณานำไปวางและเปิดใน Safari หรือ Chrome ครับ");
+                      }}
+                      className="self-start mt-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                    >
+                      <Copy size={13} />
+                      <span>คัดลอกลิงก์</span>
+                    </button>
                   </div>
                 ) : (
                   <button onClick={handleLogin} disabled={isLoggingIn} className="w-full sm:w-auto bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm hover:bg-amber-50 transition-all active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3 group disabled:opacity-70">
