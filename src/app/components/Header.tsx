@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PieChart, Users, Wallet, Brain } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, User } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 
 const dashboardTabs = [
@@ -45,14 +45,24 @@ function HeaderInner() {
 
   useEffect(() => {
     const ua = navigator.userAgent;
-    setIsInAppBrowser(/FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter/i.test(ua));
+    setIsInAppBrowser(/FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat|GSA\/|Gmail/i.test(ua));
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (isInAppBrowser) return;
-    signInWithPopup(auth, googleProvider).catch((e) => {
-      if (e?.code !== 'auth/popup-closed-by-user') console.error(e);
-    });
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (e: any) {
+      if (e?.code === 'auth/popup-blocked') {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          console.error("Redirect login error:", redirectErr);
+        }
+      } else if (e?.code !== 'auth/popup-closed-by-user') {
+        console.error(e);
+      }
+    }
   };
 
   const isAssessmentPage = pathname.startsWith("/tools/");
