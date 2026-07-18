@@ -33,7 +33,7 @@ const t = {
     "Growth Insights — ติดตามสถิติโฟกัส & สภาวะจิตใจ",
     "AI Mentor — คุยปรับ Mindset กับพี่ฟุ้ยได้ 24 ชม."
   ],
-  loginGoogle: "เริ่มต้นใช้งานฟรีด้วย Google",
+  loginGoogle: "เริ่มต้นใช้งาน",
   loginRemark: "สมัครฟรีใน 5 วินาที · ข้อมูลส่วนตัวปลอดภัย 100%",
   footer: "© 2026 อัพสกิลกับฟุ้ย",
   tools: {
