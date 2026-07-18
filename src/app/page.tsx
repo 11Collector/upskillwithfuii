@@ -20,7 +20,7 @@ const t = {
   authWelcome: "สวัสดี, คุณ",
   authSub: "พร้อมที่จะขยับขีดจำกัดของตัวเองในวันนี้หรือยัง?",
   proMember: "Pro Member",
-  dashboardBtn: "เข้าสู่ระบบ Dashboard",
+  dashboardBtn: "เข้าสู่ Personal Growth OS",
   logout: "Logout",
   toolsHeader: "📌 เครื่องมือเฉพาะสำหรับคุณ",
   toolsDetailBtn: "รายละเอียด",
