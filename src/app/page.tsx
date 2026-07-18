@@ -24,17 +24,17 @@ const t = {
   logout: "Logout",
   toolsHeader: "📌 เครื่องมือเฉพาะสำหรับคุณ",
   toolsDetailBtn: "รายละเอียด",
-  pitchBeta: "Early Access (Free Beta)",
-  pitchTitle1: "ปลดล็อก Dashboard",
-  pitchTitle2: "เพื่อเก็บสถิติส่วนตัว",
+  pitchBeta: "YOUR PERSONAL GROWTH OS",
+  pitchTitle1: "ระบบปฏิบัติการ",
+  pitchTitle2: "พัฒนาชีวิตส่วนตัวของคุณ",
   pitchList: [
-    "Hub รวมทุกผลทดสอบตัวตนในที่เดียว",
-    "สะสม XP อัพ Level ให้ตัวเอง",
-    "Smart Insight เจาะลึกจุดอัพสกิล",
-    "คุยกับพี่ฟุ้ย ช่วยวางแผนพัฒนาตัวเอง"
+    "Identity OS — ถอดรหัสตัวตน ค้นหาเป้าหมายชีวิต",
+    "XP & Quests — ทำเควสต์รายวัน อัพเลเวลให้เก่งขึ้น",
+    "Growth Insights — ติดตามสถิติโฟกัส & สภาวะจิตใจ",
+    "AI Mentor — คุยปรับ Mindset กับพี่ฟุ้ยได้ 24 ชม."
   ],
-  loginGoogle: "เข้าสู่ระบบด้วย Google",
-  loginRemark: "* เข้าร่วมฟรีในช่วง Beta พร้อมใช้ Dashboard สุด Exclusive",
+  loginGoogle: "เริ่มต้นใช้งานฟรีด้วย Google",
+  loginRemark: "สมัครฟรีใน 5 วินาที · ข้อมูลส่วนตัวปลอดภัย 100%",
   footer: "© 2026 อัพสกิลกับฟุ้ย",
   tools: {
     wheel: { name: "Wheel Of Life", desc: "เช็กสมดุลชีวิต 8 ด้าน พร้อม AI วางแผน 7 วัน", gimmick: "500K+ Views บน Social" },
@@ -1000,21 +1000,32 @@ export default function Home() {
           <div className="relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 p-8 sm:p-20 items-center">
 
             <div className="max-w-md mx-auto md:mx-0 text-left">
-              <span className="text-amber-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-4 block">
-                {t.pitchBeta}
-              </span>
-              <h2 className="text-4xl md:text-5xl font-black mb-6 text-white leading-[1.1]">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-amber-400 font-bold text-[10px] uppercase tracking-[0.3em]">
+                  {t.pitchBeta}
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 text-white leading-[1.1]">
                 {t.pitchTitle1} <br />
-                <span className="text-blue-400">{t.pitchTitle2}</span>
+                <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-amber-300 bg-clip-text text-transparent">{t.pitchTitle2}</span>
               </h2>
+              <p className="text-slate-400 text-xs md:text-sm font-bold mb-7 leading-relaxed">
+                อัพสกิลชีวิตวันละ 1% ด้วยระบบเควสต์ สถิติเติบโต และ AI Mentor
+              </p>
 
-              <ul className="space-y-4 mb-10">
-                {t.pitchList.map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300 text-sm font-medium">
-                    <div className="bg-amber-400/10 p-1.5 rounded-lg border border-amber-400/20 shrink-0">
-                      <Star size={16} className="text-amber-400 fill-amber-400/20" />
+              <ul className="space-y-3.5 mb-10">
+                {[
+                  { icon: <Users size={15} className="text-blue-400" />, text: t.pitchList[0] },
+                  { icon: <Flame size={15} className="text-orange-400" />, text: t.pitchList[1] },
+                  { icon: <PieChart size={15} className="text-emerald-400" />, text: t.pitchList[2] },
+                  { icon: <MessageSquareMore size={15} className="text-purple-400" />, text: t.pitchList[3] }
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-slate-200 text-xs md:text-sm font-bold">
+                    <div className="bg-slate-800 p-2 rounded-xl border border-white/10 shrink-0 shadow-sm">
+                      {item.icon}
                     </div>
-                    <span>{item}</span>
+                    <span>{item.text}</span>
                   </li>
                 ))}
               </ul>
@@ -1065,6 +1076,12 @@ export default function Home() {
 
             {/* Right Side: Decorative Mockup */}
             <div className="hidden md:flex justify-end relative h-full items-center">
+              {/* Floating OS Widgets */}
+              <div className="absolute top-1/2 -right-4 z-30 bg-slate-900/90 border border-amber-500/30 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 text-[10px] font-black text-amber-300">
+                <Flame size={12} className="text-amber-400 fill-amber-400" />
+                XP +50 TODAY
+              </div>
+
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
