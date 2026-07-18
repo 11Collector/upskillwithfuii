@@ -30,7 +30,7 @@ const t = {
   pitchList: [
     "Identity OS — ถอดรหัสตัวตน ค้นหาเป้าหมายชีวิต",
     "XP & Quests — ทำเควสต์รายวัน อัพเลเวลให้เก่งขึ้น",
-    "Growth Insights — ติดตามสถิติโฟกัส & สภาวะจิตใจ",
+    "Growth Insights — สถิติโฟกัส และการเติบโต",
     "AI Mentor — คุยปรับ Mindset กับพี่ฟุ้ยได้ 24 ชม."
   ],
   loginGoogle: "เริ่มต้นใช้งาน",
@@ -1006,12 +1006,12 @@ export default function Home() {
                   {t.pitchBeta}
                 </span>
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 text-white leading-[1.1]">
+              <h2 className="text-[25px] sm:text-4xl md:text-5xl font-black mb-3 text-white leading-tight">
                 {t.pitchTitle1} <br />
                 <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-amber-300 bg-clip-text text-transparent">{t.pitchTitle2}</span>
               </h2>
-              <p className="text-slate-400 text-xs md:text-sm font-bold mb-7 leading-relaxed">
-                ครบทุกเครื่องมือค้นหาตัวตน สร้างนิสัย และเติบโตในแบบของคุณ
+              <p className="text-slate-400 text-[11px] sm:text-xs md:text-sm font-bold mb-7 leading-relaxed whitespace-nowrap">
+                ครบทุกเครื่องมือค้นหาตัวตน และเติบโตในแบบของคุณ
               </p>
 
               <ul className="space-y-3.5 mb-10">
