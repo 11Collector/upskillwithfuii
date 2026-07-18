@@ -1011,7 +1011,7 @@ export default function Home() {
                 <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-amber-300 bg-clip-text text-transparent">{t.pitchTitle2}</span>
               </h2>
               <p className="text-slate-400 text-xs md:text-sm font-bold mb-7 leading-relaxed">
-                อัพสกิลชีวิตวันละ 1% ด้วยระบบเควสต์ สถิติเติบโต และ AI Mentor
+                ครบทุกเครื่องมือค้นหาตัวตน สร้างนิสัย และเติบโตในแบบของคุณ
               </p>
 
               <ul className="space-y-3.5 mb-10">
