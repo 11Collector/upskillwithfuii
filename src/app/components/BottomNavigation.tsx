@@ -45,12 +45,8 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  const noNavPaths = [
-    '/tools/soul-guide',
-    '/tools/ai-mentor',
-  ];
-
-  if (noNavPaths.some(p => pathname.startsWith(p))) return null;
+  // Only hide bottom nav on full-screen chat interface, NOT on /info pages
+  if (pathname === '/tools/soul-guide' || pathname === '/tools/ai-mentor') return null;
 
   if (isDashboardFlow) {
     const navItems = [
