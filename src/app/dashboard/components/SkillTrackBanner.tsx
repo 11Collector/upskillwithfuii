@@ -6,17 +6,17 @@ import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Ta
 import { SKILL_TRACKS, SkillTrack } from "@/data/skillTracks";
 
 // Helper function to get clean Lucide vector icon per track
-const getTrackIcon = (trackId: string, size = 22) => {
+const getTrackIcon = (trackId: string, size = 20) => {
   switch (trackId) {
-    case 'money': return <Wallet size={size} className="text-white" />;
-    case 'relationship': return <Users size={size} className="text-white" />;
-    case 'mindset': return <Brain size={size} className="text-white" />;
-    case 'career': return <Briefcase size={size} className="text-white" />;
-    case 'health': return <HeartPulse size={size} className="text-white" />;
-    case 'innerpeace': return <Sun size={size} className="text-white" />;
-    case 'contribution': return <HeartHandshake size={size} className="text-white" />;
-    case 'lifedesign': return <Compass size={size} className="text-white" />;
-    default: return <BookOpen size={size} className="text-white" />;
+    case 'money': return <Wallet size={size} className="text-emerald-300" />;
+    case 'relationship': return <Users size={size} className="text-amber-300" />;
+    case 'mindset': return <Brain size={size} className="text-purple-300" />;
+    case 'career': return <Briefcase size={size} className="text-blue-300" />;
+    case 'health': return <HeartPulse size={size} className="text-rose-300" />;
+    case 'innerpeace': return <Sun size={size} className="text-teal-300" />;
+    case 'contribution': return <HeartHandshake size={size} className="text-pink-300" />;
+    case 'lifedesign': return <Compass size={size} className="text-indigo-300" />;
+    default: return <BookOpen size={size} className="text-amber-300" />;
   }
 };
 
@@ -77,44 +77,46 @@ export default function SkillTrackBanner({
   return (
     <div className="w-full mb-6">
       {activeTrack ? (
-        /* 🏆 Active Skill Track Banner */
+        /* 🏆 Active Skill Track Banner - Clean Minimal Mobile Friendly Layout */
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative overflow-hidden rounded-[2rem] border border-orange-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 sm:p-5 shadow-2xl"
         >
           {/* Background Glow Flare */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/15 blur-3xl rounded-full pointer-events-none -mr-16 -mt-16" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-3xl rounded-full pointer-events-none -mr-16 -mt-16" />
 
-          {/* Top Bar: Icon + Title + Pill + Right "สลับวิชา" Button */}
-          <div className="flex items-start justify-between gap-3 relative z-10">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-400/30 flex items-center justify-center shrink-0 shadow-inner">
-                {getTrackIcon(activeTrack.id)}
+          {/* Header Row: Icon + Track Name + Status/Action */}
+          <div className="flex items-center justify-between gap-2.5 relative z-10 mb-3.5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
+                {getTrackIcon(activeTrack.id, 20)}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <button 
-                    onClick={onOpenInfo}
-                    className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500/20 to-amber-500/20 hover:from-orange-500/30 hover:to-amber-500/30 text-orange-300 text-[9px] font-black uppercase tracking-wider border border-orange-400/40 shrink-0 flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    วิชาสัปดาห์นี้ <span className="w-3.5 h-3.5 rounded-full bg-orange-400/30 text-orange-200 text-[9px] flex items-center justify-center font-black">i</span>
-                  </button>
-                  <span className="text-[11px] font-bold text-slate-400 shrink-0">
+                  <span className="text-[10px] sm:text-xs font-black text-amber-400 tracking-wider">
                     Day {currentDay}/7
                   </span>
+                  <button 
+                    onClick={onOpenInfo}
+                    className="w-4 h-4 rounded-full bg-orange-400/20 hover:bg-orange-400/40 text-orange-300 text-[10px] inline-flex items-center justify-center font-black cursor-pointer transition-colors border border-orange-400/30"
+                    title="ดูคำแนะนำวิชา"
+                  >
+                    i
+                  </button>
                 </div>
-                <h3 className="text-base sm:text-lg font-black text-white leading-tight truncate">
+                <h3 className="text-sm sm:text-base font-black text-white leading-tight truncate">
                   {activeTrack.title}
                 </h3>
               </div>
             </div>
 
-            {/* Top Right: Sprint Lock Status or Switch Track Button */}
+            {/* Right Sprint Lock Status or Switch Button */}
             {completedDays.length < 7 ? (
-              <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0 mt-0.5 shadow-sm">
-                <ShieldCheck size={13} className="text-orange-400" />
-                <span>โฟกัส 7 วัน</span>
+              <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
+                <ShieldCheck size={12} className="text-orange-400" />
+                <span className="hidden sm:inline">โฟกัส 7 วัน</span>
+                <span className="sm:hidden">7 วัน</span>
               </div>
             ) : (
               <button
@@ -122,21 +124,19 @@ export default function SkillTrackBanner({
                   setSelectedTrackForChoice(null);
                   setIsModalOpen(true);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-md shadow-orange-500/20 mt-0.5"
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-md shadow-orange-500/20"
               >
-                <Sparkles size={13} /> เลือกวิชาใหม่
+                <Sparkles size={12} /> สลับวิชา
               </button>
             )}
           </div>
 
-
-
-          {/* 7-Day Streak Nodes Bar */}
-          <div className="mt-4 pt-3.5 border-t border-white/10 relative z-10">
+          {/* 7-Day Sprint Progress Grid */}
+          <div className="pt-3 border-t border-white/10 relative z-10">
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 mb-2">
               <span className="flex items-center gap-1.5">
                 <Target size={13} className="text-orange-400" />
-                ความคืบหน้า 7 วัน (7-Day Sprint)
+                ความคืบหน้า 7 วัน (Sprint)
               </span>
               <span className="text-orange-400 font-black">
                 {Math.round((completedDays.length / 7) * 100)}% สำเร็จ
@@ -151,23 +151,23 @@ export default function SkillTrackBanner({
                 return (
                   <div
                     key={dayNum}
-                    className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-xl border transition-all ${
+                    className={`flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border transition-all ${
                       isCompleted
                         ? "bg-gradient-to-br from-orange-500/30 to-amber-500/20 border-orange-400 text-orange-200 shadow-md shadow-orange-500/20"
                         : isCurrent
-                        ? "bg-slate-900 border-amber-400/90 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.35)] ring-1 ring-amber-400/50"
+                        ? "bg-slate-900 border-amber-400/90 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50"
                         : "bg-white/5 border-white/5 text-slate-500"
                     }`}
                   >
                     <span className={`text-[9px] font-black uppercase ${isCurrent ? 'text-amber-300' : isCompleted ? 'text-orange-300' : 'text-slate-500'}`}>D{dayNum}</span>
                     {isCompleted ? (
-                      <CheckCircle2 size={15} className="text-orange-400" />
+                      <CheckCircle2 size={13} className="text-orange-400 mt-0.5" />
                     ) : isCurrent ? (
-                      <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-amber-400 bg-amber-400/20 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      <div className="w-3 h-3 rounded-full border-2 border-amber-400 bg-amber-400/20 flex items-center justify-center mt-0.5">
+                        <div className="w-1 h-1 rounded-full bg-amber-400 animate-ping" />
                       </div>
                     ) : (
-                      <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-slate-700 bg-transparent" />
+                      <div className="w-3 h-3 rounded-full border-2 border-slate-700 bg-transparent mt-0.5" />
                     )}
                   </div>
                 );
@@ -176,7 +176,7 @@ export default function SkillTrackBanner({
           </div>
         </motion.div>
       ) : (
-        /* 🚀 Initial Track Selection Prompt */
+        /* 🚀 Initial Track Selection Prompt - Minimal Responsive Card */
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -186,17 +186,15 @@ export default function SkillTrackBanner({
           <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 blur-xl rounded-full pointer-events-none -mr-8 -mt-8" />
 
           <div className="flex items-center justify-between gap-3 relative z-10">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-400/25 flex items-center justify-center text-lg shrink-0 shadow-inner">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500/15 border border-amber-400/25 flex items-center justify-center shrink-0 shadow-inner">
                 <BookOpen size={18} className="text-amber-400" />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 text-[8px] font-black uppercase tracking-wider border border-amber-400/30 shrink-0">
-                    7-DAY MASTERY
-                  </span>
-                </div>
-                <h3 className="text-xs sm:text-sm font-black text-white leading-snug truncate">
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] sm:text-[10px] font-black text-amber-400 uppercase tracking-widest block">
+                  7-DAY MASTERY SPRINT
+                </span>
+                <h3 className="text-xs sm:text-sm font-black text-white leading-snug mt-0.5">
                   เลือกวิชาชีวิตประจำสัปดาห์นี้
                 </h3>
               </div>
@@ -207,10 +205,9 @@ export default function SkillTrackBanner({
                 setSelectedTrackForChoice(null);
                 setIsModalOpen(true);
               }}
-              className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 shrink-0 flex items-center gap-1 cursor-pointer"
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 shrink-0 flex items-center gap-1 cursor-pointer active:scale-95"
             >
-              <span className="hidden sm:inline">เลือกวิชาฝึกฝน</span>
-              <span className="sm:hidden">เลือกวิชา</span>
+              <span>เลือกวิชา</span>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -225,7 +222,7 @@ export default function SkillTrackBanner({
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-slate-900 border border-white/10 rounded-[2rem] p-4 sm:p-5 max-w-lg w-full max-h-[70vh] sm:max-h-[80vh] flex flex-col text-white shadow-2xl relative my-auto"
+              className="bg-slate-900 border border-white/10 rounded-[2rem] p-4 sm:p-5 max-w-lg w-full max-h-[75vh] sm:max-h-[80vh] flex flex-col text-white shadow-2xl relative my-auto"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 shrink-0">
@@ -269,7 +266,7 @@ export default function SkillTrackBanner({
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
-                          {getTrackIcon(track.id)}
+                          {getTrackIcon(track.id, 20)}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
