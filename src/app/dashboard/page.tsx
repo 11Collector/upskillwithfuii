@@ -9137,8 +9137,9 @@ Day 21: [กิจกรรม]
                       <Award size={14} />
                     </div>
                     <div>
-                      <h4 className="text-[11px] font-bold text-white">เกณฑ์ผ่าน Master Badge</h4>
+                      <h4 className="text-[11px] font-bold text-white">เกณฑ์ผ่าน Master Badge & เรียนซ้ำยกระดับ</h4>
                       <p className="text-[9px] text-amber-300 font-bold">ทำสำเร็จอย่างน้อย 5 จาก 7 วัน ➔ รับ Master Badge ประจำวิชา (ทำครบ 7 วัน รับโบนัสเกียรตินิยม +100 XP)</p>
+                      <p className="text-[9px] text-emerald-300 font-semibold mt-0.5">💡 เมื่อเรียนจบแล้ว สามารถกลับมาเรียนซ้ำเพื่อรับโจทย์ AI ท้าทายยิ่งขึ้นในรอบถัดไปได้!</p>
                     </div>
                   </div>
                 </div>
