@@ -1,0 +1,311 @@
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Handshake, Compass } from "lucide-react";
+import { SKILL_TRACKS, SkillTrack } from "@/data/skillTracks";
+
+// Helper function to get clean Lucide vector icon per track
+const getTrackIcon = (trackId: string, size = 22) => {
+  switch (trackId) {
+    case 'money': return <Wallet size={size} className="text-white" />;
+    case 'relationship': return <Users size={size} className="text-white" />;
+    case 'mindset': return <Brain size={size} className="text-white" />;
+    case 'career': return <Briefcase size={size} className="text-white" />;
+    case 'health': return <HeartPulse size={size} className="text-white" />;
+    case 'focus': return <Target size={size} className="text-white" />;
+    case 'influence': return <Handshake size={size} className="text-white" />;
+    case 'lifedesign': return <Compass size={size} className="text-white" />;
+    default: return <BookOpen size={size} className="text-white" />;
+  }
+};
+
+interface SkillTrackBannerProps {
+  activeTrackId: string | null;
+  currentDay: number;
+  completedDays: number[];
+  lowestWheelCategory?: string;
+  userGoal?: string;
+  onSelectTrack: (trackId: string, keepWheelProgress?: boolean) => void;
+  onResetTrack?: () => void;
+  onOpenInfo?: () => void;
+}
+
+export default function SkillTrackBanner({
+  activeTrackId,
+  currentDay,
+  completedDays,
+  lowestWheelCategory,
+  userGoal,
+  onSelectTrack,
+  onResetTrack,
+  onOpenInfo
+}: SkillTrackBannerProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
+  const activeTrack = activeTrackId ? SKILL_TRACKS[activeTrackId] : null;
+
+  // 🧠 Smart Track Recommendation Evaluator based on userGoal keywords & lowestWheelCategory
+  const getRecommendedTrackKey = (): string => {
+    if (userGoal) {
+      const g = userGoal.toLowerCase();
+      if (g.includes("เงิน") || g.includes("รายได้") || g.includes("พอร์ต") || g.includes("ธุรกิจ")) return "money";
+      if (g.includes("งาน") || g.includes("อาชีพ") || g.includes("ธุรกิจ") || g.includes("ตำแหน่ง")) return "career";
+      if (g.includes("สุขภาพ") || g.includes("ออกกำลัง") || g.includes("นอน") || g.includes("หุ่น")) return "health";
+      if (g.includes("ความสัมพันธ์") || g.includes("รัก") || g.includes("ครอบครัว") || g.includes("เพื่อน")) return "relationship";
+      if (g.includes("คิด") || g.includes("จิต") || g.includes("อารมณ์") || g.includes("สติ")) return "mindset";
+      if (g.includes("โฟกัส") || g.includes("สมาธิ") || g.includes("เวลา")) return "focus";
+    }
+    if (lowestWheelCategory) {
+      const catMap: Record<string, string> = {
+        finance: "money", money: "money",
+        career: "career", work: "career",
+        health: "health",
+        relationship: "relationship", family: "relationship",
+        mind: "mindset", growth: "mindset",
+        focus: "focus"
+      };
+      if (catMap[lowestWheelCategory.toLowerCase()]) return catMap[lowestWheelCategory.toLowerCase()];
+    }
+    return "money";
+  };
+
+  const recommendedTrackKey = getRecommendedTrackKey();
+
+  return (
+    <div className="w-full mb-6">
+      {activeTrack ? (
+        /* 🏆 Active Skill Track Banner */
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-[2rem] border border-orange-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 sm:p-5 shadow-2xl"
+        >
+          {/* Background Glow Flare */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/15 blur-3xl rounded-full pointer-events-none -mr-16 -mt-16" />
+
+          {/* Top Bar: Icon + Title + Pill + Right "สลับวิชา" Button */}
+          <div className="flex items-start justify-between gap-3 relative z-10">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-400/30 flex items-center justify-center shrink-0 shadow-inner">
+                {getTrackIcon(activeTrack.id)}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <button 
+                    onClick={onOpenInfo}
+                    className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500/20 to-amber-500/20 hover:from-orange-500/30 hover:to-amber-500/30 text-orange-300 text-[9px] font-black uppercase tracking-wider border border-orange-400/40 shrink-0 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    วิชาสัปดาห์นี้ <span className="w-3.5 h-3.5 rounded-full bg-orange-400/30 text-orange-200 text-[9px] flex items-center justify-center font-black">i</span>
+                  </button>
+                  <span className="text-[11px] font-bold text-slate-400 shrink-0">
+                    Day {currentDay}/7
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white leading-tight truncate">
+                  {activeTrack.title}
+                </h3>
+              </div>
+            </div>
+
+            {/* Top Right: Sprint Lock Status or Switch Track Button */}
+            {completedDays.length < 7 ? (
+              <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0 mt-0.5 shadow-sm">
+                <ShieldCheck size={13} className="text-orange-400" />
+                <span>โฟกัส 7 วัน</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setSelectedTrackForChoice(null);
+                  setIsModalOpen(true);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-md shadow-orange-500/20 mt-0.5"
+              >
+                <Sparkles size={13} /> เลือกวิชาใหม่
+              </button>
+            )}
+          </div>
+
+
+
+          {/* 7-Day Streak Nodes Bar */}
+          <div className="mt-4 pt-3.5 border-t border-white/10 relative z-10">
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 mb-2">
+              <span className="flex items-center gap-1.5">
+                <Target size={13} className="text-orange-400" />
+                ความคืบหน้า 7 วัน (7-Day Sprint)
+              </span>
+              <span className="text-orange-400 font-black">
+                {Math.round((completedDays.length / 7) * 100)}% สำเร็จ
+              </span>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+              {[1, 2, 3, 4, 5, 6, 7].map((dayNum) => {
+                const isCompleted = completedDays.includes(dayNum);
+                const isCurrent = dayNum === currentDay;
+
+                return (
+                  <div
+                    key={dayNum}
+                    className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-xl border transition-all ${
+                      isCompleted
+                        ? "bg-gradient-to-br from-orange-500/30 to-amber-500/20 border-orange-400 text-orange-200 shadow-md shadow-orange-500/20"
+                        : isCurrent
+                        ? "bg-slate-900 border-amber-400/90 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.35)] ring-1 ring-amber-400/50"
+                        : "bg-white/5 border-white/5 text-slate-500"
+                    }`}
+                  >
+                    <span className={`text-[9px] font-black uppercase ${isCurrent ? 'text-amber-300' : isCompleted ? 'text-orange-300' : 'text-slate-500'}`}>D{dayNum}</span>
+                    {isCompleted ? (
+                      <CheckCircle2 size={15} className="text-orange-400" />
+                    ) : isCurrent ? (
+                      <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-amber-400 bg-amber-400/20 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      </div>
+                    ) : (
+                      <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-slate-700 bg-transparent" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      ) : (
+        /* 🚀 Initial Track Selection Prompt */
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-[2rem] border border-amber-400/30 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white p-4 sm:p-5 shadow-xl"
+        >
+          {/* Subtle Ambient Glow */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 blur-xl rounded-full pointer-events-none -mr-8 -mt-8" />
+
+          <div className="flex items-center justify-between gap-3 relative z-10">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-400/25 flex items-center justify-center text-lg shrink-0 shadow-inner">
+                <BookOpen size={18} className="text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 text-[8px] font-black uppercase tracking-wider border border-amber-400/30 shrink-0">
+                    7-DAY MASTERY
+                  </span>
+                </div>
+                <h3 className="text-xs sm:text-sm font-black text-white leading-snug truncate">
+                  เลือกวิชาชีวิตประจำสัปดาห์นี้
+                </h3>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedTrackForChoice(null);
+                setIsModalOpen(true);
+              }}
+              className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 shrink-0 flex items-center gap-1 cursor-pointer"
+            >
+              <span className="hidden sm:inline">เลือกวิชาฝึกฝน</span>
+              <span className="sm:hidden">เลือกวิชา</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* 🎓 Skill Track Selector Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pb-24 sm:pb-6 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-slate-900 border border-white/10 rounded-[2rem] p-4 sm:p-5 max-w-lg w-full max-h-[70vh] sm:max-h-[80vh] flex flex-col text-white shadow-2xl relative my-auto"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 shrink-0">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                    <BookOpen size={18} className="text-amber-400" /> เลือกวิชาชีวิต 7 วัน
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    เลือก 1 วิชาเพื่อฝึกฝนเข้มข้นสัปดาห์นี้
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedTrackForChoice(null);
+                  }}
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Sleek 1-Column List of 8 Skill Tracks - 100% Readable */}
+              <div className="overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
+                {Object.values(SKILL_TRACKS).map((track) => {
+                  const isRecommended = track.id === recommendedTrackKey;
+                  const isSelected = track.id === activeTrackId;
+
+                  return (
+                    <div
+                      key={track.id}
+                      onClick={() => {
+                        onSelectTrack(track.id);
+                        setIsModalOpen(false);
+                      }}
+                      className={`relative p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer group flex items-start justify-between gap-3 ${
+                        isSelected
+                          ? "bg-amber-500/20 border-amber-400 shadow-md shadow-amber-500/20"
+                          : "bg-slate-950/60 border-white/10 hover:border-amber-400/50 hover:bg-slate-950/90"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
+                          {getTrackIcon(track.id)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-xs sm:text-sm font-black text-white">
+                              {track.title}
+                            </h4>
+                            {isRecommended && (
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase border border-emerald-400/30 flex items-center gap-1">
+                                <Sparkles size={10} /> แนะนำสำหรับคุณ
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-amber-300 font-bold mt-0.5">
+                            {track.subtitle}
+                          </p>
+                          <p className="text-[11px] sm:text-xs text-slate-300 mt-1 leading-relaxed">
+                            {track.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex flex-col items-end justify-between self-stretch">
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          isSelected
+                            ? "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30"
+                            : "bg-white/10 text-slate-200 group-hover:bg-amber-400 group-hover:text-slate-950"
+                        }`}>
+                          {isSelected ? "วิชาปัจจุบัน" : "เลือกวิชานี้"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
