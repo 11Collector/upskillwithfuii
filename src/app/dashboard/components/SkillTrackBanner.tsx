@@ -45,31 +45,54 @@ export default function SkillTrackBanner({
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
   const activeTrack = activeTrackId ? SKILL_TRACKS[activeTrackId] : null;
 
-  // 🧠 Smart Track Recommendation Evaluator based on userGoal keywords & lowestWheelCategory
+  // 🧠 Smart Track Recommendation Evaluator:
+  // Priority #1: User's explicit 1-Year Goal text typed in Wheel of Life
+  // Priority #2: Quantitative lowest score category evaluated from Wheel of Life
   const getRecommendedTrackKey = (): string => {
-    if (userGoal) {
+    if (userGoal && userGoal.trim()) {
       const g = userGoal.toLowerCase();
-      if (g.includes("เงิน") || g.includes("รายได้") || g.includes("พอร์ต") || g.includes("ธุรกิจ")) return "money";
-      if (g.includes("งาน") || g.includes("อาชีพ") || g.includes("ธุรกิจ") || g.includes("ตำแหน่ง")) return "career";
-      if (g.includes("สุขภาพ") || g.includes("ออกกำลัง") || g.includes("นอน") || g.includes("หุ่น")) return "health";
-      if (g.includes("ความสัมพันธ์") || g.includes("รัก") || g.includes("ครอบครัว") || g.includes("เพื่อน")) return "relationship";
-      if (g.includes("พัฒนา") || g.includes("เรียน") || g.includes("สกิล") || g.includes("โต")) return "mindset";
-      if (g.includes("จิตใจ") || g.includes("สติ") || g.includes("สงบ") || g.includes("กลัว")) return "innerpeace";
-      if (g.includes("สังคม") || g.includes("แบ่งปัน") || g.includes("ช่วยเหลือ") || g.includes("ส่งต่อ")) return "contribution";
+      
+      // 1. Content & High Output Systems
+      if (g.includes("content") || g.includes("คอนเทนต์") || g.includes("ทำช่อง") || g.includes("โพสต์")) return "career";
+      
+      // 2. Team Building, Leadership & Relationships
+      if (g.includes("ทีม") || g.includes("ลูกทีม") || g.includes("ลุยไปด้วยกัน") || g.includes("ความสัมพันธ์") || g.includes("ครอบครัว") || g.includes("แฟน") || g.includes("เพื่อน")) return "relationship";
+      
+      // 3. Reading, Habit & Continuous Learning
+      if (g.includes("หนังสือ") || g.includes("อ่าน") || g.includes("เรียน") || g.includes("พัฒนาตนเอง") || g.includes("ฝึกวินัย")) return "mindset";
+      
+      // 4. Career, Business & Work Output
+      if (g.includes("งาน") || g.includes("อาชีพ") || g.includes("ธุรกิจ") || g.includes("ตำแหน่ง") || g.includes("ระบบ")) return "career";
+      
+      // 5. Health & Energy
+      if (g.includes("สุขภาพ") || g.includes("ออกกำลัง") || g.includes("น้ำหนัก") || g.includes("นอน") || g.includes("หุ่น")) return "health";
+      
+      // 6. Inner Peace & Mindfulness
+      if (g.includes("จิตใจ") || g.includes("สติ") || g.includes("สงบ") || g.includes("สมาธิ") || g.includes("ปล่อยวาง")) return "innerpeace";
+      
+      // 7. Contribution & Giving Back
+      if (g.includes("สังคม") || g.includes("ช่วยเหลือ") || g.includes("แบ่งปัน") || g.includes("ส่งต่อ") || g.includes("บริจาค")) return "contribution";
+      
+      // 8. Wealth & Asset Management
+      if (g.includes("เก็บเงิน") || g.includes("ออม") || g.includes("ปลดหนี้") || g.includes("พอร์ต") || g.includes("ลงทุน") || g.includes("เงิน")) return "money";
     }
+
     if (lowestWheelCategory) {
       const catMap: Record<string, string> = {
         finance: "money", money: "money", "การเงิน": "money",
         career: "career", work: "career", "การงาน": "career",
         health: "health", "สุขภาพ": "health",
-        relationship: "relationship", family: "relationship", "ครอบครัว": "relationship", "เพื่อนฝูง": "relationship",
+        relationship: "relationship", family: "relationship", "ครอบครัว": "relationship", "เพื่อนฝูง": "relationship", "ความสัมพันธ์": "relationship",
         mind: "mindset", growth: "mindset", "พัฒนาตนเอง": "mindset",
         spirit: "innerpeace", peace: "innerpeace", "จิตใจ": "innerpeace",
-        society: "contribution", social: "contribution", "ช่วยเหลือสังคม": "contribution"
+        society: "contribution", social: "contribution", "ช่วยเหลือสังคม": "contribution",
+        lifedesign: "lifedesign", "ออกแบบชีวิต": "lifedesign"
       };
-      if (catMap[lowestWheelCategory.toLowerCase()]) return catMap[lowestWheelCategory.toLowerCase()];
+      const key = catMap[lowestWheelCategory.toLowerCase()];
+      if (key) return key;
     }
-    return "money";
+
+    return "career";
   };
 
   const recommendedTrackKey = getRecommendedTrackKey();
