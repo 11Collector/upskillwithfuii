@@ -31,7 +31,7 @@ export interface SkillTrack {
 export const SKILL_TRACKS: Record<string, SkillTrack> = {
   money: {
     id: "money",
-    title: "วิชาอิสรภาพการเงิน",
+    title: "วิชาการเงิน",
     subtitle: "Money Mastery 7-Day Sprint",
     wheelCategory: "การเงิน",
     icon: "💰",
@@ -263,7 +263,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
 
   relationship: {
     id: "relationship",
-    title: "วิชาความสัมพันธ์ & การสื่อสาร",
+    title: "วิชาความสัมพันธ์",
     subtitle: "People & DISC Mastery 7-Day Sprint",
     wheelCategory: "เพื่อนฝูง",
     icon: "👨‍👩‍👧",
@@ -495,7 +495,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
 
   mindset: {
     id: "mindset",
-    title: "วิชา Mindset & ตรรกะความคิด",
+    title: "วิชาพัฒนาตนเอง",
     subtitle: "Soul Mindset 7-Day Sprint",
     wheelCategory: "พัฒนาตนเอง",
     icon: "🧠",
@@ -727,7 +727,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
 
   career: {
     id: "career",
-    title: "วิชาการงาน & การสร้างผลงาน",
+    title: "วิชาการงาน",
     subtitle: "Career & High Output 7-Day Sprint",
     wheelCategory: "การงาน",
     icon: "💼",
@@ -959,7 +959,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
 
   health: {
     id: "health",
-    title: "วิชาสุขภาพ & พลังงานชีวิต",
+    title: "วิชาสุขภาพ",
     subtitle: "Energy & Health 7-Day Sprint",
     wheelCategory: "สุขภาพ",
     icon: "🩺",
@@ -1423,7 +1423,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
 
   contribution: {
     id: "contribution",
-    title: "วิชาช่วยเหลือสังคม & การส่งต่อ",
+    title: "วิชาช่วยเหลือสังคม",
     subtitle: "Contribution & Social Impact 7-Day Sprint",
     wheelCategory: "ช่วยเหลือสังคม",
     icon: "🎁",
@@ -1655,7 +1655,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
 
   lifedesign: {
     id: "lifedesign",
-    title: "วิชาออกแบบเป้าหมายชีวิต",
+    title: "วิชาออกแบบชีวิต",
     subtitle: "Life Design & Balance 7-Day Sprint",
     wheelCategory: "ครอบครัว",
     icon: "🌱",

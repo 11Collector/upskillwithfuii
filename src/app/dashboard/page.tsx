@@ -9151,45 +9151,53 @@ Day 21: [กิจกรรม]
                   <BookOpen size={26} className="text-amber-400" />
                 </motion.div>
 
-                <h3 className="text-xl font-black text-white mb-2 leading-[1.2] tracking-tight">
-                  ระบบวิชาชีวิต 7 วัน <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-purple-300 to-indigo-300">
-                    (7-Day Skill Mastery)
-                  </span>
+                <h3 className="text-lg sm:text-xl font-black text-white mb-1.5 tracking-tight">
+                  ระบบวิชาชีวิต 7 วัน
                 </h3>
 
-                <p className="text-slate-300 text-[11px] sm:text-xs font-medium mb-4 leading-relaxed px-2 opacity-90">
-                  เลือกโฟกัส 1 วิชาจาก 8 ด้านใน Wheel of Life เพื่อทำภารกิจ 7 วันสม่ำเสมอและเห็นผลจริงในชีวิต!
+                <p className="text-slate-300 text-[11px] font-medium mb-3.5 leading-relaxed opacity-90">
+                  โฟกัสฝึกฝนทีละวิชา เห็นผลจริงใน 7 วัน!
                 </p>
 
                 {/* Skill Track Features Display */}
-                <div className="space-y-2.5 mb-4 text-left bg-slate-950/50 p-3.5 rounded-2xl border border-white/5">
+                <div className="space-y-2.5 mb-4 text-left bg-slate-950/60 p-3.5 rounded-2xl border border-white/5">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-300 border border-amber-500/30 shrink-0">
                       <Target size={14} />
                     </div>
                     <div>
                       <h4 className="text-[11px] font-bold text-white">Quest 1: เป้าหมายหลัก</h4>
-                      <p className="text-[9px] text-slate-400 font-medium">ดึงตรงจากแผน AI 7 วันใน Wheel of Life ของคุณ</p>
+                      <p className="text-[10px] text-slate-400 font-medium">แผน 7 วันจาก Wheel of Life ของคุณ</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-300 border border-purple-500/30 shrink-0">
                       <BookOpen size={14} />
                     </div>
                     <div>
                       <h4 className="text-[11px] font-bold text-white">Quests 2–4: วิชาชีวิตเสริม</h4>
-                      <p className="text-[9px] text-slate-400 font-medium">ดึงจากวิชาที่คุณเลือกเพื่อหนุนเป้าหมายหลักสำเร็จ</p>
+                      <p className="text-[10px] text-slate-400 font-medium">โจทย์วิชาชีวิตที่คุณเลือกฝึกฝน</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-300 border border-indigo-500/30 shrink-0">
                       <Award size={14} />
                     </div>
                     <div>
-                      <h4 className="text-[11px] font-bold text-white">เกณฑ์ผ่าน Master Badge & เรียนซ้ำยกระดับ</h4>
-                      <p className="text-[9px] text-amber-300 font-bold">ทำสำเร็จอย่างน้อย 5 จาก 7 วัน ➔ รับ Master Badge ประจำวิชา (ทำครบ 7 วัน รับโบนัสเกียรตินิยม +100 XP)</p>
-                      <p className="text-[9px] text-emerald-300 font-semibold mt-0.5">💡 เมื่อเรียนจบแล้ว สามารถกลับมาเรียนซ้ำเพื่อรับโจทย์ AI ท้าทายยิ่งขึ้นในรอบถัดไปได้!</p>
+                      <h4 className="text-[11px] font-bold text-white">ผ่านวิชา (5/7 วัน)</h4>
+                      <p className="text-[10px] text-amber-300 font-bold">รับ Master Badge (ครบ 7/7 วัน รับโบนัส +100 XP!)</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-300 border border-emerald-500/30 shrink-0">
+                      <Sparkles size={14} />
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-bold text-white">เรียนซ้ำยกระดับ (Round 2+)</h4>
+                      <p className="text-[10px] text-emerald-300 font-medium">จบแล้วย้อนกลับมาเรียนซ้ำเพื่อรับโจทย์ AI ท้าทายยิ่งขึ้นได้!</p>
                     </div>
                   </div>
                 </div>
@@ -9201,7 +9209,7 @@ Day 21: [กิจกรรม]
                   }}
                   className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 active:scale-95 text-xs tracking-wider uppercase cursor-pointer"
                 >
-                  เข้าใจแล้ว เริ่มฝึกฝนเลย!
+                  เข้าใจแล้ว เริ่มเลย!
                 </button>
               </div>
             </motion.div>

@@ -112,7 +112,7 @@ export default function SkillTrackBanner({
             </div>
 
             {/* Right Sprint Lock Status or Switch Button */}
-            {completedDays.length < 7 ? (
+            {completedDays.length < 5 ? (
               <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
                 <ShieldCheck size={12} className="text-orange-400" />
                 <span className="hidden sm:inline">โฟกัส 7 วัน</span>
