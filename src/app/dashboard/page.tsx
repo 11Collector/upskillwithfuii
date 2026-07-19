@@ -224,35 +224,22 @@ export default function DashboardPage() {
   const [skillTrackCurrentDay, setSkillTrackCurrentDay] = useState<number>(1);
   const [skillTrackCompletedDays, setSkillTrackCompletedDays] = useState<number[]>([]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedTrack = localStorage.getItem("activeSkillTrackId");
-      const savedDay = localStorage.getItem("skillTrackCurrentDay");
-      const savedCompleted = localStorage.getItem("skillTrackCompletedDays");
-      if (savedTrack) setActiveSkillTrackId(savedTrack);
-      if (savedDay) setSkillTrackCurrentDay(parseInt(savedDay, 10) || 1);
-      if (savedCompleted) {
-        try { setSkillTrackCompletedDays(JSON.parse(savedCompleted)); } catch (e) {}
-      }
-    }
-  }, []);
-
   const handleSelectSkillTrack = (trackId: string) => {
     setActiveSkillTrackId(trackId);
     setSkillTrackCurrentDay(1);
     setSkillTrackCompletedDays([]);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("activeSkillTrackId", trackId);
-      localStorage.setItem("skillTrackCurrentDay", "1");
-      localStorage.setItem("skillTrackCompletedDays", JSON.stringify([]));
-    }
     if (user?.uid) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
+        localStorage.setItem(`skillTrackCurrentDay_${user.uid}`, "1");
+        localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
+      }
       const userRef = doc(db, "users", user.uid);
-      updateDoc(userRef, {
+      setDoc(userRef, {
         activeSkillTrackId: trackId,
         skillTrackCurrentDay: 1,
         skillTrackCompletedDays: []
-      }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
+      }, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
     }
   };
 
@@ -1512,6 +1499,19 @@ Day 21: [กิจกรรม]
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // 🧹 Clear state of previous user to prevent account cross-contamination
+        setUserData(null);
+        setLastWheel(null);
+        setLastDisc(null);
+        setLastMoney(null);
+        setLastLibrarySoul(null);
+        setLastGhostResult(null);
+        setActiveSkillTrackId(null);
+        setSkillTrackCurrentDay(1);
+        setSkillTrackCompletedDays([]);
+        setAiSkillQuests({});
+        setCompletedQuests([]);
+
         setUser(currentUser);
         setNewName(currentUser.displayName || "");
         
@@ -1531,6 +1531,12 @@ Day 21: [กิจกรรม]
           console.error("Failed to update lastLoginAt:", e);
         }
       } else {
+        setUserData(null);
+        setActiveSkillTrackId(null);
+        setSkillTrackCurrentDay(1);
+        setSkillTrackCompletedDays([]);
+        setAiSkillQuests({});
+        setUser(null);
         router.push("/");
       }
     });
