@@ -237,9 +237,6 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const [aiSkillQuests, setAiSkillQuests] = useState<Record<string, any>>({});
-  const [isGeneratingSkillQuests, setIsGeneratingSkillQuests] = useState(false);
-
   const handleSelectSkillTrack = (trackId: string) => {
     setActiveSkillTrackId(trackId);
     setSkillTrackCurrentDay(1);
@@ -248,6 +245,14 @@ export default function DashboardPage() {
       localStorage.setItem("activeSkillTrackId", trackId);
       localStorage.setItem("skillTrackCurrentDay", "1");
       localStorage.setItem("skillTrackCompletedDays", JSON.stringify([]));
+    }
+    if (user?.uid) {
+      const userRef = doc(db, "users", user.uid);
+      updateDoc(userRef, {
+        activeSkillTrackId: trackId,
+        skillTrackCurrentDay: 1,
+        skillTrackCompletedDays: []
+      }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
     }
   };
 
@@ -608,6 +613,15 @@ Day 21: [กิจกรรม]
       setSkillTrackCompletedDays((prev) => {
         if (!prev.includes(currentDay)) {
           const updated = [...prev, currentDay];
+          if (typeof window !== "undefined") {
+            localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
+          }
+          if (user?.uid) {
+            const userRef = doc(db, "users", user.uid);
+            updateDoc(userRef, {
+              skillTrackCompletedDays: updated
+            }).catch(() => {});
+          }
           if (updated.length >= 5 && user?.uid && activeSkillTrackId) {
             const userRef = doc(db, "users", user.uid);
             updateDoc(userRef, {
@@ -638,12 +652,18 @@ Day 21: [กิจกรรม]
           if (typeof window !== "undefined") {
             localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
           }
+          if (user?.uid) {
+            const userRef = doc(db, "users", user.uid);
+            updateDoc(userRef, {
+              skillTrackCompletedDays: updated
+            }).catch(() => {});
+          }
           return updated;
         }
         return prev;
       });
     }
-  }, [completedQuests.length, activeSkillTrackId, skillTrackCurrentDay]);
+  }, [completedQuests.length, activeSkillTrackId, skillTrackCurrentDay, user?.uid]);
   const [totalXP, setTotalXP] = useState<number>(0);
   const currentLevel = Math.floor(totalXP / 100) + 1;
   const currentLevelXP = totalXP % 100;
@@ -733,6 +753,30 @@ Day 21: [กิจกรรม]
   const [userData, setUserData] = useState<any>(null);
   const [secondBrainNotesCount, setSecondBrainNotesCount] = useState(0);
 
+  const [aiSkillQuests, setAiSkillQuests] = useState<Record<string, any>>({});
+  const [isGeneratingSkillQuests, setIsGeneratingSkillQuests] = useState(false);
+
+  // ☁️ Sync Skill Track State from Firestore (Multi-device Sync Support)
+  useEffect(() => {
+    if (userData) {
+      if (userData.activeSkillTrackId && userData.activeSkillTrackId !== activeSkillTrackId) {
+        setActiveSkillTrackId(userData.activeSkillTrackId);
+        if (typeof window !== "undefined") localStorage.setItem("activeSkillTrackId", userData.activeSkillTrackId);
+      }
+      if (userData.skillTrackCurrentDay !== undefined && userData.skillTrackCurrentDay !== skillTrackCurrentDay) {
+        setSkillTrackCurrentDay(userData.skillTrackCurrentDay || 1);
+        if (typeof window !== "undefined") localStorage.setItem("skillTrackCurrentDay", String(userData.skillTrackCurrentDay || 1));
+      }
+      if (userData.skillTrackCompletedDays !== undefined) {
+        setSkillTrackCompletedDays(userData.skillTrackCompletedDays || []);
+        if (typeof window !== "undefined") localStorage.setItem("skillTrackCompletedDays", JSON.stringify(userData.skillTrackCompletedDays || []));
+      }
+      if (userData.aiSkillQuests) {
+        setAiSkillQuests(userData.aiSkillQuests);
+      }
+    }
+  }, [userData?.activeSkillTrackId, userData?.skillTrackCurrentDay, JSON.stringify(userData?.skillTrackCompletedDays), userData?.aiSkillQuests]);
+
   // 🧠 6-Assessment AI Generator Trigger
   const generateSkillTrackQuests = useCallback(async (trackId: string) => {
     if (!user || isGeneratingSkillQuests || aiSkillQuests[trackId]) return;
@@ -761,6 +805,12 @@ Day 21: [กิจกรรม]
       const data = await res.json();
       if (data.success && data.days) {
         setAiSkillQuests((prev) => ({ ...prev, [trackId]: data.days }));
+        if (user?.uid) {
+          const userRef = doc(db, "users", user.uid);
+          updateDoc(userRef, {
+            [`aiSkillQuests.${trackId}`]: data.days
+          }).catch((err) => console.error("Error saving aiSkillQuests to Firestore:", err));
+        }
       }
     } catch (e) {
       console.error("Failed to generate AI Skill Quests:", e);
