@@ -12,6 +12,21 @@ import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { playSuccessChime } from "@/utils/soundEffects";
 
+// 🎨 Helper for Track Badge Short Labels
+const getTrackBadgeLabel = (trackId: string): string => {
+  switch (trackId) {
+    case 'money': return 'วิชาการเงิน';
+    case 'career': return 'วิชาการงาน';
+    case 'health': return 'วิชาสุขภาพ';
+    case 'relationship': return 'วิชาความสัมพันธ์';
+    case 'mindset': return 'วิชาพัฒนาตนเอง';
+    case 'innerpeace': return 'วิชาจิตใจ & สติ';
+    case 'contribution': return 'วิชาช่วยเหลือสังคม';
+    case 'lifedesign': return 'วิชาออกแบบชีวิต';
+    default: return 'วิชาชีวิต';
+  }
+};
+
 // 🎨 1. Categories & Themes Definition
 const rewardCategories = [
   {
@@ -121,33 +136,33 @@ const shopItems = [
   { id: 1, title: "กาแฟคราฟต์พิเศษ", desc: "เติมพลังความสดชื่นยามเช้า ช่วยให้มีสมาธิทำงานได้มีประสิทธิภาพมากขึ้น", price: 20, tier: "daily", category: "joy" },
   { id: 2, title: "เค้ก / เบเกอรี่แสนอร่อย", desc: "รางวัลชิ้นเล็ก ๆ ระหว่างวันเพื่อกระตุ้นสารโดปามีนและความสุขในการเรียนรู้", price: 25, tier: "daily", category: "joy" },
   { id: 3, title: "มื้อพิเศษตามใจปาก", desc: "ชาร์จพลังกายหลังลุยงานหนัก คลายความเครียดด้วยอาหารมื้อโปรด", price: 30, tier: "daily", category: "joy" },
-  { id: 4, title: "ตั๋ววันขี้เกียจ 1 วัน", desc: "พักผ่อนแบบไร้ความรู้สึกผิด ป้องกันภาวะหมดไฟและฟื้นฟูพลังสมอง", price: 30, tier: "daily", category: "rest", minLevel: 3 },
-  { id: 5, title: "สมาชิก AI Tools รายเดือน", desc: "ลงทุนกับเครื่องมือช่วยทุ่นแรง เพิ่ม Productivity และขีดความสามารถการทำงาน", price: 30, tier: "daily", category: "growth", minLevel: 4 },
-  { id: 6, title: "สมุดบันทึกและปากกาคู่ใจ", desc: "เขียนเรียบเรียงความคิด ทบทวนเป้าหมายชีวิตและตกผลึกการเรียนรู้ประจำวัน", price: 35, tier: "daily", category: "growth" },
+  { id: 4, title: "ตั๋ววันขี้เกียจ 1 วัน", desc: "พักผ่อนแบบไร้ความรู้สึกผิด ป้องกันภาวะหมดไฟและฟื้นฟูพลังสมอง", price: 30, tier: "daily", category: "rest", minLevel: 3, requiredTrackId: "innerpeace" },
+  { id: 5, title: "สมาชิก AI Tools รายเดือน", desc: "ลงทุนกับเครื่องมือช่วยทุ่นแรง เพิ่ม Productivity และขีดความสามารถการทำงาน", price: 30, tier: "daily", category: "growth", minLevel: 4, requiredTrackId: "career" },
+  { id: 6, title: "สมุดบันทึกและปากกาคู่ใจ", desc: "เขียนเรียบเรียงความคิด ทบทวนเป้าหมายชีวิตและตกผลึกการเรียนรู้ประจำวัน", price: 35, tier: "daily", category: "growth", requiredTrackId: "mindset" },
   { id: 7, title: "สติกเกอร์สร้างแรงบันดาลใจ", desc: "เตือนสติความตั้งใจด้วยข้อความเชิงบวกบนโต๊ะทำงานหรือของใช้ส่วนตัว", price: 35, tier: "daily", category: "joy" },
   { id: 8, title: "เมล็ดกาแฟคัดเกรดพิเศษ", desc: "สร้างสุนทรียภาพยามเช้าด้วยการดริปกาแฟ ฝึกสมาธิและความประณีต", price: 35, tier: "daily", category: "joy" },
   { id: 9, title: "แก้วน้ำเก็บความเย็น", desc: "ดูแลสุขภาพร่างกายให้ไฮเดรตตลอดการทำงาน สะดวกและเป็นมิตรกับสิ่งแวดล้อม", price: 40, tier: "daily", category: "environment" },
-  { id: 10, title: "เซตวิตามินบำรุงร่างกาย", desc: "ดูแลสุขภาพและสารอาหารที่จำเป็น ช่วยบำรุงประสาทและการทำงานของสมอง", price: 40, tier: "daily", category: "rest" },
+  { id: 10, title: "เซตวิตามินบำรุงร่างกาย", desc: "ดูแลสุขภาพและสารอาหารที่จำเป็น ช่วยบำรุงประสาทและการทำงานของสมอง", price: 40, tier: "daily", category: "rest", requiredTrackId: "health" },
 
   // 🟡 Tier 2: Weekend Reward
-  { id: 11, title: "ชุดนอนผ้าเกรดพรีเมียม", desc: "ยกระดับคุณภาพการนอนหลับลึก เพื่อเช้าวันใหม่ที่สดใสและตื่นตัวเต็มที่", price: 50, tier: "weekend", category: "rest", minLevel: 6 },
-  { id: 12, title: "มื้อปิ้งย่าง / ชาบูชุดใหญ่", desc: "สังสรรค์และกระชับความสัมพันธ์กับเพื่อนหรือครอบครัวในวันหยุด", price: 50, tier: "weekend", category: "joy", minLevel: 5 },
+  { id: 11, title: "ชุดนอนผ้าเกรดพรีเมียม", desc: "ยกระดับคุณภาพการนอนหลับลึก เพื่อเช้าวันใหม่ที่สดใสและตื่นตัวเต็มที่", price: 50, tier: "weekend", category: "rest", minLevel: 6, requiredTrackId: "health" },
+  { id: 12, title: "มื้อปิ้งย่าง / ชาบูชุดใหญ่", desc: "สังสรรค์และกระชับความสัมพันธ์กับเพื่อนหรือครอบครัวในวันหยุด", price: 50, tier: "weekend", category: "joy", minLevel: 5, requiredTrackId: "relationship" },
   { id: 13, title: "บอร์ดเกมพกพา / การ์ดเกม", desc: "คลายเครียด ฝึกสมอง และสร้างเสียงหัวเราะร่วมกับคนรอบข้างในปาร์ตี้", price: 50, tier: "weekend", category: "joy" },
-  { id: 14, title: "ตั๋ว Digital Detox 1 วัน", desc: "ตัดขาดจากหน้าจอและโลกออนไลน์ชั่วคราว เพื่อฟื้นฟูสมาธิและความเงียบสงบในใจ", price: 55, tier: "weekend", category: "rest", minLevel: 7 },
-  { id: 15, title: "หนังสือพัฒนาตนเองเล่มใหม่", desc: "เปิดมุมมองใหม่ อัพเดต Mindset และเติมองค์ความรู้สำหรับพัฒนาชีวิตด้านต่าง ๆ", price: 55, tier: "weekend", category: "growth" },
+  { id: 14, title: "ตั๋ว Digital Detox 1 วัน", desc: "ตัดขาดจากหน้าจอและโลกออนไลน์ชั่วคราว เพื่อฟื้นฟูสมาธิและความเงียบสงบในใจ", price: 55, tier: "weekend", category: "rest", minLevel: 7, requiredTrackId: "innerpeace" },
+  { id: 15, title: "หนังสือพัฒนาตนเองเล่มใหม่", desc: "เปิดมุมมองใหม่ อัพเดต Mindset และเติมองค์ความรู้สำหรับพัฒนาชีวิตด้านต่าง ๆ", price: 55, tier: "weekend", category: "growth", requiredTrackId: "mindset" },
   { id: 16, title: "ตั๋วชมภาพยนตร์พรีเมียม", desc: "เสพสื่อศิลปะและความบันเทิงเต็มรูปแบบ เพื่อหลบหนีความวุ่นวายชั่วคราว", price: 60, tier: "weekend", category: "experience" },
-  { id: 17, title: "คอร์สอัพสกิลออนไลน์ระยะสั้น", desc: "เรียนรู้ทักษะใหม่ที่ใช้งานได้จริง เพิ่มความก้าวหน้าในสายอาชีพและการทำงาน", price: 70, tier: "weekend", category: "growth", minLevel: 8 },
-  { id: 18, title: "หมอนหนุนเพื่อสุขภาพ", desc: "แก้ปัญหาออฟฟิศซินโดรมและการปวดเมื่อยเวลานอน เพื่อสุขภาพกายที่ดีขึ้น", price: 70, tier: "weekend", category: "rest" },
+  { id: 17, title: "คอร์สอัพสกิลออนไลน์ระยะสั้น", desc: "เรียนรู้ทักษะใหม่ที่ใช้งานได้จริง เพิ่มความก้าวหน้าในสายอาชีพและการทำงาน", price: 70, tier: "weekend", category: "growth", minLevel: 8, requiredTrackId: "career" },
+  { id: 18, title: "หมอนหนุนเพื่อสุขภาพ", desc: "แก้ปัญหาออฟฟิศซินโดรมและการปวดเมื่อยเวลานอน เพื่อสุขภาพกายที่ดีขึ้น", price: 70, tier: "weekend", category: "rest", requiredTrackId: "health" },
   { id: 19, title: "บอร์ดเกมวางแผนกลยุทธ์", desc: "ฝึกการคิดวิเคราะห์ แก้ไขปัญหาเฉพาะหน้า และวางหมากกลยุทธ์อย่างสนุกสนาน", price: 75, tier: "weekend", category: "growth" },
   { id: 20, title: "หนังสือการ์ตูนยกเซ็ต", desc: "ผ่อนคลายจิตใจ เติมเต็มจินตนาการ และความสุขจากเรื่องราววัยเด็ก", price: 80, tier: "weekend", category: "joy" },
 
   // 🟠 Tier 3: Mid Reward
   { id: 21, title: "ชุดอุปกรณ์ดริปกาแฟ", desc: "สร้างมุมโปรดส่วนตัว ฝึกฝนทักษะการชง และมีความสุขกับกลิ่นหอมในบ้าน", price: 90, tier: "mid", category: "environment" },
   { id: 22, title: "สมาชิกคอร์สเรียน VIP", desc: "เปิดโอกาสให้เข้าถึงความรู้อย่างไม่จำกัด ปราศจากโฆษณาคั่นเพื่อสมาธิที่ดีเยี่ยม", price: 90, tier: "mid", category: "growth" },
-  { id: 23, title: "แพ็กเกจนวดสปาบำบัด", desc: "ผ่อนคลายกล้ามเนื้อที่อ่อนล้าสะสมจากการทำงานหนัก ปรับสมดุลกายและจิตใจ", price: 100, tier: "mid", category: "rest" },
+  { id: 23, title: "แพ็กเกจนวดสปาบำบัด", desc: "ผ่อนคลายกล้ามเนื้อที่อ่อนล้าสะสมจากการทำงานหนัก ปรับสมดุลกายและจิตใจ", price: 100, tier: "mid", category: "rest", requiredTrackId: "innerpeace" },
   { id: 24, title: "กล่องสุ่มโมเดลสุดฮิต", desc: "เติมเต็มความสุขทางสายตา แต่งแต้มโต๊ะทำงานให้น่ามองและเพลิดเพลิน", price: 120, tier: "mid", category: "joy" },
   { id: 25, title: "แผ่นเกมคอนโซลแผ่นใหม่", desc: "ให้รางวัลตัวเองด้วยการดื่มด่ำกับเกมโปรด ฝึกทักษะการตัดสินใจและจินตนาการ", price: 120, tier: "mid", category: "joy" },
-  { id: 26, title: "หูฟังตัดเสียงรบกวนไร้สาย", desc: "ตัดเสียงรบกวนเพื่อเข้าสู่สภาวะ Deep Work และทำงานได้อย่างมีสมาธิสูงสุด", price: 130, tier: "mid", category: "environment", minLevel: 12 },
+  { id: 26, title: "หูฟังตัดเสียงรบกวนไร้สาย", desc: "ตัดเสียงรบกวนเพื่อเข้าสู่สภาวะ Deep Work และทำงานได้อย่างมีสมาธิสูงสุด", price: 130, tier: "mid", category: "environment", minLevel: 12, requiredTrackId: "career" },
   { id: 27, title: "คอร์สเรียนเร่งรัด Bootcamp", desc: "ติวเข้มทักษะสำคัญเชิงลึกกับผู้เชี่ยวชาญ เพื่อยกระดับโปรไฟล์สายอาชีพของคุณ", price: 140, tier: "mid", category: "growth" },
   { id: 28, title: "มื้อค่ำบุฟเฟต์โรงแรมหรู", desc: "สัมผัสประสบการณ์ดินเนอร์ชั้นเลิศ เติมเต็มความสุขด้านประสาทสัมผัสและบริการ", price: 150, tier: "mid", category: "experience" },
   { id: 29, title: "ผลิตภัณฑ์บำรุงผิวหรือน้ำหอม", desc: "ดูแลภาพลักษณ์ภายนอก สร้างเสน่ห์ความมั่นใจ และความน่าเชื่อถือในสังคม", price: 150, tier: "mid", category: "rest" },
@@ -155,26 +170,26 @@ const shopItems = [
 
   // 🔴 Tier 4: Epic Reward
   { id: 31, title: "โมเดลสะสม Limited Edition", desc: "ของสะสมที่มีเรื่องราวเฉพาะตัว ช่วยสร้างความภูมิใจและแรงผลักดันเชิงบวก", price: 200, tier: "epic", category: "joy" },
-  { id: 32, title: "เครื่องประดับทองคำ / อัญมณี", desc: "สะสมสินทรัพย์มีค่าที่แสดงถึงความมั่นคง และให้รางวัลชีวิตชิ้นสำคัญ", price: 200, tier: "epic", category: "freedom" },
+  { id: 32, title: "เครื่องประดับทองคำ / อัญมณี", desc: "สะสมสินทรัพย์มีค่าที่แสดงถึงความมั่นคง และให้รางวัลชีวิตชิ้นสำคัญ", price: 200, tier: "epic", category: "freedom", requiredTrackId: "money" },
   { id: 33, title: "รองเท้า Sneakers คู่โปรด", desc: "ทะนุถนอมสุขภาพเท้าเพื่อการก้าวเดินในทุก ๆ วัน พร้อมดีไซน์ที่มั่นใจ", price: 250, tier: "epic", category: "environment" },
   { id: 34, title: "ตั๋วคอนเสิร์ต / มิวสิคเฟสติวัล", desc: "ร่วมสัมผัสบรรยากาศดนตรีสดและผู้คน ปลดปล่อยพลังงานและความทรงจำสุดพิเศษ", price: 250, tier: "epic", category: "experience", minLevel: 18 },
-  { id: 35, title: "คีย์บอร์ดกลไก Custom", desc: "ปรับแต่งสัมผัสการพิมพ์และความสวยงามตามต้องการ ช่วยให้การเขียนงานเป็นเรื่องสนุก", price: 300, tier: "epic", category: "environment", minLevel: 10 },
+  { id: 35, title: "คีย์บอร์ดกลไก Custom", desc: "ปรับแต่งสัมผัสการพิมพ์และความสวยงามตามต้องการ ช่วยให้การเขียนงานเป็นเรื่องสนุก", price: 300, tier: "epic", category: "environment", minLevel: 10, requiredTrackId: "career" },
   { id: 36, title: "ทริปพักผ่อน 2 วัน 1 คืน", desc: "พาตัวเองออกจากสิ่งแวดล้อมเดิม ๆ ไปผ่อนคลายสมองท่ามกลางวิวธรรมชาติแสนสงบ", price: 350, tier: "epic", category: "experience" },
-  { id: 37, title: "เก้าอี้เพื่อสุขภาพ Ergonomic", desc: "ลงทุนกับสุขภาพหลังในระยะยาว ลดความเมื่อยล้าสะสมจากการนั่งทำงานหลายชั่วโมง", price: 400, tier: "epic", category: "environment", minLevel: 15 },
+  { id: 37, title: "เก้าอี้เพื่อสุขภาพ Ergonomic", desc: "ลงทุนกับสุขภาพหลังในระยะยาว ลดความเมื่อยล้าสะสมจากการนั่งทำงานหลายชั่วโมง", price: 400, tier: "epic", category: "environment", minLevel: 15, requiredTrackId: "health" },
   { id: 38, title: "ตั๋วเที่ยวต่างประเทศโซนใกล้", desc: "เปิดโลกทัศน์เรียนรู้วัฒนธรรมใหม่ สะสมประสบการณ์การผจญภัยและเติบโตภายนอก", price: 500, tier: "epic", category: "experience" },
   { id: 39, title: "ตั๋วเครื่องบิน Business Class", desc: "สัมผัสความสะดวกสบายระดับพรีเมียม เพื่อเดินทางไกลโดยไม่เพลียล้าสะสม", price: 600, tier: "epic", category: "experience" },
   { id: 40, title: "เครื่องชงกาแฟเอสเพรสโซสตูดิโอ", desc: "ยกระดับบาร์กาแฟที่บ้าน ให้คุณควบคุมรสชาติที่โปรดปรานได้ทุกแก้วด้วยตัวเอง", price: 750, tier: "epic", category: "environment" },
 
   // 🟣 Tier 5: Legendary Reward
-  { id: 41, title: "พอร์ตสินทรัพย์การเงินแรก", desc: "เริ่มสะสมความมั่งคั่งอย่างเป็นรูปธรรม สร้างความอุ่นใจและปูพื้นฐานสู่อิสรภาพการเงิน", price: 900, tier: "legendary", category: "freedom" },
-  { id: 42, title: "ปรับปรุงห้องทำงาน / ห้องสมุด", desc: "จัดสภาพแวดล้อมภายในบ้านให้เอื้อต่อการเรียนรู้ ทำงานสร้างสรรค์ และมีสมาธิ", price: 1200, tier: "legendary", category: "environment" },
-  { id: 43, title: "คอมพิวเตอร์เวิร์กสเตชันสูง", desc: "เพิ่มความเร็วในการประมวลผลงาน ออกแบบ หรือตัดต่อคอนเทนต์แบบมืออาชีพ", price: 1300, tier: "legendary", category: "environment" },
-  { id: 44, title: "รีทรีตพักใจเป้าหมายชีวิต", desc: "ใช้เวลาอยู่กับตัวเองอย่างจริงจัง เพื่อทบทวนเป้าหมาย วางแผนอนาคต และตั้งหลักชีวิตใหม่", price: 1400, tier: "legendary", category: "rest", minLevel: 25 },
-  { id: 45, title: "โค้ชชิ่งปลดล็อกเป้าหมาย 1:1", desc: "รับคำแนะนำตรงจุดจากผู้เชี่ยวชาญ เพื่อเร่งการเติบโตและผ่านอุปสรรคสำคัญในชีวิต", price: 1500, tier: "legendary", category: "growth", minLevel: 20 },
+  { id: 41, title: "พอร์ตสินทรัพย์การเงินแรก", desc: "เริ่มสะสมความมั่งคั่งอย่างเป็นรูปธรรม สร้างความอุ่นใจและปูพื้นฐานสู่อิสรภาพการเงิน", price: 900, tier: "legendary", category: "freedom", requiredTrackId: "money" },
+  { id: 42, title: "ปรับปรุงห้องทำงาน / ห้องสมุด", desc: "จัดสภาพแวดล้อมภายในบ้านให้เอื้อต่อการเรียนรู้ ทำงานสร้างสรรค์ และมีสมาธิ", price: 1200, tier: "legendary", category: "environment", requiredTrackId: "lifedesign" },
+  { id: 43, title: "คอมพิวเตอร์เวิร์กสเตชันสูง", desc: "เพิ่มความเร็วในการประมวลผลงาน ออกแบบ หรือตัดต่อคอนเทนต์แบบมืออาชีพ", price: 1300, tier: "legendary", category: "environment", requiredTrackId: "career" },
+  { id: 44, title: "รีทรีตพักใจเป้าหมายชีวิต", desc: "ใช้เวลาอยู่กับตัวเองอย่างจริงจัง เพื่อทบทวนเป้าหมาย วางแผนอนาคต และตั้งหลักชีวิตใหม่", price: 1400, tier: "legendary", category: "rest", minLevel: 25, requiredTrackId: "innerpeace" },
+  { id: 45, title: "โค้ชชิ่งปลดล็อกเป้าหมาย 1:1", desc: "รับคำแนะนำตรงจุดจากผู้เชี่ยวชาญ เพื่อเร่งการเติบโตและผ่านอุปสรรคสำคัญในชีวิต", price: 1500, tier: "legendary", category: "growth", minLevel: 20, requiredTrackId: "contribution" },
   { id: 46, title: "ทริป Workation ต่างประเทศ", desc: "สัมผัสบรรยากาศทำงานสไตล์ดิจิทัลเร่ร่อน เพื่อค้นพบแรงบันดาลใจและความคิดริเริ่มสร้างสรรค์", price: 1600, tier: "legendary", category: "experience", minLevel: 22 },
   { id: 47, title: "เซตกล้องและอุปกรณ์สร้างสรรค์", desc: "เริ่มผลิตผลงานและสร้างแบรนด์ส่วนตัวบนออนไลน์อย่างมืออาชีพด้วยอุปกรณ์ครบชุด", price: 1700, tier: "legendary", category: "environment" },
-  { id: 48, title: "แพ็กเกจตรวจสุขภาพ VIP", desc: "ตรวจเช็กสุขภาพร่างกายอย่างเจาะลึกล่วงหน้า เพื่อการป้องกันและมีอายุที่ยืนยาวแข็งแรง", price: 1800, tier: "legendary", category: "rest" },
-  { id: 49, title: "กองทุนเวลาอิสระ 1 เดือน", desc: "ให้โอกาสตัวเองได้หยุดพักและทดลองทำโปรเจกต์ในฝันอย่างเต็มที่โดยไร้กังวลเรื่องการเงิน", price: 1900, tier: "legendary", category: "freedom", minLevel: 28 },
+  { id: 48, title: "แพ็กเกจตรวจสุขภาพ VIP", desc: "ตรวจเช็กสุขภาพร่างกายอย่างเจาะลึกล่วงหน้า เพื่อการป้องกันและมีอายุที่ยืนยาวแข็งแรง", price: 1800, tier: "legendary", category: "rest", requiredTrackId: "health" },
+  { id: 49, title: "กองทุนเวลาอิสระ 1 เดือน", desc: "ให้โอกาสตัวเองได้หยุดพักและทดลองทำโปรเจกต์ในฝันอย่างเต็มที่โดยไร้กังวลเรื่องการเงิน", price: 1900, tier: "legendary", category: "freedom", minLevel: 28, requiredTrackId: "lifedesign" },
   { id: 50, title: "ตั๋วอัปเกรดชีวิตครั้งใหญ่", desc: "ตัดสินใจลงทุนในสินทรัพย์ที่เปลี่ยนทิศทางชีวิตได้จริง ไม่ว่าจะเป็นด้านปัญญาหรือเวลาเสรี", price: 2000, tier: "legendary", category: "freedom", minLevel: 30 }
 ];
 
@@ -243,6 +258,7 @@ export default function PremiumShopPage() {
   const [user, setUser] = useState<User | null>(null);
   const [potXP, setPotXP] = useState(0);
   const [totalXP, setTotalXP] = useState(0);
+  const [completedSkillBadges, setCompletedSkillBadges] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Deposit/Redeem states
@@ -274,6 +290,7 @@ export default function PremiumShopPage() {
             const userData = userSnap.data();
             setPotXP(userData.potXP || 0);
             setTotalXP(userData.totalXP || 0);
+            setCompletedSkillBadges(userData.completedSkillBadges || []);
             setRedeemedHistory(userData.redeemedHistory || []);
           }
         } catch (error) {
@@ -571,7 +588,8 @@ export default function PremiumShopPage() {
               const tierInfo = getTierLabel(item.tier);
               const currentLevel = Math.floor(totalXP / 100) + 1;
               const isLevelLocked = item.minLevel ? currentLevel < item.minLevel : false;
-              const canRedeem = potXP >= item.price && !isLevelLocked;
+              const isTrackLocked = item.requiredTrackId ? !completedSkillBadges.includes(item.requiredTrackId) : false;
+              const canRedeem = potXP >= item.price && !isLevelLocked && !isTrackLocked;
               const deficit = item.price - potXP;
 
               return (
@@ -600,14 +618,21 @@ export default function PremiumShopPage() {
                           }} 
                         />
                         {/* Level Lock Overlay */}
-                        {isLevelLocked && (
+                        {isLevelLocked ? (
                           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-white p-4">
                             <Lock className="text-yellow-400 mb-1.5 animate-bounce" size={24} />
                             <span className="text-[9px] font-black uppercase tracking-wider bg-slate-900/90 px-2.5 py-1 rounded-full border border-white/10 shadow-lg text-yellow-400">
                               ต้องการ LV.{item.minLevel}
                             </span>
                           </div>
-                        )}
+                        ) : isTrackLocked ? (
+                          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-white p-4">
+                            <Lock className="text-amber-400 mb-1.5 animate-bounce" size={24} />
+                            <span className="text-[9px] font-black uppercase tracking-wider bg-slate-900/90 px-2.5 py-1 rounded-full border border-white/10 shadow-lg text-amber-300 text-center">
+                              ต้องผ่าน {getTrackBadgeLabel(item.requiredTrackId!)}
+                            </span>
+                          </div>
+                        ) : null}
                         <div className="absolute bottom-2.5 right-2.5 z-20 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 text-[10px] font-black text-purple-300 flex items-center gap-1 shadow-lg tracking-wider">
                           {item.price} XP
                         </div>
@@ -624,6 +649,11 @@ export default function PremiumShopPage() {
                             {isLevelLocked ? <Lock size={10} /> : "✅"} LV.{item.minLevel}
                           </span>
                         )}
+                        {item.requiredTrackId && (
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border flex items-center gap-1 ${isTrackLocked ? 'bg-amber-50 text-amber-700 border-amber-200/80' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                            {isTrackLocked ? <Lock size={10} /> : "✅"} {getTrackBadgeLabel(item.requiredTrackId)}
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-sm font-bold text-slate-800 mb-1 leading-snug">{item.title}</h3>
                       <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">{item.desc}</p>
@@ -637,9 +667,11 @@ export default function PremiumShopPage() {
                     >
                       {isLevelLocked 
                         ? `🔒 ต้องการ Level ${item.minLevel}` 
-                        : canRedeem 
-                          ? "แลกรางวัล 🎁" 
-                          : `ขาดอีก ${deficit} XP`}
+                        : isTrackLocked
+                          ? `🔒 ต้องผ่าน ${getTrackBadgeLabel(item.requiredTrackId!)}`
+                          : canRedeem 
+                            ? "แลกรางวัล 🎁" 
+                            : `ขาดอีก ${deficit} XP`}
                     </button>
                   </div>
                 </motion.div>
