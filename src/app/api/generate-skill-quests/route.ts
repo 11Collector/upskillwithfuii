@@ -43,11 +43,26 @@ export async function POST(req: Request) {
     }
 
     const round = roundNumber || 1;
-    const roundContext = round > 1
-      ? `⭐ ผู้เรียนกำลังเรียนวิชานี้ซ้ำเป็นรอบที่ ${round} (Level Up Edition)! 
-    - กรุณาเพิ่มระดับความท้าทาย ความลึกซึ้ง และการลงมือทำขั้นสูง (Advanced Challenge) สำหรับรอบที่ ${round} นี้
-    - ห้ามซ้ำกับโจทย์พื้นฐานของรอบที่ 1 โดยเน้นการยกระดับผลลัพธ์และการท้าทายศักยภาพที่สูงขึ้นอย่างชัดเจน!`
-      : `ผู้เรียนกำลังเรียนวิชานี้เป็นรอบแรก (Foundation Edition): เน้นการปูพื้นฐานและสร้างนิสัยประจำวัน`;
+    let roundTierTitle = "Foundation Edition";
+    let roundInstruction = "เน้นการปูพื้นฐาน สร้างนิสัยประจำวัน (Micro-habits) 2-5 นาทีที่ทำได้จริง และปรับ Mindset";
+
+    if (round === 2) {
+      roundTierTitle = "Advanced Execution Edition";
+      roundInstruction = "เน้นการลงมือทำขั้นสูง (Advanced Execution) การตัดสิ่งฟุ่มเฟือย และการท้าทายข้าม Comfort Zone";
+    } else if (round === 3) {
+      roundTierTitle = "Systems Building Edition";
+      roundInstruction = "เน้นการวางระบบออโตเมชันระยะยาว (System Building) การสร้างกระบวนการให้ระบบทำงานแทนเรา";
+    } else if (round === 4) {
+      roundTierTitle = "High-Stakes Challenge Edition";
+      roundInstruction = "เน้นภารกิจสร้างผลลัพธ์สูง (High-Stakes Challenge) การสร้างผลตอบแทน/ขยายขีดความสามารถที่เคยกลัว";
+    } else if (round >= 5) {
+      roundTierTitle = `Grandmaster Legacy Edition (Round ${round})`;
+      roundInstruction = `เน้นความเป็นเลิศระดับสูงสุด (Grandmaster Mastery) การถอดบทเรียน สรุป Blueprint และการถ่ายทอด/ส่งต่อคุณค่าให้ผู้อื่นอย่างสร้างสรรค์`;
+    }
+
+    const roundContext = `⭐ ผู้เรียนกำลังเรียนวิชานี้เป็นรอบที่ ${round} (${roundTierTitle}):
+- ${roundInstruction}
+- กรุณาออกแบบโจทย์สำหรับรอบที่ ${round} นี้ ให้มีความลึกซึ้ง ท้าทาย และไม่ซ้ำกับโจทย์พื้นฐานของรอบก่อนหน้าอย่างชัดเจน!`;
 
     const systemPrompt = `คุณคือ พี่ฟุ้ย AI Mentor โค้ชพัฒนาตัวเองชั้นนำ
 ภารกิจของคุณคือการออกแบบ "แผนฝึกฝนวิชาชีวิต 7 วัน (7-Day Skill Sprint)" สำหรับวิชา: "${trackId}" 
