@@ -9,16 +9,150 @@ interface SkillBadgesShowcaseProps {
   trackCompletionCounts?: Record<string, number>;
 }
 
-const BADGES_3X3 = [
-  { id: "money", title: "Wealth", icon: <Wallet size={20} />, sub: "การเงิน" },
-  { id: "career", title: "Career", icon: <Briefcase size={20} />, sub: "การงาน" },
-  { id: "health", title: "Vitality", icon: <HeartPulse size={20} />, sub: "สุขภาพ" },
-  { id: "relationship", title: "Connection", icon: <Users size={20} />, sub: "ครอบครัว & เพื่อน" },
-  { id: "grandmaster", title: "Grandmaster", icon: <Crown size={24} className="text-amber-400" />, sub: "พิชิตครบ 8 มิติ", isSpecial: true },
-  { id: "mindset", title: "Mindset", icon: <Brain size={20} />, sub: "พัฒนาตนเอง" },
-  { id: "innerpeace", title: "Inner Peace", icon: <Sun size={20} />, sub: "จิตใจ & สติ" },
-  { id: "contribution", title: "Contribution", icon: <HeartHandshake size={20} />, sub: "ช่วยเหลือสังคม" },
-  { id: "lifedesign", title: "Life Design", icon: <Compass size={20} />, sub: "ออกแบบระบบชีวิต" },
+interface BadgeItem {
+  id: string;
+  title: string;
+  sub: string;
+  icon: React.ReactNode;
+  isSpecial?: boolean;
+  defaultBg: string;
+  defaultBorder: string;
+  iconBg: string;
+  titleColor: string;
+  subColor: string;
+  activeBorder: string;
+  activeDot: string;
+  completedBg: string;
+}
+
+const BADGES_3X3: BadgeItem[] = [
+  {
+    id: "money",
+    title: "Wealth",
+    sub: "การเงิน",
+    icon: <Wallet size={20} />,
+    defaultBg: "bg-[#06291C]",
+    defaultBorder: "border-emerald-600/40",
+    iconBg: "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30",
+    titleColor: "text-emerald-100",
+    subColor: "text-emerald-400/80",
+    activeBorder: "border-emerald-400 ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/20 scale-[1.02]",
+    activeDot: "bg-emerald-400 shadow-emerald-400",
+    completedBg: "bg-emerald-600/25 border-emerald-400 shadow-md shadow-emerald-500/10"
+  },
+  {
+    id: "career",
+    title: "Career",
+    sub: "การงาน",
+    icon: <Briefcase size={20} />,
+    defaultBg: "bg-[#0B1E3D]",
+    defaultBorder: "border-blue-600/40",
+    iconBg: "bg-blue-500/20 text-blue-300 border border-blue-400/30",
+    titleColor: "text-blue-100",
+    subColor: "text-blue-400/80",
+    activeBorder: "border-blue-400 ring-2 ring-blue-400/50 shadow-lg shadow-blue-500/20 scale-[1.02]",
+    activeDot: "bg-blue-400 shadow-blue-400",
+    completedBg: "bg-blue-600/25 border-blue-400 shadow-md shadow-blue-500/10"
+  },
+  {
+    id: "health",
+    title: "Vitality",
+    sub: "สุขภาพ",
+    icon: <HeartPulse size={20} />,
+    defaultBg: "bg-[#330F17]",
+    defaultBorder: "border-rose-600/40",
+    iconBg: "bg-rose-500/20 text-rose-300 border border-rose-400/30",
+    titleColor: "text-rose-100",
+    subColor: "text-rose-400/80",
+    activeBorder: "border-rose-400 ring-2 ring-rose-400/50 shadow-lg shadow-rose-500/20 scale-[1.02]",
+    activeDot: "bg-rose-400 shadow-rose-400",
+    completedBg: "bg-rose-600/25 border-rose-400 shadow-md shadow-rose-500/10"
+  },
+  {
+    id: "relationship",
+    title: "Connection",
+    sub: "ครอบครัว & เพื่อน",
+    icon: <Users size={20} />,
+    defaultBg: "bg-[#301B05]",
+    defaultBorder: "border-amber-600/40",
+    iconBg: "bg-amber-500/20 text-amber-300 border border-amber-400/30",
+    titleColor: "text-amber-100",
+    subColor: "text-amber-400/80",
+    activeBorder: "border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20 scale-[1.02]",
+    activeDot: "bg-amber-400 shadow-amber-400",
+    completedBg: "bg-amber-600/25 border-amber-400 shadow-md shadow-amber-500/10"
+  },
+  {
+    id: "grandmaster",
+    title: "Grandmaster",
+    sub: "พิชิตครบ 8 มิติ",
+    icon: <Crown size={24} className="text-amber-400" />,
+    isSpecial: true,
+    defaultBg: "bg-[#181102]",
+    defaultBorder: "border-amber-500/40",
+    iconBg: "bg-amber-400/20 text-amber-300",
+    titleColor: "text-amber-300",
+    subColor: "text-amber-400/70",
+    activeBorder: "border-amber-400",
+    activeDot: "bg-amber-400",
+    completedBg: "bg-amber-500/25 border-amber-400",
+  },
+  {
+    id: "mindset",
+    title: "Mindset",
+    sub: "พัฒนาตนเอง",
+    icon: <Brain size={20} />,
+    defaultBg: "bg-[#210D38]",
+    defaultBorder: "border-purple-600/40",
+    iconBg: "bg-purple-500/20 text-purple-300 border border-purple-400/30",
+    titleColor: "text-purple-100",
+    subColor: "text-purple-400/80",
+    activeBorder: "border-purple-400 ring-2 ring-purple-400/50 shadow-lg shadow-purple-500/20 scale-[1.02]",
+    activeDot: "bg-purple-400 shadow-purple-400",
+    completedBg: "bg-purple-600/25 border-purple-400 shadow-md shadow-purple-500/10"
+  },
+  {
+    id: "innerpeace",
+    title: "Inner Peace",
+    sub: "จิตใจ & สติ",
+    icon: <Sun size={20} />,
+    defaultBg: "bg-[#05292B]",
+    defaultBorder: "border-teal-600/40",
+    iconBg: "bg-teal-500/20 text-teal-300 border border-teal-400/30",
+    titleColor: "text-teal-100",
+    subColor: "text-teal-400/80",
+    activeBorder: "border-teal-400 ring-2 ring-teal-400/50 shadow-lg shadow-teal-500/20 scale-[1.02]",
+    activeDot: "bg-teal-400 shadow-teal-400",
+    completedBg: "bg-teal-600/25 border-teal-400 shadow-md shadow-teal-500/10"
+  },
+  {
+    id: "contribution",
+    title: "Contribution",
+    sub: "ช่วยเหลือสังคม",
+    icon: <HeartHandshake size={20} />,
+    defaultBg: "bg-[#330A24]",
+    defaultBorder: "border-pink-600/40",
+    iconBg: "bg-pink-500/20 text-pink-300 border border-pink-400/30",
+    titleColor: "text-pink-100",
+    subColor: "text-pink-400/80",
+    activeBorder: "border-pink-400 ring-2 ring-pink-400/50 shadow-lg shadow-pink-500/20 scale-[1.02]",
+    activeDot: "bg-pink-400 shadow-pink-400",
+    completedBg: "bg-pink-600/25 border-pink-400 shadow-md shadow-pink-500/10"
+  },
+  {
+    id: "lifedesign",
+    title: "Life Design",
+    sub: "ออกแบบระบบชีวิต",
+    icon: <Compass size={20} />,
+    defaultBg: "bg-[#11133B]",
+    defaultBorder: "border-indigo-600/40",
+    iconBg: "bg-indigo-500/20 text-indigo-300 border border-indigo-400/30",
+    titleColor: "text-indigo-100",
+    subColor: "text-indigo-400/80",
+    activeBorder: "border-indigo-400 ring-2 ring-indigo-400/50 shadow-lg shadow-indigo-500/20 scale-[1.02]",
+    activeDot: "bg-indigo-400 shadow-indigo-400",
+    completedBg: "bg-indigo-600/25 border-indigo-400 shadow-md shadow-indigo-500/10"
+  }
 ];
 
 export default function SkillBadgesShowcase({
@@ -55,7 +189,7 @@ export default function SkillBadgesShowcase({
         </div>
       </div>
 
-      {/* 3x3 Bento Grid with Orange & Dark Accents */}
+      {/* 3x3 Colorful Bento Grid with Tailored Accents */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 relative z-10">
         {BADGES_3X3.map((item) => {
           if (item.isSpecial) {
@@ -65,7 +199,7 @@ export default function SkillBadgesShowcase({
                 className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl border text-center transition-all relative overflow-hidden ${
                   isGrandmasterUnlocked
                     ? "bg-gradient-to-br from-amber-500/30 via-orange-500/20 to-slate-900 border-amber-400 text-amber-200 shadow-md shadow-amber-500/20 ring-1 ring-amber-400/40"
-                    : "bg-slate-950 border-slate-800 text-slate-500"
+                    : `${item.defaultBg} ${item.defaultBorder} text-slate-500`
                 }`}
               >
                 {!isGrandmasterUnlocked ? (
@@ -102,10 +236,10 @@ export default function SkillBadgesShowcase({
               key={item.id}
               className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl border text-center transition-all relative ${
                 isCompleted
-                  ? "bg-amber-500/15 border-amber-400/60 text-amber-200 shadow-sm"
+                  ? `${item.completedBg} text-white shadow-sm`
                   : isActive
-                  ? "bg-slate-950 border-2 border-amber-400 text-white shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40"
-                  : "bg-slate-950 border border-slate-800/90 text-slate-400"
+                  ? `${item.defaultBg} ${item.activeBorder} text-white`
+                  : `${item.defaultBg} ${item.defaultBorder} text-slate-300 hover:brightness-125`
               }`}
             >
               {count > 1 && (
@@ -114,24 +248,28 @@ export default function SkillBadgesShowcase({
                 </div>
               )}
 
-              <div className={`p-2 rounded-xl mb-1.5 transition-colors ${isCompleted ? 'bg-amber-400/20 text-amber-300' : isActive ? 'bg-white/10 text-white' : 'bg-white/5 text-slate-500'}`}>
+              {/* Icon Container with Colorful Accent */}
+              <div
+                className={`p-2 rounded-xl mb-1.5 transition-all duration-300 ${item.iconBg}`}
+              >
                 {item.icon}
               </div>
-              <h4 className={`text-[11px] sm:text-xs font-black truncate ${isCompleted ? 'text-amber-200' : isActive ? 'text-white' : 'text-slate-300'}`}>
+
+              <h4 className={`text-[11px] sm:text-xs font-black truncate ${item.titleColor}`}>
                 {item.title}
               </h4>
-              <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 truncate mt-0.5">
+              <span className={`text-[8px] sm:text-[9px] font-bold truncate mt-0.5 ${item.subColor}`}>
                 {item.sub}
               </span>
 
               {/* Minimal Status Indicator */}
               <div className="absolute top-2 right-2">
                 {isCompleted ? (
-                  <CheckCircle2 size={12} className="text-amber-400" />
+                  <CheckCircle2 size={13} className="text-amber-400" />
                 ) : isActive ? (
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400 animate-pulse" />
+                  <div className={`w-2.5 h-2.5 rounded-full ${item.activeDot} shadow-sm animate-pulse`} />
                 ) : (
-                  <Lock size={10} className="text-slate-600" />
+                  <Lock size={10} className="text-slate-500/80" />
                 )}
               </div>
             </div>
