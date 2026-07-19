@@ -136,7 +136,7 @@ export default function SkillTrackBanner({
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 mb-2">
               <span className="flex items-center gap-1.5">
                 <Target size={13} className="text-orange-400" />
-                ความคืบหน้า 7 วัน (Sprint)
+                ความคืบหน้า 7 วัน
               </span>
               <span className="text-orange-400 font-black">
                 {Math.round((completedDays.length / 7) * 100)}% สำเร็จ

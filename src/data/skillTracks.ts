@@ -32,7 +32,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   money: {
     id: "money",
     title: "วิชาการเงิน",
-    subtitle: "Money Mastery 7-Day Sprint",
+    subtitle: "Money Mastery & Financial Freedom",
     wheelCategory: "การเงิน",
     icon: "💰",
     color: "amber",
@@ -264,7 +264,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   relationship: {
     id: "relationship",
     title: "วิชาความสัมพันธ์",
-    subtitle: "People & DISC Mastery 7-Day Sprint",
+    subtitle: "People & DISC Mastery",
     wheelCategory: "เพื่อนฝูง",
     icon: "👨‍👩‍👧",
     color: "purple",
@@ -496,7 +496,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   mindset: {
     id: "mindset",
     title: "วิชาพัฒนาตนเอง",
-    subtitle: "Soul Mindset 7-Day Sprint",
+    subtitle: "Soul & Mindset Mastery",
     wheelCategory: "พัฒนาตนเอง",
     icon: "🧠",
     color: "violet",
@@ -728,7 +728,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   career: {
     id: "career",
     title: "วิชาการงาน",
-    subtitle: "Career & High Output 7-Day Sprint",
+    subtitle: "Career & High Output",
     wheelCategory: "การงาน",
     icon: "💼",
     color: "blue",
@@ -960,7 +960,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   health: {
     id: "health",
     title: "วิชาสุขภาพ",
-    subtitle: "Energy & Health 7-Day Sprint",
+    subtitle: "Energy & Vitality",
     wheelCategory: "สุขภาพ",
     icon: "🩺",
     color: "emerald",
@@ -1192,7 +1192,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   innerpeace: {
     id: "innerpeace",
     title: "วิชาจิตใจ & สติ",
-    subtitle: "Inner Peace & Mindfulness 7-Day Sprint",
+    subtitle: "Inner Peace & Mindfulness",
     wheelCategory: "จิตใจ",
     icon: "🧘",
     color: "cyan",
@@ -1424,7 +1424,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   contribution: {
     id: "contribution",
     title: "วิชาช่วยเหลือสังคม",
-    subtitle: "Contribution & Social Impact 7-Day Sprint",
+    subtitle: "Contribution & Social Impact",
     wheelCategory: "ช่วยเหลือสังคม",
     icon: "🎁",
     color: "pink",
@@ -1656,7 +1656,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
   lifedesign: {
     id: "lifedesign",
     title: "วิชาออกแบบชีวิต",
-    subtitle: "Life Design & Balance 7-Day Sprint",
+    subtitle: "Life Design & Balance",
     wheelCategory: "ครอบครัว",
     icon: "🌱",
     color: "teal",
