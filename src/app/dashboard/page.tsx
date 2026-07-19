@@ -9072,7 +9072,7 @@ Day 21: [กิจกรรม]
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100001] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl"
             onClick={() => {
-              localStorage.setItem("hasSeenSkillTrackPopup", "true");
+              localStorage.setItem("hasSeenSkillTrackPopup_v1", "true");
               setShowQuestEnergyPopup(false);
             }}
           >
@@ -9146,7 +9146,7 @@ Day 21: [กิจกรรม]
 
                 <button
                   onClick={() => {
-                    localStorage.setItem("hasSeenSkillTrackPopup", "true");
+                    localStorage.setItem("hasSeenSkillTrackPopup_v1", "true");
                     setShowQuestEnergyPopup(false);
                   }}
                   className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 active:scale-95 text-xs tracking-wider uppercase cursor-pointer"
