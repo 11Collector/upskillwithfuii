@@ -1189,17 +1189,17 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     ]
   },
 
-  focus: {
-    id: "focus",
-    title: "วิชาสมาธิ & โฟกัสขั้นสุด",
-    subtitle: "Deep Focus 7-Day Sprint",
+  innerpeace: {
+    id: "innerpeace",
+    title: "วิชาจิตใจ & สติ",
+    subtitle: "Inner Peace & Mindfulness 7-Day Sprint",
     wheelCategory: "จิตใจ",
-    icon: "🎯",
+    icon: "🧘",
     color: "cyan",
     borderColor: "border-cyan-500/40",
     bgGradient: "from-cyan-600/20 via-blue-600/10 to-slate-900",
-    description: "ฝึกฝนพลังสมาธิ สลัดสิ่งล่อใจ ควบคุมสติให้อยู่กับงานตรงหน้า และใช้งาน Focus Room เต็มประสิทธิภาพ",
-    outcomes: ["สลัดนิสัยหยิบมือถือไถขณะทำงาน", "ทำงานเสร็จไวขึ้น 2 เท่าด้วยสมาธิที่แน่วแน่", "จิตใจสงบ ไม่วอกแวกง่าย"],
+    description: "ฝึกฝนพลังสมาธิ สลัดสิ่งล่อใจ คืนความสงบเย็นให้จิตใจ ก้าวข้ามอารมณ์ลบ และสร้างความแข็งแกร่งจากภายใน",
+    outcomes: ["สลัดนิสัยวอกแวกและอารมณ์ว้าวุ่น", "มีสติอยู่กับงานตรงหน้าและปล่อยวางสิ่งคุมไม่ได้", "จิตใจสงบเย็น มีพลังใจเต็มเปี่ยม"],
     days: [
       {
         day: 1,
@@ -1421,17 +1421,17 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     ]
   },
 
-  influence: {
-    id: "influence",
-    title: "วิชาการสร้างอิทธิพล & สังคม",
-    subtitle: "Influence & Connection 7-Day Sprint",
+  contribution: {
+    id: "contribution",
+    title: "วิชาช่วยเหลือสังคม & การส่งต่อ",
+    subtitle: "Contribution & Social Impact 7-Day Sprint",
     wheelCategory: "ช่วยเหลือสังคม",
-    icon: "🤝",
+    icon: "🎁",
     color: "pink",
     borderColor: "border-pink-500/40",
     bgGradient: "from-pink-600/20 via-rose-600/10 to-slate-900",
-    description: "สร้างความน่าเชื่อถือ สื่อสารโน้มน้าวใจ ส่งต่อคุณค่าให้สังคม และขยายเครือข่ายความสัมพันธ์ที่มีคุณภาพ",
-    outcomes: ["สร้างความน่าเชื่อถือในการทำงานและธุรกิจ", "โน้มน้าวใจและสร้างความเคารพอย่างจริงใจ", "ส่งต่อคุณค่าและช่วยเหลือผู้คน"],
+    description: "สร้างคุณค่า ส่งต่อประโยชน์แก่ผู้อื่น แบ่งปันความรู้ ชุมชน และขยายผลกระทบเชิงบวกสู่สังคมรอบข้าง",
+    outcomes: ["สร้างความน่าเชื่อถือและการยอมรับในสังคม", "ส่งต่อประโยชน์และช่วยเหลือผู้คนอย่างจริงใจ", "สร้างความสุขลึกซึ้งจากการเป็นผู้ให้"],
     days: [
       {
         day: 1,

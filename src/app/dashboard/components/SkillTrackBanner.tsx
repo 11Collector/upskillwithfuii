@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Handshake, Compass } from "lucide-react";
+import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Sun, HeartHandshake, Compass } from "lucide-react";
 import { SKILL_TRACKS, SkillTrack } from "@/data/skillTracks";
 
 // Helper function to get clean Lucide vector icon per track
@@ -13,8 +13,8 @@ const getTrackIcon = (trackId: string, size = 22) => {
     case 'mindset': return <Brain size={size} className="text-white" />;
     case 'career': return <Briefcase size={size} className="text-white" />;
     case 'health': return <HeartPulse size={size} className="text-white" />;
-    case 'focus': return <Target size={size} className="text-white" />;
-    case 'influence': return <Handshake size={size} className="text-white" />;
+    case 'innerpeace': return <Sun size={size} className="text-white" />;
+    case 'contribution': return <HeartHandshake size={size} className="text-white" />;
     case 'lifedesign': return <Compass size={size} className="text-white" />;
     default: return <BookOpen size={size} className="text-white" />;
   }
@@ -53,17 +53,19 @@ export default function SkillTrackBanner({
       if (g.includes("งาน") || g.includes("อาชีพ") || g.includes("ธุรกิจ") || g.includes("ตำแหน่ง")) return "career";
       if (g.includes("สุขภาพ") || g.includes("ออกกำลัง") || g.includes("นอน") || g.includes("หุ่น")) return "health";
       if (g.includes("ความสัมพันธ์") || g.includes("รัก") || g.includes("ครอบครัว") || g.includes("เพื่อน")) return "relationship";
-      if (g.includes("คิด") || g.includes("จิต") || g.includes("อารมณ์") || g.includes("สติ")) return "mindset";
-      if (g.includes("โฟกัส") || g.includes("สมาธิ") || g.includes("เวลา")) return "focus";
+      if (g.includes("พัฒนา") || g.includes("เรียน") || g.includes("สกิล") || g.includes("โต")) return "mindset";
+      if (g.includes("จิตใจ") || g.includes("สติ") || g.includes("สงบ") || g.includes("กลัว")) return "innerpeace";
+      if (g.includes("สังคม") || g.includes("แบ่งปัน") || g.includes("ช่วยเหลือ") || g.includes("ส่งต่อ")) return "contribution";
     }
     if (lowestWheelCategory) {
       const catMap: Record<string, string> = {
-        finance: "money", money: "money",
-        career: "career", work: "career",
-        health: "health",
-        relationship: "relationship", family: "relationship",
-        mind: "mindset", growth: "mindset",
-        focus: "focus"
+        finance: "money", money: "money", "การเงิน": "money",
+        career: "career", work: "career", "การงาน": "career",
+        health: "health", "สุขภาพ": "health",
+        relationship: "relationship", family: "relationship", "ครอบครัว": "relationship", "เพื่อนฝูง": "relationship",
+        mind: "mindset", growth: "mindset", "พัฒนาตนเอง": "mindset",
+        spirit: "innerpeace", peace: "innerpeace", "จิตใจ": "innerpeace",
+        society: "contribution", social: "contribution", "ช่วยเหลือสังคม": "contribution"
       };
       if (catMap[lowestWheelCategory.toLowerCase()]) return catMap[lowestWheelCategory.toLowerCase()];
     }

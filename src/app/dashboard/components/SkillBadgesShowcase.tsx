@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Crown, Wallet, Briefcase, HeartPulse, Users, Brain, Target, Handshake, Compass, CheckCircle2, Lock, Award, Sparkles } from "lucide-react";
+import { Crown, Wallet, Briefcase, HeartPulse, Users, Brain, Sun, HeartHandshake, Compass, CheckCircle2, Lock, Award, Sparkles } from "lucide-react";
 
 interface SkillBadgesShowcaseProps {
   completedTrackIds?: string[];
@@ -10,14 +10,14 @@ interface SkillBadgesShowcaseProps {
 }
 
 const BADGES_3X3 = [
-  { id: "money", title: "Wealth", icon: <Wallet size={20} />, sub: "อิสรภาพการเงิน" },
-  { id: "career", title: "Output", icon: <Briefcase size={20} />, sub: "การงาน & Output" },
-  { id: "health", title: "Vitality", icon: <HeartPulse size={20} />, sub: "สุขภาพ & พลังงาน" },
-  { id: "relationship", title: "Connection", icon: <Users size={20} />, sub: "ความสัมพันธ์" },
-  { id: "grandmaster", title: "Grandmaster", icon: <Crown size={24} className="text-amber-400" />, sub: "พิชิตครบ 8 วิชา", isSpecial: true },
-  { id: "mindset", title: "Mindset", icon: <Brain size={20} />, sub: "กรองความคิด" },
-  { id: "focus", title: "Deep Focus", icon: <Target size={20} />, sub: "ไร้สิ่งรบกวน" },
-  { id: "influence", title: "Influence", icon: <Handshake size={20} />, sub: "ศิลปะการจูงใจ" },
+  { id: "money", title: "Wealth", icon: <Wallet size={20} />, sub: "การเงิน" },
+  { id: "career", title: "Career", icon: <Briefcase size={20} />, sub: "การงาน" },
+  { id: "health", title: "Vitality", icon: <HeartPulse size={20} />, sub: "สุขภาพ" },
+  { id: "relationship", title: "Connection", icon: <Users size={20} />, sub: "ครอบครัว & เพื่อน" },
+  { id: "grandmaster", title: "Grandmaster", icon: <Crown size={24} className="text-amber-400" />, sub: "พิชิตครบ 8 มิติ", isSpecial: true },
+  { id: "mindset", title: "Mindset", icon: <Brain size={20} />, sub: "พัฒนาตนเอง" },
+  { id: "innerpeace", title: "Inner Peace", icon: <Sun size={20} />, sub: "จิตใจ & สติ" },
+  { id: "contribution", title: "Contribution", icon: <HeartHandshake size={20} />, sub: "ช่วยเหลือสังคม" },
   { id: "lifedesign", title: "Life Design", icon: <Compass size={20} />, sub: "ออกแบบระบบชีวิต" },
 ];
 
