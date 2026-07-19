@@ -140,43 +140,43 @@ export const WeeklySummaryModal = ({
     const categories = [
       {
         key: "wheel",
-        label: "Wheel of Life (สมดุลชีวิต)",
+        label: "เป้าหมายหลัก",
         score: stats.wheel,
         icon: <PieChart size={18} className="text-red-400" />,
         color: "text-red-400",
         borderColor: "border-red-500/20",
         bgColor: "bg-red-500/5",
-        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวด Wheel of Life กันนะ"
+        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวดเป้าหมายหลักกันนะ"
       },
       {
         key: "disc",
-        label: "Habit (พฤติกรรม)",
+        label: "นิสัยประจำวัน",
         score: stats.disc,
         icon: <Users size={18} className="text-blue-400" />,
         color: "text-blue-400",
         borderColor: "border-blue-500/20",
         bgColor: "bg-blue-500/5",
-        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวด Habit กันนะ"
+        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวดนิสัยประจำวันกันนะ"
       },
       {
         key: "money",
-        label: "Money (การเงิน)",
+        label: "ลงมือทำจริง",
         score: stats.money,
         icon: <Wallet size={18} className="text-amber-400" />,
         color: "text-amber-400",
         borderColor: "border-amber-500/20",
         bgColor: "bg-amber-500/5",
-        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวด Money กันนะ"
+        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวดลงมือทำจริงกันนะ"
       },
       {
         key: "challenge",
-        label: "Challenge (ความท้าทาย)",
+        label: "ตกตะกอนความคิด",
         score: stats.challenge,
         icon: <Target size={18} className="text-purple-400" />,
         color: "text-purple-400",
         borderColor: "border-purple-500/20",
         bgColor: "bg-purple-500/5",
-        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวด Challenge กันนะ"
+        advice: "สัปดาห์นี้มาตั้งใจทำเควสหมวดตกตะกอนความคิดกันนะ"
       }
     ];
 
@@ -272,10 +272,10 @@ export const WeeklySummaryModal = ({
               </span>
               <div className="grid grid-cols-2 gap-2.5">
                 {[
-                  { label: hasActiveSkillTrack ? "Wheel Plan" : "Wheel of Life", val: stats.wheel, color: "text-red-400", gradColor: "from-red-500 to-rose-400", glow: "shadow-[0_0_8px_rgba(239,68,68,0.35)]" },
-                  { label: hasActiveSkillTrack ? "Skill Habit" : "Habit", val: stats.disc, color: "text-blue-400", gradColor: "from-blue-500 to-cyan-400", glow: "shadow-[0_0_8px_rgba(59,130,246,0.35)]" },
-                  { label: hasActiveSkillTrack ? "Skill Action" : "Money", val: stats.money, color: "text-amber-400", gradColor: "from-amber-500 to-yellow-400", glow: "shadow-[0_0_8px_rgba(245,158,11,0.35)]" },
-                  { label: hasActiveSkillTrack ? "Soul Reflection" : "Challenge", val: stats.challenge, color: "text-purple-400", gradColor: "from-purple-500 to-fuchsia-400", glow: "shadow-[0_0_8px_rgba(168,85,247,0.35)]" }
+                  { label: "เป้าหมายหลัก", val: stats.wheel, color: "text-red-400", gradColor: "from-red-500 to-rose-400", glow: "shadow-[0_0_8px_rgba(239,68,68,0.35)]" },
+                  { label: "นิสัยประจำวัน", val: stats.disc, color: "text-blue-400", gradColor: "from-blue-500 to-cyan-400", glow: "shadow-[0_0_8px_rgba(59,130,246,0.35)]" },
+                  { label: "ลงมือทำจริง", val: stats.money, color: "text-amber-400", gradColor: "from-amber-500 to-yellow-400", glow: "shadow-[0_0_8px_rgba(245,158,11,0.35)]" },
+                  { label: "ตกตะกอนความคิด", val: stats.challenge, color: "text-purple-400", gradColor: "from-purple-500 to-fuchsia-400", glow: "shadow-[0_0_8px_rgba(168,85,247,0.35)]" }
                 ].map((item, i) => (
                   <div key={i} className="flex flex-col gap-2 p-3.5 rounded-[1.5rem] bg-slate-900 border border-slate-800 hover:border-slate-700/80 transition-all duration-300 shadow-sm">
                     <div className="flex items-center justify-between min-w-0">
