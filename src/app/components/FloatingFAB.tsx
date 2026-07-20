@@ -66,7 +66,7 @@ export default function FloatingFAB() {
   ];
 
   if (!user) return null;
-  if (pathname === "/" || pathname.startsWith("/tools") || pathname.startsWith("/admin") || pathname === "/privacy" || pathname === "/report-review") return null;
+  if (pathname === "/" || pathname.startsWith("/tools") || pathname.startsWith("/personalityzero") || pathname.startsWith("/admin") || pathname === "/privacy" || pathname === "/report-review") return null;
 
   // 4. Custom behavior for Second Brain page
   if (pathname === "/second-brain") {

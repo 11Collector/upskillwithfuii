@@ -5549,7 +5549,7 @@ Day 21: [กิจกรรม]
               activeTrackId={activeSkillTrackId}
               currentDay={skillTrackCurrentDay}
               completedDays={skillTrackCompletedDays}
-              lowestWheelCategory={userData?.lastWheel?.lowestCategory}
+              lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
               onSelectTrack={handleSelectSkillTrack}
               onResetTrack={() => handleSelectSkillTrack(activeSkillTrackId || "money")}

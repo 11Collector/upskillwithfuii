@@ -45,8 +45,8 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  // Only hide bottom nav on full-screen chat interface, NOT on /info pages
-  if (pathname === '/tools/soul-guide' || pathname === '/tools/ai-mentor') return null;
+  // Only hide bottom nav on full-screen chat interface & standalone assessment pages
+  if (pathname === '/tools/soul-guide' || pathname === '/tools/ai-mentor' || pathname.startsWith('/personalityzero')) return null;
 
   if (isDashboardFlow) {
     const navItems = [
