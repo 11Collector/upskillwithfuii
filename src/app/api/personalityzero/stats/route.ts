@@ -46,8 +46,8 @@ export async function GET() {
       traits[traitKey] = Number(traitsData[traitKey] || 0);
     });
 
-    const sumFromTraits = Object.values(traits).reduce((acc, c) => acc + c, 0);
-    const totalPlays = Math.max(Number(data.total_plays || 0), sumFromTraits);
+    // totalPlays is strictly computed as the sum of all trait counts to guarantee exact consistency
+    const totalPlays = Object.values(traits).reduce((acc, c) => acc + c, 0);
 
     const percentages: Record<string, number> = {};
     Object.keys(traits).forEach((traitKey) => {
@@ -104,11 +104,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, reset: true });
     }
 
-    const trait = body?.trait;
+    let trait = body?.trait;
+    if (trait === "NPC?") trait = "NPC";
+
     const validTraits = ["MONK", "FUCK", "ZZZZ", "WORK", "NPC", "HELL"];
     if (!trait || !validTraits.includes(trait)) {
       return NextResponse.json({ error: "Invalid trait" }, { status: 400 });
     }
+
     const docSnap = await statsDocRef.get();
 
     if (!docSnap.exists) {
