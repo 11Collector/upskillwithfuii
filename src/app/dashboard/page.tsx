@@ -1071,7 +1071,7 @@ Day 21: [กิจกรรม]
 
         const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
 
-        if (activeDateToCheck === todayStr) {
+        if (activeDateToCheck === todayStr && userData.completedQuestIds) {
           setCompletedQuests(userData.completedQuestIds || []);
           setCustomQuestTitle(userData.customQuestTitle || "");
         } else {
@@ -1083,10 +1083,12 @@ Day 21: [กิจกรรม]
 
           const userRef = doc(db, "users", currentUser.uid);
           const updates: any = {
+            completedQuestIds: [],
             customQuestTitle: "",
             aiGeneratedQuestTitle: "",
             aiGeneratedDiscTitle: "",
             aiGeneratedMoneyTitle: "",
+            lastActiveDate: todayStr,
             lastQuestAnalysisDate: "",
             questPreferences: null
           };
@@ -3073,10 +3075,21 @@ Day 21: [กิจกรรม]
 
     if (needsUpdate) {
       const userRef = doc(db, "users", user.uid);
-      updateDoc(userRef, {
+      const updateData: any = {
         currentDailyQuests: dailyQuests,
-        lastActiveDate: todayDateStr
-      }).catch((e) => console.error("Error syncing daily quests:", e));
+        lastActiveDate: todayDateStr,
+      };
+
+      if (storedDate && storedDate !== todayDateStr) {
+        updateData.completedQuestIds = [];
+        updateData.customQuestTitle = "";
+        updateData.aiGeneratedQuestTitle = "";
+        updateData.aiGeneratedDiscTitle = "";
+        updateData.aiGeneratedMoneyTitle = "";
+        setCompletedQuests([]);
+      }
+
+      updateDoc(userRef, updateData).catch((e) => console.error("Error syncing daily quests:", e));
     }
   }, [user?.uid, todayDateStr, userData, dailyQuests]);
 
