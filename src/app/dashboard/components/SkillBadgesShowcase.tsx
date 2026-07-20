@@ -235,9 +235,7 @@ export default function SkillBadgesShowcase({
             <div
               key={item.id}
               className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl border text-center transition-all relative ${
-                isCompleted
-                  ? `${item.completedBg} text-white shadow-sm`
-                  : isActive
+                isActive
                   ? `${item.defaultBg} ${item.activeBorder} text-white`
                   : `${item.defaultBg} ${item.defaultBorder} text-slate-300 hover:brightness-125`
               }`}
@@ -265,7 +263,7 @@ export default function SkillBadgesShowcase({
               {/* Minimal Status Indicator */}
               <div className="absolute top-2 right-2">
                 {isCompleted ? (
-                  <CheckCircle2 size={13} className="text-amber-400" />
+                  <CheckCircle2 size={15} className="text-emerald-400 drop-shadow-sm" />
                 ) : isActive ? (
                   <div className={`w-2.5 h-2.5 rounded-full ${item.activeDot} shadow-sm animate-pulse`} />
                 ) : (
