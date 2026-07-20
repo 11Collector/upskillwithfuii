@@ -1069,7 +1069,7 @@ Day 21: [กิจกรรม]
         }
         setPotXP(userData.potXP || 0);
 
-        const activeDateToCheck = userData.lastActiveDate || userData.lastQuestDate;
+        const activeDateToCheck = userData.lastQuestDate;
 
         if (activeDateToCheck === todayStr && userData.completedQuestIds) {
           setCompletedQuests(userData.completedQuestIds || []);
