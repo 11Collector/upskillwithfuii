@@ -5768,7 +5768,12 @@ Day 21: [กิจกรรม]
 
                         {quest.id === 1 && (
                           <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${isDone ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700 border border-rose-200/60'}`}>
-                            {quest.title.includes('|') ? quest.title.split('|')[0].trim() : `DAY ${wheelPlanDay || 1}`}
+                            {quest.title.includes('|') 
+                              ? quest.title.split('|')[0].trim() 
+                              : wheelPlanDay > (wheelPlanTarget || 21) 
+                              ? 'COMPLETE' 
+                              : `DAY ${Math.min(wheelPlanDay || 1, wheelPlanTarget || 21)}`
+                            }
                           </span>
                         )}
 
