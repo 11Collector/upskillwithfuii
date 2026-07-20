@@ -65,17 +65,17 @@ function HeaderInner() {
     }
   };
 
-  const isAssessmentPage = pathname.startsWith("/tools/");
+  const isAssessmentPage = pathname.startsWith("/tools/") || pathname.startsWith("/personalityzero");
   const isDashboard = pathname.startsWith("/dashboard");
   const isAppPage = isDashboard || pathname.startsWith("/library") || pathname.startsWith("/second-brain") || pathname.startsWith("/gallery") || pathname === "/report-review" || pathname.startsWith("/shop");
 
-  // tool pages: ซ่อนทุก size
+  // tool & assessment pages: ซ่อนทุก size
   if (isAssessmentPage) return null;
 
   // mobile thin header — แสดงบน homepage และ non-dashboard pages
   // ซ่อนบน dashboard (bottom nav จัดการ) และ desktop (desktop nav จัดการ)
   // library มี dark theme เอง + bottom nav จัดการ nav ครบแล้ว
-  const showMobileHeader = isMobile && !isDashboard && !pathname.startsWith('/library') && !pathname.startsWith('/second-brain') && !pathname.startsWith('/gallery') && !pathname.startsWith('/shop');
+  const showMobileHeader = isMobile && !isDashboard && !pathname.startsWith('/library') && !pathname.startsWith('/second-brain') && !pathname.startsWith('/gallery') && !pathname.startsWith('/shop') && !pathname.startsWith('/personalityzero');
 
   return (
     <>
