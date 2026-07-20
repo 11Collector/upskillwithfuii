@@ -600,13 +600,17 @@ Day 21: [กิจกรรม]
       setSkillTrackCompletedDays((prev) => {
         if (!prev.includes(currentDay)) {
           const updated = [...prev, currentDay];
+          const nextDay = Math.min(7, currentDay + 1);
+          setSkillTrackCurrentDay(nextDay);
           if (typeof window !== "undefined") {
             localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
+            localStorage.setItem("skillTrackCurrentDay", String(nextDay));
           }
           if (user?.uid) {
             const userRef = doc(db, "users", user.uid);
             updateDoc(userRef, {
-              skillTrackCompletedDays: updated
+              skillTrackCompletedDays: updated,
+              skillTrackCurrentDay: nextDay
             }).catch(() => {});
           }
           if (updated.length >= 5 && user?.uid && activeSkillTrackId) {
@@ -1010,10 +1014,148 @@ Day 21: [กิจกรรม]
 
         setStreakCount(currentStreak);
         setLastQuestDate(userData.lastQuestDate || "");
-        setWheelPlanDay(userData.wheelPlanDay || 0);
-        setWheelPlanTarget(userData.wheelPlanTarget || 7);
-        setWheelPlanSkips(userData.wheelPlanSkips || 0);
-        setLastSkipDate(userData.lastSkipDate || "");
+        setPotXP(userData.potXP || 0);
+
+        const lastActiveDate = userData.lastActiveDate || "";
+        const isSameActiveDate = lastActiveDate === todayStr;
+
+        if (isSameActiveDate) {
+          setCompletedQuests(userData.completedQuestIds || []);
+          setCustomQuestTitle(userData.customQuestTitle || "");
+          setWheelPlanDay(userData.wheelPlanDay || 0);
+        } else {
+          setCompletedQuests([]);
+          setCustomQuestTitle("");
+          setAiGeneratedQuestTitle("");
+          setAiGeneratedDiscTitle("");
+          setAiGeneratedMoneyTitle("");
+
+          const userRef = doc(db, "users", currentUser.uid);
+          const updates: any = {
+            completedQuestIds: [],
+            customQuestTitle: "",
+            aiGeneratedQuestTitle: "",
+            aiGeneratedDiscTitle: "",
+            aiGeneratedMoneyTitle: "",
+            lastActiveDate: todayStr,
+            lastQuestAnalysisDate: "",
+            questPreferences: null
+          };
+
+          let currentPlanDay = userData.wheelPlanDay || 0;
+          let wheelPlanTarget = userData.wheelPlanTarget || 7;
+          let nextPlanDay = currentPlanDay;
+
+          const yesterdayCompletedWheel = Array.isArray(userData.completedQuestIds) && userData.completedQuestIds.includes(1);
+
+          if (yesterdayCompletedWheel) {
+            if (currentPlanDay > wheelPlanTarget) {
+              nextPlanDay = currentPlanDay;
+              updates.wheelPlanDay = nextPlanDay;
+            } else if (currentPlanDay === wheelPlanTarget) {
+              nextPlanDay = currentPlanDay + 1;
+              const completions = userData.wheelCompletions || 0;
+              let bonusXP = 0;
+              let milestoneName = "";
+              let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
+
+              if (wheelPlanTarget === 7) {
+                if (completions >= 7) {
+                  bonusXP = 100;
+                  milestoneName = "PERFECT RUN!";
+                  modalType = "PERFECT";
+                } else if (completions >= 5) {
+                  bonusXP = 50;
+                  milestoneName = "GREAT RUN!";
+                  modalType = "GREAT";
+                } else if (completions >= 1) {
+                  bonusXP = 20;
+                  milestoneName = "GOOD RUN!";
+                  modalType = "GOOD";
+                }
+              } else if (wheelPlanTarget === 21) {
+                if (completions >= 12) {
+                  bonusXP = 250;
+                  milestoneName = "EXTRAORDINARY RUN!";
+                  modalType = "PERFECT";
+                } else if (completions >= 8) {
+                  bonusXP = 100;
+                  milestoneName = "GREAT RUN (21 DAYS)!";
+                  modalType = "GREAT";
+                } else if (completions >= 1) {
+                  bonusXP = 50;
+                  milestoneName = "GOOD RUN (21 DAYS)!";
+                  modalType = "GOOD";
+                }
+              }
+
+              const xpToAdd = bonusXP;
+              const perfectWeekInc = (wheelPlanTarget === 7 && modalType === 'PERFECT') ? 1 : 0;
+
+              try {
+                const weeklyRef = doc(db, "users", currentUser.uid, "weekly_stats", data.currentWeekInfo.id);
+                await setDoc(weeklyRef, {
+                  weeklySavings: userData.weeklySavings || 0,
+                  updatedAt: new Date()
+                }, { merge: true });
+              } catch (e) {
+                console.error("Failed to archive weeklySavings to weekly_stats:", e);
+              }
+
+              updates.wheelPlanDay = nextPlanDay;
+              updates.wheelCompletions = 0;
+              updates.weeklySavings = 0;
+
+              if (xpToAdd > 0) {
+                setRewardModalData({
+                  title: milestoneName,
+                  bonusXP: xpToAdd,
+                  message: wheelPlanTarget === 7
+                    ? `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองขยายแผนเป็น 21 วันเพื่อสร้างนิสัยจริงต่อเนื่อง หรือเลือกประเมินใหม่เพื่อรับแผนใหม่กันครับ!`
+                    : `คุณรักษาวินัยต่อเนื่องจนครบ 21 วันสำเร็จ! (สำเร็จ ${completions} วันในรอบหลัง) เก่งสุดยอดระดับ Extraordinary เลยครับ!\n\n💡 แนะนำ: ได้เวลาประเมินวงล้อชีวิตอีกครั้งเพื่ออัปเดตสมดุลชีวิตและรับเป้าหมายชุดใหม่กันแล้ว!`,
+                  type: modalType,
+                  weeklySavings: userData?.weeklySavings || 0
+                });
+                updates.totalXP = increment(xpToAdd);
+                if (perfectWeekInc > 0) {
+                  updates.perfectWeeks = increment(perfectWeekInc);
+                }
+              }
+
+              if (xpToAdd > 0) {
+                const currentXP = userData.totalXP || 0;
+                const newXP = currentXP + xpToAdd;
+                const oldLevel = Math.floor(currentXP / 100) + 1;
+                const newLevel = Math.floor(newXP / 100) + 1;
+                if (newLevel > oldLevel) {
+                  showLevelUpModal(newLevel);
+                }
+                setTotalXP(newXP);
+                if (perfectWeekInc > 0) {
+                  setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
+                }
+                setShowPerfectWeekModal(true);
+              }
+
+              setWheelCompletions(0);
+            } else {
+              nextPlanDay = currentPlanDay + 1;
+              updates.wheelPlanDay = nextPlanDay;
+            }
+          } else {
+            updates.wheelPlanDay = currentPlanDay;
+          }
+
+          setWheelPlanDay(nextPlanDay);
+
+          try {
+            await updateDoc(userRef, updates);
+            setUserData((prev: any) => prev ? { ...prev, ...updates } : null);
+          } catch (e) {
+            console.error("Failed to update user dashboard data for new day:", e);
+          }
+        }
+
         setLastChatDate(userData.lastChatDate || "");
         setAiGeneratedQuestTitle(userData.aiGeneratedQuestTitle || "");
         setAiGeneratedDiscTitle(userData.aiGeneratedDiscTitle || "");
@@ -1066,151 +1208,6 @@ Day 21: [กิจกรรม]
           console.log(`🎉 ระบบตามเก็บ XP ให้คุณแล้ว: +${xpToClaim} XP`);
         } else {
           setTotalXP(userData.totalXP || 0);
-        }
-        setPotXP(userData.potXP || 0);
-
-        const activeDateToCheck = userData.lastQuestDate;
-
-        if (activeDateToCheck === todayStr && userData.completedQuestIds) {
-          setCompletedQuests(userData.completedQuestIds || []);
-          setCustomQuestTitle(userData.customQuestTitle || "");
-        } else {
-          setCompletedQuests([]);
-          setCustomQuestTitle("");
-          setAiGeneratedQuestTitle("");
-          setAiGeneratedDiscTitle("");
-          setAiGeneratedMoneyTitle("");
-
-          const userRef = doc(db, "users", currentUser.uid);
-          const updates: any = {
-            completedQuestIds: [],
-            customQuestTitle: "",
-            aiGeneratedQuestTitle: "",
-            aiGeneratedDiscTitle: "",
-            aiGeneratedMoneyTitle: "",
-            lastActiveDate: todayStr,
-            lastQuestAnalysisDate: "",
-            questPreferences: null
-          };
-
-          let currentPlanDay = userData.wheelPlanDay || 0;
-          let wheelPlanTarget = userData.wheelPlanTarget || 7;
-          let nextPlanDay = currentPlanDay;
-
-          if (currentPlanDay > wheelPlanTarget) {
-            // ค้างไว้ที่วันเดิมเพื่อรอให้ผู้ใช้เลือกเส้นทางใน Dashboard
-            nextPlanDay = currentPlanDay;
-            updates.wheelPlanDay = nextPlanDay;
-            updates.lastActiveDate = todayStr;
-            updates.completedQuestIds = [];
-          } else if (currentPlanDay === wheelPlanTarget) {
-            // จบแผนปัจจุบัน (7 วัน หรือ 21 วัน)
-            nextPlanDay = currentPlanDay + 1; // ไปที่ 8 หรือ 22
-
-            const completions = userData.wheelCompletions || 0;
-            let bonusXP = 0;
-            let milestoneName = "";
-            let modalType: "PERFECT" | "GREAT" | "GOOD" = "GOOD";
-
-            if (wheelPlanTarget === 7) {
-              if (completions >= 7) {
-                bonusXP = 100;
-                milestoneName = "PERFECT RUN!";
-                modalType = "PERFECT";
-              } else if (completions >= 5) {
-                bonusXP = 50;
-                milestoneName = "GREAT RUN!";
-                modalType = "GREAT";
-              } else if (completions >= 1) {
-                bonusXP = 20;
-                milestoneName = "GOOD RUN!";
-                modalType = "GOOD";
-              }
-            } else if (wheelPlanTarget === 21) {
-              // ช่วงขยายแผน Day 8-21 (รวม 14 วัน)
-              if (completions >= 12) {
-                bonusXP = 250;
-                milestoneName = "EXTRAORDINARY RUN!";
-                modalType = "PERFECT";
-              } else if (completions >= 8) {
-                bonusXP = 100;
-                milestoneName = "GREAT RUN (21 DAYS)!";
-                modalType = "GREAT";
-              } else if (completions >= 1) {
-                bonusXP = 50;
-                milestoneName = "GOOD RUN (21 DAYS)!";
-                modalType = "GOOD";
-              }
-            }
-
-            const xpToAdd = bonusXP;
-            const perfectWeekInc = (wheelPlanTarget === 7 && modalType === 'PERFECT') ? 1 : 0;
-
-            // 📊 Archive current week's weeklySavings to weekly_stats doc
-            try {
-              const weeklyRef = doc(db, "users", currentUser.uid, "weekly_stats", data.currentWeekInfo.id);
-              await setDoc(weeklyRef, {
-                weeklySavings: userData.weeklySavings || 0,
-                updatedAt: new Date()
-              }, { merge: true });
-            } catch (e) {
-              console.error("Failed to archive weeklySavings to weekly_stats:", e);
-            }
-
-            updates.wheelPlanDay = nextPlanDay;
-            updates.lastActiveDate = todayStr;
-            updates.completedQuestIds = [];
-            updates.wheelCompletions = 0;
-            updates.weeklySavings = 0; // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
-
-            if (xpToAdd > 0) {
-              setRewardModalData({
-                title: milestoneName,
-                bonusXP: xpToAdd,
-                message: wheelPlanTarget === 7
-                  ? `สรุปผลแผน 7 วัน! คุณทำสำเร็จทั้งหมด ${completions} วันครับ รับโบนัสความพยายามไปเลย!\n\n💡 แนะนำ: ลองขยายแผนเป็น 21 วันเพื่อสร้างนิสัยจริงต่อเนื่อง หรือเลือกประเมินใหม่เพื่อรับแผนใหม่กันครับ!`
-                  : `คุณรักษาวินัยต่อเนื่องจนครบ 21 วันสำเร็จ! (สำเร็จ ${completions} วันในรอบหลัง) เก่งสุดยอดระดับ Extraordinary เลยครับ!\n\n💡 แนะนำ: ได้เวลาประเมินวงล้อชีวิตอีกครั้งเพื่ออัปเดตสมดุลชีวิตและรับเป้าหมายชุดใหม่กันแล้ว!`,
-                type: modalType,
-                weeklySavings: userData?.weeklySavings || 0
-              });
-              updates.totalXP = increment(xpToAdd);
-              if (perfectWeekInc > 0) {
-                updates.perfectWeeks = increment(perfectWeekInc);
-              }
-            }
-
-            if (xpToAdd > 0) {
-              const currentXP = (userData.totalXP || 0) + xpToClaim;
-              const newXP = currentXP + xpToAdd;
-              const oldLevel = Math.floor(currentXP / 100) + 1;
-              const newLevel = Math.floor(newXP / 100) + 1;
-              if (newLevel > oldLevel) {
-                showLevelUpModal(newLevel);
-              }
-              setTotalXP(newXP);
-              if (perfectWeekInc > 0) {
-                setPerfectWeeks((userData.perfectWeeks || 0) + perfectWeekInc);
-              }
-              setShowPerfectWeekModal(true);
-            }
-
-            setWheelCompletions(0);
-
-          } else {
-            nextPlanDay = currentPlanDay + 1;
-            updates.wheelPlanDay = nextPlanDay;
-            updates.lastActiveDate = todayStr;
-            updates.completedQuestIds = [];
-          }
-
-          try {
-            await updateDoc(userRef, updates);
-            setUserData((prev: any) => prev ? { ...prev, ...updates } : null);
-          } catch (e) {
-            console.error("Failed to update user dashboard data for new day:", e);
-          }
-
-          setWheelPlanDay(nextPlanDay);
         }
 
         if (userData.lastQuoteDate === todayStr) {
