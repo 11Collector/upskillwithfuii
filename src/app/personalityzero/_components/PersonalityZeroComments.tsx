@@ -34,7 +34,7 @@ export const PersonalityZeroComments: React.FC<PersonalityZeroCommentsProps> = (
 
   const fetchComments = async () => {
     try {
-      const res = await fetch("/api/personalityzero/comments");
+      const res = await fetch("/api/personalityzero/comments", { cache: "no-store" });
       const data = await res.json();
       if (data.success && data.comments) {
         setComments(data.comments);

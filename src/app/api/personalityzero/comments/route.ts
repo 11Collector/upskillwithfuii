@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const DEFAULT_COMMENTS = [
   {
     id: "default-1",

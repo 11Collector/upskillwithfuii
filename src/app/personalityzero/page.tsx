@@ -88,7 +88,7 @@ export default function PersonalityZeroPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch("/api/personalityzero/stats");
+      const res = await fetch("/api/personalityzero/stats", { cache: "no-store" });
       const data = await res.json();
       if (data.success) {
         if (typeof data.totalPlays === "number") setTotalPlays(data.totalPlays);
