@@ -377,15 +377,18 @@ const handleGenerateResult = async () => {
         if (userSnap.exists()) {
           const userData = userSnap.data();
           
-          // 🌟 [AUDIT RESET LOGIC]: เตรียมข้อมูลอัปเดต User Profile
-          // เราจะรีเซ็ตทุกอย่างเพื่อให้ Dashboard เริ่มนับแผน AI ใหม่เป็น DAY 1 ทันที
+          const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          const existingCompleted = Array.isArray(userData.completedQuestIds) ? userData.completedQuestIds : [];
+          const newCompleted = Array.from(new Set([...existingCompleted, 1]));
+
+          // 🌟 [AUDIT RESET LOGIC]: อัปเดต User Profile โดยเก็บสะสม Quest 1 (Wheel) และวันล่าสุดไว้
           let updateData: any = {
             wheelPlanDay: 1,       
-            lastActiveDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
-            lastQuestDate: null,   // 🚩 ล้างวันที่ เพื่อให้เริ่มติ๊กเควสใหม่ได้เลยไม่ต้องรอพรุ่งนี้
-            completedQuestIds: [], // 🚩 ล้างเควสที่เคยติ๊กไว้ เพื่อเริ่มเก็บแต้มใหม่
-            wheelCompletions: 0,   // 🧹 รีเซ็ตความสำเร็จใหม่เพื่อเริ่มนับ 7 วัน
-            customQuestTitle: ""   // 🚩 (แถม) ล้างเควสทำเอง เผื่อเขาอยากตั้งเป้าหมายใหม่ให้เข้ากับรอบนี้
+            lastActiveDate: todayStr,
+            lastQuestDate: todayStr,
+            completedQuestIds: newCompleted,
+            wheelCompletions: 0,   
+            customQuestTitle: ""   
           };
 
           // ✅ 2. Logic แจก 50 XP (ถ้าเป็นการทำครั้งแรกจริงๆ)
@@ -452,11 +455,15 @@ const handleGenerateResult = async () => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
+          const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          const existingCompleted = Array.isArray(userData.completedQuestIds) ? userData.completedQuestIds : [];
+          const newCompleted = Array.from(new Set([...existingCompleted, 1]));
+
           let updateData: any = {
             wheelPlanDay: 1,
-            lastActiveDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
-            lastQuestDate: null,
-            completedQuestIds: [],
+            lastActiveDate: todayStr,
+            lastQuestDate: todayStr,
+            completedQuestIds: newCompleted,
             wheelCompletions: 0,
           };
           if (!userData.hasWheelXP) {
