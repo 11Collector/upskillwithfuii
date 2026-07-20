@@ -238,8 +238,11 @@ export default function DashboardPage() {
       setDoc(userRef, {
         activeSkillTrackId: trackId,
         skillTrackCurrentDay: 1,
-        skillTrackCompletedDays: []
+        skillTrackCompletedDays: [],
+        completedSkillBadges: [],
+        trackCompletionCounts: {}
       }, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
+      setUserData((u: any) => u ? { ...u, completedSkillBadges: [], trackCompletionCounts: {} } : null);
     }
   };
 
