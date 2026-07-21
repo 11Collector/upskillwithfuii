@@ -227,12 +227,21 @@ export default function DashboardPage() {
   const [todaySkillTrackDay, setTodaySkillTrackDay] = useState<number>(1);
 
   const handleSelectSkillTrack = (trackId: string) => {
+    const isFirstTime = !todaySkillTrackId;
+
     setActiveSkillTrackId(trackId);
     setSkillTrackCurrentDay(1);
     setSkillTrackCompletedDays([]);
 
     const trackName = SKILL_TRACKS[trackId]?.title || "วิชาใหม่";
-    setShowSuccessToast(`✨ สลับวิชาเป็น "${trackName}" เรียบร้อย! บทเรียนวิชาใหม่จะเริ่มในวันพรุ่งนี้ครับ`);
+
+    if (isFirstTime) {
+      setTodaySkillTrackId(trackId);
+      setTodaySkillTrackDay(1);
+      setShowSuccessToast(`🎓 เริ่มต้นวิชา "${trackName}" บทเรียน Day 1 แล้วครับ!`);
+    } else {
+      setShowSuccessToast(`✨ สลับวิชาเป็น "${trackName}" เรียบร้อย! บทเรียนวิชาใหม่จะเริ่มในวันพรุ่งนี้ครับ`);
+    }
 
     if (user?.uid) {
       if (typeof window !== "undefined") {
@@ -241,12 +250,17 @@ export default function DashboardPage() {
         localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
       }
       const userRef = doc(db, "users", user.uid);
-      setDoc(userRef, {
+      const updatePayload: any = {
         activeSkillTrackId: trackId,
         skillTrackCurrentDay: 1,
         skillTrackCompletedDays: []
-      }, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
-      setUserData((u: any) => u ? { ...u, activeSkillTrackId: trackId, skillTrackCurrentDay: 1, skillTrackCompletedDays: [] } : null);
+      };
+      if (isFirstTime) {
+        updatePayload.todaySkillTrackId = trackId;
+        updatePayload.todaySkillTrackDay = 1;
+      }
+      setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
+      setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
     }
   };
 
