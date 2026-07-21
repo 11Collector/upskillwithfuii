@@ -7608,7 +7608,7 @@ Day 21: [กิจกรรม]
                       <div className="relative w-14 h-14 flex items-center justify-center select-none shrink-0 mb-4">
                         <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/20 to-cyan-500/20 rounded-full blur-md" />
                         <div className="absolute inset-0 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-xl flex items-center justify-center overflow-hidden">
-                          <img src="/logoapp-v2.png" alt="App Logo" className="w-full h-full object-cover rounded-full scale-100 brightness-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.25)]" />
+                          <img src="/logoapp.png" alt="App Logo" className="w-full h-full object-cover rounded-full scale-100 brightness-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.25)]" />
                         </div>
                       </div>
                       <div className="relative w-12 h-12">

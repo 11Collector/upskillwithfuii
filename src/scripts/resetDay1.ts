@@ -44,6 +44,7 @@ async function resetAllUsersToDay1() {
 
   for (const doc of snapshot.docs) {
     batch.update(doc.ref, {
+      activeSkillTrackId: null,
       skillTrackCurrentDay: 1,
       skillTrackCompletedDays: [],
       todaySkillTrackDay: 1,
