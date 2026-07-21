@@ -1069,7 +1069,8 @@ function LibraryContent() {
       });
 
       if (!response.ok) {
-        throw new Error("AI Scan failed");
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "AI Scan failed");
       }
 
       const data = await response.json();

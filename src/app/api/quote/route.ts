@@ -29,7 +29,8 @@ export async function POST(req: Request) {
   const { prompt, type } = parsed.data;
 
   // Check Daily Quota for Free Tier (authenticated users only)
-  if (!isAuthError(authResult) && type !== 'wheel') {
+  const isExemptFromDailyLimit = ['wheel', 'second_brain_scan', 'second_brain'].includes(type || '');
+  if (!isAuthError(authResult) && !isExemptFromDailyLimit) {
     const userRef = adminDb.collection("users").doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.exists ? userSnap.data() || {} : {};
