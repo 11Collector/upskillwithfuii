@@ -629,6 +629,7 @@ Day 21: [กิจกรรม]
             updateDoc(userRef, {
               skillTrackCompletedDays: updated
             }).catch(() => {});
+            setUserData((u: any) => u ? { ...u, skillTrackCompletedDays: updated } : null);
           }
           if (updated.length === 5 && user?.uid && activeSkillTrackId) {
             const userRef = doc(db, "users", user.uid);
@@ -719,6 +720,7 @@ Day 21: [กิจกรรม]
             updateDoc(userRef, {
               skillTrackCompletedDays: updated
             }).catch(() => {});
+            setUserData((u: any) => u ? { ...u, skillTrackCompletedDays: updated } : null);
           }
           return updated;
         }
