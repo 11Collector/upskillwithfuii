@@ -29,6 +29,8 @@ interface SkillTrackBannerProps {
   onSelectTrack: (trackId: string, keepWheelProgress?: boolean) => void;
   onResetTrack?: () => void;
   onOpenInfo?: () => void;
+  onAdvanceDevDay?: () => void;
+  nextTrackId?: string | null;
 }
 
 export default function SkillTrackBanner({
@@ -39,7 +41,9 @@ export default function SkillTrackBanner({
   userGoal,
   onSelectTrack,
   onResetTrack,
-  onOpenInfo
+  onOpenInfo,
+  onAdvanceDevDay,
+  nextTrackId
 }: SkillTrackBannerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
@@ -134,24 +138,26 @@ export default function SkillTrackBanner({
               </div>
             </div>
 
-            {/* Right Sprint Lock Status or Switch Button */}
-            {completedDays.length < 5 ? (
-              <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
-                <ShieldCheck size={12} className="text-orange-400" />
-                <span className="hidden sm:inline">โฟกัส 7 วัน</span>
-                <span className="sm:hidden">7 วัน</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setSelectedTrackForChoice(null);
-                  setIsModalOpen(true);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-md shadow-orange-500/20"
-              >
-                <Sparkles size={12} /> สลับวิชา
-              </button>
-            )}
+            {/* Right Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              {completedDays.length < 5 ? (
+                <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
+                  <ShieldCheck size={12} className="text-orange-400" />
+                  <span className="hidden sm:inline">โฟกัส 7 วัน</span>
+                  <span className="sm:hidden">7 วัน</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSelectedTrackForChoice(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-md shadow-orange-500/20"
+                >
+                  <Sparkles size={12} /> สลับวิชา
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 7-Day Sprint Progress Grid */}
@@ -196,6 +202,15 @@ export default function SkillTrackBanner({
                 );
               })}
             </div>
+            {nextTrackId && nextTrackId !== activeTrackId && SKILL_TRACKS[nextTrackId] && (
+              <div className="mt-3 px-3.5 py-2 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-300 text-xs font-semibold flex items-center justify-between shadow-inner">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Sparkles size={14} className="text-amber-400 shrink-0" />
+                  <span className="truncate">วิชาถัดไป: <strong className="text-white font-black">{SKILL_TRACKS[nextTrackId].title}</strong></span>
+                </div>
+                <span className="text-[10px] text-amber-400 font-black px-2 py-0.5 bg-amber-400/10 rounded-full border border-amber-400/20 shrink-0 ml-2">เริ่มวันพรุ่งนี้ 00:00 น.</span>
+              </div>
+            )}
           </div>
         </motion.div>
       ) : (

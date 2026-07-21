@@ -223,11 +223,17 @@ export default function DashboardPage() {
   const [activeSkillTrackId, setActiveSkillTrackId] = useState<string | null>(null);
   const [skillTrackCurrentDay, setSkillTrackCurrentDay] = useState<number>(1);
   const [skillTrackCompletedDays, setSkillTrackCompletedDays] = useState<number[]>([]);
+  const [todaySkillTrackId, setTodaySkillTrackId] = useState<string | null>(null);
+  const [todaySkillTrackDay, setTodaySkillTrackDay] = useState<number>(1);
 
   const handleSelectSkillTrack = (trackId: string) => {
     setActiveSkillTrackId(trackId);
     setSkillTrackCurrentDay(1);
     setSkillTrackCompletedDays([]);
+
+    const trackName = SKILL_TRACKS[trackId]?.title || "วิชาใหม่";
+    setShowSuccessToast(`✨ สลับวิชาเป็น "${trackName}" เรียบร้อย! บทเรียนวิชาใหม่จะเริ่มในวันพรุ่งนี้ครับ`);
+
     if (user?.uid) {
       if (typeof window !== "undefined") {
         localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
@@ -238,11 +244,9 @@ export default function DashboardPage() {
       setDoc(userRef, {
         activeSkillTrackId: trackId,
         skillTrackCurrentDay: 1,
-        skillTrackCompletedDays: [],
-        completedSkillBadges: [],
-        trackCompletionCounts: {}
+        skillTrackCompletedDays: []
       }, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
-      setUserData((u: any) => u ? { ...u, completedSkillBadges: [], trackCompletionCounts: {} } : null);
+      setUserData((u: any) => u ? { ...u, activeSkillTrackId: trackId, skillTrackCurrentDay: 1, skillTrackCompletedDays: [] } : null);
     }
   };
 
@@ -603,25 +607,42 @@ Day 21: [กิจกรรม]
       setSkillTrackCompletedDays((prev) => {
         if (!prev.includes(currentDay)) {
           const updated = [...prev, currentDay];
-          const nextDay = Math.min(7, currentDay + 1);
-          setSkillTrackCurrentDay(nextDay);
           if (typeof window !== "undefined") {
             localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
-            localStorage.setItem("skillTrackCurrentDay", String(nextDay));
           }
           if (user?.uid) {
             const userRef = doc(db, "users", user.uid);
             updateDoc(userRef, {
-              skillTrackCompletedDays: updated,
-              skillTrackCurrentDay: nextDay
+              skillTrackCompletedDays: updated
             }).catch(() => {});
           }
-          if (updated.length >= 5 && user?.uid && activeSkillTrackId) {
+          if (updated.length === 5 && user?.uid && activeSkillTrackId) {
             const userRef = doc(db, "users", user.uid);
             updateDoc(userRef, {
               completedSkillBadges: arrayUnion(activeSkillTrackId),
-              [`trackCompletionCounts.${activeSkillTrackId}`]: increment(1)
+              [`trackCompletionCounts.${activeSkillTrackId}`]: increment(1),
+              totalXP: increment(50)
             }).catch(() => {});
+
+            setTotalXP((prevXP) => {
+              const newXP = prevXP + 50;
+              const oldLevel = Math.floor(prevXP / 100) + 1;
+              const newLevel = Math.floor(newXP / 100) + 1;
+              if (newLevel > oldLevel) {
+                showLevelUpModal(newLevel);
+              }
+              return newXP;
+            });
+
+            setRewardModalData({
+              title: "🎖️ ปลดล็อกตราวิชาสำเร็จ!",
+              bonusXP: 50,
+              message: `ยินดีด้วยครับ! คุณรักษาวินัยเรียนรู้วิชานี้ครบ 5 วัน ปลดล็อกตราสัญลักษณ์ประจำวิชาสำเร็จเรียบร้อย! สามารถเรียนต่อให้ครบ 7 วันเพื่อรับโบนัส +100 XP หรือสลับวิชาใหม่ได้เลยครับ!`,
+              type: "GREAT",
+              weeklySavings: userData?.weeklySavings || 0
+            });
+            setShowPerfectWeekModal(true);
+
             setUserData((u: any) => {
               const counts = u?.trackCompletionCounts || {};
               const currentCount = counts[activeSkillTrackId] || 0;
@@ -631,9 +652,42 @@ Day 21: [กิจกรรม]
                 trackCompletionCounts: {
                   ...counts,
                   [activeSkillTrackId]: currentCount + 1
-                }
+                },
+                totalXP: (u?.totalXP || 0) + 50
               };
             });
+          }
+
+          if (updated.length === 7 && user?.uid && activeSkillTrackId) {
+            const userRef = doc(db, "users", user.uid);
+            updateDoc(userRef, {
+              completedSkillBadges: arrayUnion(activeSkillTrackId),
+              totalXP: increment(100)
+            }).catch(() => {});
+
+            setTotalXP((prevXP) => {
+              const newXP = prevXP + 100;
+              const oldLevel = Math.floor(prevXP / 100) + 1;
+              const newLevel = Math.floor(newXP / 100) + 1;
+              if (newLevel > oldLevel) {
+                showLevelUpModal(newLevel);
+              }
+              return newXP;
+            });
+
+            setRewardModalData({
+              title: "🎓 พิชิตวิชา 7 วันสำเร็จ!",
+              bonusXP: 100,
+              message: `ยินดีด้วยครับ! คุณรักษาวินัยเรียนรู้วิชานี้จนครบ 7 วันเต็ม รับโบนัสความพยายาม +100 XP พร้อมเกียรติยศ Perfect Run ไปเลย!`,
+              type: "PERFECT",
+              weeklySavings: userData?.weeklySavings || 0
+            });
+            setShowPerfectWeekModal(true);
+
+            setUserData((u: any) => ({
+              ...u,
+              totalXP: (u?.totalXP || 0) + 100
+            }));
           }
           return updated;
         }
@@ -1026,6 +1080,8 @@ Day 21: [กิจกรรม]
           setCompletedQuests(userData.completedQuestIds || []);
           setCustomQuestTitle(userData.customQuestTitle || "");
           setWheelPlanDay(userData.wheelPlanDay || 0);
+          setTodaySkillTrackId(userData.todaySkillTrackId || userData.activeSkillTrackId || null);
+          setTodaySkillTrackDay(userData.todaySkillTrackDay || userData.skillTrackCurrentDay || 1);
         } else {
           setCompletedQuests([]);
           setCustomQuestTitle("");
@@ -1145,11 +1201,41 @@ Day 21: [กิจกรรม]
               nextPlanDay = currentPlanDay + 1;
               updates.wheelPlanDay = nextPlanDay;
             }
-          } else {
-            updates.wheelPlanDay = currentPlanDay;
           }
 
           setWheelPlanDay(nextPlanDay);
+
+          // 🎓 Advance & Lock Today's Skill Track ID & Day for the New Day
+          let activeTrack = userData.activeSkillTrackId || null;
+          const trackCurrentDay = userData.skillTrackCurrentDay || 1;
+          const completedDays = Array.isArray(userData.skillTrackCompletedDays) ? userData.skillTrackCompletedDays : [];
+
+          // 🛑 If track was finished (7 days completed) and user hasn't explicitly selected a new track:
+          // Fallback to Default Quests (activeTrack = null) for the new day!
+          if (completedDays.length >= 7 && activeTrack === userData.todaySkillTrackId) {
+            activeTrack = null;
+            updates.activeSkillTrackId = null;
+            updates.skillTrackCurrentDay = 1;
+            updates.skillTrackCompletedDays = [];
+            setActiveSkillTrackId(null);
+            setSkillTrackCurrentDay(1);
+            setSkillTrackCompletedDays([]);
+          }
+
+          let nextTrackDay = trackCurrentDay;
+          if (activeTrack && completedDays.includes(trackCurrentDay)) {
+            nextTrackDay = Math.min(7, trackCurrentDay + 1);
+            updates.skillTrackCurrentDay = nextTrackDay;
+            setSkillTrackCurrentDay(nextTrackDay);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("skillTrackCurrentDay", String(nextTrackDay));
+            }
+          }
+
+          updates.todaySkillTrackId = activeTrack;
+          updates.todaySkillTrackDay = activeTrack ? nextTrackDay : 1;
+          setTodaySkillTrackId(activeTrack);
+          setTodaySkillTrackDay(activeTrack ? nextTrackDay : 1);
 
           try {
             await updateDoc(userRef, updates);
@@ -2794,10 +2880,13 @@ Day 21: [กิจกรรม]
   const dailyQuests = useMemo(() => {
     if (!todayDateStr || !user?.uid) return [];
 
-    // 🎓 ถ้ามี Active Skill Track ให้ดึง Quest 1 จากแผน AI Wheel และ Quests 2-4 จากวิชาที่เลือก
-    if (activeSkillTrackId && SKILL_TRACKS[activeSkillTrackId]) {
-      const track = SKILL_TRACKS[activeSkillTrackId];
-      const targetDay = skillTrackCurrentDay || 1;
+    // 🎓 ถ้ามี Active Skill Track ให้ดึง Quest 1 จากแผน AI Wheel และ Quests 2-4 จากวิชาที่เลือกสำหรับวันนี้
+    const effectiveTrackId = todaySkillTrackId || activeSkillTrackId;
+    const effectiveTrackDay = todaySkillTrackDay || skillTrackCurrentDay || 1;
+
+    if (effectiveTrackId && SKILL_TRACKS[effectiveTrackId]) {
+      const track = SKILL_TRACKS[effectiveTrackId];
+      const targetDay = Math.min(7, Math.max(1, effectiveTrackDay));
       
       // 🎯 Quest 1: Anchor from Wheel AI 21-Day Action Plan using wheelPlanDay!
       const wheelDay = (completedQuests.includes(1) && wheelPlanDay === 22) ? 21 : (wheelPlanDay || 1);
@@ -2824,7 +2913,7 @@ Day 21: [กิจกรรม]
       }
 
       // 🧠 6-Assessment AI Quests (If generated for active track)
-      const aiDays = aiSkillQuests[activeSkillTrackId];
+      const aiDays = aiSkillQuests[effectiveTrackId];
       const aiDayData = aiDays ? (aiDays[targetDay - 1] || aiDays[0]) : null;
       const dayData = track.days[(targetDay - 1)] || track.days[0];
       const skillQuests = aiDayData?.quests || dayData?.quests;
@@ -5559,9 +5648,10 @@ Day 21: [กิจกรรม]
 
             {/* 🎓 7-Day Skill Track Mastery Banner */}
             <SkillTrackBanner
-              activeTrackId={activeSkillTrackId}
-              currentDay={skillTrackCurrentDay}
+              activeTrackId={todaySkillTrackId || activeSkillTrackId}
+              currentDay={todaySkillTrackDay || skillTrackCurrentDay}
               completedDays={skillTrackCompletedDays}
+              nextTrackId={activeSkillTrackId}
               lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
               onSelectTrack={handleSelectSkillTrack}

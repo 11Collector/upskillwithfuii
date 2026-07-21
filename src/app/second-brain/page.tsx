@@ -1118,6 +1118,11 @@ function SecondBrainContent() {
       return;
     }
 
+    if (notes.length < 2) {
+      alert("💡 ต้องมีโน้ตในระบบอย่างน้อย 2 รายการขึ้นไป เพื่อให้ AI วิเคราะห์ความเชื่อมโยงได้ครับ");
+      return;
+    }
+
     // Bypass check: allow if Pro OR freeScansUsed is under 3
     if (!isProMember && freeScansUsed >= 3) {
       alert("✨ ฟีเจอร์ AI Brain Scan วิเคราะห์ความเชื่อมโยง เป็นสิทธิ์เฉพาะสมาชิก PRO\n\nสามารถอัปเดตสมาชิกที่หน้าแดชบอร์ดได้ครับ");
@@ -1128,11 +1133,11 @@ function SecondBrainContent() {
     try {
       const idToken = await auth.currentUser?.getIdToken(true);
       
-      const notesSummary = notes.map(n => ({
+      const notesSummary = notes.slice(0, 50).map(n => ({
         id: n.id,
         title: n.title || "ไม่มีชื่อ",
         category: n.category || "พัฒนาตัวเอง",
-        snippet: (n.content || "").replace(/[#*`_-]/g, "").slice(0, 1200)
+        snippet: (n.content || "").replace(/[#*`_-]/g, "").slice(0, 400)
       }));
 
       const promptText = `นี่คือรายการโน้ตทั้งหมดในสมองที่สองของผู้ใช้:\n${JSON.stringify(notesSummary, null, 2)}\n\nโปรดทำการจับคู่เชื่อมโยงไอเดียที่สัมพันธ์กัน และส่งคำตอบคืนเป็น JSON เท่านั้นตามกฎ`;
@@ -1157,16 +1162,22 @@ function SecondBrainContent() {
       const data = await response.json();
       let suggestions = [];
       try {
-        const cleanedText = data.quote.replace(/```json|```/g, "").trim();
-        suggestions = JSON.parse(cleanedText);
-      } catch (parseErr) {
-        console.error("Failed to parse AI JSON response:", parseErr, data.quote);
-        const arrayMatch = data.quote.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        const rawQuote = data.quote || "";
+        const cleanedText = rawQuote
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/, "")
+          .replace(/\s*```$/, "")
+          .trim();
+
+        const arrayMatch = cleanedText.match(/\[\s*\{[\s\S]*\}\s*\]/);
         if (arrayMatch) {
           suggestions = JSON.parse(arrayMatch[0]);
         } else {
-          throw new Error("AI returned invalid JSON formatting");
+          suggestions = JSON.parse(cleanedText);
         }
+      } catch (parseErr) {
+        console.error("Failed to parse AI JSON response:", parseErr, data.quote);
+        throw new Error("AI returned invalid JSON formatting");
       }
 
       if (Array.isArray(suggestions)) {
