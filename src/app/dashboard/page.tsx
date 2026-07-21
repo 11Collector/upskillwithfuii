@@ -7603,24 +7603,18 @@ Day 21: [กิจกรรม]
                 {/* Content */}
                 <div className="overflow-y-auto flex-1 p-5 space-y-3">
                   {bookMatchLoading ? (
-                    <div className="flex flex-col items-center justify-center py-14 gap-4">
-                      {/* App Logo Holographic Seal */}
-                      <div className="relative w-14 h-14 flex items-center justify-center select-none shrink-0 mb-4">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/20 to-cyan-500/20 rounded-full blur-md" />
-                        <div className="absolute inset-0 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-xl flex items-center justify-center overflow-hidden">
-                          <img src="/logoapp-v2.png" alt="App Logo" className="w-full h-full object-cover rounded-full scale-100 brightness-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.25)]" />
-                        </div>
-                      </div>
-                      <div className="relative w-12 h-12">
+                    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+                      <div className="relative w-16 h-16 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-emerald-400/20 rounded-full blur-xl animate-pulse" />
                         <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-                          className="w-12 h-12 rounded-full border-2 border-t-transparent"
-                          style={{ borderColor: "transparent", borderTopColor: "transparent", background: "conic-gradient(from 0deg, #a78bfa, #34d399, #67e8f9, #fbbf24, #f472b6, #a78bfa)", borderRadius: "9999px", padding: "2px" }}
-                        />
-                        <div className="absolute inset-[2px] bg-white rounded-full" />
+                          animate={{ y: [-4, 4, -4] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                          className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shadow-md"
+                        >
+                          <BookOpen size={26} />
+                        </motion.div>
                       </div>
-                      <p className="text-slate-500 text-sm font-medium">กำลังเลือกหนังสือที่เหมาะกับคุณ</p>
+                      <p className="text-slate-500 text-xs font-bold animate-pulse">กำลังเฟ้นหาหนังสือเฉพาะสำหรับจิตวิญญาณของคุณ...</p>
                     </div>
                   ) : bookMatchBooks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-14 gap-3">
