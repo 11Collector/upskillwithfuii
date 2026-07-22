@@ -379,7 +379,7 @@ const handleGenerateResult = async () => {
           
           const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
           const existingCompleted = Array.isArray(userData.completedQuestIds) ? userData.completedQuestIds : [];
-          const newCompleted = Array.from(new Set([...existingCompleted, 1]));
+          const newCompleted = existingCompleted.filter((id: number) => id !== 1);
 
           // 🌟 [AUDIT RESET LOGIC]: อัปเดต User Profile โดยเก็บสะสม Quest 1 (Wheel) และวันล่าสุดไว้
           let updateData: any = {
@@ -457,7 +457,7 @@ const handleGenerateResult = async () => {
           const userData = userSnap.data();
           const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
           const existingCompleted = Array.isArray(userData.completedQuestIds) ? userData.completedQuestIds : [];
-          const newCompleted = Array.from(new Set([...existingCompleted, 1]));
+          const newCompleted = existingCompleted.filter((id: number) => id !== 1);
 
           let updateData: any = {
             wheelPlanDay: 1,

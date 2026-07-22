@@ -31,52 +31,35 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-async function resetAllUsersToDay1() {
-  console.log('🔄 Starting reset to Day 1 for all users...');
-  const usersRef = db.collection('users');
-  const snapshot = await usersRef.get();
+async function resetEmotionUser() {
+  const email = 'emotion.tuii@gmail.com';
+  console.log(`🔍 Finding user ${email}...`);
+  const snapshot = await db.collection('users').where('email', '==', email).get();
 
-  console.log(`Found ${snapshot.size} users to reset.`);
-
-  let batch = db.batch();
-  let count = 0;
-  let totalReset = 0;
+  if (snapshot.empty) {
+    console.log(`❌ User not found`);
+    return;
+  }
 
   for (const doc of snapshot.docs) {
-    batch.update(doc.ref, {
+    console.log(`Clearing track and wheel data for ${doc.id}...`);
+    await doc.ref.update({
       activeSkillTrackId: null,
-      skillTrackCurrentDay: 1,
-      skillTrackCompletedDays: [],
-      todaySkillTrackDay: 1,
       todaySkillTrackId: null,
+      skillTrackCurrentDay: 1,
+      todaySkillTrackDay: 1,
+      skillTrackCompletedDays: [],
       completedSkillBadges: [],
       trackCompletionCounts: {},
-      completedQuestIds: [],
       hasSeenSkillTrackPopup: false,
       wheelPlanDay: 1,
-      wheelCompletions: 0
+      wheelCompletions: 0,
+      completedQuestIds: [],
+      lastWheel: null
     });
-
-    count++;
-    totalReset++;
-
-    if (count === 450) {
-      await batch.commit();
-      console.log(`Committed batch of ${count} users.`);
-      batch = db.batch();
-      count = 0;
-    }
   }
 
-  if (count > 0) {
-    await batch.commit();
-    console.log(`Committed final batch of ${count} users.`);
-  }
-
-  console.log(`✅ Successfully reset ${totalReset} users to Day 1 clean state!`);
+  console.log(`✅ Successfully reset user ${email}!`);
 }
 
-resetAllUsersToDay1().catch((err) => {
-  console.error('❌ Error resetting users to Day 1:', err);
-  process.exit(1);
-});
+resetEmotionUser().catch(console.error);
