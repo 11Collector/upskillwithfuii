@@ -1888,7 +1888,7 @@ export default function Home() {
     <audio ref={audioRef} src="/sounds/begins.mp3" loop preload="metadata" />
 
     {!showUpgradeModal && !showStoryModal && !showIOSInstallGuide && !showGuide && (
-      <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-auto">
+      <div className="fixed bottom-24 right-4 sm:bottom-24 sm:right-6 md:bottom-6 md:right-6 z-[200] flex flex-col items-end gap-2 pointer-events-auto">
         {/* 3-Second Auto-Fade Toast */}
         <AnimatePresence>
           {showMusicToast && (

@@ -823,9 +823,22 @@ Day 21: [กิจกรรม]
   // ☁️ Sync Skill Track State from Firestore (Multi-device Sync Support)
   useEffect(() => {
     if (userData) {
-      if (userData.activeSkillTrackId && userData.activeSkillTrackId !== activeSkillTrackId) {
-        setActiveSkillTrackId(userData.activeSkillTrackId);
-        if (typeof window !== "undefined") localStorage.setItem("activeSkillTrackId", userData.activeSkillTrackId);
+      const targetActiveTrack = userData.activeSkillTrackId || null;
+      const targetTodayTrack = userData.todaySkillTrackId || null;
+
+      if (targetActiveTrack !== activeSkillTrackId) {
+        setActiveSkillTrackId(targetActiveTrack);
+        if (typeof window !== "undefined") {
+          if (targetActiveTrack) localStorage.setItem("activeSkillTrackId", targetActiveTrack);
+          else localStorage.removeItem("activeSkillTrackId");
+        }
+      }
+      if (targetTodayTrack !== todaySkillTrackId) {
+        setTodaySkillTrackId(targetTodayTrack);
+        if (typeof window !== "undefined") {
+          if (targetTodayTrack) localStorage.setItem("todaySkillTrackId", targetTodayTrack);
+          else localStorage.removeItem("todaySkillTrackId");
+        }
       }
       if (userData.skillTrackCurrentDay !== undefined && userData.skillTrackCurrentDay !== skillTrackCurrentDay) {
         setSkillTrackCurrentDay(userData.skillTrackCurrentDay || 1);
@@ -839,7 +852,7 @@ Day 21: [กิจกรรม]
         setAiSkillQuests(userData.aiSkillQuests);
       }
     }
-  }, [userData?.activeSkillTrackId, userData?.skillTrackCurrentDay, JSON.stringify(userData?.skillTrackCompletedDays), userData?.aiSkillQuests]);
+  }, [userData?.activeSkillTrackId, userData?.todaySkillTrackId, userData?.skillTrackCurrentDay, JSON.stringify(userData?.skillTrackCompletedDays), userData?.aiSkillQuests]);
 
   // 🧠 6-Assessment AI Generator Trigger
   const generateSkillTrackQuests = useCallback(async (trackId: string) => {
@@ -977,13 +990,14 @@ Day 21: [กิจกรรม]
   }, [hasHabitMasterTools]);
 
   useEffect(() => {
-    if (activeTab === "quests" && !isPhase1Completed) {
-      const hasSeen = localStorage.getItem("hasSeenSkillTrackPopup_v1");
-      if (!hasSeen) {
+    if (activeTab === "quests" && user?.uid) {
+      const hasSeenLocal = localStorage.getItem(`hasSeenSkillTrackPopup_${user.uid}`);
+      const hasSeenDB = userData?.hasSeenSkillTrackPopup;
+      if (!hasSeenLocal && !hasSeenDB && !isPhase1Completed) {
         setShowQuestEnergyPopup(true);
       }
     }
-  }, [activeTab, isPhase1Completed]);
+  }, [activeTab, user?.uid, userData?.hasSeenSkillTrackPopup, isPhase1Completed]);
 
   const loadDashboardData = useCallback(async (currentUser: User) => {
     setLoading(true);
@@ -1097,7 +1111,9 @@ Day 21: [กิจกรรม]
           setCustomQuestTitle(userData.customQuestTitle || "");
           setWheelPlanDay(userData.wheelPlanDay || 0);
           setTodaySkillTrackId(userData.todaySkillTrackId || userData.activeSkillTrackId || null);
-          setTodaySkillTrackDay(userData.todaySkillTrackDay || userData.skillTrackCurrentDay || 1);
+          setActiveSkillTrackId(userData.activeSkillTrackId || null);
+          setSkillTrackCurrentDay(userData.skillTrackCurrentDay || 1);
+          setSkillTrackCompletedDays(userData.skillTrackCompletedDays || []);
         } else {
           setCompletedQuests([]);
           setCustomQuestTitle("");
@@ -1907,8 +1923,16 @@ Day 21: [กิจกรรม]
         totalXP: 0,
         potXP: 0,
         streakCount: 0,
-        wheelPlanDay: 0,
+        wheelPlanDay: 1,
         wheelPlanSkips: 0,
+        wheelCompletions: 0,
+        activeSkillTrackId: null,
+        todaySkillTrackId: null,
+        skillTrackCurrentDay: 1,
+        skillTrackCompletedDays: [],
+        completedSkillBadges: [],
+        trackCompletionCounts: {},
+        hasSeenSkillTrackPopup: false,
         completedQuestIds: [],
         totalFocusMinutes: 0,     // 🆕 ล้างนาทีสะสม Focus Room
         focusReflections: [],
@@ -1946,7 +1970,6 @@ Day 21: [กิจกรรม]
         hasChattedWithFuii: false,
         lastChatTime: deleteField(),
         perfectWeeks: 0,    // 🏆 ล้างจำนวนสัปดาห์ที่สมบูรณ์
-        wheelCompletions: 0, // 🎡 ล้างตัวนับความสำเร็จรายวัน
         createdAt: resetDate, // รีเซ็ตเพื่อให้ Weekly Stats กลับไปนับ Week 1 ใหม่
         aiGeneratedQuestTitle: "",
         aiGeneratedDiscTitle: "",
@@ -1977,10 +2000,23 @@ Day 21: [กิจกรรม]
       setPotXP(0);
       setStreakCount(0);
       setLastQuestDate("");
-      setWheelPlanDay(0);
+      setWheelPlanDay(1);
       setWheelPlanSkips(0);
       setWheelCompletions(0); // 🎡 ล้างตัวนับความสำเร็จ
       setPerfectWeeks(0);    // 🏆 ล้าง Badge สะสม
+      setActiveSkillTrackId(null);
+      setTodaySkillTrackId(null);
+      setSkillTrackCurrentDay(1);
+      setSkillTrackCompletedDays([]);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("activeSkillTrackId");
+        localStorage.removeItem("todaySkillTrackId");
+        localStorage.removeItem("skillTrackCurrentDay");
+        localStorage.removeItem("skillTrackCompletedDays");
+        if (user?.uid) {
+          localStorage.removeItem(`hasSeenSkillTrackPopup_${user.uid}`);
+        }
+      }
       setCompletedQuests([]);
       setLastWheel(null);
       setLastDisc(null);
@@ -2905,14 +2941,17 @@ Day 21: [กิจกรรม]
       const targetDay = Math.min(7, Math.max(1, effectiveTrackDay));
       
       // 🎯 Quest 1: Anchor from Wheel AI 21-Day Action Plan using wheelPlanDay!
+      let quest1Title = "";
       const wheelDay = (completedQuests.includes(1) && wheelPlanDay === 22) ? 21 : (wheelPlanDay || 1);
-      let wheelTitle = "";
-      if (lastWheel?.analysis) {
+
+      if (!lastWheel) {
+        quest1Title = "ทำแบบประเมิน Wheel of Life เพื่อปลดล็อกแผนพัฒนาชีวิตของคุณ";
+      } else if (lastWheel?.analysis) {
         const lines = lastWheel.analysis.split('\n');
         const dayRegex = new RegExp(`\\bday\\s*${wheelDay}\\b`, 'i');
         const dayLine = lines.find((l: string) => dayRegex.test(l));
         if (dayLine) {
-          wheelTitle = dayLine
+          quest1Title = dayLine
             .replace(/\*\*/g, '')
             .replace(/^[\s\-\*•\d\.\(\)]+/, '')
             .replace(/^day\s*\d+\s*[:\-|\s]*/i, '')
@@ -2923,7 +2962,7 @@ Day 21: [กิจกรรม]
             .map((l: string) => l.replace(/\*\*/g, '').replace(/^\d+\.\s*|^-\s*/, '').trim());
           if (planItems.length > 0) {
             const idx = Math.min(planItems.length - 1, wheelDay - 1);
-            wheelTitle = (planItems[idx] || planItems[0]).replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim();
+            quest1Title = (planItems[idx] || planItems[0]).replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim();
           }
         }
       }
@@ -2953,9 +2992,9 @@ Day 21: [กิจกรรม]
           {
             id: 1,
             type: "WHEEL",
-            title: wheelTitle || skillQuests[0]?.title || "ทบทวนเป้าหมายหลักใน Wheel of Life ของคุณ",
-            xp: 25,
-            subTag: `เป้าหมายหลัก D${targetDay}`
+            title: quest1Title || "ทบทวนเป้าหมายหลักใน Wheel of Life ของคุณ",
+            xp: !lastWheel ? 50 : 25,
+            subTag: !lastWheel ? "ประเมินเริ่มต้น" : `เป้าหมายหลัก D${targetDay}`
           },
           {
             id: 2,
@@ -3011,7 +3050,11 @@ Day 21: [กิจกรรม]
     // 🎯 [NEW LOGIC] Quest 1 MUST ALWAYS use lastWheel.analysis FIRST when available!
     let wheelQuestSet = false;
 
-    if (!wheelQuestSet && lastWheel?.analysis) {
+    if (!lastWheel) {
+      qList[0].title = "ทำแบบประเมิน Wheel of Life เพื่อปลดล็อกแผนพัฒนาชีวิตของคุณ";
+      qList[0].xp = 50;
+      wheelQuestSet = true;
+    } else if (!wheelQuestSet && lastWheel?.analysis) {
       const isWheelDoneToday = completedQuests.includes(1);
       const maxTarget = Math.max(wheelPlanTarget || 21, 21);
 
@@ -5671,7 +5714,27 @@ Day 21: [กิจกรรม]
               lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
               onSelectTrack={handleSelectSkillTrack}
-              onResetTrack={() => handleSelectSkillTrack(activeSkillTrackId || "money")}
+              onResetTrack={() => {
+                if (user?.uid) {
+                  const userRef = doc(db, "users", user.uid);
+                  updateDoc(userRef, {
+                    activeSkillTrackId: null,
+                    todaySkillTrackId: null,
+                    skillTrackCurrentDay: 1,
+                    skillTrackCompletedDays: []
+                  }).catch(() => {});
+                }
+                setActiveSkillTrackId(null);
+                setTodaySkillTrackId(null);
+                setSkillTrackCurrentDay(1);
+                setSkillTrackCompletedDays([]);
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("activeSkillTrackId");
+                  localStorage.removeItem("todaySkillTrackId");
+                  localStorage.removeItem("skillTrackCurrentDay");
+                  localStorage.removeItem("skillTrackCompletedDays");
+                }
+              }}
               onOpenInfo={() => setShowQuestEnergyPopup(true)}
             />
 
@@ -5848,6 +5911,10 @@ Day 21: [กิจกรรม]
                     // 🚩 ถ้าเป็น Notice ห้ามรันฟังก์ชัน toggleQuest
                     onClick={() => {
                       if (isNotice) return;
+                      if (quest.id === 1 && !lastWheel) {
+                        router.push("/tools/wheel-of-life");
+                        return;
+                      }
                       toggleQuest(quest.id, quest.xp);
                     }}
                   >
@@ -5876,8 +5943,10 @@ Day 21: [กิจกรรม]
                         </span>
 
                         {quest.id === 1 && (
-                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${isDone ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700 border border-rose-200/60'}`}>
-                            {quest.title.includes('|') 
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${isDone ? 'bg-green-100 text-green-700' : !lastWheel ? 'bg-amber-100 text-amber-800 border border-amber-200/60' : 'bg-rose-100 text-rose-700 border border-rose-200/60'}`}>
+                            {!lastWheel
+                              ? 'ประเมินเริ่มต้น'
+                              : quest.title.includes('|') 
                               ? quest.title.split('|')[0].trim() 
                               : wheelPlanDay > (wheelPlanTarget || 21) 
                               ? 'COMPLETE' 
@@ -9246,7 +9315,11 @@ Day 21: [กิจกรรม]
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100001] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl"
             onClick={() => {
-              localStorage.setItem("hasSeenSkillTrackPopup_v1", "true");
+              if (user?.uid) {
+                localStorage.setItem(`hasSeenSkillTrackPopup_${user.uid}`, "true");
+                updateDoc(doc(db, "users", user.uid), { hasSeenSkillTrackPopup: true }).catch(() => {});
+                setUserData((u: any) => u ? { ...u, hasSeenSkillTrackPopup: true } : null);
+              }
               setShowQuestEnergyPopup(false);
             }}
           >
@@ -9328,7 +9401,11 @@ Day 21: [กิจกรรม]
 
                 <button
                   onClick={() => {
-                    localStorage.setItem("hasSeenSkillTrackPopup_v1", "true");
+                    if (user?.uid) {
+                      localStorage.setItem(`hasSeenSkillTrackPopup_${user.uid}`, "true");
+                      updateDoc(doc(db, "users", user.uid), { hasSeenSkillTrackPopup: true }).catch(() => {});
+                      setUserData((u: any) => u ? { ...u, hasSeenSkillTrackPopup: true } : null);
+                    }
                     setShowQuestEnergyPopup(false);
                   }}
                   className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 active:scale-95 text-xs tracking-wider uppercase cursor-pointer"
