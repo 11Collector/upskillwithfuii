@@ -2944,8 +2944,8 @@ Day 21: [กิจกรรม]
       Array.isArray(userData?.currentDailyQuests) &&
       userData.currentDailyQuests.length === 4
     ) {
-      const storedTrackId = userData.todaySkillTrackId || userData.activeSkillTrackId || null;
-      if (storedTrackId === effectiveTrackId) {
+      const storedTrackId = userData.currentDailyTrackId || userData.todaySkillTrackId || userData.activeSkillTrackId || null;
+      if (!storedTrackId || storedTrackId === effectiveTrackId) {
         return userData.currentDailyQuests;
       }
     }
@@ -3236,9 +3236,11 @@ Day 21: [กิจกรรม]
       dailyQuests.some((q, idx) => q.title !== storedQuests[idx]?.title);
 
     if (needsUpdate) {
+      const effectiveTrackId = todaySkillTrackId || activeSkillTrackId || null;
       const userRef = doc(db, "users", user.uid);
       const updateData: any = {
         currentDailyQuests: dailyQuests,
+        currentDailyTrackId: effectiveTrackId,
         lastActiveDate: todayDateStr,
       };
 
@@ -3252,6 +3254,7 @@ Day 21: [กิจกรรม]
       }
 
       updateDoc(userRef, updateData).catch((e) => console.error("Error syncing daily quests:", e));
+      setUserData((prev: any) => prev ? { ...prev, ...updateData } : null);
     }
   }, [user?.uid, todayDateStr, userData, dailyQuests]);
 
