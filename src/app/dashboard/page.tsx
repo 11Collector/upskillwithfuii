@@ -253,7 +253,8 @@ export default function DashboardPage() {
       const updatePayload: any = {
         activeSkillTrackId: trackId,
         skillTrackCurrentDay: 1,
-        skillTrackCompletedDays: []
+        skillTrackCompletedDays: [],
+        currentDailyQuests: null
       };
       if (isFirstTime) {
         updatePayload.todaySkillTrackId = trackId;
@@ -1128,6 +1129,7 @@ Day 21: [กิจกรรม]
             aiGeneratedQuestTitle: "",
             aiGeneratedDiscTitle: "",
             aiGeneratedMoneyTitle: "",
+            currentDailyQuests: null,
             lastActiveDate: todayStr,
             lastQuestAnalysisDate: "",
             questPreferences: null
@@ -1932,6 +1934,7 @@ Day 21: [กิจกรรม]
         skillTrackCompletedDays: [],
         completedSkillBadges: [],
         trackCompletionCounts: {},
+        currentDailyQuests: null,
         hasSeenSkillTrackPopup: false,
         completedQuestIds: [],
         totalFocusMinutes: 0,     // 🆕 ล้างนาทีสะสม Focus Room
@@ -2932,9 +2935,20 @@ Day 21: [กิจกรรม]
   const dailyQuests = useMemo(() => {
     if (!todayDateStr || !user?.uid) return [];
 
-    // 🎓 ถ้ามี Active Skill Track ให้ดึง Quest 1 จากแผน AI Wheel และ Quests 2-4 จากวิชาที่เลือกสำหรับวันนี้
     const effectiveTrackId = todaySkillTrackId || activeSkillTrackId;
     const effectiveTrackDay = todaySkillTrackDay || skillTrackCurrentDay || 1;
+
+    // 🔒 ล็อกคำโจทย์ประจำวันถ้ามีบันทึกไว้อยู่แล้ว เพื่อป้องกันโจทย์เปลี่ยนคำกลางคันขณะผู้ใช้กดเควส
+    if (
+      userData?.lastActiveDate === todayDateStr &&
+      Array.isArray(userData?.currentDailyQuests) &&
+      userData.currentDailyQuests.length === 4
+    ) {
+      const storedTrackId = userData.todaySkillTrackId || userData.activeSkillTrackId || null;
+      if (storedTrackId === effectiveTrackId) {
+        return userData.currentDailyQuests;
+      }
+    }
 
     if (effectiveTrackId && SKILL_TRACKS[effectiveTrackId]) {
       const track = SKILL_TRACKS[effectiveTrackId];
@@ -5721,8 +5735,10 @@ Day 21: [กิจกรรม]
                     activeSkillTrackId: null,
                     todaySkillTrackId: null,
                     skillTrackCurrentDay: 1,
-                    skillTrackCompletedDays: []
+                    skillTrackCompletedDays: [],
+                    currentDailyQuests: null
                   }).catch(() => {});
+                  setUserData((u: any) => u ? { ...u, currentDailyQuests: null } : null);
                 }
                 setActiveSkillTrackId(null);
                 setTodaySkillTrackId(null);
