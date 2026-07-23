@@ -544,7 +544,7 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
               <div className="h-3 bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-700/50 shadow-inner relative z-10">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(totalWeeklyScore / 28) * 100}%` }}
+                  animate={{ width: `${Math.min(100, (totalWeeklyScore / 28) * 100)}%` }}
                   transition={{ duration: 1.5, delay: 0.8, type: "spring" }}
                   className="h-full bg-gradient-to-r from-orange-500 via-yellow-500 to-emerald-500 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] relative"
                 >

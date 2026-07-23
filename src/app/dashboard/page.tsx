@@ -574,6 +574,28 @@ Day 21: [กิจกรรม]
   const [isSelectingEnergy, setIsSelectingEnergy] = useState(false);
 
   useEffect(() => {
+    (window as any).testAdvanceDay = () => {
+      setTodaySkillTrackDay((prev) => {
+        const next = Math.min(7, prev + 1);
+        setSkillTrackCurrentDay(next);
+        console.log(`⏩ [Dev Test] Advanced Skill Track Day to: Day ${next}`);
+        return next;
+      });
+    };
+
+    (window as any).testFailFast = () => {
+      setTodaySkillTrackDay(4);
+      setSkillTrackCurrentDay(4);
+      setSkillTrackCompletedDays([]);
+      console.log("🛑 [Dev Test] Set to Day 4 with 0 completed days -> Fail-Fast Triggered!");
+    };
+
+    (window as any).testCompleteToday = () => {
+      const currentDay = todaySkillTrackDay || skillTrackCurrentDay || 1;
+      setSkillTrackCompletedDays((prev) => [...new Set([...prev, currentDay])]);
+      console.log(`✅ [Dev Test] Marked Day ${currentDay} as completed!`);
+    };
+
     (window as any).testResetFounder = async () => {
       if (user) {
         try {
@@ -596,7 +618,7 @@ Day 21: [กิจกรรม]
         }
       }
     };
-  }, [user]);
+  }, [user, todaySkillTrackDay, skillTrackCurrentDay]);
 
   const [lastWheel, setLastWheel] = useState<any>(null);
   const [lastQuote, setLastQuote] = useState<any>(null);
@@ -616,8 +638,9 @@ Day 21: [กิจกรรม]
 
   // 🎯 Sync 3/4 Daily Quests Completion to 7-Day Sprint Node
   useEffect(() => {
-    if (!activeSkillTrackId) return;
-    const currentDay = skillTrackCurrentDay || 1;
+    const activeTrack = todaySkillTrackId || activeSkillTrackId;
+    if (!activeTrack) return;
+    const currentDay = todaySkillTrackDay || skillTrackCurrentDay || 1;
     if (completedQuests.length >= 3) {
       setSkillTrackCompletedDays((prev) => {
         if (!prev.includes(currentDay)) {
@@ -728,7 +751,7 @@ Day 21: [กิจกรรม]
         return prev;
       });
     }
-  }, [completedQuests.length, activeSkillTrackId, skillTrackCurrentDay, user?.uid]);
+  }, [completedQuests.length, activeSkillTrackId, todaySkillTrackId, skillTrackCurrentDay, todaySkillTrackDay, user?.uid]);
   const [totalXP, setTotalXP] = useState<number>(0);
   const currentLevel = Math.floor(totalXP / 100) + 1;
   const currentLevelXP = totalXP % 100;
@@ -841,6 +864,10 @@ Day 21: [กิจกรรม]
           else localStorage.removeItem("todaySkillTrackId");
         }
       }
+      if (userData.todaySkillTrackDay !== undefined && userData.todaySkillTrackDay !== todaySkillTrackDay) {
+        setTodaySkillTrackDay(userData.todaySkillTrackDay || 1);
+        if (typeof window !== "undefined") localStorage.setItem("todaySkillTrackDay", String(userData.todaySkillTrackDay || 1));
+      }
       if (userData.skillTrackCurrentDay !== undefined && userData.skillTrackCurrentDay !== skillTrackCurrentDay) {
         setSkillTrackCurrentDay(userData.skillTrackCurrentDay || 1);
         if (typeof window !== "undefined") localStorage.setItem("skillTrackCurrentDay", String(userData.skillTrackCurrentDay || 1));
@@ -853,7 +880,7 @@ Day 21: [กิจกรรม]
         setAiSkillQuests(userData.aiSkillQuests);
       }
     }
-  }, [userData?.activeSkillTrackId, userData?.todaySkillTrackId, userData?.skillTrackCurrentDay, JSON.stringify(userData?.skillTrackCompletedDays), userData?.aiSkillQuests]);
+  }, [userData?.activeSkillTrackId, userData?.todaySkillTrackId, userData?.todaySkillTrackDay, userData?.skillTrackCurrentDay, JSON.stringify(userData?.skillTrackCompletedDays), userData?.aiSkillQuests]);
 
   // 🧠 6-Assessment AI Generator Trigger
   const generateSkillTrackQuests = useCallback(async (trackId: string) => {
@@ -1112,6 +1139,7 @@ Day 21: [กิจกรรม]
           setCustomQuestTitle(userData.customQuestTitle || "");
           setWheelPlanDay(userData.wheelPlanDay || 0);
           setTodaySkillTrackId(userData.todaySkillTrackId || userData.activeSkillTrackId || null);
+          setTodaySkillTrackDay(userData.todaySkillTrackDay || userData.skillTrackCurrentDay || 1);
           setActiveSkillTrackId(userData.activeSkillTrackId || null);
           setSkillTrackCurrentDay(userData.skillTrackCurrentDay || 1);
           setSkillTrackCompletedDays(userData.skillTrackCompletedDays || []);
@@ -2680,7 +2708,11 @@ Day 21: [กิจกรรม]
   const aiWheelSummary = lastWheel?.analysis || "ระบบกำลังประมวลผลข้อมูล... กรุณาประเมินใหม่อีกครั้งเพื่อรับคำแนะนำจาก AI";
 
   const totalWeeklyScore = useMemo(() => {
-    return (weeklyData.wheel || 0) + (weeklyData.disc || 0) + (weeklyData.money || 0) + (weeklyData.library || 0) + (weeklyData.wildcard || 0) + (weeklyData.challenge || 0);
+    const wheel = Math.min(7, Math.max(0, weeklyData.wheel || 0));
+    const disc = Math.min(7, Math.max(0, weeklyData.disc || 0));
+    const money = Math.min(7, Math.max(0, weeklyData.money || 0));
+    const challenge = Math.min(7, Math.max(0, weeklyData.challenge || 0));
+    return Math.min(28, wheel + disc + money + challenge);
   }, [weeklyData]);
 
   const rankInfo = useMemo(() => {
@@ -5583,7 +5615,7 @@ Day 21: [กิจกรรม]
                     <div className="h-3 bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-700/50 shadow-inner relative z-10">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${(totalWeeklyScore / 28) * 100}%` }}
+                        animate={{ width: `${Math.min(100, (totalWeeklyScore / 28) * 100)}%` }}
                         transition={{ duration: 1.5, delay: 0.8, type: "spring" }}
                         className="h-full bg-gradient-to-r from-orange-500 via-yellow-500 to-emerald-500 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] relative"
                       >
@@ -5731,6 +5763,37 @@ Day 21: [กิจกรรม]
               lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
               onSelectTrack={handleSelectSkillTrack}
+              onRestartTrack={() => {
+                const targetTrack = todaySkillTrackId || activeSkillTrackId;
+                if (!targetTrack) return;
+                setActiveSkillTrackId(targetTrack);
+                setTodaySkillTrackId(targetTrack);
+                setSkillTrackCurrentDay(1);
+                setTodaySkillTrackDay(1);
+                setSkillTrackCompletedDays([]);
+
+                if (user?.uid) {
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem(`activeSkillTrackId_${user.uid}`, targetTrack);
+                    localStorage.setItem(`skillTrackCurrentDay_${user.uid}`, "1");
+                    localStorage.setItem(`todaySkillTrackDay_${user.uid}`, "1");
+                    localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
+                  }
+                  const userRef = doc(db, "users", user.uid);
+                  const updatePayload: any = {
+                    activeSkillTrackId: targetTrack,
+                    todaySkillTrackId: targetTrack,
+                    skillTrackCurrentDay: 1,
+                    todaySkillTrackDay: 1,
+                    skillTrackCompletedDays: [],
+                    currentDailyQuests: null
+                  };
+                  setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error restarting skill track:", err));
+                  setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
+                }
+                const trackName = SKILL_TRACKS[targetTrack]?.title || "วิชา";
+                setShowSuccessToast(`🔄 เริ่มต้นแก้ตัววิชา "${trackName}" บทเรียน Day 1 เรียบร้อยครับ! ลุยกันใหม่!`);
+              }}
               onResetTrack={() => {
                 if (user?.uid) {
                   const userRef = doc(db, "users", user.uid);
@@ -5738,6 +5801,7 @@ Day 21: [กิจกรรม]
                     activeSkillTrackId: null,
                     todaySkillTrackId: null,
                     skillTrackCurrentDay: 1,
+                    todaySkillTrackDay: 1,
                     skillTrackCompletedDays: [],
                     currentDailyQuests: null
                   }).catch(() => {});
@@ -5746,6 +5810,7 @@ Day 21: [กิจกรรม]
                 setActiveSkillTrackId(null);
                 setTodaySkillTrackId(null);
                 setSkillTrackCurrentDay(1);
+                setTodaySkillTrackDay(1);
                 setSkillTrackCompletedDays([]);
                 if (typeof window !== "undefined") {
                   localStorage.removeItem("activeSkillTrackId");

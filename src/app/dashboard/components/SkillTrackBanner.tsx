@@ -28,6 +28,7 @@ interface SkillTrackBannerProps {
   userGoal?: string;
   onSelectTrack: (trackId: string, keepWheelProgress?: boolean) => void;
   onResetTrack?: () => void;
+  onRestartTrack?: () => void;
   onOpenInfo?: () => void;
   onAdvanceDevDay?: () => void;
   nextTrackId?: string | null;
@@ -41,6 +42,7 @@ export default function SkillTrackBanner({
   userGoal,
   onSelectTrack,
   onResetTrack,
+  onRestartTrack,
   onOpenInfo,
   onAdvanceDevDay,
   nextTrackId
@@ -48,6 +50,13 @@ export default function SkillTrackBanner({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
   const activeTrack = activeTrackId ? SKILL_TRACKS[activeTrackId] : null;
+
+  // 🧠 Fail-Fast Sprint Evaluator:
+  // If remaining available days in 7-day sprint + already completed days < 5, sprint is failed!
+  const isTodayCompleted = completedDays.includes(currentDay);
+  const remainingDaysCount = isTodayCompleted ? Math.max(0, 7 - currentDay) : Math.max(0, 7 - currentDay + 1);
+  const maxPossibleCompleted = completedDays.length + remainingDaysCount;
+  const isFailedSprint = completedDays.length < 5 && maxPossibleCompleted < 5;
 
   // 🧠 Smart Track Recommendation Evaluator:
   // Priority #1: User's explicit 1-Year Goal text typed in Wheel of Life
@@ -108,10 +117,10 @@ export default function SkillTrackBanner({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2rem] border border-orange-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 sm:p-5 shadow-2xl"
+          className={`relative overflow-hidden rounded-[2rem] border ${isFailedSprint ? 'border-rose-500/40 bg-gradient-to-br from-slate-950 via-rose-950/20 to-slate-950' : 'border-orange-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950'} text-white p-4 sm:p-5 shadow-2xl`}
         >
           {/* Background Glow Flare */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-3xl rounded-full pointer-events-none -mr-16 -mt-16" />
+          <div className={`absolute top-0 right-0 w-64 h-64 ${isFailedSprint ? 'bg-rose-500/10' : 'bg-orange-500/10'} blur-3xl rounded-full pointer-events-none -mr-16 -mt-16`} />
 
           {/* Header Row: Icon + Track Name + Status/Action */}
           <div className="flex items-center justify-between gap-2.5 relative z-10 mb-3.5">
@@ -121,7 +130,7 @@ export default function SkillTrackBanner({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[10px] sm:text-xs font-black text-amber-400 tracking-wider">
+                  <span className={`text-[10px] sm:text-xs font-black ${isFailedSprint ? 'text-rose-400' : 'text-amber-400'} tracking-wider`}>
                     Day {currentDay}/7
                   </span>
                   <button 
@@ -140,7 +149,12 @@ export default function SkillTrackBanner({
 
             {/* Right Action Buttons */}
             <div className="flex items-center gap-2 shrink-0">
-              {completedDays.length < 5 ? (
+              {isFailedSprint ? (
+                <div className="px-2.5 py-1 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
+                  <RotateCcw size={12} className="text-rose-400" />
+                  <span>ไม่ผ่านรอบนี้</span>
+                </div>
+              ) : completedDays.length < 5 ? (
                 <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
                   <ShieldCheck size={12} className="text-orange-400" />
                   <span className="hidden sm:inline">โฟกัส 7 วัน</span>
@@ -164,10 +178,10 @@ export default function SkillTrackBanner({
           <div className="pt-3 border-t border-white/10 relative z-10">
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 mb-2">
               <span className="flex items-center gap-1.5">
-                <Target size={13} className="text-orange-400" />
+                <Target size={13} className={isFailedSprint ? 'text-rose-400' : 'text-orange-400'} />
                 ความคืบหน้า 7 วัน
               </span>
-              <span className="text-orange-400 font-black">
+              <span className={isFailedSprint ? 'text-rose-400 font-black' : 'text-orange-400 font-black'}>
                 {Math.round((completedDays.length / 7) * 100)}% สำเร็จ
               </span>
             </div>
@@ -184,16 +198,18 @@ export default function SkillTrackBanner({
                       isCompleted
                         ? "bg-gradient-to-br from-orange-500/30 to-amber-500/20 border-orange-400 text-orange-200 shadow-md shadow-orange-500/20"
                         : isCurrent
-                        ? "bg-slate-900 border-amber-400/90 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50"
+                        ? isFailedSprint
+                          ? "bg-slate-900 border-rose-400/90 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] ring-1 ring-rose-400/50"
+                          : "bg-slate-900 border-amber-400/90 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50"
                         : "bg-white/5 border-white/5 text-slate-500"
                     }`}
                   >
-                    <span className={`text-[9px] font-black uppercase ${isCurrent ? 'text-amber-300' : isCompleted ? 'text-orange-300' : 'text-slate-500'}`}>D{dayNum}</span>
+                    <span className={`text-[9px] font-black uppercase ${isCurrent ? (isFailedSprint ? 'text-rose-300' : 'text-amber-300') : isCompleted ? 'text-orange-300' : 'text-slate-500'}`}>D{dayNum}</span>
                     {isCompleted ? (
                       <CheckCircle2 size={13} className="text-orange-400 mt-0.5" />
                     ) : isCurrent ? (
-                      <div className="w-3 h-3 rounded-full border-2 border-amber-400 bg-amber-400/20 flex items-center justify-center mt-0.5">
-                        <div className="w-1 h-1 rounded-full bg-amber-400 animate-ping" />
+                      <div className={`w-3 h-3 rounded-full border-2 ${isFailedSprint ? 'border-rose-400 bg-rose-400/20' : 'border-amber-400 bg-amber-400/20'} flex items-center justify-center mt-0.5`}>
+                        <div className={`w-1 h-1 rounded-full ${isFailedSprint ? 'bg-rose-400' : 'bg-amber-400'} animate-ping`} />
                       </div>
                     ) : (
                       <div className="w-3 h-3 rounded-full border-2 border-slate-700 bg-transparent mt-0.5" />
@@ -202,7 +218,32 @@ export default function SkillTrackBanner({
                 );
               })}
             </div>
-            {nextTrackId && nextTrackId !== activeTrackId && SKILL_TRACKS[nextTrackId] && (
+
+            {/* 🛑 Fail-Fast Sprint Warning Banner */}
+            {isFailedSprint ? (
+              <div className="mt-3 p-3 sm:p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center shrink-0 border border-rose-400/30 text-rose-400 font-bold">
+                    ✕
+                  </div>
+                  <div>
+                    <span className="font-black text-rose-300 block text-xs sm:text-sm">ไม่ผ่านรอบนี้ (สะสมได้ไม่ถึง 5/7 วัน)</span>
+                    <span className="text-[10px] sm:text-[11px] text-rose-200/80 block mt-0.5">ข้ามเควสต์เกิน 2 วัน ทำให้สะสมไม่ครบ 5 วันในรอบนี้ ไม่เป็นไรครับ! สามารถเลือกสลับวิชาใหม่ได้เลย</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => {
+                      setSelectedTrackForChoice(null);
+                      setIsModalOpen(true);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white font-black text-xs transition-all shadow-md flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
+                  >
+                    <Sparkles size={13} /> สลับวิชา
+                  </button>
+                </div>
+              </div>
+            ) : nextTrackId && nextTrackId !== activeTrackId && SKILL_TRACKS[nextTrackId] ? (
               <div className="mt-3 px-3.5 py-2 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-300 text-xs font-semibold flex items-center justify-between shadow-inner">
                 <div className="flex items-center gap-2 min-w-0">
                   <Sparkles size={14} className="text-amber-400 shrink-0" />
@@ -210,7 +251,7 @@ export default function SkillTrackBanner({
                 </div>
                 <span className="text-[10px] text-amber-400 font-black px-2 py-0.5 bg-amber-400/10 rounded-full border border-amber-400/20 shrink-0 ml-2">เริ่มวันพรุ่งนี้ 00:00 น.</span>
               </div>
-            )}
+            ) : null}
           </div>
         </motion.div>
       ) : (
