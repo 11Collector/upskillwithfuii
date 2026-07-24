@@ -3025,6 +3025,7 @@ Day 21: [กิจกรรม]
 
         let q2Title = skillQuests[0]?.title || "ฝึกนิสัยประจำวิชา";
         let q3Title = skillQuests[1]?.title || "ท้าทายลงมือทำประจำวิชา";
+        let q4Title = skillQuests[2]?.title || "ทบทวนปัญญาประจำวิชา";
 
         if (!aiDayData) {
           if (activeSkillTrackId === "money" && moneyTitle) {
@@ -3032,6 +3033,22 @@ Day 21: [กิจกรรม]
           } else if (activeSkillTrackId === "relationship" && discStyle) {
             q2Title = q2Title.replace(/ตามสไตล์ของคุณ/g, `สไตล์สาย ${discStyle} ของคุณ`);
           }
+        }
+
+        // 🛡️ Deduplication & Overlap Safeguard against Quest 1 (Wheel Anchor)
+        const isTooSimilar = (t1: string, t2: string) => {
+          if (!t1 || !t2) return false;
+          const c1 = t1.toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '');
+          const c2 = t2.toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '');
+          return (c1.length > 6 && c2.length > 6 && (c1.includes(c2) || c2.includes(c1)));
+        };
+
+        const trackName = track.title || "วิชาชีวิต";
+        if (quest1Title && isTooSimilar(q2Title, quest1Title)) {
+          q2Title = `[${trackName}] ${q2Title}`;
+        }
+        if (quest1Title && isTooSimilar(q3Title, quest1Title)) {
+          q3Title = `[${trackName}] ${q3Title}`;
         }
 
         return [
@@ -3059,7 +3076,7 @@ Day 21: [กิจกรรม]
           {
             id: 4,
             type: "LIBRARY",
-            title: skillQuests[2]?.title || "ทบทวนปัญญาประจำวิชา",
+            title: q4Title,
             xp: 10,
             subTag: skillQuests[2]?.tag || "วิชาทบทวน"
           }
