@@ -37,6 +37,8 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
+import { AssessmentProvider } from "@/context/AssessmentContext";
+
 export default function RootLayout({
   children,
 }: {
@@ -68,15 +70,17 @@ export default function RootLayout({
 
         <Header />
 
-        <ClientMainWrapper>
-          <Suspense>
-            {children}
-          </Suspense>
-        </ClientMainWrapper>
+        <AssessmentProvider>
+          <ClientMainWrapper>
+            <Suspense>
+              {children}
+            </Suspense>
+          </ClientMainWrapper>
 
-        <Suspense fallback={<div className="h-[5.5rem]" />}>
-          <BottomNavigation />
-        </Suspense>
+          <Suspense fallback={<div className="h-[5.5rem]" />}>
+            <BottomNavigation />
+          </Suspense>
+        </AssessmentProvider>
 
         <Suspense fallback={null}>
           <FloatingFAB />

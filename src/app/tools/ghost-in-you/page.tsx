@@ -54,10 +54,14 @@ async function loadCommunityStats(): Promise<Record<string, number> | null> {
   } catch { return null; }
 }
 
+import { useAssessmentMode } from "@/context/AssessmentContext";
+
 // ─── page ───
 export default function GhostInYouPage() {
   const router = useRouter();
   const [phase, setPhase] = useState<"intro" | "quiz" | "loading" | "result">("intro");
+  const isAssessing = phase === "quiz" || phase === "loading";
+  useAssessmentMode(isAssessing);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [result, setResult] = useState<{ primary: GhostId; secondary: GhostId; scores: Record<GhostId, number> } | null>(null);

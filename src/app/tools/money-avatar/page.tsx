@@ -341,10 +341,14 @@ const getProgressiveQuestionSet = (allScenarios: any[], numQuestions: number) =>
   return selectedIDs.map(id => allScenarios.find(s => s.id === id)).filter(Boolean);
 };
 
+import { useAssessmentMode } from "@/context/AssessmentContext";
+
 // --- 4. MAIN COMPONENT ---
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
+  const isAssessing = gameState === "playing" || gameState === "loading";
+  useAssessmentMode(isAssessing);
   const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<{ risk: number, disc: number, choiceIndex: number }[]>([]);

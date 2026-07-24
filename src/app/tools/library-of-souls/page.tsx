@@ -11,9 +11,12 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, setDoc, doc } from "firebase/firestore";
 import { BookOpen, ArrowLeft, Sparkles, Quote, Wind, Coffee, Loader2 } from "lucide-react";
 import { results } from "@/data/librarySoulsResults";
+import { useAssessmentMode } from "@/context/AssessmentContext";
 
 export default function LibrarySoulsQuizPage() {
   const [gameState, setGameState] = useState<"start" | "playing">("start");
+  const isAssessing = gameState === "playing";
+  useAssessmentMode(isAssessing);
   const [user, setUser] = useState<User | null>(null);
   const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
 

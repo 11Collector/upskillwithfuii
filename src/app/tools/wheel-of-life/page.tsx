@@ -1,5 +1,6 @@
 "use client";
 
+import { useAssessmentMode } from "@/context/AssessmentContext";
 import { db, auth } from '@/lib/firebase'; 
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, doc, updateDoc,getDoc,increment,setDoc } from 'firebase/firestore'; 
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -293,6 +294,8 @@ export default function WheelOfLifeApp() {
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [step, setStep] = useState('home');
+  const isAssessing = step === 'assess_current' || step === 'assess_target';
+  useAssessmentMode(isAssessing);
   const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null); 
   const [currentScores, setCurrentScores] = useState(Array(8).fill(5));
   const [targetScores, setTargetScores] = useState(Array(8).fill(5));
