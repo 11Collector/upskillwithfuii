@@ -3265,7 +3265,7 @@ Day 21: [กิจกรรม]
 
     const needsUpdate = storedDate !== todayDateStr || 
       storedQuests.length !== dailyQuests.length ||
-      dailyQuests.some((q, idx) => q.title !== storedQuests[idx]?.title);
+      dailyQuests.some((q: any, idx: number) => q.title !== storedQuests[idx]?.title);
 
     if (needsUpdate) {
       const effectiveTrackId = todaySkillTrackId || activeSkillTrackId || null;
@@ -3298,7 +3298,7 @@ Day 21: [กิจกรรม]
       if (id === 1 && lastSkipDate === todayDateStr) return sum + 0;
 
       // 2. เควสปกติหาจาก dailyQuests
-      const quest = dailyQuests.find(q => q.id === id);
+      const quest = dailyQuests.find((q: any) => q.id === id);
 
       // 3. บวกคะแนนเต็ม (quest.xp) ไม่ต้องเช็กลำดับข้อแล้ว
       return sum + (quest?.xp || 0);
@@ -3627,7 +3627,7 @@ Day 21: [กิจกรรม]
     const userRef = doc(db, "users", user.uid);
 
     // 1. หาข้อมูลเควส
-    const quest = typeof id === 'number' ? dailyQuests.find(q => q.id === id) : null;
+    const quest = typeof id === 'number' ? dailyQuests.find((q: any) => q.id === id) : null;
     const questType = quest?.type || (id === 'special-01' ? "SPECIAL" : "OTHER");
 
     let xpChange = isDone ? -xp : xp;
@@ -5922,7 +5922,7 @@ Day 21: [กิจกรรม]
               )}
 
 
-              {dailyQuests.map((quest) => {
+              {dailyQuests.map((quest: any) => {
                 const isDone = completedQuests.includes(quest.id);
                 const isNotice = quest.xp === 0; // 🚩 เช็กว่าเป็นประกาศแจ้งเตือนหรือไม่
 
