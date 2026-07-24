@@ -6,8 +6,10 @@ import { Home, PieChart, Users, Wallet, Brain, LayoutDashboard } from "lucide-re
 import { Suspense, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useAssessment } from "@/context/AssessmentContext";
 
 function BottomNavigationInner() {
+  const { isAssessing } = useAssessment();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -45,8 +47,15 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  // Hide bottom nav on all assessment tools, full-screen chat & standalone tool pages
-  if (pathname.startsWith('/tools') || pathname.startsWith('/personalityzero') || pathname === '/shop') return null;
+  // Hide bottom nav on active assessment flow, full-screen chat & standalone tools
+  if (
+    isAssessing ||
+    pathname === '/tools/soul-guide' ||
+    pathname === '/tools/ai-mentor' ||
+    pathname === '/tools/slides' ||
+    pathname.startsWith('/personalityzero') ||
+    pathname === '/shop'
+  ) return null;
 
   if (isDashboardFlow) {
     const navItems = [

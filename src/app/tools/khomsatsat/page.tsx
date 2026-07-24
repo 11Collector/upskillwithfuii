@@ -12,6 +12,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
+import { useAssessmentMode } from "@/context/AssessmentContext";
 
 
 const kanit = Kanit({
@@ -219,6 +220,8 @@ export default function SwipeQuoteApp() {
 
 
   const [gameState, setGameState] = useState<"start" | "swiping" | "generating" | "result">("start");
+  const isAssessing = gameState === "swiping" || gameState === "generating";
+  useAssessmentMode(isAssessing);
   const [playerMood, setPlayerMood] = useState<{ id: string, title: string } | null>(null);
   const [deck, setDeck] = useState<string[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);

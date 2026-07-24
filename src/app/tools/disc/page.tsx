@@ -73,12 +73,21 @@ const themeColors: Record<string, { bg: string, border: string, title: string, n
   C: { bg: "bg-blue-50", border: "border-blue-200", title: "text-blue-700", name: "text-blue-900", desc: "text-blue-800" },
 };
 
+import { useAssessmentMode } from "@/context/AssessmentContext";
+
 type GenderType = "หนุ่ม" | "สาว" | "ตัวมัม" | "ชาว";
 
 export default function Home() {
   // Logic เดิมของคุณทั้งหมด
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
+  const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
+
+  const isAssessing = gameState === "playing" || gameState === "loading";
+  useAssessmentMode(isAssessing);
+
+  const [nickname, setNickname] = useState("");
+  const [gender, setGender] = useState<GenderType | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -97,14 +106,10 @@ export default function Home() {
       }
     }
     return () => unsubscribe();
-  }, []);
-
-  const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
+  }, [nickname]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<("D" | "I" | "S" | "C")[]>([]);
   const [activeScenarios, setActiveScenarios] = useState<ChatScenario[]>([]);
-  const [gender, setGender] = useState<GenderType | null>(null);
-  const [nickname, setNickname] = useState("");
   const [isCapturing, setIsCapturing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDiscInfo, setShowDiscInfo] = useState(false);
