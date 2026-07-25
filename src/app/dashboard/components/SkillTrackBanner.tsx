@@ -196,23 +196,23 @@ export default function SkillTrackBanner({
                     key={dayNum}
                     className={`flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border transition-all ${
                       isCompleted
-                        ? "bg-gradient-to-br from-orange-500/30 to-amber-500/20 border-orange-400 text-orange-200 shadow-md shadow-orange-500/20"
+                        ? "bg-gradient-to-br from-amber-500/30 via-orange-500/25 to-amber-600/20 border-amber-400 text-amber-100 shadow-md shadow-amber-500/20"
                         : isCurrent
                         ? isFailedSprint
-                          ? "bg-slate-900 border-rose-400/90 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] ring-1 ring-rose-400/50"
-                          : "bg-slate-900 border-amber-400/90 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50"
-                        : "bg-white/5 border-white/5 text-slate-500"
+                          ? "bg-slate-950 border-rose-400 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.4)] ring-1 ring-rose-400/70"
+                          : "bg-slate-900 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.4)] ring-1 ring-amber-400/70"
+                        : "bg-white/5 border-white/10 text-slate-400"
                     }`}
                   >
-                    <span className={`text-[9px] font-black uppercase ${isCurrent ? (isFailedSprint ? 'text-rose-300' : 'text-amber-300') : isCompleted ? 'text-orange-300' : 'text-slate-500'}`}>D{dayNum}</span>
+                    <span className={`text-[9.5px] font-black uppercase tracking-tight ${isCurrent ? (isFailedSprint ? 'text-rose-200 font-bold' : 'text-amber-200 font-bold') : isCompleted ? 'text-amber-300 font-bold' : 'text-slate-400'}`}>D{dayNum}</span>
                     {isCompleted ? (
-                      <CheckCircle2 size={13} className="text-orange-400 mt-0.5" />
+                      <CheckCircle2 size={14} className="text-amber-300 mt-0.5 drop-shadow-sm" />
                     ) : isCurrent ? (
-                      <div className={`w-3 h-3 rounded-full border-2 ${isFailedSprint ? 'border-rose-400 bg-rose-400/20' : 'border-amber-400 bg-amber-400/20'} flex items-center justify-center mt-0.5`}>
-                        <div className={`w-1 h-1 rounded-full ${isFailedSprint ? 'bg-rose-400' : 'bg-amber-400'} animate-ping`} />
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 ${isFailedSprint ? 'border-rose-400 bg-rose-400/30' : 'border-amber-400 bg-amber-400/30'} flex items-center justify-center mt-0.5`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${isFailedSprint ? 'bg-rose-300' : 'bg-amber-300'} animate-ping`} />
                       </div>
                     ) : (
-                      <div className="w-3 h-3 rounded-full border-2 border-slate-700 bg-transparent mt-0.5" />
+                      <div className="w-3 h-3 rounded-full border-2 border-slate-600 bg-transparent mt-0.5 opacity-60" />
                     )}
                   </div>
                 );
@@ -221,14 +221,14 @@ export default function SkillTrackBanner({
 
             {/* 🛑 Fail-Fast Sprint Warning Banner */}
             {isFailedSprint ? (
-              <div className="mt-3 p-3 sm:p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center shrink-0 border border-rose-400/30 text-rose-400 font-bold">
+              <div className="mt-3 p-3.5 sm:p-4 rounded-2xl bg-rose-950/90 border border-rose-500/60 text-white text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-rose-950/60 backdrop-blur-sm">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-rose-600/30 flex items-center justify-center shrink-0 border border-rose-400/50 text-rose-200 font-black shadow-inner text-sm">
                     ✕
                   </div>
                   <div>
-                    <span className="font-black text-rose-300 block text-xs sm:text-sm">ไม่ผ่านรอบนี้ (สะสมได้ไม่ถึง 5/7 วัน)</span>
-                    <span className="text-[10px] sm:text-[11px] text-rose-200/80 block mt-0.5">ข้ามเควสต์เกิน 2 วัน ทำให้สะสมไม่ครบ 5 วันในรอบนี้ ไม่เป็นไรครับ! สามารถเลือกสลับวิชาใหม่ได้เลย</span>
+                    <span className="font-black text-rose-100 block text-xs sm:text-sm tracking-wide">ไม่ผ่านรอบนี้ (สะสมได้ไม่ถึง 5/7 วัน)</span>
+                    <span className="text-[11px] text-rose-200 block mt-0.5 leading-snug">ข้ามเควสต์เกิน 2 วัน ทำให้สะสมไม่ครบ 5 วันในรอบนี้ ไม่เป็นไรครับ! สามารถเลือกสลับวิชาใหม่ได้เลย</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
@@ -237,19 +237,26 @@ export default function SkillTrackBanner({
                       setSelectedTrackForChoice(null);
                       setIsModalOpen(true);
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white font-black text-xs transition-all shadow-md flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
+                    className={`px-4 py-2 rounded-xl text-white font-black text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0 border ${
+                      nextTrackId && nextTrackId !== activeTrackId
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 border-amber-300/60 shadow-amber-900/40"
+                        : "bg-gradient-to-r from-rose-500 via-red-500 to-rose-600 hover:from-rose-400 hover:to-red-400 border-rose-400/40 shadow-rose-900/40"
+                    }`}
                   >
-                    <Sparkles size={13} /> สลับวิชา
+                    <Sparkles size={13} />
+                    <span>{nextTrackId && nextTrackId !== activeTrackId ? "ต่อคิววิชาพรุ่งนี้แล้ว" : "สลับวิชา"}</span>
                   </button>
                 </div>
               </div>
             ) : nextTrackId && nextTrackId !== activeTrackId && SKILL_TRACKS[nextTrackId] ? (
-              <div className="mt-3 px-3.5 py-2 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-300 text-xs font-semibold flex items-center justify-between shadow-inner">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Sparkles size={14} className="text-amber-400 shrink-0" />
-                  <span className="truncate">วิชาถัดไป: <strong className="text-white font-black">{SKILL_TRACKS[nextTrackId].title}</strong></span>
+              <div className="mt-3 p-3 rounded-2xl bg-amber-950/90 border border-amber-400/50 text-amber-100 text-xs font-medium flex items-center justify-between shadow-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0 border border-amber-400/40 text-amber-300 shadow-inner">
+                    <Sparkles size={14} />
+                  </div>
+                  <span className="truncate">ต่อคิววิชาถัดไป: <strong className="text-white font-black">{SKILL_TRACKS[nextTrackId].title}</strong></span>
                 </div>
-                <span className="text-[10px] text-amber-400 font-black px-2 py-0.5 bg-amber-400/10 rounded-full border border-amber-400/20 shrink-0 ml-2">เริ่มวันพรุ่งนี้ 00:00 น.</span>
+                <span className="text-[10px] text-amber-200 font-black px-2.5 py-1 bg-amber-400/25 rounded-full border border-amber-400/40 shrink-0 ml-2 shadow-sm">เริ่มวันพรุ่งนี้ 00:00 น.</span>
               </div>
             ) : null}
           </div>
@@ -328,7 +335,8 @@ export default function SkillTrackBanner({
               <div className="overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
                 {Object.values(SKILL_TRACKS).map((track) => {
                   const isRecommended = track.id === recommendedTrackKey;
-                  const isSelected = track.id === activeTrackId;
+                  const isCurrentActive = track.id === activeTrackId;
+                  const isQueuedNext = nextTrackId && track.id === nextTrackId && nextTrackId !== activeTrackId;
 
                   return (
                     <div
@@ -338,8 +346,10 @@ export default function SkillTrackBanner({
                         setIsModalOpen(false);
                       }}
                       className={`relative p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer group flex items-start justify-between gap-3 ${
-                        isSelected
+                        isCurrentActive
                           ? "bg-amber-500/20 border-amber-400 shadow-md shadow-amber-500/20"
+                          : isQueuedNext
+                          ? "bg-orange-500/20 border-orange-400 shadow-md shadow-orange-500/20"
                           : "bg-slate-950/60 border-white/10 hover:border-amber-400/50 hover:bg-slate-950/90"
                       }`}
                     >
@@ -368,12 +378,14 @@ export default function SkillTrackBanner({
                       </div>
 
                       <div className="shrink-0 flex flex-col items-end justify-between self-stretch">
-                        <span className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                          isSelected
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 ${
+                          isCurrentActive
                             ? "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30"
+                            : isQueuedNext
+                            ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-md shadow-orange-500/30"
                             : "bg-white/10 text-slate-200 group-hover:bg-amber-400 group-hover:text-slate-950"
                         }`}>
-                          {isSelected ? "วิชาปัจจุบัน" : "เลือกวิชานี้"}
+                          {isCurrentActive ? "วิชาปัจจุบัน" : isQueuedNext ? "✨ ต่อคิวแล้ว (เริ่มพรุ่งนี้)" : "เลือกวิชานี้"}
                         </span>
                       </div>
                     </div>
