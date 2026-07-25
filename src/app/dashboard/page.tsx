@@ -227,41 +227,65 @@ export default function DashboardPage() {
   const [todaySkillTrackDay, setTodaySkillTrackDay] = useState<number>(1);
 
   const handleSelectSkillTrack = (trackId: string) => {
+    // 🧠 Smart Check: If user has already completed quests today, start new track tomorrow.
+    // If user hasn't completed any quests today (or first time), start Day 1 immediately TODAY!
+    const hasCompletedQuestsToday = completedQuests.length > 0;
     const isFirstTime = !todaySkillTrackId;
-
-    setActiveSkillTrackId(trackId);
-    setSkillTrackCurrentDay(1);
-    setSkillTrackCompletedDays([]);
-
     const trackName = SKILL_TRACKS[trackId]?.title || "วิชาใหม่";
 
-    if (isFirstTime) {
+    if (!hasCompletedQuestsToday || isFirstTime) {
+      setActiveSkillTrackId(trackId);
       setTodaySkillTrackId(trackId);
+      setSkillTrackCurrentDay(1);
       setTodaySkillTrackDay(1);
-      setShowSuccessToast(`🎓 เริ่มต้นวิชา "${trackName}" บทเรียน Day 1 แล้วครับ!`);
-    } else {
-      setShowSuccessToast(`✨ สลับวิชาเป็น "${trackName}" เรียบร้อย! บทเรียนวิชาใหม่จะเริ่มในวันพรุ่งนี้ครับ`);
-    }
+      setSkillTrackCompletedDays([]);
 
-    if (user?.uid) {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
-        localStorage.setItem(`skillTrackCurrentDay_${user.uid}`, "1");
-        localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
+      setShowSuccessToast(`🎓 เริ่มต้นวิชา "${trackName}" บทเรียน Day 1 แล้วครับ!`);
+
+      if (user?.uid) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
+          localStorage.setItem(`todaySkillTrackId_${user.uid}`, trackId);
+          localStorage.setItem(`skillTrackCurrentDay_${user.uid}`, "1");
+          localStorage.setItem(`todaySkillTrackDay_${user.uid}`, "1");
+          localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
+          localStorage.setItem("skillTrackCompletedDays", JSON.stringify([]));
+        }
+        const userRef = doc(db, "users", user.uid);
+        const updatePayload: any = {
+          activeSkillTrackId: trackId,
+          todaySkillTrackId: trackId,
+          skillTrackCurrentDay: 1,
+          todaySkillTrackDay: 1,
+          skillTrackCompletedDays: [],
+          currentDailyQuests: null
+        };
+        setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
+        setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
       }
-      const userRef = doc(db, "users", user.uid);
-      const updatePayload: any = {
-        activeSkillTrackId: trackId,
-        skillTrackCurrentDay: 1,
-        skillTrackCompletedDays: [],
-        currentDailyQuests: null
-      };
-      if (isFirstTime) {
-        updatePayload.todaySkillTrackId = trackId;
-        updatePayload.todaySkillTrackDay = 1;
+    } else {
+      // 🌙 User has already done quests today -> Queue new track to start tomorrow at 00:00
+      setActiveSkillTrackId(trackId);
+      setSkillTrackCurrentDay(1);
+      setSkillTrackCompletedDays([]);
+
+      setShowSuccessToast(`⏳ เนื่องจากวันนี้ทำเควสต์แล้ว วิชา "${trackName}" จะต่อคิวเริ่ม Day 1 ในวันพรุ่งนี้ 00:00 น. ครับ`);
+
+      if (user?.uid) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
+          localStorage.setItem(`skillTrackCurrentDay_${user.uid}`, "1");
+          localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
+        }
+        const userRef = doc(db, "users", user.uid);
+        const updatePayload: any = {
+          activeSkillTrackId: trackId,
+          skillTrackCurrentDay: 1,
+          skillTrackCompletedDays: []
+        };
+        setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
+        setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
       }
-      setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
-      setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
     }
   };
 
@@ -649,11 +673,14 @@ Day 21: [กิจกรรม]
     const activeTrack = todaySkillTrackId || activeSkillTrackId;
     if (!activeTrack) return;
     const currentDay = todaySkillTrackDay || skillTrackCurrentDay || 1;
+    const storageKey = user?.uid ? `skillTrackCompletedDays_${user.uid}` : "skillTrackCompletedDays";
+
     if (completedQuests.length >= 3) {
       setSkillTrackCompletedDays((prev) => {
         if (!prev.includes(currentDay)) {
           const updated = [...prev, currentDay];
           if (typeof window !== "undefined") {
+            localStorage.setItem(storageKey, JSON.stringify(updated));
             localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
           }
           if (user?.uid) {
@@ -741,22 +768,31 @@ Day 21: [กิจกรรม]
         return prev;
       });
     } else {
-      setSkillTrackCompletedDays((prev) => {
-        if (prev.includes(currentDay)) {
-          const updated = prev.filter((d) => d !== currentDay);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
-          }
-          if (user?.uid) {
-            const userRef = doc(db, "users", user.uid);
-            updateDoc(userRef, {
-              skillTrackCompletedDays: updated
-            }).catch(() => {});
-            setUserData((u: any) => u ? { ...u, skillTrackCompletedDays: updated } : null);
-          }
-          return updated;
+      // 🛡️ Safeguard: Only uncheck currentDay if user is explicitly on the active current session date
+      // to avoid date-rollover resets from stripping past completed days.
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+      setUserData((u: any) => {
+        if (u && u.lastActiveDate === todayStr) {
+          setSkillTrackCompletedDays((prev) => {
+            if (prev.includes(currentDay)) {
+              const updated = prev.filter((d) => d !== currentDay);
+              if (typeof window !== "undefined") {
+                localStorage.setItem(storageKey, JSON.stringify(updated));
+                localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
+              }
+              if (user?.uid) {
+                const userRef = doc(db, "users", user.uid);
+                updateDoc(userRef, {
+                  skillTrackCompletedDays: updated
+                }).catch(() => {});
+              }
+              return updated;
+            }
+            return prev;
+          });
+          return u;
         }
-        return prev;
+        return u;
       });
     }
   }, [completedQuests.length, activeSkillTrackId, todaySkillTrackId, skillTrackCurrentDay, todaySkillTrackDay, user?.uid]);
