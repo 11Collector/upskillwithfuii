@@ -570,6 +570,14 @@ Day 21: [กิจกรรม]
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(""); // 👈 ประกาศเป็นค่าว่างไว้ก่อน
   const [loading, setLoading] = useState(true);
+
+  // 🛡️ Loading Safety Timeout: Guarantee spinner disappears after 3 seconds max
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
   const [isToggling, setIsToggling] = useState(false);
   const [isSelectingEnergy, setIsSelectingEnergy] = useState(false);
 
@@ -907,8 +915,8 @@ Day 21: [กิจกรรม]
           expectedAge: userData?.expectedAge
         })
       });
-      const data = await res.json();
-      if (data.success && data.days) {
+      const data = await res.json().catch(() => null);
+      if (data && data.success && data.days) {
         setAiSkillQuests((prev) => ({ ...prev, [trackId]: data.days }));
         if (user?.uid) {
           const userRef = doc(db, "users", user.uid);
@@ -1035,7 +1043,12 @@ Day 21: [กิจกรรม]
       try {
         const data = await fetchDashboardData(currentUser.uid, currentUser.email, currentUser.displayName);
 
-        // Fetch User's second_brain count (limit to 1 to check if there is at least one note)
+        if (data?.isQuotaExceeded) {
+          console.warn("⚠️ Firestore quota exceeded, skipping retries and rendering fallback Dashboard.");
+          setUserData(data.userData || { displayName: currentUser.displayName, email: currentUser.email });
+          setLoading(false);
+          break;
+        }
         try {
           const notesRef = collection(db, "users", currentUser.uid, "second_brain");
           const notesSnap = await getDocs(query(notesRef, limit(1)));
@@ -2903,7 +2916,7 @@ Day 21: [กิจกรรม]
 
       try {
         const idToken = await user.getIdToken();
-        const energyLevel = (data?.lastQuestEnergyDate === todayDateStr) ? data?.questEnergyLevel : null;
+        const currentEnergyLevel: string | null = (userData?.lastQuestEnergyDate === todayDateStr) ? ((userData as any)?.questEnergyLevel || null) : null;
 
         // Resolve reference pools from quests.ts
         const discMainChar = lastDisc ? (lastDisc.finalResult || lastDisc.result || "C").charAt(0) : "C";
@@ -2928,14 +2941,14 @@ Day 21: [กิจกรรม]
 
         const challengePool = QUEST_POOL.CHALLENGE || [];
 
-        console.log("🤖 [AI Quest Analysis] Triggering API call. Payload:", { level: currentLevel, wheelQuestTitle: computedWheelTitle, energyLevel });
+        console.log("🤖 [AI Quest Analysis] Triggering API call. Payload:", { level: currentLevel, wheelQuestTitle: computedWheelTitle, energyLevel: currentEnergyLevel });
         const res = await fetch('/api/quest-analysis', {
           method: 'POST',
           headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             level: currentLevel, 
             wheelQuestTitle: computedWheelTitle,
-            energyLevel: energyLevel,
+            energyLevel: currentEnergyLevel,
             habitPool: combinedHabitPool,
             moneyPool: moneyPool,
             challengePool: challengePool
@@ -2945,7 +2958,9 @@ Day 21: [กิจกรรม]
           console.log("❌ [AI Quest Analysis] API call failed with status:", res.status);
           return;
         }
-        const { questTitle, discTitle, moneyTitle } = await res.json();
+        const data = await res.json().catch(() => null);
+        if (!data) return;
+        const { questTitle, discTitle, moneyTitle } = data;
         console.log("✨ [AI Quest Analysis] API response parsed:", { questTitle, discTitle, moneyTitle });
         if (!questTitle && !discTitle && !moneyTitle) {
           console.log("⚠️ [AI Quest Analysis] AI returned empty titles (falling back to static pool).");
@@ -6083,7 +6098,7 @@ Day 21: [กิจกรรม]
                       </div>
 
                       <p className={`text-[13px] sm:text-[15px] font-bold leading-snug
-          ${isDone ? 'line-through text-slate-400' : isNotice || quest.title.includes('สรุปผล') ? 'text-amber-900' : 'text-slate-700'}`}>
+          ${isDone ? 'line-through text-slate-400' : isNotice ? 'text-amber-900 font-bold' : 'text-slate-700'}`}>
                         {(quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title).replace(/^Day\s*\d+\s*:\s*/i, "")}
                       </p>
                       {quest.id === 1 && lastWheel && !quest.title.includes('สรุปผล') && (
@@ -6098,17 +6113,15 @@ Day 21: [กิจกรรม]
                     </div>
 
                     <div className="shrink-0 text-right flex flex-col items-end gap-2">
-                      {isNotice || quest.title.includes('สรุปผล') ? (
+                      {isNotice ? (
                         <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 uppercase tracking-widest cursor-pointer">
-                          {quest.title.includes('สรุปผล') ? 'Claim Bonus' : (quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'INFO'}
+                          {(quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'INFO'}
                         </span>
                       ) : (
                         <div className="flex flex-col items-end gap-1.5">
                           <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border shadow-sm transition-all ${isDone ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'}`}>
                             +{quest.xp} XP
                           </span>
-
-
                         </div>
                       )}
                     </div>
