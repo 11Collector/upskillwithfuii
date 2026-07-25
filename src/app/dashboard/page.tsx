@@ -3280,8 +3280,15 @@ Day 21: [กิจกรรม]
   }, [todayDateStr, user?.uid, activeSkillTrackId, skillTrackCurrentDay, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP, userData?.questEnergyLevel, userData?.lastQuestEnergyDate]);
 
   // Sync computed dailyQuests to Firestore for other systems (like AI Mentor chat) to access
+  const hasSyncedDailyQuestsRef = useRef<string>("");
+
   useEffect(() => {
     if (!user?.uid || !todayDateStr || !userData || dailyQuests.length === 0) return;
+
+    const effectiveTrackId = todaySkillTrackId || activeSkillTrackId || null;
+    const syncKey = `${todayDateStr}_${effectiveTrackId}_${dailyQuests.map((q: any) => q.title).join('|')}`;
+
+    if (hasSyncedDailyQuestsRef.current === syncKey) return;
 
     const storedQuests = userData.currentDailyQuests || [];
     const storedDate = userData.lastActiveDate || "";
@@ -3291,7 +3298,7 @@ Day 21: [กิจกรรม]
       dailyQuests.some((q: any, idx: number) => q.title !== storedQuests[idx]?.title);
 
     if (needsUpdate) {
-      const effectiveTrackId = todaySkillTrackId || activeSkillTrackId || null;
+      hasSyncedDailyQuestsRef.current = syncKey;
       const userRef = doc(db, "users", user.uid);
       const updateData: any = {
         currentDailyQuests: dailyQuests,
@@ -3311,7 +3318,7 @@ Day 21: [กิจกรรม]
       updateDoc(userRef, updateData).catch((e) => console.error("Error syncing daily quests:", e));
       setUserData((prev: any) => prev ? { ...prev, ...updateData } : null);
     }
-  }, [user?.uid, todayDateStr, userData, dailyQuests]);
+  }, [user?.uid, todayDateStr, dailyQuests, userData?.lastActiveDate, todaySkillTrackId, activeSkillTrackId]);
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
