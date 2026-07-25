@@ -672,13 +672,39 @@ const GraphView: React.FC<GraphViewProps> = ({
         </g>
       </svg>
       {/* SYSTEM OVERLAYS */}
-      <div className="absolute top-4 left-4 md:left-6 z-10 flex items-center gap-4">
+      <div className="absolute top-4 left-4 md:left-6 z-10 flex items-center gap-2 flex-wrap">
         {/* Mobile-Friendly Back Button to Notes */}
         <button
           onClick={onClose}
           className="py-1.5 px-3 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
         >
           <span>←</span> กลับไปหน้าโน้ต
+        </button>
+
+        {/* Direct AI Brain Scan Button */}
+        <button
+          onClick={() => {
+            if (!isProMember && freeScansUsed >= 3) {
+              setShowUpgradeModal(true);
+            } else {
+              onTriggerAiScan();
+            }
+          }}
+          disabled={isAiScanning}
+          className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isAiScanning ? (
+            <>
+              <Loader2 size={12} className="animate-spin" />
+              <span>กำลังสแกน...</span>
+            </>
+          ) : (
+            <>
+              <span>✨</span>
+              <span>สแกนสมอง AI</span>
+              {!isProMember && (freeScansUsed < 3 ? <span className="text-[9px] opacity-80">({3 - freeScansUsed})</span> : <span className="text-[9px] text-amber-300 font-bold">(PRO)</span>)}
+            </>
+          )}
         </button>
 
         {/* SCI-FI Stats Fluff (Desktop Only) */}
@@ -1079,47 +1105,63 @@ function LibraryContent() {
       }
 
       const data = await response.json();
-      let suggestions = [];
+      let suggestions: any[] = [];
       try {
         const rawQuote = data.quote || "";
         const cleanedText = rawQuote
-          .replace(/^```json\s*/i, "")
-          .replace(/^```\s*/, "")
-          .replace(/\s*```$/, "")
+          .replace(/```json/gi, "")
+          .replace(/```/g, "")
           .trim();
 
-        const arrayMatch = cleanedText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-        if (arrayMatch) {
-          suggestions = JSON.parse(arrayMatch[0]);
-        } else {
-          suggestions = JSON.parse(cleanedText);
-        }
-      } catch (parseErr) {
-        console.error("Failed to parse AI JSON response:", parseErr, data.quote);
-        throw new Error("AI returned invalid JSON formatting");
-      }
+        let parsed: any = null;
+        try {
+          parsed = JSON.parse(cleanedText);
+        } catch {
+          const arrayMatch = cleanedText.match(/\[[\s\S]*\]/);
+          const objectMatch = cleanedText.match(/\{[\s\S]*\}/);
 
-      if (Array.isArray(suggestions)) {
-        setAiSuggestions(suggestions);
-        localStorage.setItem(`ai_suggestions_${user.uid}`, JSON.stringify(suggestions));
-
-        // Increment freeScansUsed in Firestore for non-Pro members
-        if (!isProMember) {
-          const nextCount = freeScansUsed + 1;
-          setFreeScansUsed(nextCount);
-          try {
-            const userRef = doc(db, "users", user.uid);
-            await updateDoc(userRef, {
-              freeScansUsed: nextCount
-            });
-          } catch (dbErr) {
-            console.error("Failed to update freeScansUsed in Firestore:", dbErr);
+          if (arrayMatch) {
+            const cleanedStr = arrayMatch[0].replace(/,\s*([\]}])/g, "$1");
+            parsed = JSON.parse(cleanedStr);
+          } else if (objectMatch) {
+            const cleanedStr = objectMatch[0].replace(/,\s*([\]}])/g, "$1");
+            parsed = JSON.parse(cleanedStr);
           }
         }
 
-        alert("✨ AI สแกนวิเคราะห์ความเชื่อมโยงเสร็จสิ้นเรียบร้อย! สามารถดูเส้นประเรืองแสงในโหมดแผนผังได้เลยครับ");
+        if (Array.isArray(parsed)) {
+          suggestions = parsed;
+        } else if (parsed && Array.isArray(parsed.connections)) {
+          suggestions = parsed.connections;
+        } else if (parsed && Array.isArray(parsed.suggestions)) {
+          suggestions = parsed.suggestions;
+        }
+      } catch (parseErr) {
+        console.error("Failed to parse AI JSON response:", parseErr, data.quote);
+        suggestions = [];
+      }
+
+      setAiSuggestions(suggestions);
+      localStorage.setItem(`ai_suggestions_${user.uid}`, JSON.stringify(suggestions));
+
+      // Increment freeScansUsed in Firestore for non-Pro members
+      if (!isProMember) {
+        const nextCount = freeScansUsed + 1;
+        setFreeScansUsed(nextCount);
+        try {
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            freeScansUsed: nextCount
+          });
+        } catch (dbErr) {
+          console.error("Failed to update freeScansUsed in Firestore:", dbErr);
+        }
+      }
+
+      if (suggestions.length > 0) {
+        alert(`✨ AI สแกนวิเคราะห์เสร็จสิ้น! พบความเชื่อมโยงซ่อนเร้นทั้งหมด ${suggestions.length} คู่ สังเกตเส้นประเรืองแสงในแผนผังสมองได้เลยครับ`);
       } else {
-        throw new Error("Invalid output format");
+        alert("✨ AI สแกนสมองเสร็จสิ้น! ยังไม่พบความเชื่อมโยงใหม่ ลองเพิ่มเนื้อหาในโน้ตเพื่อช่วยให้ AI วิเคราะห์ได้ลึกขึ้นครับ");
       }
     } catch (error: any) {
       console.error("AI Scan error:", error);
