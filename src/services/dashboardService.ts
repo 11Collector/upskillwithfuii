@@ -3,35 +3,35 @@ import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc,
 import { calculateRelativeWeek } from "@/utils/dashboardHelpers";
 
 export const fetchDashboardData = async (uid: string, email: string | null, displayName?: string | null) => {
-  // 1. ดึงข้อมูล User Profile ก่อนเป็นอันดับแรก (สำคัญสุด)
-  const userDocSnap = await getDoc(doc(db, "users", uid));
-  let joinDate = new Date();
-  let chatQuota = { used: 0, total: 0 };
-  let userData = null;
+  try {
+    const userDocSnap = await getDoc(doc(db, "users", uid));
+    let joinDate = new Date();
+    let chatQuota = { used: 0, total: 0 };
+    let userData = null;
 
-  if (userDocSnap.exists()) {
-    userData = userDocSnap.data();
+    if (userDocSnap.exists()) {
+      userData = userDocSnap.data();
 
-    // 🔥 Calculate AI Mentor Quota
-    const level = Math.floor((userData.totalXP || 0) / 100) + 1;
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-    let usedToday = userData.chatUsageDate === today ? (userData.dailyChatCount || 0) : 0;
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",")[0];
-    let totalQuota = (adminEmail && email === adminEmail || level > 10) ? Infinity : level;
-    chatQuota = { used: usedToday, total: totalQuota };
+      // 🔥 Calculate AI Mentor Quota
+      const level = Math.floor((userData.totalXP || 0) / 100) + 1;
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+      let usedToday = userData.chatUsageDate === today ? (userData.dailyChatCount || 0) : 0;
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",")[0];
+      let totalQuota = (adminEmail && email === adminEmail || level > 10) ? Infinity : level;
+      chatQuota = { used: usedToday, total: totalQuota };
 
-    if (userData.createdAt) {
-      joinDate = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
-    } else {
-      await setDoc(doc(db, "users", uid), { createdAt: joinDate }, { merge: true });
-    }
-    // backfill email/displayName ถ้ายังไม่มีใน doc
-    const needsUpdate: Record<string, string> = {};
-    if (email && !userData.email) needsUpdate.email = email;
-    if (displayName && !userData.displayName) needsUpdate.displayName = displayName;
-    if (Object.keys(needsUpdate).length > 0) {
-      await setDoc(doc(db, "users", uid), needsUpdate, { merge: true });
-    }
+      if (userData.createdAt) {
+        joinDate = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
+      } else {
+        await setDoc(doc(db, "users", uid), { createdAt: joinDate }, { merge: true }).catch(() => {});
+      }
+      // backfill email/displayName ถ้ายังไม่มีใน doc
+      const needsUpdate: Record<string, string> = {};
+      if (email && !userData.email) needsUpdate.email = email;
+      if (displayName && !userData.displayName) needsUpdate.displayName = displayName;
+      if (Object.keys(needsUpdate).length > 0) {
+        await setDoc(doc(db, "users", uid), needsUpdate, { merge: true }).catch(() => {});
+      }
 
     // 🔥 Auto-assign sequential memberNumber if they are PRO but do not have a memberNumber yet
     const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || "";
@@ -203,4 +203,26 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
     prevWeekData,
     prevPrevWeekData
   };
+  } catch (err: any) {
+    console.error("Firebase quota exceeded or error fetching dashboard data:", err);
+    const joinDate = new Date();
+    return {
+      userData: null,
+      joinDate,
+      chatQuota: { used: 0, total: Infinity },
+      currentWeekInfo: calculateRelativeWeek(joinDate),
+      prevWeekInfo: calculateRelativeWeek(joinDate),
+      wheelData: null,
+      discData: null,
+      moneyData: null,
+      librarySoulData: null,
+      ghostResultData: null,
+      quoteData: null,
+      hasSoulGuide: false,
+      thisWeekData: null,
+      prevWeekData: null,
+      prevPrevWeekData: null,
+      isQuotaExceeded: err?.code === 'resource-exhausted'
+    };
+  }
 };

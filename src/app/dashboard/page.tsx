@@ -1665,8 +1665,14 @@ Day 21: [กิจกรรม]
         setUser(currentUser);
         setNewName(currentUser.displayName || "");
         
-        await loadDashboardData(currentUser);
-        await loadPlaylistBooks(currentUser.uid);
+        try {
+          await loadDashboardData(currentUser);
+          await loadPlaylistBooks(currentUser.uid);
+        } catch (err) {
+          console.error("Error loading dashboard data:", err);
+        } finally {
+          setLoading(false);
+        }
 
         // Update lastLoginAt once per session in the background after data loads
         try {
