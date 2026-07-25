@@ -3337,8 +3337,8 @@ Day 21: [กิจกรรม]
 
   const dailyXPGained = useMemo(() => {
     return completedQuests.reduce((sum: number, id) => {
-      // 1. เควสพิเศษได้ 20 เสมอ
-      if (id === 'special-01') return sum + 20;
+      // 1. เควสพิเศษ (MY QUEST) ได้ 15 XP
+      if (id === 'special-01') return sum + 15;
 
       if (id === 1 && lastSkipDate === todayDateStr) return sum + 0;
 
