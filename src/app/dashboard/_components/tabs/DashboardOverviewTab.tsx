@@ -485,10 +485,10 @@ export const DashboardOverviewTab: React.FC<OverviewTabProps> = ({
           {/* 2. Core Identity (4 วงกลมหลัก - สื่อถึงความสมดุล) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
             {[
-              { label: "Wheel", val: weeklyData.wheel, color: "text-red-500", icon: <PieChart size={14} /> },
-              { label: "HABIT", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
-              { label: "Money", val: weeklyData.money, color: "text-amber-400", icon: <Wallet size={14} /> },
-              { label: "Challenge", val: weeklyData.challenge, color: "text-purple-400", icon: <Target size={14} /> }
+              { label: "เป้าหมายหลัก", val: weeklyData.wheel, color: "text-red-500", icon: <Target size={14} /> },
+              { label: "นิสัยประจำวัน", val: weeklyData.disc, color: "text-blue-400", icon: <Users size={14} /> },
+              { label: "ลงมือทำจริง", val: weeklyData.money, color: "text-amber-400", icon: <Zap size={14} /> },
+              { label: "ตกตะกอนความคิด", val: weeklyData.challenge, color: "text-purple-400", icon: <BrainCircuit size={14} /> }
             ].map((item, i) => {
               const radius = 20;
               const circumference = 2 * Math.PI * radius;

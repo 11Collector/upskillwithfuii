@@ -3082,21 +3082,21 @@ Day 21: [กิจกรรม]
           },
           {
             id: 2,
-            type: "MONEY",
+            type: "DISC",
             title: q2Title,
             xp: 15,
             subTag: skillQuests[0]?.tag || "วิชานิสัย"
           },
           {
             id: 3,
-            type: "CHALLENGE",
+            type: "MONEY",
             title: q3Title,
             xp: 10,
             subTag: skillQuests[1]?.tag || "วิชาท้าทาย"
           },
           {
             id: 4,
-            type: "LIBRARY",
+            type: "CHALLENGE",
             title: q4Title,
             xp: 10,
             subTag: skillQuests[2]?.tag || "วิชาทบทวน"
