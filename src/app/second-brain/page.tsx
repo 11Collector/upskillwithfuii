@@ -1186,40 +1186,56 @@ function SecondBrainContent() {
       }
 
       const data = await response.json();
+      const rawQuote = data.quote || "";
+
       let suggestions: any[] = [];
+      let cleaned = rawQuote
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
+
+      // 1. Direct parse
       try {
-        const rawQuote = data.quote || "";
-        const cleanedText = rawQuote
-          .replace(/```json/gi, "")
-          .replace(/```/g, "")
-          .trim();
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed)) suggestions = parsed;
+        else if (parsed && Array.isArray(parsed.connections)) suggestions = parsed.connections;
+        else if (parsed && Array.isArray(parsed.suggestions)) suggestions = parsed.suggestions;
+      } catch (e) {}
 
-        let parsed: any = null;
+      // 2. Extracted block parse with trailing comma cleanup & control char stripping
+      if (suggestions.length === 0) {
+        const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+        const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+        const targetStr = arrayMatch ? arrayMatch[0] : objectMatch ? objectMatch[0] : cleaned;
+        const sanitized = targetStr
+          .replace(/,\s*([\]}])/g, "$1")
+          .replace(/[\u0000-\u001F]+/g, " ");
+
         try {
-          parsed = JSON.parse(cleanedText);
-        } catch {
-          const arrayMatch = cleanedText.match(/\[[\s\S]*\]/);
-          const objectMatch = cleanedText.match(/\{[\s\S]*\}/);
+          const parsed = JSON.parse(sanitized);
+          if (Array.isArray(parsed)) suggestions = parsed;
+          else if (parsed && Array.isArray(parsed.connections)) suggestions = parsed.connections;
+          else if (parsed && Array.isArray(parsed.suggestions)) suggestions = parsed.suggestions;
+        } catch (e) {}
+      }
 
-          if (arrayMatch) {
-            const cleanedStr = arrayMatch[0].replace(/,\s*([\]}])/g, "$1");
-            parsed = JSON.parse(cleanedStr);
-          } else if (objectMatch) {
-            const cleanedStr = objectMatch[0].replace(/,\s*([\]}])/g, "$1");
-            parsed = JSON.parse(cleanedStr);
+      // 3. Robust Regex Fallback if LLM output had unescaped quotes or malformed JSON
+      if (suggestions.length === 0) {
+        const sourceMatches = [...cleaned.matchAll(/"source"\s*:\s*"([^"]+)"/g)];
+        const targetMatches = [...cleaned.matchAll(/"target"\s*:\s*"([^"]+)"/g)];
+        const reasonMatches = [...cleaned.matchAll(/"reason"\s*:\s*"([^"\r\n]*)"/g)];
+        const scoreMatches = [...cleaned.matchAll(/"score"\s*:\s*(\d+)/g)];
+
+        for (let i = 0; i < sourceMatches.length; i++) {
+          if (sourceMatches[i] && targetMatches[i]) {
+            suggestions.push({
+              source: sourceMatches[i][1],
+              target: targetMatches[i][1],
+              score: scoreMatches[i] ? Number(scoreMatches[i][1]) : 85,
+              reason: reasonMatches[i] ? reasonMatches[i][1] : "พบจุดเชื่อมโยงเชิงแนวคิดระหว่างบันทึก"
+            });
           }
         }
-
-        if (Array.isArray(parsed)) {
-          suggestions = parsed;
-        } else if (parsed && Array.isArray(parsed.connections)) {
-          suggestions = parsed.connections;
-        } else if (parsed && Array.isArray(parsed.suggestions)) {
-          suggestions = parsed.suggestions;
-        }
-      } catch (parseErr) {
-        console.error("Failed to parse AI JSON response:", parseErr, data.quote);
-        suggestions = [];
       }
 
       setAiSuggestions(suggestions);
