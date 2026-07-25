@@ -121,7 +121,7 @@ ${roundContext}
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `ช่วยออกแบบแผน 7 วันสำหรับวิชา ${trackId} ให้ฉันหน่อย` }

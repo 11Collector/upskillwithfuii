@@ -74,7 +74,7 @@ ${userMessage}
         "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-pro",
         messages: [
           { role: "system", content: "You are a professional assistant that parses coaching chats into structured JSON notes with a title, category, and plain text content." },
           { role: "user", content: prompt }

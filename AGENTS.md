@@ -60,7 +60,7 @@ Each agent below has a defined domain. When working on a task, identify which ag
 **Owns:** `/tools/soul-guide`, `/tools/ai-mentor`, `src/app/api/chat/route.ts`
 
 **Rules:**
-- Model: DeepSeek `deepseek-chat` via `https://api.deepseek.com/chat/completions`
+- Model: DeepSeek `deepseek-v4-pro` (or `DEEPSEEK_MODEL` env var) via `https://api.deepseek.com/chat/completions`
 - Daily quota: ไม่จำกัด (Infinity) — ทุก level ใช้ได้เต็มที่
 - System prompt must include Secret Context (lastMood, lastDisc, lastWheel, lastMoney, lastLibrarySoul) — never expose these labels to the user in responses
 - Language rule: Thai or English ONLY — strictly no Chinese characters

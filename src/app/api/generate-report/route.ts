@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
