@@ -91,7 +91,7 @@ ${distributionNote}
         'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
         max_tokens: 1000,
