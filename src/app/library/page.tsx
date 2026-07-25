@@ -1433,16 +1433,30 @@ function LibraryContent() {
     }
   }, [isMounted, selectedNote?.id, searchParams]);
 
+  const lastLoadedNoteRef = useRef<{ id: string; title: string; content: string; category: string } | null>(null);
+
   // Sync selected note fields to local input states
   useEffect(() => {
     if (selectedNote) {
-      setNoteTitle(selectedNote.title || "");
-      setNoteContent(selectedNote.content || "");
-      setNoteCategory(selectedNote.category || "พัฒนาตัวเอง");
+      const initialTitle = selectedNote.title || "";
+      const initialContent = selectedNote.content || "";
+      const initialCategory = selectedNote.category || "พัฒนาตัวเอง";
+
+      setNoteTitle(initialTitle);
+      setNoteContent(initialContent);
+      setNoteCategory(initialCategory);
+
+      lastLoadedNoteRef.current = {
+        id: selectedNote.id,
+        title: initialTitle,
+        content: initialContent,
+        category: initialCategory
+      };
     } else {
       setNoteTitle("");
       setNoteContent("");
       setNoteCategory("พัฒนาตัวเอง");
+      lastLoadedNoteRef.current = null;
     }
   }, [selectedNote?.id]);
 
@@ -1450,10 +1464,13 @@ function LibraryContent() {
   useEffect(() => {
     if (!user || !selectedNote) return;
 
+    const lastLoaded = lastLoadedNoteRef.current;
+    if (!lastLoaded || lastLoaded.id !== selectedNote.id) return;
+
     const isChanged =
-      noteTitle !== (selectedNote.title || "") ||
-      noteContent !== (selectedNote.content || "") ||
-      noteCategory !== (selectedNote.category || "พัฒนาตัวเอง");
+      noteTitle !== lastLoaded.title ||
+      noteContent !== lastLoaded.content ||
+      noteCategory !== lastLoaded.category;
 
     if (!isChanged) return;
 
@@ -1467,6 +1484,14 @@ function LibraryContent() {
           category: noteCategory,
           updatedAt: new Date().toISOString()
         });
+
+        // Update baseline ref after successful save
+        lastLoadedNoteRef.current = {
+          id: selectedNote.id,
+          title: noteTitle,
+          content: noteContent,
+          category: noteCategory
+        };
       } catch (error) {
         console.error("Error auto-saving note:", error);
       } finally {
