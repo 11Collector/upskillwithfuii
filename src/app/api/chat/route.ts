@@ -148,10 +148,11 @@ export async function POST(req: Request) {
     const notesRef = adminDb.collection("users").doc(authResult.uid).collection("second_brain");
     const questLogRef = adminDb.collection("users").doc(authResult.uid).collection("quest_log");
 
-    const [notesSnap, questLogSnap] = await Promise.all([
-      notesRef.orderBy("updatedAt", "desc").limit(30).get().catch(() => null),
-      questLogRef.orderBy("createdAt", "desc").limit(10).get().catch(() => null)
-    ]);
+    let notesSnap = await notesRef.orderBy("updatedAt", "desc").limit(30).get().catch(() => null);
+    if (!notesSnap || notesSnap.empty) {
+      notesSnap = await notesRef.limit(30).get().catch(() => null);
+    }
+    const questLogSnap = await questLogRef.orderBy("createdAt", "desc").limit(10).get().catch(() => null);
     
     let relevantNotesContext = "";
 
@@ -162,6 +163,18 @@ export async function POST(req: Request) {
     const skipRAG = isGreeting || cleanedMessage.length < 8;
 
     if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && !skipRAG) {
+      // 1. First, check direct title keyword matches (case-insensitive)
+      const matchedDocsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+
+      notesSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        const title = (data.title || "").trim().toLowerCase();
+        if (title && title !== "บันทึกที่ไม่มีชื่อ" && (cleanedMessage.includes(title) || title.includes(cleanedMessage.split(" ")[0]))) {
+          matchedDocsMap.set(doc.id, doc);
+        }
+      });
+
+      // 2. If no direct match or for broader semantic matching, call AI Router
       const noteSummaries = notesSnap.docs.map((doc, index) => ({
         index,
         title: doc.data().title || "บันทึกที่ไม่มีชื่อ",
@@ -207,22 +220,28 @@ export async function POST(req: Request) {
 
         if (retrievalResponse.ok) {
           const retrievalData = await retrievalResponse.json();
-          const retrievalText = retrievalData.choices[0].message.content.trim();
-          const matchedIndexes = JSON.parse(retrievalText.match(/\[.*\]/)?.[0] || "[]");
+          const retrievalText = retrievalData.choices[0]?.message?.content?.trim() || "";
+          const matchedArrayMatch = retrievalText.match(/\[[\s\S]*?\]/);
+          const matchedIndexes = matchedArrayMatch ? JSON.parse(matchedArrayMatch[0]) : [];
           
           if (Array.isArray(matchedIndexes) && matchedIndexes.length > 0) {
-            const matchedDocs = matchedIndexes
-              .map(idx => notesSnap.docs[idx])
-              .filter(Boolean);
-
-            relevantNotesContext = matchedDocs.map(doc => {
-              const data = doc.data();
-              return `--- บันทึกย่อ: ${data.title} ---\nหมวดหมู่: ${data.category || 'ทั่วไป'}\nเนื้อหา:\n${data.content || 'ไม่มีเนื้อหา'}\n`;
-            }).join("\n\n");
+            matchedIndexes.forEach((idx: number) => {
+              const doc = notesSnap.docs[idx];
+              if (doc) {
+                matchedDocsMap.set(doc.id, doc);
+              }
+            });
           }
         }
       } catch (err) {
         console.error("RAG Retrieval Failed:", err);
+      }
+
+      if (matchedDocsMap.size > 0) {
+        relevantNotesContext = Array.from(matchedDocsMap.values()).map(doc => {
+          const data = doc.data();
+          return `--- บันทึกย่อ: ${data.title} ---\nหมวดหมู่: ${data.category || 'ทั่วไป'}\nเนื้อหา:\n${data.content || 'ไม่มีเนื้อหา'}\n`;
+        }).join("\n\n");
       }
     }
 
