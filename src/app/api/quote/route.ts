@@ -29,6 +29,7 @@ export async function POST(req: Request) {
   const { prompt, type } = parsed.data;
 
   // Check Daily Quota for Free Tier (authenticated users only)
+  let pendingQuotaUpdate: { userRef: any; todayKey: string; currentCount: number } | null = null;
   const isExemptFromDailyLimit = ['wheel', 'second_brain_scan', 'second_brain'].includes(type || '');
   if (!isAuthError(authResult) && !isExemptFromDailyLimit) {
     const userRef = adminDb.collection("users").doc(uid);
@@ -52,10 +53,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "คุณใช้โควตาสร้างคำคมฟรีครบ 1 ครั้งในวันนี้แล้ว อัปเกรดเป็น PRO เพื่อสุ่มสร้างได้ไม่จำกัดครับ" }, { status: 403 });
       }
 
-      await userRef.set({
-        quoteDailyDate: todayKey,
-        quoteDailyCount: currentCount + 1
-      }, { merge: true });
+      pendingQuotaUpdate = { userRef, todayKey, currentCount };
     }
   }
 
@@ -93,7 +91,18 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-    const generatedQuote = data.choices[0].message.content.trim();
+    const generatedQuote = data.choices[0]?.message?.content?.trim() || "";
+
+    if (!generatedQuote) {
+      return NextResponse.json({ error: "AI ส่งข้อมูลมาว่างเปล่า" }, { status: 500 });
+    }
+
+    if (pendingQuotaUpdate) {
+      await pendingQuotaUpdate.userRef.set({
+        quoteDailyDate: pendingQuotaUpdate.todayKey,
+        quoteDailyCount: pendingQuotaUpdate.currentCount + 1
+      }, { merge: true }).catch(() => {});
+    }
 
     logAiCall(uid, "quote_generation").catch(() => {});
 

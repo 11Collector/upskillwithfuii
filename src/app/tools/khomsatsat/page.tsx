@@ -552,7 +552,7 @@ export default function SwipeQuoteApp() {
       const isTimeout = error?.name === "AbortError";
       setApiError(isTimeout
         ? "AI ตอบช้าไปหน่อย (timeout) ลองใหม่ได้เลย"
-        : "เชื่อมต่อไม่ได้ในตอนนี้ ลองใหม่สักครั้งนะ"
+        : (error?.message || "เชื่อมต่อไม่ได้ในตอนนี้ ลองใหม่สักครั้งนะ")
       );
       setGameState("result");
     }
