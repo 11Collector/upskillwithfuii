@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+        model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
         ...(type === "second_brain_scan" ? { response_format: { type: "json_object" } } : {}),
         messages: [
           // ปรับ System ให้เป็นที่ปรึกษาที่ฉลาดและอบอุ่น ตามสไตล์ที่คุณฟุ้ยต้องการ
@@ -80,8 +80,8 @@ export async function POST(req: Request) {
           { role: "user", content: prompt }
         ],
         stream: false,
-        temperature: 0.4, // ลดลงนิดหน่อยเพื่อให้แผน 7 วันมีความสมเหตุสมผล ไม่เพ้อฝันเกินไป
-        max_tokens: 1500  // 🔥 เพิ่มเป็น 1500 เพื่อให้ครอบคลุมเนื้อหาทั้งหมด ไม่โดนตัดจบ
+        temperature: type ? 0.4 : 0.7,
+        max_tokens: type === "second_brain_scan" ? 1200 : type === "second_brain" ? 1000 : 300
       })
     });
 

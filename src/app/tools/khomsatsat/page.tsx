@@ -454,9 +454,9 @@ export default function SwipeQuoteApp() {
   `;
 
     try {
-      // ใส่ AbortController เผื่อ API ค้างนานเกิน 15 วินาทีให้ตัดจบ
+      // ใส่ AbortController เผื่อ API ค้างนานเกิน 30 วินาทีให้ตัดจบ
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const idToken = currentUser ? await currentUser.getIdToken() : null;
       const response = await fetch('/api/quote', {

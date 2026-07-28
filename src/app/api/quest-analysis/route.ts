@@ -35,7 +35,7 @@ async function callDeepSeek(prompt: string, maxTokens = 60): Promise<string> {
       'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: maxTokens,

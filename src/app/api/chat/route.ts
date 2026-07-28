@@ -189,7 +189,7 @@ export async function POST(req: Request) {
             "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
           },
           body: JSON.stringify({
-            model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+            model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
             messages: [
               {
                 role: "system",
@@ -446,7 +446,7 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
       },
       signal: controller.signal,
       body: JSON.stringify({
-        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+        model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
