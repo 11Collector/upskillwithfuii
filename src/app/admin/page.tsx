@@ -58,7 +58,7 @@ ChartJS.register(
 ChartJS.defaults.color = "#9ca3af";
 ChartJS.defaults.font.family = "system-ui, -apple-system, sans-serif";
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean);
+const ADMIN_EMAILS = Array.from(new Set(["emotion.tuii@gmail.com", "upskillwithfuii@gmail.com", ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",")].filter(Boolean)));
 
 const aiFeatureNames: Record<string, string> = {
   ai_mentor: "คุยกับพี่ฟุ้ย (AI Chat)",

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         ],
         stream: false,
         temperature: type ? 0.4 : 0.7,
-        max_tokens: type === "second_brain_scan" ? 1200 : type === "second_brain" ? 1000 : 300
+        max_tokens: type === "wheel" ? 2500 : type === "second_brain_scan" ? 1200 : type === "second_brain" ? 1000 : 1200
       })
     });
 

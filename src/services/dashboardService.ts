@@ -16,8 +16,8 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
       const level = Math.floor((userData.totalXP || 0) / 100) + 1;
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       let usedToday = userData.chatUsageDate === today ? (userData.dailyChatCount || 0) : 0;
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",")[0];
-      let totalQuota = (adminEmail && email === adminEmail || level > 10) ? Infinity : level;
+      const adminEmails = Array.from(new Set(["emotion.tuii@gmail.com", "upskillwithfuii@gmail.com", ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",")].filter(Boolean)));
+      let totalQuota = (email && adminEmails.includes(email.toLowerCase()) || level > 10) ? Infinity : level;
       chatQuota = { used: usedToday, total: totalQuota };
 
       if (userData.createdAt) {

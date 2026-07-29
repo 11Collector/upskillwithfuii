@@ -45,9 +45,15 @@ function BottomNavigationInner() {
 
   const isDark = false;
 
-  // Hide bottom nav on active assessment flow, full-screen chat, focus tools & standalone pages
+  // Hide bottom nav on assessment flows (intro, testing & result pages), full-screen chat, focus tools & standalone pages
   if (
     isAssessing ||
+    pathname.startsWith('/tools/disc') ||
+    pathname.startsWith('/tools/money-avatar') ||
+    pathname.startsWith('/tools/wheel-of-life') ||
+    pathname.startsWith('/tools/library-of-souls') ||
+    pathname.startsWith('/tools/khomsatsat') ||
+    pathname.startsWith('/tools/ghost-in-you') ||
     pathname === '/tools/soul-guide' ||
     pathname === '/tools/ai-mentor' ||
     pathname === '/tools/slides' ||

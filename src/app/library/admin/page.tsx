@@ -12,7 +12,7 @@ import { mockArticles } from "@/constants/article";
 import { Loader2, Plus, Save, Trash2, RefreshCw, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean);
+const ADMIN_EMAILS = Array.from(new Set(["emotion.tuii@gmail.com", "upskillwithfuii@gmail.com", ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",")].filter(Boolean)));
 
 export default function LibraryAdmin() {
   const [articles, setArticles] = useState<any[]>([]);

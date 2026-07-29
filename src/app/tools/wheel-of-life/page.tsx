@@ -391,7 +391,9 @@ const handleGenerateResult = async () => {
             lastQuestDate: todayStr,
             completedQuestIds: newCompleted,
             wheelCompletions: 0,   
-            customQuestTitle: ""   
+            customQuestTitle: "",
+            currentDailyQuests: null,
+            aiGeneratedQuestTitle: ""
           };
 
           // ✅ 2. Logic แจก 50 XP (ถ้าเป็นการทำครั้งแรกจริงๆ)
@@ -468,6 +470,8 @@ const handleGenerateResult = async () => {
             lastQuestDate: todayStr,
             completedQuestIds: newCompleted,
             wheelCompletions: 0,
+            currentDailyQuests: null,
+            aiGeneratedQuestTitle: ""
           };
           if (!userData.hasWheelXP) {
             const oldXP = userData.totalXP || 0;
@@ -572,6 +576,11 @@ const analyzeWithAI = async () => {
             
             await updateDoc(reportRef, { analysis: generatedAnalysis });
             console.log("✅ AI อัปเดตข้อมูลลง DB เรียบร้อย!");
+
+            if (currentUser) {
+              const userRef = doc(db, "users", currentUser.uid);
+              await setDoc(userRef, { currentDailyQuests: null }, { merge: true });
+            }
             
           } catch(e) { 
             console.error("❌ Update AI result error:", e); 
@@ -843,8 +852,16 @@ const analyzeWithAI = async () => {
                 let actionPlan = "";
                 let afterPlan = "";
 
-                const planIndex = aiAnalysis.indexOf('📅');
-                const fireIndex = aiAnalysis.indexOf('🔥', planIndex);
+                let planIndex = aiAnalysis.indexOf('📅');
+                if (planIndex === -1) planIndex = aiAnalysis.indexOf('🗓️');
+                if (planIndex === -1) planIndex = aiAnalysis.search(/แผนปฏิบัติการ\s*7\s*วัน/i);
+                if (planIndex === -1) planIndex = aiAnalysis.search(/Day\s*1/i);
+
+                let fireIndex = -1;
+                if (planIndex !== -1) {
+                  fireIndex = aiAnalysis.indexOf('🔥', planIndex);
+                  if (fireIndex === -1) fireIndex = aiAnalysis.search(/ข้อคิดส่งท้าย/i);
+                }
 
                 if (planIndex !== -1) {
                     beforePlan = aiAnalysis.substring(0, planIndex);

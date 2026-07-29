@@ -3049,9 +3049,10 @@ Day 21: [กิจกรรม]
       const track = SKILL_TRACKS[effectiveTrackId];
       const targetDay = Math.min(7, Math.max(1, effectiveTrackDay));
       
-      // 🎯 Quest 1: Anchor from Wheel AI 21-Day Action Plan using wheelPlanDay!
+      // 🎯 Quest 1: Anchor from Wheel AI Action Plan using wheelPlanDay!
       let quest1Title = "";
-      const wheelDay = (completedQuests.includes(1) && wheelPlanDay === 22) ? 21 : (wheelPlanDay || 1);
+      const activeTarget = wheelPlanTarget || 7;
+      const wheelDay = (completedQuests.includes(1) && wheelPlanDay === (activeTarget + 1)) ? activeTarget : (wheelPlanDay || 1);
 
       if (!lastWheel) {
         quest1Title = "ทำแบบประเมิน Wheel of Life เพื่อปลดล็อกแผนพัฒนาชีวิตของคุณ";
@@ -3182,7 +3183,7 @@ Day 21: [กิจกรรม]
       wheelQuestSet = true;
     } else if (!wheelQuestSet && lastWheel?.analysis) {
       const isWheelDoneToday = completedQuests.includes(1);
-      const maxTarget = Math.max(wheelPlanTarget || 21, 21);
+      const maxTarget = wheelPlanTarget || 7;
 
       // ถ้าวันนี้ทำไปแล้ว แสดงว่า wheelPlanDay เพิ่งถูกเลื่อนขึ้นไปเป็นตัวถัดไป ให้ถอยกลับมาแสดงของอันเดิมก่อน
       const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : wheelPlanDay;
@@ -7728,7 +7729,7 @@ Day 21: [กิจกรรม]
             </button>
 
             {/* 🚨 ปุ่มรีเซ็ตข้อมูล (ซ่อนตัวเนียนๆ เป็นสีแดงอ่อน - แสดงเฉพาะ Dev หรือ Admin) */}
-            {(process.env.NODE_ENV === 'development' || (user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean).includes(user.email.toLowerCase()))) && (
+            {(process.env.NODE_ENV === 'development' || (user?.email && ["emotion.tuii@gmail.com", "upskillwithfuii@gmail.com", ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",")].filter(Boolean).includes(user.email.toLowerCase()))) && (
               <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
 
                 <button onClick={handleResetAllData} className="flex items-center justify-center gap-2 bg-transparent text-red-300 font-bold text-xs py-3 px-4 rounded-full hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 w-full sm:w-auto">

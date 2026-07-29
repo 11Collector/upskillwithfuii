@@ -292,7 +292,7 @@ export default function PremiumShopPage() {
 
   const router = useRouter();
 
-  const isAdmin = !!(user?.email && (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",").filter(Boolean).includes(user.email.toLowerCase()));
+  const isAdmin = !!(user?.email && ["emotion.tuii@gmail.com", "upskillwithfuii@gmail.com", ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(",")].filter(Boolean).includes(user.email.toLowerCase()));
 
   // Fetch User and potXP from Firestore
   useEffect(() => {
