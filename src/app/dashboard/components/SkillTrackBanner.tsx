@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Sun, HeartHandshake, Compass } from "lucide-react";
+import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Sun, HeartHandshake, Compass, Clock } from "lucide-react";
 import { SKILL_TRACKS, SkillTrack } from "@/data/skillTracks";
 
 // Helper function to get clean Lucide vector icon per track
@@ -49,7 +49,38 @@ export default function SkillTrackBanner({
 }: SkillTrackBannerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
+  const [timeLeftStr, setTimeLeftStr] = useState<string>("");
   const activeTrack = activeTrackId ? SKILL_TRACKS[activeTrackId] : null;
+
+  useEffect(() => {
+    const updateTimer = () => {
+      try {
+        const now = new Date();
+        const bgkTimeString = now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" });
+        const bgkNow = new Date(bgkTimeString);
+        const bgkMidnight = new Date(bgkNow);
+        bgkMidnight.setHours(24, 0, 0, 0);
+        const diffMs = bgkMidnight.getTime() - bgkNow.getTime();
+
+        if (diffMs <= 0) {
+          setTimeLeftStr("00ชม. 00น.");
+          return;
+        }
+
+        const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        const pad = (n: number) => String(n).padStart(2, "0");
+        setTimeLeftStr(`${hrs}ชม. ${pad(mins)}น.`);
+      } catch {
+        setTimeLeftStr("");
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 🧠 Fail-Fast Sprint Evaluator:
   // If remaining available days in 7-day sprint + already completed days < 5, sprint is failed!
@@ -136,7 +167,7 @@ export default function SkillTrackBanner({
                   <button 
                     onClick={onOpenInfo}
                     className="w-4 h-4 rounded-full bg-orange-400/20 hover:bg-orange-400/40 text-orange-300 text-[10px] inline-flex items-center justify-center font-black cursor-pointer transition-colors border border-orange-400/30"
-                    title="ดูคำแนะนำวิชา"
+                    title="ดูคำแนะนำวิชาและเวลาตัดรอบ"
                   >
                     i
                   </button>

@@ -767,32 +767,26 @@ Day 21: [กิจกรรม]
         }
         return prev;
       });
-    } else {
-      // 🛡️ Safeguard: Only uncheck currentDay if user is explicitly on the active current session date
-      // to avoid date-rollover resets from stripping past completed days.
-      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-      setUserData((u: any) => {
-        if (u && u.lastActiveDate === todayStr) {
-          setSkillTrackCompletedDays((prev) => {
-            if (prev.includes(currentDay)) {
-              const updated = prev.filter((d) => d !== currentDay);
-              if (typeof window !== "undefined") {
-                localStorage.setItem(storageKey, JSON.stringify(updated));
-                localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
-              }
-              if (user?.uid) {
-                const userRef = doc(db, "users", user.uid);
-                updateDoc(userRef, {
-                  skillTrackCompletedDays: updated
-                }).catch(() => {});
-              }
-              return updated;
-            }
-            return prev;
-          });
-          return u;
+    } else if (completedQuests.length > 0) {
+      // 🛡️ Safeguard: Only uncheck currentDay if user is actively toggling quests today (completedQuests.length > 0).
+      // Never touch or strip past completed days during date-rollover reset (when completedQuests.length === 0).
+      setSkillTrackCompletedDays((prev) => {
+        if (prev.includes(currentDay)) {
+          const updated = prev.filter((d) => d !== currentDay);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+            localStorage.setItem("skillTrackCompletedDays", JSON.stringify(updated));
+          }
+          if (user?.uid) {
+            const userRef = doc(db, "users", user.uid);
+            updateDoc(userRef, {
+              skillTrackCompletedDays: updated
+            }).catch(() => {});
+          }
+          setUserData((u: any) => u ? { ...u, skillTrackCompletedDays: updated } : null);
+          return updated;
         }
-        return u;
+        return prev;
       });
     }
   }, [completedQuests.length, activeSkillTrackId, todaySkillTrackId, skillTrackCurrentDay, todaySkillTrackDay, user?.uid]);
@@ -917,8 +911,20 @@ Day 21: [กิจกรรม]
         if (typeof window !== "undefined") localStorage.setItem("skillTrackCurrentDay", String(userData.skillTrackCurrentDay || 1));
       }
       if (userData.skillTrackCompletedDays !== undefined) {
-        setSkillTrackCompletedDays(userData.skillTrackCompletedDays || []);
-        if (typeof window !== "undefined") localStorage.setItem("skillTrackCompletedDays", JSON.stringify(userData.skillTrackCompletedDays || []));
+        let completedDays = Array.isArray(userData.skillTrackCompletedDays) ? userData.skillTrackCompletedDays : [];
+        const currentTrackDay = userData.todaySkillTrackDay || userData.skillTrackCurrentDay || 1;
+        if (currentTrackDay > 1) {
+          const expectedPastDays = Array.from({ length: currentTrackDay - 1 }, (_, i) => i + 1);
+          const missing = expectedPastDays.filter((d) => !completedDays.includes(d));
+          if (missing.length > 0) {
+            completedDays = Array.from(new Set([...completedDays, ...expectedPastDays])).sort((a, b) => a - b);
+            if (user?.uid) {
+              updateDoc(doc(db, "users", user.uid), { skillTrackCompletedDays: completedDays }).catch(() => {});
+            }
+          }
+        }
+        setSkillTrackCompletedDays(completedDays);
+        if (typeof window !== "undefined") localStorage.setItem("skillTrackCompletedDays", JSON.stringify(completedDays));
       }
       if (userData.aiSkillQuests) {
         setAiSkillQuests(userData.aiSkillQuests);
@@ -9547,7 +9553,17 @@ Day 21: [กิจกรรม]
                     </div>
                     <div>
                       <h4 className="text-[11px] font-bold text-white">ผ่านวิชา (5/7 วัน)</h4>
-                      <p className="text-[10px] text-amber-300 font-bold">รับ Master Badge (ครบ 7/7 วัน รับโบนัส +100 XP!)</p>
+                      <p className="text-[10px] text-amber-300 font-bold">ทำสำเร็จ ≥3/4 เควสต์ต่อวัน = ติ๊กถูก 1 วัน (ครบ 7/7 รับ +100 XP!)</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-300 border border-sky-500/30 shrink-0">
+                      <Clock size={14} />
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-bold text-white">เวลาตัดรอบประจำวัน</h4>
+                      <p className="text-[10px] text-sky-300 font-medium">ระบบรีเซ็ตเควสต์และขึ้นวันใหม่ทุกเที่ยงคืนตรง (00:00 น.)</p>
                     </div>
                   </div>
 
