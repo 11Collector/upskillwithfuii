@@ -712,10 +712,10 @@ export default function SoulGuidePage() {
         className="flex-1 w-full overflow-y-auto no-scrollbar"
       >
         <div className="max-w-3xl mx-auto flex flex-col gap-6 p-6">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
-                key={idx}
+                key={`msg-${idx}-${msg.role}-${msg.content.slice(0, 15)}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
