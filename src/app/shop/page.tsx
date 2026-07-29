@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Trophy, X, Camera, Moon, Laptop, Ticket, Key, LayoutGrid, PiggyBank, BookOpen, SlidersHorizontal, Lock
@@ -273,6 +273,22 @@ export default function PremiumShopPage() {
   const [redeemedItem, setRedeemedItem] = useState<any>(null);
   const [redeemedHistory, setRedeemedHistory] = useState<any[]>([]);
   const [showInventoryModal, setShowInventoryModal] = useState(false);
+
+  // Group duplicate tickets in inventory by item ID/title and track quantities & instances
+  const groupedInventory = useMemo(() => {
+    const map = new Map<string, { item: any; count: number; instances: any[] }>();
+    [...redeemedHistory].reverse().forEach((hist) => {
+      const key = hist.id || hist.title;
+      if (!map.has(key)) {
+        map.set(key, { item: hist, count: 1, instances: [hist] });
+      } else {
+        const existing = map.get(key)!;
+        existing.count += 1;
+        existing.instances.push(hist);
+      }
+    });
+    return Array.from(map.values());
+  }, [redeemedHistory]);
 
   const router = useRouter();
 
@@ -876,11 +892,37 @@ export default function PremiumShopPage() {
       {/* --- 🎒 Modal: Inventory --- */}
       <AnimatePresence>
         {showInventoryModal && (
-          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowInventoryModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white border border-slate-200 p-6 rounded-[2.5rem] shadow-2xl max-h-[80vh] flex flex-col z-10">
-              <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                <h4 className="text-lg font-black text-slate-900">คลังตั๋วความสุข</h4>
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowInventoryModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" />
+            
+            {/* Bright Holo Rainbow Glossy Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white border-2 border-purple-200/90 p-4 sm:p-6 rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(236,72,153,0.22)] max-h-[85vh] flex flex-col z-10 overflow-hidden text-left"
+            >
+              {/* Bright Iridescent Top Accent Bar */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-300 via-purple-300 via-sky-300 to-emerald-300" />
+              
+              {/* Soft Bright Ambient Glows */}
+              <div className="absolute -top-12 -right-12 w-36 h-36 bg-gradient-to-br from-pink-200/50 to-purple-200/40 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-gradient-to-tr from-sky-200/50 to-emerald-200/40 rounded-full blur-2xl pointer-events-none" />
+
+              {/* Modal Header */}
+              <div className="relative z-10 flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-gradient-to-tr from-pink-100 via-purple-100 to-sky-100 border border-purple-200/60 shadow-xs text-purple-900">
+                    <Ticket size={18} className="text-purple-700" />
+                  </div>
+                  <div>
+                    <h4 className="text-base sm:text-lg font-black text-slate-900">
+                      คลังตั๋วความสุข
+                    </h4>
+                    <p className="text-[10px] font-bold text-slate-400">รวมตั๋วที่คุณสะสม • แตะการ์ดเพื่อดูรายละเอียด</p>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                   {redeemedHistory.length > 0 && isAdmin && (
                     <button
@@ -898,50 +940,74 @@ export default function PremiumShopPage() {
                           alert("เกิดข้อผิดพลาดในการล้างประวัติ");
                         }
                       }}
-                      className="px-3 py-1.5 hover:bg-red-50 text-red-500 rounded-xl text-[10px] font-black transition-all active:scale-95 border border-red-100 cursor-pointer"
+                      className="px-2.5 py-1 hover:bg-red-50 text-red-500 rounded-xl text-[10px] font-black transition-all active:scale-95 border border-red-100 cursor-pointer"
                     >
                       ล้างประวัติ
                     </button>
                   )}
-                  <button onClick={() => setShowInventoryModal(false)} className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 cursor-pointer"><X size={20} /></button>
+                  <button onClick={() => setShowInventoryModal(false)} className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition-colors cursor-pointer">
+                    <X size={20} />
+                  </button>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {redeemedHistory.length === 0 ? (
+
+              {/* Grid 3x3 Content Area */}
+              <div className="relative z-10 flex-1 overflow-y-auto px-1 pt-1 pb-2 no-scrollbar">
+                {groupedInventory.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">
-                    <Ticket size={32} className="mx-auto mb-2 text-slate-300" />
-                    <p className="text-sm font-bold">ยังไม่มีตั๋วความสุขสะสม</p>
+                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-tr from-pink-50 to-purple-100 flex items-center justify-center border border-purple-100 shadow-inner">
+                      <Ticket size={28} className="text-purple-400" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700">ยังไม่มีตั๋วความสุขสะสม</p>
                     <p className="text-xs text-slate-400 mt-1">สะสม XP แล้วเริ่มแลกรางวัลแรกกันเลย!</p>
                   </div>
                 ) : (
-                  [...redeemedHistory].reverse().map((hist, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-2xl transition-all hover:bg-slate-100/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/50 flex items-center justify-center shrink-0">
-                          <img src={`/item/${hist.id}.png`} alt={hist.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/default-avatar.png"; }} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-800 line-clamp-1">{hist.title}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-black text-purple-600">{hist.price} XP</span>
-                            <span className="text-[8px] text-slate-400">
-                              {hist.redeemedAt && new Date(hist.redeemedAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {groupedInventory.map((group, index) => (
+                      <motion.div
+                        key={index}
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => {
-                          setRedeemedItem(hist);
+                          setRedeemedItem({ ...group.item, count: group.count, instances: group.instances });
                           setShowInventoryModal(false);
                           setShowTicketModal(true);
                         }}
-                        className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] font-black transition-all active:scale-95 shrink-0"
+                        className="group relative flex flex-col items-center p-2 sm:p-2.5 bg-white hover:bg-purple-50/40 border border-slate-200/80 hover:border-purple-300 rounded-2xl transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md text-center"
                       >
-                        ดูตั๋ว
-                      </button>
-                    </div>
-                  ))
+                        {/* Ticket Badge Icon Container */}
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-pink-50/80 via-purple-50/80 to-sky-50/80 border border-purple-100 shadow-inner flex items-center justify-center mb-1.5 shrink-0 group-hover:scale-105 transition-transform">
+                          <img
+                            src={`/item/${group.item.id}.png`}
+                            alt={group.item.title}
+                            className="w-full h-full object-cover rounded-2xl"
+                            onError={(e) => { (e.target as HTMLImageElement).src = "/default-avatar.png"; }}
+                          />
+
+                          {/* 🏷️ Quantity Badge (x2, x3, etc.) */}
+                          {group.count > 1 && (
+                            <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white font-black text-[9px] sm:text-[10px] rounded-full shadow-md z-20 border-2 border-white leading-none">
+                              x{group.count}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title Container - 2 Lines without truncation */}
+                        <div className="w-full min-h-[2.25rem] flex items-center justify-center px-0.5 mb-1">
+                          <p className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight text-center group-hover:text-purple-600 transition-colors line-clamp-2">
+                            {group.item.title}
+                          </p>
+                        </div>
+
+                        {/* XP Badge */}
+                        <div className="flex items-center justify-center gap-1 mt-auto">
+                          <span className="text-[8.5px] sm:text-[9px] font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100/80 shadow-2xs group-hover:bg-purple-100/60 transition-colors">
+                            {group.item.price} XP
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -967,7 +1033,14 @@ export default function PremiumShopPage() {
               className="relative w-full max-w-sm bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] shadow-2xl z-10 text-white flex flex-col items-center"
             >
               <div className="flex justify-between items-center w-full mb-6">
-                <h4 className="text-lg font-black text-white">ตั๋วความสุขของคุณ</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-lg font-black text-white">ตั๋วความสุขของคุณ</h4>
+                  {redeemedItem.count > 1 && (
+                    <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-[10px] rounded-full shadow-sm">
+                      สะสม {redeemedItem.count} ใบ
+                    </span>
+                  )}
+                </div>
                 <button onClick={() => setShowTicketModal(false)} className="p-1.5 hover:bg-slate-800 rounded-full text-slate-400">
                   <X size={20} />
                 </button>
