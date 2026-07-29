@@ -610,6 +610,12 @@ Day 21: [กิจกรรม]
       setTodaySkillTrackDay((prev) => {
         const next = Math.min(7, prev + 1);
         setSkillTrackCurrentDay(next);
+        if (user?.uid) {
+          updateDoc(doc(db, "users", user.uid), {
+            todaySkillTrackDay: next,
+            skillTrackCurrentDay: next
+          }).catch(() => {});
+        }
         console.log(`⏩ [Dev Test] Advanced Skill Track Day to: Day ${next}`);
         return next;
       });
@@ -912,17 +918,6 @@ Day 21: [กิจกรรม]
       }
       if (userData.skillTrackCompletedDays !== undefined) {
         let completedDays = Array.isArray(userData.skillTrackCompletedDays) ? userData.skillTrackCompletedDays : [];
-        const currentTrackDay = userData.todaySkillTrackDay || userData.skillTrackCurrentDay || 1;
-        if (currentTrackDay > 1) {
-          const expectedPastDays = Array.from({ length: currentTrackDay - 1 }, (_, i) => i + 1);
-          const missing = expectedPastDays.filter((d) => !completedDays.includes(d));
-          if (missing.length > 0) {
-            completedDays = Array.from(new Set([...completedDays, ...expectedPastDays])).sort((a, b) => a - b);
-            if (user?.uid) {
-              updateDoc(doc(db, "users", user.uid), { skillTrackCompletedDays: completedDays }).catch(() => {});
-            }
-          }
-        }
         setSkillTrackCompletedDays(completedDays);
         if (typeof window !== "undefined") localStorage.setItem("skillTrackCompletedDays", JSON.stringify(completedDays));
       }
@@ -1340,7 +1335,7 @@ Day 21: [กิจกรรม]
           }
 
           let nextTrackDay = trackCurrentDay;
-          if (activeTrack && completedDays.includes(trackCurrentDay)) {
+          if (activeTrack && trackCurrentDay < 7) {
             nextTrackDay = Math.min(7, trackCurrentDay + 1);
             updates.skillTrackCurrentDay = nextTrackDay;
             setSkillTrackCurrentDay(nextTrackDay);
