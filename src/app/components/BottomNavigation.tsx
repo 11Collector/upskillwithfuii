@@ -40,21 +40,20 @@ function BottomNavigationInner() {
     !!user && (
       pathname.startsWith('/dashboard') ||
       ((pathname.startsWith('/library') || pathname.startsWith('/second-brain') || pathname.startsWith('/tools')) && enteredDashboard) ||
-      pathname === '/tools/deep-work' ||
-      pathname === '/tools/focus-room' ||
       pathname === '/shop'
     );
 
   const isDark = false;
 
-  // Hide bottom nav on active assessment flow, full-screen chat & standalone tools
+  // Hide bottom nav on active assessment flow, full-screen chat, focus tools & standalone pages
   if (
     isAssessing ||
     pathname === '/tools/soul-guide' ||
     pathname === '/tools/ai-mentor' ||
     pathname === '/tools/slides' ||
-    pathname.startsWith('/personalityzero') ||
-    pathname === '/shop'
+    pathname === '/tools/focus-room' ||
+    pathname === '/tools/deep-work' ||
+    pathname.startsWith('/personalityzero')
   ) return null;
 
   if (isDashboardFlow) {
