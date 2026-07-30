@@ -54,8 +54,8 @@ function BottomNavigationInner() {
     pathname.startsWith('/tools/library-of-souls') ||
     pathname.startsWith('/tools/khomsatsat') ||
     pathname.startsWith('/tools/ghost-in-you') ||
-    pathname === '/tools/soul-guide' ||
-    pathname === '/tools/ai-mentor' ||
+    pathname.startsWith('/tools/soul-guide') ||
+    pathname.startsWith('/tools/ai-mentor') ||
     pathname === '/tools/slides' ||
     pathname === '/tools/focus-room' ||
     pathname === '/tools/deep-work' ||
