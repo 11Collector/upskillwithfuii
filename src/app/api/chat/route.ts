@@ -253,7 +253,7 @@ export async function POST(req: Request) {
       // Fetch AI Brain Scan Connections if available
       const userDocSnap = await adminDb.collection("users").doc(authResult.uid).get().catch(() => null);
       const userDbData = userDocSnap?.exists ? userDocSnap.data() || {} : {};
-      const storedSuggestions = userDbData.aiSuggestions || userData?.aiSuggestions || [];
+      const storedSuggestions = userDbData.aiSuggestions || (userData as any)?.aiSuggestions || [];
 
       if (Array.isArray(storedSuggestions) && storedSuggestions.length > 0) {
         const connectionsList = storedSuggestions.map((sug: any) => {
