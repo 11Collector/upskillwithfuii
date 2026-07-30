@@ -157,22 +157,23 @@ export async function POST(req: Request) {
     let relevantNotesContext = "";
 
     // Check if the user's message is a simple greeting or short talk to skip RAG retrieval
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
-    const cleanedMessage = lastUserMessage.trim().toLowerCase();
-    const isGreeting = /^(hello|hi|hey|สวัสดี|หวัดดี|ทักทาย|ดีครับ|ดีค่ะ|ครับ|ค่ะ|ok|โอเค|yes|no|ใช่|ไม่|เริ่ม)/i.test(cleanedMessage);
-    const skipRAG = isGreeting || cleanedMessage.length < 8;
+    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก)/i.test(cleanedMessage);
 
-    if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && !skipRAG) {
+    if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && (!skipRAG || isOverviewQuery)) {
       // 1. First, check direct title keyword matches (case-insensitive)
       const matchedDocsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
 
-      notesSnap.docs.forEach((doc) => {
-        const data = doc.data();
-        const title = (data.title || "").trim().toLowerCase();
-        if (title && title !== "บันทึกที่ไม่มีชื่อ" && (cleanedMessage.includes(title) || title.includes(cleanedMessage.split(" ")[0]))) {
-          matchedDocsMap.set(doc.id, doc);
-        }
-      });
+      if (isOverviewQuery) {
+        notesSnap.docs.forEach((doc) => matchedDocsMap.set(doc.id, doc));
+      } else {
+        notesSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          const title = (data.title || "").trim().toLowerCase();
+          if (title && title !== "บันทึกที่ไม่มีชื่อ" && (cleanedMessage.includes(title) || title.includes(cleanedMessage.split(" ")[0]))) {
+            matchedDocsMap.set(doc.id, doc);
+          }
+        });
+      }
 
       // 2. If no direct match or for broader semantic matching, call AI Router
       const noteSummaries = notesSnap.docs.map((doc, index) => ({
@@ -242,6 +243,20 @@ export async function POST(req: Request) {
           const data = doc.data();
           return `--- บันทึกย่อ: ${data.title} ---\nหมวดหมู่: ${data.category || 'ทั่วไป'}\nเนื้อหา:\n${data.content || 'ไม่มีเนื้อหา'}\n`;
         }).join("\n\n");
+      }
+
+      // Fetch AI Brain Scan Connections if available
+      const userDocSnap = await adminDb.collection("users").doc(authResult.uid).get().catch(() => null);
+      const userDbData = userDocSnap?.exists ? userDocSnap.data() || {} : {};
+      const storedSuggestions = userDbData.aiSuggestions || userData?.aiSuggestions || [];
+
+      if (Array.isArray(storedSuggestions) && storedSuggestions.length > 0) {
+        const connectionsList = storedSuggestions.map((sug: any) => {
+          const srcTitle = notesSnap?.docs.find(d => d.id === sug.source)?.data()?.title || sug.source;
+          const trgTitle = notesSnap?.docs.find(d => d.id === sug.target)?.data()?.title || sug.target;
+          return `- [${srcTitle}] ↔ [${trgTitle}] (ความสัมพันธ์ ${sug.score || 80}%): ${sug.reason || 'เกี่ยวกับแนวคิดเดียวกัน'}`;
+        }).join("\n");
+        relevantNotesContext += `\n\n--- เส้นเชื่อมโยงความคิดที่สแกนพบแล้วในแผนผัง (AI Scan Connections) ---\n${connectionsList}\n`;
       }
     }
 

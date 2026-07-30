@@ -1241,18 +1241,17 @@ function SecondBrainContent() {
       setAiSuggestions(suggestions);
       localStorage.setItem(`ai_suggestions_${user.uid}`, JSON.stringify(suggestions));
 
-      // Increment freeScansUsed in Firestore for non-Pro members
-      if (!isProMember) {
-        const nextCount = freeScansUsed + 1;
-        setFreeScansUsed(nextCount);
-        try {
-          const userRef = doc(db, "users", user.uid);
-          await updateDoc(userRef, {
-            freeScansUsed: nextCount
-          });
-        } catch (dbErr) {
-          console.error("Failed to update freeScansUsed in Firestore:", dbErr);
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const updatePayload: any = { aiSuggestions: suggestions };
+        if (!isProMember) {
+          const nextCount = freeScansUsed + 1;
+          setFreeScansUsed(nextCount);
+          updatePayload.freeScansUsed = nextCount;
         }
+        await updateDoc(userRef, updatePayload);
+      } catch (dbErr) {
+        console.error("Failed to update aiSuggestions in Firestore:", dbErr);
       }
 
       if (suggestions.length > 0) {
