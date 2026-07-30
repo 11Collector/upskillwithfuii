@@ -157,6 +157,11 @@ export async function POST(req: Request) {
     let relevantNotesContext = "";
 
     // Check if the user's message is a simple greeting or short talk to skip RAG retrieval
+    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const cleanedMessage = lastUserMessage.trim().toLowerCase();
+    const isGreeting = /^(hello|hi|hey|สวัสดี|หวัดดี|ทักทาย|ดีครับ|ดีค่ะ|ครับ|ค่ะ|ok|โอเค|yes|no|ใช่|ไม่|เริ่ม)/i.test(cleanedMessage);
+    const skipRAG = isGreeting || cleanedMessage.length < 8;
+
     const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก)/i.test(cleanedMessage);
 
     if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && (!skipRAG || isOverviewQuery)) {
