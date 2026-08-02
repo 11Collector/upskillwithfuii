@@ -267,7 +267,6 @@ export default function DashboardPage() {
       // 🌙 User has already done quests today -> Queue new track to start tomorrow at 00:00
       setActiveSkillTrackId(trackId);
       setSkillTrackCurrentDay(1);
-      setSkillTrackCompletedDays([]);
 
       setShowSuccessToast(`⏳ เนื่องจากวันนี้ทำเควสต์แล้ว วิชา "${trackName}" จะต่อคิวเริ่ม Day 1 ในวันพรุ่งนี้ 00:00 น. ครับ`);
 
@@ -275,16 +274,14 @@ export default function DashboardPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
           localStorage.setItem(`skillTrackCurrentDay_${user.uid}`, "1");
-          localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
         }
         const userRef = doc(db, "users", user.uid);
         const updatePayload: any = {
           activeSkillTrackId: trackId,
-          skillTrackCurrentDay: 1,
-          skillTrackCompletedDays: []
+          skillTrackCurrentDay: 1
         };
         setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
-        setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
+        setUserData((u: any) => u ? { ...u, activeSkillTrackId: trackId, skillTrackCurrentDay: 1 } : null);
       }
     }
   };
@@ -696,11 +693,11 @@ Day 21: [กิจกรรม]
             }).catch(() => {});
             setUserData((u: any) => u ? { ...u, skillTrackCompletedDays: updated } : null);
           }
-          if (updated.length === 5 && user?.uid && activeSkillTrackId) {
+          if (updated.length === 5 && user?.uid && activeTrack) {
             const userRef = doc(db, "users", user.uid);
             updateDoc(userRef, {
-              completedSkillBadges: arrayUnion(activeSkillTrackId),
-              [`trackCompletionCounts.${activeSkillTrackId}`]: increment(1),
+              completedSkillBadges: arrayUnion(activeTrack),
+              [`trackCompletionCounts.${activeTrack}`]: increment(1),
               totalXP: increment(50)
             }).catch(() => {});
 
@@ -725,23 +722,23 @@ Day 21: [กิจกรรม]
 
             setUserData((u: any) => {
               const counts = u?.trackCompletionCounts || {};
-              const currentCount = counts[activeSkillTrackId] || 0;
+              const currentCount = counts[activeTrack] || 0;
               return {
                 ...u,
-                completedSkillBadges: Array.from(new Set([...(u?.completedSkillBadges || []), activeSkillTrackId])),
+                completedSkillBadges: Array.from(new Set([...(u?.completedSkillBadges || []), activeTrack])),
                 trackCompletionCounts: {
                   ...counts,
-                  [activeSkillTrackId]: currentCount + 1
+                  [activeTrack]: currentCount + 1
                 },
                 totalXP: (u?.totalXP || 0) + 50
               };
             });
           }
 
-          if (updated.length === 7 && user?.uid && activeSkillTrackId) {
+          if (updated.length === 7 && user?.uid && activeTrack) {
             const userRef = doc(db, "users", user.uid);
             updateDoc(userRef, {
-              completedSkillBadges: arrayUnion(activeSkillTrackId),
+              completedSkillBadges: arrayUnion(activeTrack),
               totalXP: increment(100)
             }).catch(() => {});
 
@@ -1217,9 +1214,7 @@ Day 21: [กิจกรรม]
           let wheelPlanTarget = userData.wheelPlanTarget || 7;
           let nextPlanDay = currentPlanDay;
 
-          const yesterdayCompletedWheel = Array.isArray(userData.completedQuestIds) && userData.completedQuestIds.includes(1);
-
-          if (yesterdayCompletedWheel) {
+          if (currentPlanDay > 0) {
             if (currentPlanDay > wheelPlanTarget) {
               nextPlanDay = currentPlanDay;
               updates.wheelPlanDay = nextPlanDay;
@@ -1322,9 +1317,16 @@ Day 21: [กิจกรรม]
           const trackCurrentDay = userData.skillTrackCurrentDay || 1;
           const completedDays = Array.isArray(userData.skillTrackCompletedDays) ? userData.skillTrackCompletedDays : [];
 
-          // 🛑 If track was finished (7 days completed) and user hasn't explicitly selected a new track:
-          // Fallback to Default Quests (activeTrack = null) for the new day!
-          if (completedDays.length >= 7 && activeTrack === userData.todaySkillTrackId) {
+          if (activeTrack !== userData.todaySkillTrackId) {
+            // 🎓 Transitioning to a new queued track on rollover!
+            updates.skillTrackCompletedDays = [];
+            setSkillTrackCompletedDays([]);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("skillTrackCompletedDays", JSON.stringify([]));
+            }
+          } else if (completedDays.length >= 7) {
+            // 🛑 If track was finished (7 days completed) and user hasn't explicitly selected a new track:
+            // Fallback to Default Quests (activeTrack = null) for the new day!
             activeTrack = null;
             updates.activeSkillTrackId = null;
             updates.skillTrackCurrentDay = 1;
@@ -1335,7 +1337,7 @@ Day 21: [กิจกรรม]
           }
 
           let nextTrackDay = trackCurrentDay;
-          if (activeTrack && trackCurrentDay < 7) {
+          if (activeTrack && trackCurrentDay < 7 && activeTrack === userData.todaySkillTrackId) {
             nextTrackDay = Math.min(7, trackCurrentDay + 1);
             updates.skillTrackCurrentDay = nextTrackDay;
             setSkillTrackCurrentDay(nextTrackDay);
@@ -5843,6 +5845,7 @@ Day 21: [กิจกรรม]
               currentDay={todaySkillTrackDay || skillTrackCurrentDay}
               completedDays={skillTrackCompletedDays}
               nextTrackId={activeSkillTrackId}
+              isBadgeUnlocked={!!(userData?.completedSkillBadges?.includes(todaySkillTrackId || activeSkillTrackId || "")) }
               lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
               onSelectTrack={handleSelectSkillTrack}

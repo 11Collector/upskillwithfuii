@@ -32,6 +32,7 @@ interface SkillTrackBannerProps {
   onOpenInfo?: () => void;
   onAdvanceDevDay?: () => void;
   nextTrackId?: string | null;
+  isBadgeUnlocked?: boolean;
 }
 
 export default function SkillTrackBanner({
@@ -45,7 +46,8 @@ export default function SkillTrackBanner({
   onRestartTrack,
   onOpenInfo,
   onAdvanceDevDay,
-  nextTrackId
+  nextTrackId,
+  isBadgeUnlocked
 }: SkillTrackBannerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
@@ -82,12 +84,16 @@ export default function SkillTrackBanner({
     return () => clearInterval(interval);
   }, []);
 
-  // 🧠 Fail-Fast Sprint Evaluator:
-  // If remaining available days in 7-day sprint + already completed days < 5, sprint is failed!
-  const isTodayCompleted = completedDays.includes(currentDay);
+  // 🧠 Fail-Fast Sprint Evaluator & Completed Days Sync:
+  // If badge is unlocked, merge actual completedDays with 5-day fallback so newly completed days (e.g. D7) immediately render checked
+  const effectiveCompletedDays = isBadgeUnlocked
+    ? Array.from(new Set([...completedDays, ...(completedDays.length < 5 ? [1, 2, 3, 4, 5] : [])]))
+    : completedDays;
+
+  const isTodayCompleted = effectiveCompletedDays.includes(currentDay);
   const remainingDaysCount = isTodayCompleted ? Math.max(0, 7 - currentDay) : Math.max(0, 7 - currentDay + 1);
-  const maxPossibleCompleted = completedDays.length + remainingDaysCount;
-  const isFailedSprint = completedDays.length < 5 && maxPossibleCompleted < 5;
+  const maxPossibleCompleted = effectiveCompletedDays.length + remainingDaysCount;
+  const isFailedSprint = !isBadgeUnlocked && effectiveCompletedDays.length < 5 && maxPossibleCompleted < 5;
 
   // 🧠 Smart Track Recommendation Evaluator:
   // Priority #1: User's explicit 1-Year Goal text typed in Wheel of Life
@@ -185,7 +191,7 @@ export default function SkillTrackBanner({
                   <RotateCcw size={12} className="text-rose-400" />
                   <span>ไม่ผ่านรอบนี้</span>
                 </div>
-              ) : completedDays.length < 5 ? (
+              ) : effectiveCompletedDays.length < 5 && !isBadgeUnlocked ? (
                 <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
                   <ShieldCheck size={12} className="text-orange-400" />
                   <span className="hidden sm:inline">โฟกัส 7 วัน</span>
@@ -199,7 +205,8 @@ export default function SkillTrackBanner({
                   }}
                   className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-md shadow-orange-500/20"
                 >
-                  <Sparkles size={12} /> สลับวิชา
+                  <Sparkles size={12} />
+                  <span>{nextTrackId && nextTrackId !== activeTrackId ? "เปลี่ยนวิชาที่ต่อคิว" : "สลับวิชา"}</span>
                 </button>
               )}
             </div>
@@ -213,13 +220,13 @@ export default function SkillTrackBanner({
                 ความคืบหน้า 7 วัน
               </span>
               <span className={isFailedSprint ? 'text-rose-400 font-black' : 'text-orange-400 font-black'}>
-                {Math.round((completedDays.length / 7) * 100)}% สำเร็จ
+                {Math.round((effectiveCompletedDays.length / 7) * 100)}% สำเร็จ
               </span>
             </div>
 
             <div className="grid grid-cols-7 gap-1 sm:gap-2">
               {[1, 2, 3, 4, 5, 6, 7].map((dayNum) => {
-                const isCompleted = completedDays.includes(dayNum);
+                const isCompleted = effectiveCompletedDays.includes(dayNum);
                 const isCurrent = dayNum === currentDay;
 
                 return (
