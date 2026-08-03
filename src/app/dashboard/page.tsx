@@ -219,6 +219,48 @@ const FramerMotionConfetti = () => {
   );
 };
 
+const getWheelDayTitle = (analysis: string | undefined | null, displayDay: number, maxTarget: number): string | null => {
+  if (!analysis || displayDay <= 0 || displayDay > maxTarget) return null;
+
+  const lines = analysis.split('\n');
+
+  // 1. Direct Regex Match for "Day X", "วันที่ X", "วัน X"
+  const dayRegex = new RegExp(`^\\s*(?:[\\-\\*\u2022\\d\\.\\(\\)]\\s*)*(?:day|วันที่|วัน)\\s*${displayDay}\\b(?!\\s*[-–—ถึง]+\\s*\\d+)`, 'i');
+  const dayLine = lines.find((l: string) => dayRegex.test(l) && !l.includes('แผนปฏิบัติการ'));
+
+  if (dayLine) {
+    const cleanText = dayLine
+      .replace(/\*\*/g, '')
+      .replace(/^[\s\-\*•\d\.\(\)]+/, '')
+      .replace(/^(?:day|วันที่|วัน)\s*\d+\s*[:\-|\s]*/i, '')
+      .trim();
+    if (cleanText) return cleanText;
+  }
+
+  // 2. Fallback: filter all plan item lines excluding headers/range titles
+  const planItems = lines
+    .filter((l: string) => {
+      const isHeader = l.includes('แผนปฏิบัติการ') || l.match(/\b(?:day|วันที่|วัน)\s*\d+\s*[-–—ถึง]+\s*\d+/i);
+      const isItem = l.match(/^\s*(?:[\\-\\*\u2022\\d\\.\\(\\)]\s*)*(?:day|วันที่|วัน)\s*\d+/i) || l.match(/^\d+\.\s*\S/);
+      return isItem && !isHeader;
+    })
+    .map((l: string) => 
+      l.replace(/\*\*/g, '')
+       .replace(/^[\s\-\*•\d\.\(\)]+/, '')
+       .replace(/^(?:day|วันที่|วัน)\s*\d+\s*[:\-|\s]*/i, '')
+       .replace(/^\d+\.\s*/, '')
+       .trim()
+    )
+    .filter((t: string) => t.length > 0);
+
+  if (planItems.length > 0) {
+    const dayIdx = Math.min(planItems.length - 1, displayDay - 1);
+    return planItems[dayIdx] || planItems[0];
+  }
+
+  return null;
+};
+
 export default function DashboardPage() {
   const [activeSkillTrackId, setActiveSkillTrackId] = useState<string | null>(null);
   const [skillTrackCurrentDay, setSkillTrackCurrentDay] = useState<number>(1);
@@ -465,6 +507,7 @@ export default function DashboardPage() {
         wheelPlanTarget: 7, // รีเซ็ตเป้าหมายกลับเป็น 7 วันเสมอ
         isRandomMode: false,
         completedQuestIds: [],
+        currentDailyQuests: [],
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
         lastActiveAt: serverTimestamp(),
@@ -475,7 +518,7 @@ export default function DashboardPage() {
       setWheelPlanTarget(7);
       setCompletedQuests([]);
       setWheelCompletions(0);
-      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0, wheelPlanTarget: 7 } : null);
+      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0, wheelPlanTarget: 7, completedQuestIds: [], currentDailyQuests: [] } : null);
       alert("เริ่มรอบใหม่ (Day 1) ให้คุณแล้ว! ลุยกันต่อเลยครับ");
     } catch (e) { console.error(e); }
   };
@@ -494,7 +537,10 @@ export default function DashboardPage() {
       const assessmentId = lastWheel.id;
 
       // เช็กก่อนว่ามีข้อมูล Day 8-21 ในตัวเดิมอยู่แล้วหรือไม่
-      const alreadyExtended = lastWheel.analysis && lastWheel.analysis.match(/\bDay\s?21\b/i);
+      const alreadyExtended = lastWheel.analysis && (
+        lastWheel.analysis.match(/\b(?:Day|วันที่|วัน)\s*8\b/i) ||
+        lastWheel.analysis.match(/\b(?:Day|วันที่|วัน)\s*9\b/i)
+      );
 
       if (alreadyExtended) {
         // ดึงของเดิมรันต่อได้เลย ไม่ต้องเรียก AI
@@ -502,12 +548,14 @@ export default function DashboardPage() {
           wheelPlanTarget: 21,
           wheelPlanDay: 8,
           completedQuestIds: [],
+          currentDailyQuests: [],
         });
 
         setWheelPlanTarget(21);
         setWheelPlanDay(8);
         setCompletedQuests([]);
-        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8 } : null);
+        setLastWheel((prev: any) => prev ? { ...prev, analysis: lastWheel.analysis } : null);
+        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8, completedQuestIds: [], currentDailyQuests: [] } : null);
         alert("ขยายแผนต่อเนื่องเป็น 21 วันแล้ว! (ใช้แผนเดิมที่วิเคราะห์ไว้ก่อนหน้า) ลุยกันต่อเลยครับ");
       } else {
         // เจน AI เพิ่มเติม
@@ -575,13 +623,14 @@ Day 21: [กิจกรรม]
           wheelPlanTarget: 21,
           wheelPlanDay: 8,
           completedQuestIds: [],
+          currentDailyQuests: [],
         });
 
         setWheelPlanTarget(21);
         setWheelPlanDay(8);
         setCompletedQuests([]);
         setLastWheel((prev: any) => prev ? { ...prev, analysis: extendedAnalysis } : null);
-        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8 } : null);
+        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8, completedQuestIds: [], currentDailyQuests: [] } : null);
         alert("✨ AI ได้วิเคราะห์และสร้างแผนสร้างนิสัยต่อเนื่อง (Day 8-21) ให้คุณเรียบร้อยแล้ว ลุยกันต่อเลยครับ!");
       }
     } catch (e: any) {
@@ -2926,26 +2975,22 @@ Day 21: [กิจกรรม]
         computedWheelTitle = randomWheelQuestTitle;
         wheelQuestSet = true;
       }
-      if (!wheelQuestSet && lastWheel?.analysis) {
-        const planSection = lastWheel.analysis.split('📅')[1];
-        if (planSection) {
-          const planItems = planSection.split('\n')
-            .filter((l: string) => l.match(/^[1-7]\.|^-|\bDay\s?[1-7]\b/i))
-            .map((l: string) => l.replace(/^[1-7]\.\s*|^-\s*|\*\*/g, '').trim());
+      if (!wheelQuestSet && lastWheel) {
+        const maxTarget = wheelPlanTarget || 7;
+        if (wheelPlanDay > maxTarget) {
+          computedWheelTitle = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
+          wheelQuestSet = true;
+        } else {
+          const isWheelDoneToday = completedIds.includes(1);
+          const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : (wheelPlanDay || 1);
 
-          if (planItems.length > 0) {
-            const isWheelDoneToday = completedIds.includes(1);
-            const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
-
-            if (displayDay > 0 && displayDay <= 7) {
-              const dayIdx = Math.min(6, displayDay - 1);
-              let currentDayPlan = planItems[dayIdx] || planItems[0];
-              computedWheelTitle = `DAY ${displayDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
-              wheelQuestSet = true;
-            } else {
-              computedWheelTitle = `🏆 จบแผน 7 วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
-              wheelQuestSet = true;
+          if (displayDay > 0 && displayDay <= maxTarget) {
+            let dayText = lastWheel?.analysis ? getWheelDayTitle(lastWheel.analysis, displayDay, maxTarget) : null;
+            if (!dayText) {
+              dayText = "พัฒนาพฤติกรรมเป้าหมายต่อเนื่อง";
             }
+            computedWheelTitle = `DAY ${displayDay}/${maxTarget} | ${dayText}`;
+            wheelQuestSet = true;
           }
         }
       }
@@ -3043,17 +3088,31 @@ Day 21: [กิจกรรม]
       Array.isArray(userData?.currentDailyQuests) &&
       userData.currentDailyQuests.length === 4
     ) {
+      const maxTarget = wheelPlanTarget || 7;
+      const isFinished = lastWheel && wheelPlanDay > maxTarget;
       const storedTrackId = userData.currentDailyTrackId;
+      let isLocked = false;
+
       if (storedTrackId) {
-        if (storedTrackId === effectiveTrackId) {
-          return userData.currentDailyQuests;
-        }
+        if (storedTrackId === effectiveTrackId) isLocked = true;
       } else {
-        // Fallback for legacy docs where currentDailyTrackId wasn't saved yet:
-        // Only lock if user has already completed 1+ quests today
-        if (completedQuests.length > 0) {
-          return userData.currentDailyQuests;
+        if (completedQuests.length > 0) isLocked = true;
+      }
+
+      if (isLocked) {
+        if (isFinished) {
+          return userData.currentDailyQuests.map((q: any, i: number) => {
+            if (i === 0) {
+              return {
+                ...q,
+                title: `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`,
+                xp: 0,
+              };
+            }
+            return q;
+          });
         }
+        return userData.currentDailyQuests;
       }
     }
 
@@ -3069,23 +3128,9 @@ Day 21: [กิจกรรม]
       if (!lastWheel) {
         quest1Title = "ทำแบบประเมิน Wheel of Life เพื่อปลดล็อกแผนพัฒนาชีวิตของคุณ";
       } else if (lastWheel?.analysis) {
-        const lines = lastWheel.analysis.split('\n');
-        const dayRegex = new RegExp(`\\bday\\s*${wheelDay}\\b`, 'i');
-        const dayLine = lines.find((l: string) => dayRegex.test(l));
-        if (dayLine) {
-          quest1Title = dayLine
-            .replace(/\*\*/g, '')
-            .replace(/^[\s\-\*•\d\.\(\)]+/, '')
-            .replace(/^day\s*\d+\s*[:\-|\s]*/i, '')
-            .trim();
-        } else {
-          const planItems = lines
-            .filter((l: string) => l.match(/^\d+\.|^-|\bDay\s?\d+\b/i))
-            .map((l: string) => l.replace(/\*\*/g, '').replace(/^\d+\.\s*|^-\s*/, '').trim());
-          if (planItems.length > 0) {
-            const idx = Math.min(planItems.length - 1, wheelDay - 1);
-            quest1Title = (planItems[idx] || planItems[0]).replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim();
-          }
+        const dayText = getWheelDayTitle(lastWheel.analysis, wheelDay, activeTarget);
+        if (dayText) {
+          quest1Title = dayText;
         }
       }
 
@@ -3188,49 +3233,30 @@ Day 21: [กิจกรรม]
 
     // 🎯 [NEW LOGIC] Quest 1 MUST ALWAYS use lastWheel.analysis FIRST when available!
     let wheelQuestSet = false;
+    const maxTarget = wheelPlanTarget || 7;
 
     if (!lastWheel) {
       qList[0].title = "ทำแบบประเมิน Wheel of Life เพื่อปลดล็อกแผนพัฒนาชีวิตของคุณ";
       qList[0].xp = 50;
       wheelQuestSet = true;
-    } else if (!wheelQuestSet && lastWheel?.analysis) {
+    } else if (wheelPlanDay > maxTarget) {
+      // 🏆 จบแผนแล้ว (Day 8+ เมื่อ target=7 หรือ Day 22+ เมื่อ target=21)
+      qList[0].title = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
+      qList[0].xp = 0;
+      wheelQuestSet = true;
+    } else {
       const isWheelDoneToday = completedQuests.includes(1);
-      const maxTarget = wheelPlanTarget || 7;
-
-      // ถ้าวันนี้ทำไปแล้ว แสดงว่า wheelPlanDay เพิ่งถูกเลื่อนขึ้นไปเป็นตัวถัดไป ให้ถอยกลับมาแสดงของอันเดิมก่อน
-      const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : wheelPlanDay;
+      const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : (wheelPlanDay || 1);
 
       if (displayDay > 0 && displayDay <= maxTarget) {
-        const lines = lastWheel.analysis.split('\n');
-        const dayRegex = new RegExp(`\\bday\\s*${displayDay}\\b`, 'i');
-        const dayLine = lines.find((l: string) => dayRegex.test(l));
-
-        if (dayLine) {
-          const cleanText = dayLine
-            .replace(/\*\*/g, '') // ลบตัวหนา Markdown ก่อนเสมอ
-            .replace(/^[\s\-\*•\d\.\(\)]+/, '') // ลบสัญลักษณ์นำหน้ารายการ
-            .replace(/^day\s*\d+\s*[:\-|\s]*/i, '') // ลบคำว่า Day X: หรือ Day X -
-            .trim();
-
-          qList[0].title = `DAY ${displayDay}/${maxTarget} | ${cleanText}`;
-          wheelQuestSet = true;
-        } else {
-          // Fallback เผื่อหาบรรทัดตรงๆ ไม่เจอ ให้กรองหัวข้อรายการทั้งหมดแล้วจิ้มตาม index
-          const planItems = lastWheel.analysis.split('\n')
-            .filter((l: string) => l.match(/^\d+\.|^-|\bDay\s?\d+\b/i))
-            .map((l: string) => l.replace(/\*\*/g, '').replace(/^\d+\.\s*|^-\s*/, '').trim());
-
-          if (planItems.length > 0) {
-            const dayIdx = Math.min(planItems.length - 1, displayDay - 1);
-            let currentDayPlan = planItems[dayIdx] || planItems[0];
-            qList[0].title = `DAY ${displayDay}/${maxTarget} | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
-            wheelQuestSet = true;
-          }
+        let dayText = lastWheel?.analysis ? getWheelDayTitle(lastWheel.analysis, displayDay, maxTarget) : null;
+        if (!dayText) {
+          const wheelPool = QUEST_POOL.WHEEL[wheelArea as keyof typeof QUEST_POOL.WHEEL] || QUEST_POOL.WHEEL["การงาน"];
+          const x = Math.sin(wheelSeed * 1.5 * 12.9898 + 1.5 * 78.233) * 43758.5453123;
+          const wheelIdx = Math.floor((x - Math.floor(x)) * wheelPool.length);
+          dayText = wheelPool[wheelIdx];
         }
-      } else {
-        // จบแผนแล้ว (Day 8+ หรือ Day 22+)
-        qList[0].title = `🏆 จบแผน ${maxTarget} วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
-        qList[0].xp = 0;
+        qList[0].title = `DAY ${displayDay}/${maxTarget} | ${dayText}`;
         wheelQuestSet = true;
       }
     }
@@ -3579,26 +3605,22 @@ Day 21: [กิจกรรม]
         computedWheelTitle = randomWheelQuestTitle;
         wheelQuestSet = true;
       }
-      if (!wheelQuestSet && lastWheel?.analysis) {
-        const planSection = lastWheel.analysis.split('📅')[1];
-        if (planSection) {
-          const planItems = planSection.split('\n')
-            .filter((l: string) => l.match(/^[1-7]\.|^-|\bDay\s?[1-7]\b/i))
-            .map((l: string) => l.replace(/^[1-7]\.\s*|^-\s*|\*\*/g, '').trim());
+      if (!wheelQuestSet && lastWheel) {
+        const maxTarget = wheelPlanTarget || 7;
+        if (wheelPlanDay > maxTarget) {
+          computedWheelTitle = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
+          wheelQuestSet = true;
+        } else {
+          const isWheelDoneToday = completedQuests.includes(1);
+          const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : (wheelPlanDay || 1);
 
-          if (planItems.length > 0) {
-            const isWheelDoneToday = completedQuests.includes(1);
-            const displayDay = (isWheelDoneToday && wheelPlanDay === 8) ? 7 : wheelPlanDay;
-
-            if (displayDay > 0 && displayDay <= 7) {
-              const dayIdx = Math.min(6, displayDay - 1);
-              let currentDayPlan = planItems[dayIdx] || planItems[0];
-              computedWheelTitle = `DAY ${displayDay}/7 | ${currentDayPlan.replace(/^(Day\s*\d+\s*[:\-]\s*|\d+\.\s*)/i, '').trim()}`;
-              wheelQuestSet = true;
-            } else {
-              computedWheelTitle = `🏆 จบแผน 7 วันแล้ว! พักผ่อนให้เต็มที่ พรุ่งนี้ค่อยมาเริ่มประเมินใหม่นะ`;
-              wheelQuestSet = true;
+          if (displayDay > 0 && displayDay <= maxTarget) {
+            let dayText = lastWheel?.analysis ? getWheelDayTitle(lastWheel.analysis, displayDay, maxTarget) : null;
+            if (!dayText) {
+              dayText = "พัฒนาพฤติกรรมเป้าหมายต่อเนื่อง";
             }
+            computedWheelTitle = `DAY ${displayDay}/${maxTarget} | ${dayText}`;
+            wheelQuestSet = true;
           }
         }
       }
@@ -6047,7 +6069,15 @@ Day 21: [กิจกรรม]
                 const styles = getTypeStyles(quest.type, quest.id);
 
                 const getBadgeContent = () => {
-                  if (isNotice) return 'Action Required';
+                  if (quest.id === 1) {
+                    return (
+                      <span className="inline-flex items-center gap-1">
+                        <Target size={11} className="text-red-500" />
+                        <span>เป้าหมายหลัก</span>
+                      </span>
+                    );
+                  }
+                  if (isNotice) return 'แจ้งเตือน';
                   if (activeSkillTrackId && SKILL_TRACKS[activeSkillTrackId]) {
                     if (quest.id === 1) {
                       return (
@@ -6127,7 +6157,7 @@ Day 21: [กิจกรรม]
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider 
-            ${isDone ? 'bg-green-100 text-green-600' : isNotice ? 'bg-amber-500 text-white shadow-sm' : `${styles.bg} ${styles.text}`}`}>
+            ${isDone ? 'bg-green-100 text-green-600' : (isNotice && quest.id !== 1) ? 'bg-amber-500 text-white shadow-sm' : `${styles.bg} ${styles.text}`}`}>
                           {getBadgeContent()}
                         </span>
 
@@ -6135,11 +6165,11 @@ Day 21: [กิจกรรม]
                           <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${isDone ? 'bg-green-100 text-green-700' : !lastWheel ? 'bg-amber-100 text-amber-800 border border-amber-200/60' : 'bg-rose-100 text-rose-700 border border-rose-200/60'}`}>
                             {!lastWheel
                               ? 'ประเมินเริ่มต้น'
+                              : wheelPlanDay > (wheelPlanTarget || 7) 
+                              ? 'COMPLETE' 
                               : quest.title.includes('|') 
                               ? quest.title.split('|')[0].trim() 
-                              : wheelPlanDay > (wheelPlanTarget || 21) 
-                              ? 'COMPLETE' 
-                              : `DAY ${Math.min(wheelPlanDay || 1, wheelPlanTarget || 21)}`
+                              : `DAY ${Math.min(wheelPlanDay || 1, wheelPlanTarget || 7)}`
                             }
                           </span>
                         )}
@@ -6175,7 +6205,7 @@ Day 21: [กิจกรรม]
                     <div className="shrink-0 text-right flex flex-col items-end gap-2">
                       {isNotice ? (
                         <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 uppercase tracking-widest cursor-pointer">
-                          {(quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'INFO'}
+                          {quest.title.includes('จบแผน') ? 'จบแผน 🏆' : (quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'แจ้งเตือน 💡'}
                         </span>
                       ) : (
                         <div className="flex flex-col items-end gap-1.5">
