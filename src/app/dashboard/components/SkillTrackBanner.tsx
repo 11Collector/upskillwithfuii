@@ -198,18 +198,11 @@ export default function SkillTrackBanner({
                   <span>ไม่ผ่านรอบนี้</span>
                 </div>
               ) : effectiveCompletedDays.length < 5 && !isBadgeUnlocked ? (
-                <button
-                  onClick={() => {
-                    setSelectedTrackForChoice(null);
-                    setIsModalOpen(true);
-                  }}
-                  className="px-2.5 py-1 rounded-xl bg-orange-500/15 hover:bg-orange-500/30 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all"
-                  title="คลิกเพื่อสลับวิชาเรียน"
-                >
+                <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
                   <ShieldCheck size={12} className="text-orange-400" />
-                  <span className="hidden sm:inline">โฟกัส 7 วัน (สลับวิชา)</span>
-                  <span className="sm:hidden">สลับวิชา</span>
-                </button>
+                  <span className="hidden sm:inline">โฟกัส 7 วัน</span>
+                  <span className="sm:hidden">7 วัน</span>
+                </div>
               ) : (
                 <button
                   onClick={() => {
