@@ -181,12 +181,6 @@ export default function SkillTrackBanner({
                 <h3 className="text-sm sm:text-base font-black text-white leading-tight truncate">
                   {activeTrack.title}
                 </h3>
-                {nextTrackId && nextTrackId !== activeTrack.id && SKILL_TRACKS[nextTrackId] && (
-                  <div className="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-400/20 text-[10px] sm:text-xs font-bold text-amber-300">
-                    <Clock size={11} className="text-amber-400 shrink-0" />
-                    <span className="truncate">วิชาถัดไป: {SKILL_TRACKS[nextTrackId].title} (เริ่มพรุ่งนี้)</span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -292,15 +286,15 @@ export default function SkillTrackBanner({
                   </button>
                 </div>
               </div>
-            ) : nextTrackId && nextTrackId !== activeTrackId && SKILL_TRACKS[nextTrackId] ? (
-              <div className="mt-3 p-3 rounded-2xl bg-amber-950/90 border border-amber-400/50 text-amber-100 text-xs font-medium flex items-center justify-between shadow-lg backdrop-blur-sm">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0 border border-amber-400/40 text-amber-300 shadow-inner">
-                    <Sparkles size={14} />
-                  </div>
-                  <span className="truncate">ต่อคิววิชาถัดไป: <strong className="text-white font-black">{SKILL_TRACKS[nextTrackId].title}</strong></span>
+            ) : nextTrackId && nextTrackId !== activeTrack.id && SKILL_TRACKS[nextTrackId] ? (
+              <div className="mt-3 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-400/20 text-amber-200 text-xs font-medium flex items-center justify-between gap-2 backdrop-blur-sm">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <Clock size={12} className="text-amber-400 shrink-0" />
+                  <span className="truncate text-[11px] sm:text-xs">
+                    ต่อคิววิชาถัดไป: <strong className="text-white font-bold">{SKILL_TRACKS[nextTrackId].title}</strong>
+                  </span>
                 </div>
-                <span className="text-[10px] text-amber-200 font-black px-2.5 py-1 bg-amber-400/25 rounded-full border border-amber-400/40 shrink-0 ml-2 shadow-sm">เริ่มวันพรุ่งนี้ 00:00 น.</span>
+                <span className="text-[10px] sm:text-[11px] text-amber-300/80 font-bold shrink-0">เริ่มพรุ่งนี้ 00:00 น.</span>
               </div>
             ) : null}
           </div>
