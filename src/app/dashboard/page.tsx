@@ -242,6 +242,7 @@ export default function DashboardPage() {
 
       setShowSuccessToast(`🎓 เริ่มต้นวิชา "${trackName}" บทเรียน Day 1 แล้วครับ!`);
 
+      setAiSkillQuests({});
       if (user?.uid) {
         if (typeof window !== "undefined") {
           localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
@@ -250,6 +251,8 @@ export default function DashboardPage() {
           localStorage.setItem(`todaySkillTrackDay_${user.uid}`, "1");
           localStorage.setItem(`skillTrackCompletedDays_${user.uid}`, JSON.stringify([]));
           localStorage.setItem("skillTrackCompletedDays", JSON.stringify([]));
+          localStorage.setItem("todaySkillTrackId", trackId);
+          localStorage.setItem("activeSkillTrackId", trackId);
         }
         const userRef = doc(db, "users", user.uid);
         const updatePayload: any = {
@@ -259,7 +262,9 @@ export default function DashboardPage() {
           todaySkillTrackDay: 1,
           skillTrackCompletedDays: [],
           currentDailyQuests: null,
-          currentDailyTrackId: trackId
+          currentDailyTrackId: trackId,
+          aiSkillQuests: null,
+          lastQuestAnalysisDate: ""
         };
         setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
         setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
@@ -5868,6 +5873,7 @@ Day 21: [กิจกรรม]
                 setTodaySkillTrackDay(1);
                 setSkillTrackCompletedDays([]);
 
+                setAiSkillQuests({});
                 if (user?.uid) {
                   if (typeof window !== "undefined") {
                     localStorage.setItem(`activeSkillTrackId_${user.uid}`, targetTrack);
@@ -5882,7 +5888,10 @@ Day 21: [กิจกรรม]
                     skillTrackCurrentDay: 1,
                     todaySkillTrackDay: 1,
                     skillTrackCompletedDays: [],
-                    currentDailyQuests: null
+                    currentDailyQuests: null,
+                    currentDailyTrackId: targetTrack,
+                    aiSkillQuests: null,
+                    lastQuestAnalysisDate: ""
                   };
                   setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error restarting skill track:", err));
                   setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
