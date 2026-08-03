@@ -258,7 +258,8 @@ export default function DashboardPage() {
           skillTrackCurrentDay: 1,
           todaySkillTrackDay: 1,
           skillTrackCompletedDays: [],
-          currentDailyQuests: null
+          currentDailyQuests: null,
+          currentDailyTrackId: trackId
         };
         setDoc(userRef, updatePayload, { merge: true }).catch((err) => console.error("Error saving activeSkillTrackId to Firestore:", err));
         setUserData((u: any) => u ? { ...u, ...updatePayload } : null);
@@ -1205,6 +1206,7 @@ Day 21: [กิจกรรม]
             aiGeneratedDiscTitle: "",
             aiGeneratedMoneyTitle: "",
             currentDailyQuests: null,
+            currentDailyTrackId: null,
             lastActiveDate: todayStr,
             lastQuestAnalysisDate: "",
             questPreferences: null
@@ -3036,9 +3038,17 @@ Day 21: [กิจกรรม]
       Array.isArray(userData?.currentDailyQuests) &&
       userData.currentDailyQuests.length === 4
     ) {
-      const storedTrackId = userData.currentDailyTrackId || userData.todaySkillTrackId || userData.activeSkillTrackId || null;
-      if (!storedTrackId || storedTrackId === effectiveTrackId) {
-        return userData.currentDailyQuests;
+      const storedTrackId = userData.currentDailyTrackId;
+      if (storedTrackId) {
+        if (storedTrackId === effectiveTrackId) {
+          return userData.currentDailyQuests;
+        }
+      } else {
+        // Fallback for legacy docs where currentDailyTrackId wasn't saved yet:
+        // Only lock if user has already completed 1+ quests today
+        if (completedQuests.length > 0) {
+          return userData.currentDailyQuests;
+        }
       }
     }
 
@@ -3332,7 +3342,7 @@ Day 21: [กิจกรรม]
     qList[3].title = aiGeneratedQuestTitle || getUniqueQuestSlot(QUEST_POOL.CHALLENGE, [qList[0].title, qList[1].title, qList[2].title], 6.8, 3);
 
     return qList;
-  }, [todayDateStr, user?.uid, activeSkillTrackId, skillTrackCurrentDay, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP, userData?.questEnergyLevel, userData?.lastQuestEnergyDate]);
+  }, [todayDateStr, user?.uid, todaySkillTrackId, todaySkillTrackDay, activeSkillTrackId, skillTrackCurrentDay, userData?.currentDailyTrackId, userData?.currentDailyQuests, aiSkillQuests, wheelArea, lastWheel, lastDisc, lastMoney, lastLibrarySoul, isRandomMode, customQuestTitle, randomWheelQuestTitle, wheelPlanDay, completedQuests, rerollCount, slotSeeds, aiGeneratedQuestTitle, aiGeneratedDiscTitle, aiGeneratedMoneyTitle, totalXP, userData?.questEnergyLevel, userData?.lastQuestEnergyDate]);
 
   // Sync computed dailyQuests to Firestore for other systems (like AI Mentor chat) to access
   const hasSyncedDailyQuestsRef = useRef<string>("");

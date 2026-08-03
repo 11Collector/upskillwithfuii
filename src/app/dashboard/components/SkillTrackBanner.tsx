@@ -181,6 +181,12 @@ export default function SkillTrackBanner({
                 <h3 className="text-sm sm:text-base font-black text-white leading-tight truncate">
                   {activeTrack.title}
                 </h3>
+                {nextTrackId && nextTrackId !== activeTrack.id && SKILL_TRACKS[nextTrackId] && (
+                  <div className="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-400/20 text-[10px] sm:text-xs font-bold text-amber-300">
+                    <Clock size={11} className="text-amber-400 shrink-0" />
+                    <span className="truncate">วิชาถัดไป: {SKILL_TRACKS[nextTrackId].title} (เริ่มพรุ่งนี้)</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -192,11 +198,18 @@ export default function SkillTrackBanner({
                   <span>ไม่ผ่านรอบนี้</span>
                 </div>
               ) : effectiveCompletedDays.length < 5 && !isBadgeUnlocked ? (
-                <div className="px-2.5 py-1 rounded-xl bg-orange-500/15 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => {
+                    setSelectedTrackForChoice(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-orange-500/15 hover:bg-orange-500/30 border border-orange-400/30 text-orange-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all"
+                  title="คลิกเพื่อสลับวิชาเรียน"
+                >
                   <ShieldCheck size={12} className="text-orange-400" />
-                  <span className="hidden sm:inline">โฟกัส 7 วัน</span>
-                  <span className="sm:hidden">7 วัน</span>
-                </div>
+                  <span className="hidden sm:inline">โฟกัส 7 วัน (สลับวิชา)</span>
+                  <span className="sm:hidden">สลับวิชา</span>
+                </button>
               ) : (
                 <button
                   onClick={() => {
