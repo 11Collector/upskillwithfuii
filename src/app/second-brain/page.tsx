@@ -1101,6 +1101,35 @@ function SecondBrainContent() {
     "คำพูดหรือข้อความจากใครที่ทำให้คุณอบอุ่นหัวใจไหม?"
   ];
 
+  useEffect(() => {
+    if (showBedtimeModal) {
+      const todayStr = new Date().toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+      const titleMatch = `🌙 3 สิ่งดีๆ ประจำวันที่ ${todayStr}`;
+      const todayNote = notes.find(n => n.title === titleMatch || (n.category === "พลังบวก" && n.title?.includes(todayStr)));
+
+      if (todayNote && todayNote.content) {
+        const lines = todayNote.content
+          .split("\n")
+          .map((l: string) => l.trim())
+          .filter((l: string) => l.length > 0 && !l.startsWith("#") && !l.startsWith("-"));
+        
+        const cleanItems = lines.map((line: string) => line.replace(/^\d+\.\s*/, "").trim());
+
+        setGoodThing1(cleanItems[0] || "");
+        setGoodThing2(cleanItems[1] || "");
+        setGoodThing3(cleanItems[2] || "");
+      } else {
+        setGoodThing1("");
+        setGoodThing2("");
+        setGoodThing3("");
+      }
+    }
+  }, [showBedtimeModal, notes]);
+
   const handleSaveBedtimeGratitude = async () => {
     if (!goodThing1.trim() && !goodThing2.trim() && !goodThing3.trim()) {
       alert("กรุณากรอกสิ่งดีๆ อย่างน้อย 1 ข้อนะครับ 😊");
