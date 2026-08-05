@@ -1233,10 +1233,10 @@ Day 21: [กิจกรรม]
         setLastQuestDate(userData.lastQuestDate || "");
         setPotXP(userData.potXP || 0);
 
-        const lastActiveDate = userData.lastActiveDate || "";
-        const isSameActiveDate = lastActiveDate === todayStr;
+        const lastRolloverDate = userData.lastDailyRolloverDate || "";
+        const isSameRolloverDate = lastRolloverDate === todayStr;
 
-        if (isSameActiveDate) {
+        if (isSameRolloverDate) {
           setCompletedQuests(userData.completedQuestIds || []);
           setCustomQuestTitle(userData.customQuestTitle || "");
           setWheelPlanDay(userData.wheelPlanDay || 0);
@@ -1262,6 +1262,7 @@ Day 21: [กิจกรรม]
             currentDailyQuests: null,
             currentDailyTrackId: null,
             lastActiveDate: todayStr,
+            lastDailyRolloverDate: todayStr,
             lastQuestAnalysisDate: "",
             questPreferences: null
           };
@@ -1393,7 +1394,7 @@ Day 21: [กิจกรรม]
           }
 
           let nextTrackDay = trackCurrentDay;
-          if (activeTrack && trackCurrentDay < 7 && activeTrack === userData.todaySkillTrackId) {
+          if (activeTrack && trackCurrentDay < 7) {
             nextTrackDay = Math.min(7, trackCurrentDay + 1);
             updates.skillTrackCurrentDay = nextTrackDay;
             setSkillTrackCurrentDay(nextTrackDay);
@@ -3399,7 +3400,6 @@ Day 21: [กิจกรรม]
       const updateData: any = {
         currentDailyQuests: dailyQuests,
         currentDailyTrackId: effectiveTrackId,
-        lastActiveDate: todayDateStr,
       };
 
       if (storedDate && storedDate !== todayDateStr) {
