@@ -3001,7 +3001,7 @@ ${noteContent}`;
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="bg-slate-950/90 border border-white/10 rounded-[2rem] p-6 sm:p-7 max-w-md w-full shadow-[0_32px_80px_-16px_rgba(0,0,0,0.9)] text-white relative overflow-hidden backdrop-blur-2xl cursor-default"
+              className="bg-slate-950/90 border border-white/10 rounded-[2rem] p-6 sm:p-8 max-w-lg w-full shadow-[0_32px_80px_-16px_rgba(0,0,0,0.9)] text-white relative overflow-hidden backdrop-blur-2xl cursor-default"
             >
               {/* Subtle Ambient Radial Lighting */}
               <div className="absolute -top-20 -left-20 w-56 h-56 bg-indigo-600/15 blur-[80px] rounded-full pointer-events-none" />
@@ -3017,79 +3017,100 @@ ${noteContent}`;
                 }}
                 className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center cursor-pointer border border-white/5 z-50 active:scale-95"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
 
               {/* Pro Header */}
-              <div className="flex items-center justify-between mb-5 relative z-10 pr-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
-                    <Moon size={18} className="text-indigo-300" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white tracking-tight leading-none mb-1">3 สิ่งดีๆ วันนี้</h3>
-                    <p className="text-[11px] text-slate-400 font-medium">บันทึกความรู้สึกดีๆ สะสมพลังบวก</p>
-                  </div>
-                </div>
-                <div className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-black tracking-wider flex items-center gap-1 shadow-sm">
-                  <Sparkles size={10} className="text-amber-400" />
-                  <span>+10 XP</span>
-                </div>
-              </div>
+              {(() => {
+                const todayDateStr = new Date().toLocaleDateString("th-TH", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric"
+                });
+                const todayTitleMatch = `🌙 3 สิ่งดีๆ ประจำวันที่ ${todayDateStr}`;
+                const hasSavedToday = notes.some(n => n.title === todayTitleMatch || (n.category === "พลังบวก" && n.title?.includes(todayDateStr)));
 
-              {/* Prompt Helper Bar (AI Thought Card Style) */}
-              <div className="mb-4 p-3.5 bg-slate-900/80 border border-indigo-500/20 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-inner relative z-10">
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-amber-400 to-indigo-500 shrink-0" />
-                  <span className="leading-snug text-slate-300 font-medium italic text-[11px]">{GRATITUDE_PROMPTS[gratitudePromptIndex]}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setGratitudePromptIndex((prev) => (prev + 1) % GRATITUDE_PROMPTS.length)}
-                  className="text-[10px] font-bold text-indigo-300 hover:text-white transition-all shrink-0 px-2.5 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 rounded-xl border border-indigo-500/30 cursor-pointer whitespace-nowrap active:scale-95"
-                >
-                  สุ่มคำถาม 💡
-                </button>
-              </div>
-
-              {/* 3 Sleek Pro Input Lines */}
-              <div className="space-y-3 mb-6 relative z-10">
-                {[
-                  { val: goodThing1, set: setGoodThing1, ph: "เช่น วันนี้ได้กินของอร่อย / มีเวลาพักผ่อน..." },
-                  { val: goodThing2, set: setGoodThing2, ph: "เช่น ทำงานสำคัญเสร็จ / ได้คุยกับคนที่สบายใจ..." },
-                  { val: goodThing3, set: setGoodThing3, ph: "เช่น เรียนรู้เรื่องใหม่ / อากาศดี อารมณ์แจ่มใส..." }
-                ].map((item, idx) => (
-                  <div key={idx} className="group flex items-center gap-3 bg-slate-900/60 hover:bg-slate-900/90 border border-white/8 focus-within:border-indigo-500/50 focus-within:bg-slate-900 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-2xl px-4 py-3 transition-all">
-                    <span className="text-[10px] font-mono font-bold text-indigo-400/70 group-focus-within:text-indigo-400 select-none px-1.5 py-0.5 rounded-md bg-indigo-500/10">0{idx + 1}</span>
-                    <input
-                      type="text"
-                      placeholder={item.ph}
-                      value={item.val}
-                      onChange={(e) => item.set(e.target.value)}
-                      className="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Pro Save Button */}
-              <button
-                type="button"
-                disabled={isSavingBedtime}
-                onClick={handleSaveBedtimeGratitude}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white rounded-2xl text-xs font-black tracking-wide transition-all shadow-[0_8px_25px_rgba(79,70,229,0.35)] hover:shadow-[0_12px_30px_rgba(79,70,229,0.5)] cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 relative z-10 border border-indigo-400/30"
-              >
-                {isSavingBedtime ? (
+                return (
                   <>
-                    <Loader2 size={15} className="animate-spin" />
-                    <span>กำลังบันทึกพลังบวก...</span>
+                    <div className="flex items-center justify-between mb-5 relative z-10 pr-10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
+                          <Moon size={20} className="text-indigo-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg sm:text-xl font-black text-white tracking-tight leading-none mb-1">3 สิ่งดีๆ วันนี้</h3>
+                          <p className="text-xs text-slate-400 font-medium">บันทึกความรู้สึกดีๆ สะสมพลังบวก</p>
+                        </div>
+                      </div>
+                      {hasSavedToday ? (
+                        <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                          <CheckCircle2 size={13} className="text-emerald-400" />
+                          <span>รับ XP แล้ว</span>
+                        </div>
+                      ) : (
+                        <div className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-black tracking-wider flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                          <Sparkles size={12} className="text-amber-400" />
+                          <span>+10 XP</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Prompt Helper Bar (AI Thought Card Style) */}
+                    <div className="mb-4 p-4 bg-slate-900/80 border border-indigo-500/20 rounded-2xl flex items-center justify-between gap-3 shadow-inner relative z-10">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="w-1.5 h-7 rounded-full bg-gradient-to-b from-amber-400 to-indigo-500 shrink-0" />
+                        <span className="leading-relaxed text-slate-200 font-medium italic text-xs sm:text-sm">{GRATITUDE_PROMPTS[gratitudePromptIndex]}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setGratitudePromptIndex((prev) => (prev + 1) % GRATITUDE_PROMPTS.length)}
+                        className="text-xs font-bold text-indigo-300 hover:text-white transition-all shrink-0 px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 rounded-xl border border-indigo-500/30 cursor-pointer whitespace-nowrap active:scale-95"
+                      >
+                        สุ่มคำถาม 💡
+                      </button>
+                    </div>
+
+                    {/* 3 Sleek Pro Input Lines */}
+                    <div className="space-y-3 mb-6 relative z-10">
+                      {[
+                        { val: goodThing1, set: setGoodThing1, ph: "เช่น วันนี้ได้กินของอร่อย / มีเวลาพักผ่อน..." },
+                        { val: goodThing2, set: setGoodThing2, ph: "เช่น ทำงานสำคัญเสร็จ / ได้คุยกับคนที่สบายใจ..." },
+                        { val: goodThing3, set: setGoodThing3, ph: "เช่น เรียนรู้เรื่องใหม่ / อากาศดี อารมณ์แจ่มใส..." }
+                      ].map((item, idx) => (
+                        <div key={idx} className="group flex items-center gap-3 bg-slate-900/60 hover:bg-slate-900/90 border border-white/8 focus-within:border-indigo-500/50 focus-within:bg-slate-900 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-2xl px-4 py-3.5 sm:py-4 transition-all">
+                          <span className="text-xs font-mono font-bold text-indigo-400/80 group-focus-within:text-indigo-400 select-none px-2 py-0.5 rounded-md bg-indigo-500/10">0{idx + 1}</span>
+                          <input
+                            type="text"
+                            placeholder={item.ph}
+                            value={item.val}
+                            onChange={(e) => item.set(e.target.value)}
+                            className="w-full bg-transparent text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pro Save Button */}
+                    <button
+                      type="button"
+                      disabled={isSavingBedtime}
+                      onClick={handleSaveBedtimeGratitude}
+                      className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white rounded-2xl text-sm font-black tracking-wide transition-all shadow-[0_8px_25px_rgba(79,70,229,0.35)] hover:shadow-[0_12px_30px_rgba(79,70,229,0.5)] cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 relative z-10 border border-indigo-400/30"
+                    >
+                      {isSavingBedtime ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>กำลังบันทึก...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{hasSavedToday ? "อัปเดตบันทึกพลังบวก" : "บันทึกความรู้สึกดีๆ (+10 XP)"}</span>
+                        </>
+                      )}
+                    </button>
                   </>
-                ) : (
-                  <>
-                    <span>บันทึกความรู้สึกดีๆ (+10 XP)</span>
-                  </>
-                )}
-              </button>
+                );
+              })()}
             </motion.div>
           </div>
         )}
