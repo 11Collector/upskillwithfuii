@@ -499,8 +499,12 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
     const data = await response.json();
     let reply = data.choices[0].message.content.trim();
 
-    // Clean redundant quotes inside blockquotes (e.g. > ""text"" or > "text")
-    reply = reply.replace(/^(\s*>\s*)["'”«“]{1,3}([\s\S]*?)["'”»“]{1,3}\s*$/gm, '$1$2');
+    // Clean redundant quotes inside blockquotes (e.g. > ""text"" or > "text" or > """text""")
+    reply = reply
+      .replace(/["”'“]{2,}/g, '"')
+      .replace(/(^|\n)(\s*>\s*)["'”«“]+/g, '$1$2')
+      .replace(/["'”»“]+(\s*)(\n|$)/g, '$1$2')
+      .replace(/^(\s*>\s*)["'”«“]+([\s\S]*?)["'”»“]+\s*$/gm, '$1$2');
 
     logAiCall(authResult.uid, "ai_mentor").catch(() => {});
 

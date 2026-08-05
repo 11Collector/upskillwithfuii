@@ -108,7 +108,17 @@ export default function SoulGuidePage() {
 
   useEffect(() => {
     messagesRef.current = messages;
-  }, [messages]);
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  const cleanMessageContent = (text: string) => {
+    if (!text) return "";
+    return text
+      .replace(/["”'“]{2,}/g, '"')
+      .replace(/(^|\n)(\s*>\s*)["'”«“]+/g, '$1$2')
+      .replace(/["'”»“]+(\s*)(\n|$)/g, '$1$2')
+      .trim();
+  };
 
   useEffect(() => {
     if (!user || isLoading) return;
@@ -669,7 +679,7 @@ export default function SoulGuidePage() {
 
       {/* Header - ซ่อนเมื่อมี Modal ยืนยันล้างแชท */}
       {!showResetConfirm && (
-        <header className="w-full max-w-4xl px-6 py-8 flex items-center justify-between z-20 sticky top-0 bg-zinc-950/50 backdrop-blur-md border-b border-white/5">
+        <header className="w-full max-w-4xl px-6 py-4 flex items-center justify-between z-30 shrink-0 bg-zinc-950/95 backdrop-blur-xl border-b border-white/10">
           <button
             onClick={() => router.back()}
             className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all text-zinc-400 hover:text-white"
@@ -677,13 +687,13 @@ export default function SoulGuidePage() {
             <ArrowLeft size={18} />
           </button>
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-0.5">
               <div className={`w-2 h-2 rounded-full animate-pulse ${isTyping ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
               <h1 className="text-xs font-black text-zinc-200 tracking-wider">คุยกับพี่ฟุ้ย</h1>
             </div>
 
             {/* 🏷️ [AI ACTIVE] Status Badge */}
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-1">
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -711,7 +721,7 @@ export default function SoulGuidePage() {
         ref={mainRef} 
         className="flex-1 w-full overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-3xl mx-auto flex flex-col gap-6 p-6">
+        <div className="max-w-3xl mx-auto flex flex-col gap-6 p-4 sm:p-6 pt-4 sm:pt-6 pb-8">
           <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
@@ -727,9 +737,16 @@ export default function SoulGuidePage() {
                     : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
                     }`}
                 >
-                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {msg.content}
+                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white prose-blockquote:quotes-none prose-blockquote:not-italic">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote className="border-l-2 border-indigo-500/80 pl-4 py-1.5 my-3 bg-indigo-500/10 rounded-r-xl text-zinc-200 not-italic quotes-none" {...props} />
+                        )
+                      }}
+                    >
+                      {cleanMessageContent(msg.content)}
                     </ReactMarkdown>
                   </div>
 
