@@ -162,19 +162,26 @@ export async function POST(req: Request) {
     const isGreeting = /^(hello|hi|hey|สวัสดี|หวัดดี|ทักทาย|ดีครับ|ดีค่ะ|ครับ|ค่ะ|ok|โอเค|yes|no|ใช่|ไม่|เริ่ม)/i.test(cleanedMessage);
     const skipRAG = isGreeting || cleanedMessage.length < 8;
 
-    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก)/i.test(cleanedMessage);
+    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก|พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ)/i.test(cleanedMessage);
 
     if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && (!skipRAG || isOverviewQuery)) {
-      // 1. First, check direct title keyword matches (case-insensitive)
+      // 1. First, check direct title/category keyword matches (case-insensitive)
       const matchedDocsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
 
       if (isOverviewQuery) {
-        notesSnap.docs.forEach((doc) => matchedDocsMap.set(doc.id, doc));
+        notesSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          const isGratitudeQuery = /(พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ)/i.test(cleanedMessage);
+          if (!isGratitudeQuery || data.category === "พลังบวก" || (data.title || "").includes("สิ่งดีๆ")) {
+            matchedDocsMap.set(doc.id, doc);
+          }
+        });
       } else {
         notesSnap.docs.forEach((doc) => {
           const data = doc.data();
           const title = (data.title || "").trim().toLowerCase();
-          if (title && title !== "บันทึกที่ไม่มีชื่อ" && (cleanedMessage.includes(title) || title.includes(cleanedMessage.split(" ")[0]))) {
+          const category = (data.category || "").trim().toLowerCase();
+          if (title && title !== "บันทึกที่ไม่มีชื่อ" && (cleanedMessage.includes(title) || title.includes(cleanedMessage.split(" ")[0]) || (category === "พลังบวก" && cleanedMessage.includes("พลังบวก")))) {
             matchedDocsMap.set(doc.id, doc);
           }
         });
@@ -184,6 +191,7 @@ export async function POST(req: Request) {
       const noteSummaries = notesSnap.docs.map((doc, index) => ({
         index,
         title: doc.data().title || "บันทึกที่ไม่มีชื่อ",
+        category: doc.data().category || "ทั่วไป",
         excerpt: (doc.data().content || "").substring(0, 150)
       }));
 

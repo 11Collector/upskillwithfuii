@@ -5,7 +5,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings, X, HelpCircle
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings, X, HelpCircle, Moon
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -25,6 +25,12 @@ const CATEGORY_THEMES: Record<string, { icon: any; color: string; bgColor: strin
     color: "text-slate-400",
     bgColor: "bg-white/5",
     borderColor: "border-white/10"
+  },
+  "พลังบวก": {
+    icon: <Moon size={20} />,
+    color: "text-indigo-400",
+    bgColor: "bg-indigo-500/10",
+    borderColor: "border-indigo-500/20"
   },
   "หนังสือ": {
     icon: <BookOpen size={20} />,
@@ -1076,6 +1082,122 @@ function SecondBrainContent() {
   const [lastNoteXpDate, setLastNoteXpDate] = useState<string | null>(null);
   const [showXpToast, setShowXpToast] = useState(false);
 
+  // 🌙 Bedtime 3 Good Things Modal States
+  const [showBedtimeModal, setShowBedtimeModal] = useState(false);
+  const [goodThing1, setGoodThing1] = useState("");
+  const [goodThing2, setGoodThing2] = useState("");
+  const [goodThing3, setGoodThing3] = useState("");
+  const [isSavingBedtime, setIsSavingBedtime] = useState(false);
+  const [bedtimeXpToast, setBedtimeXpToast] = useState(false);
+  const [gratitudePromptIndex, setGratitudePromptIndex] = useState(0);
+  const [randomPastNote, setRandomPastNote] = useState<any | null>(null);
+
+  const GRATITUDE_PROMPTS = [
+    "วันนี้ใครทำให้คุณยิ้มได้แม้เป็นเรื่องเล็กๆ?",
+    "มีอาหารหรือเครื่องดื่มมื้อไหนที่คุณรู้สึกเอ็นจอยเป็นพิเศษ?",
+    "ความสำเร็จหรือเรื่องดีๆ เล็กๆ ที่ทำได้สำเร็จวันนี้คืออะไร?",
+    "มีบทเรียนหรือความผิดพลาดอะไรที่ทำให้คุณเก่งขึ้นวันนี้?",
+    "บรรยากาศหรือสถานที่ไหนที่ทำให้รู้สึกผ่อนคลายสบายใจวันนี้?",
+    "คำพูดหรือข้อความจากใครที่ทำให้คุณอบอุ่นหัวใจไหม?"
+  ];
+
+  const handleSaveBedtimeGratitude = async () => {
+    if (!goodThing1.trim() && !goodThing2.trim() && !goodThing3.trim()) {
+      alert("กรุณากรอกสิ่งดีๆ อย่างน้อย 1 ข้อนะครับ 😊");
+      return;
+    }
+    setIsSavingBedtime(true);
+
+    const todayStr = new Date().toLocaleDateString("th-TH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+
+    const title = `🌙 3 สิ่งดีๆ ประจำวันที่ ${todayStr}`;
+    const items = [goodThing1.trim(), goodThing2.trim(), goodThing3.trim()].filter(Boolean);
+    const content = items.map((item, idx) => `${idx + 1}. ${item}`).join('\n\n');
+
+    const createdAtStr = new Date().toISOString();
+
+    // Check if a gratitude note for today already exists
+    const existingTodayNote = notes.find(n => n.title === title || (n.category === "พลังบวก" && n.title?.includes(todayStr)));
+
+    let targetNoteId = existingTodayNote?.id || "";
+
+    if (user) {
+      try {
+        const notesRef = collection(db, "users", user.uid, "second_brain");
+        if (existingTodayNote) {
+          const existingDocRef = doc(db, "users", user.uid, "second_brain", existingTodayNote.id);
+          await updateDoc(existingDocRef, {
+            content,
+            updatedAt: createdAtStr
+          });
+          targetNoteId = existingTodayNote.id;
+        } else {
+          const docRef = await addDoc(notesRef, {
+            title,
+            content,
+            category: "พลังบวก",
+            createdAt: createdAtStr,
+            updatedAt: createdAtStr
+          });
+          targetNoteId = docRef.id;
+
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            totalXP: increment(10)
+          });
+        }
+      } catch (e) {
+        console.error("Error saving gratitude note:", e);
+      }
+    } else {
+      targetNoteId = existingTodayNote?.id || ("guest-" + Date.now());
+    }
+
+    const updatedNote = {
+      id: targetNoteId,
+      title,
+      content,
+      category: "พลังบวก",
+      createdAt: existingTodayNote?.createdAt || createdAtStr,
+      updatedAt: createdAtStr
+    };
+
+    setNotes(prev => {
+      const filtered = prev.filter(n => n.id !== targetNoteId && n.title !== title);
+      return [updatedNote, ...filtered];
+    });
+    setSelectedNote(updatedNote);
+    setNoteTitle(title);
+    setNoteContent(content);
+    setNoteCategory("พลังบวก");
+    setFilterNoteCategory("ทั้งหมด");
+
+    setIsSavingBedtime(false);
+    setShowBedtimeModal(false);
+    setGoodThing1("");
+    setGoodThing2("");
+    setGoodThing3("");
+
+    if (!existingTodayNote) {
+      setBedtimeXpToast(true);
+      setTimeout(() => setBedtimeXpToast(false), 4500);
+    }
+  };
+
+  const handleGetRandomPastNote = () => {
+    const gratitudeNotes = notes.filter(n => n.category === "พลังบวก" || n.title?.includes("สิ่งดีๆ"));
+    if (gratitudeNotes.length === 0) {
+      alert("ยังไม่มีบันทึกสิ่งดีๆ ในอดีตเลยครับ ลองบันทึกครั้งแรกดูนะ!");
+      return;
+    }
+    const idx = Math.floor(Math.random() * gratitudeNotes.length);
+    setRandomPastNote(gratitudeNotes[idx]);
+  };
+
   // --- 🛰️ Upgraded Brain Graph & Autocomplete States ---
   const [showGraphView, setShowGraphView] = useState(false);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -1982,15 +2104,25 @@ ${noteContent}`;
 
       <div className="max-w-5xl mx-auto relative z-10">
 
-        {/* Toggle Switcher: Minimal Pill Button in Top-Right */}
-        <div className="absolute right-0 top-0 z-50">
+        {/* Toggle Switcher: Minimal Pill Buttons in Top-Right */}
+        <div className="absolute right-0 top-0 z-50 flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => setShowBedtimeModal(true)}
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-bold bg-indigo-950/90 hover:bg-indigo-900 border-indigo-500/30 text-indigo-200 hover:text-white cursor-pointer whitespace-nowrap"
+            title="บันทึก 3 สิ่งดีๆ ของวันนี้ (+10 XP)"
+          >
+            <Moon size={12} className="text-indigo-400 shrink-0" />
+            <span className="hidden sm:inline">3 สิ่งดีๆ วันนี้</span>
+            <span className="sm:hidden">3 สิ่งดีๆ</span>
+          </button>
           <Link
             href="/library"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600 hover:text-slate-900"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600 hover:text-slate-900 whitespace-nowrap"
             title="สลับไปหน้าคลังบทความ"
           >
-            <BookOpen size={12} className="text-indigo-600" />
-            <span>คลังบทความ</span>
+            <BookOpen size={12} className="text-indigo-600 shrink-0" />
+            <span className="hidden sm:inline">คลังบทความ</span>
+            <span className="sm:hidden">บทความ</span>
           </Link>
         </div>
 
@@ -2176,7 +2308,7 @@ ${noteContent}`;
               <h1 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight mb-4">
                 สมองที่สอง <span className="text-slate-500">จดบันทึก</span>
               </h1>
-              <p className="text-slate-500 text-sm md:text-lg font-medium">เก็บบันทึกสรุปหนังสือและไอเดียพัฒนาตัวเอง</p>
+              <p className="text-slate-500 text-sm md:text-lg font-medium">เก็บบันทึกสรุปหนังสือ ไอเดีย และพลังบวกในชีวิต</p>
             </header>
 
             <motion.div
@@ -2205,7 +2337,7 @@ ${noteContent}`;
                     {notes.length}
                   </span>
                 </h3>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 justify-end">
                   <button
                     onClick={() => {
                       setShowGraphView(!showGraphView);
@@ -2244,37 +2376,35 @@ ${noteContent}`;
               </div>
 
               {/* Filter Category Select (Horizontal scroll of tiny pills) */}
-              <div className="flex gap-1 overflow-x-auto pb-2.5 mb-4 no-scrollbar border-b border-slate-100">
-                {["ทั้งหมด", "พัฒนาตัวเอง", "การเงิน & ลงทุน", "ธุรกิจ", "หนังสือ"].map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setFilterNoteCategory(cat)}
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all duration-200 border ${
-                      filterNoteCategory === cat
-                        ? "bg-slate-900 border-slate-900 text-white shadow-sm"
-                        : "bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100/80 hover:text-slate-700"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              <div className="flex gap-1.5 overflow-x-auto pb-2.5 mb-4 no-scrollbar border-b border-slate-100 items-center">
+                {["ทั้งหมด", "พลังบวก", "พัฒนาตัวเอง", "การเงิน & ลงทุน", "ธุรกิจ", "หนังสือ"].map((cat) => {
+                  const isSpecial = cat === "พลังบวก";
+                  const isSelected = filterNoteCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setFilterNoteCategory(cat)}
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-all duration-200 border flex items-center gap-1 cursor-pointer ${
+                        isSelected
+                          ? isSpecial
+                            ? "bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 border-indigo-500/50 text-indigo-100 shadow-sm"
+                            : "bg-slate-900 border-slate-900 text-white shadow-sm"
+                          : isSpecial
+                          ? "bg-indigo-50 border-indigo-200/90 text-indigo-700 hover:bg-indigo-100/80 shadow-[0_2px_8px_rgba(99,102,241,0.12)] font-black"
+                          : "bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100/80 hover:text-slate-700"
+                      }`}
+                    >
+                      {isSpecial && <Sparkles size={10} className="text-amber-500 shrink-0" />}
+                      <span>{cat}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Notes List Scroll Container */}
               <div className="flex-1 overflow-y-auto max-h-[480px] pr-1 pb-14 space-y-2.5 no-scrollbar">
-                {notes.filter((n) => {
-                  const matchesSearch =
-                    (n.title || "").toLowerCase().includes(searchNoteQuery.toLowerCase()) ||
-                    (n.content || "").toLowerCase().includes(searchNoteQuery.toLowerCase());
-                  const matchesCategory =
-                    filterNoteCategory === "ทั้งหมด" || n.category === filterNoteCategory;
-                  return matchesSearch && matchesCategory;
-                }).length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 font-medium text-xs">
-                    ไม่มีบันทึกสำหรับตัวกรองนี้
-                  </div>
-                ) : (
-                  notes
+                {(() => {
+                  const filtered = notes
                     .filter((n) => {
                       const matchesSearch =
                         (n.title || "").toLowerCase().includes(searchNoteQuery.toLowerCase()) ||
@@ -2283,16 +2413,30 @@ ${noteContent}`;
                         filterNoteCategory === "ทั้งหมด" || n.category === filterNoteCategory;
                       return matchesSearch && matchesCategory;
                     })
-                    .map((n) => {
-                      const isSelected = selectedNote?.id === n.id;
-                      const hasText = n.content && n.content.trim().length > 0;
-                      const excerpt = hasText
-                        ? n.content.replace(/[#*`_-]/g, "").slice(0, 120) + (n.content.length > 120 ? "..." : "")
-                        : "ไม่มีเนื้อหาจดบันทึก...";
+                    .reduce((acc: any[], current: any) => {
+                      const isDuplicate = acc.some((item) => item.id === current.id || (item.title && item.title === current.title && item.category === "พลังบวก"));
+                      if (!isDuplicate) acc.push(current);
+                      return acc;
+                    }, []);
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-10 text-slate-400 font-medium text-xs">
+                        ไม่มีบันทึกสำหรับตัวกรองนี้
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((n, idx) => {
+                    const isSelected = selectedNote?.id === n.id;
+                    const hasText = n.content && n.content.trim().length > 0;
+                    const excerpt = hasText
+                      ? n.content.replace(/[#*`_-]/g, "").slice(0, 120) + (n.content.length > 120 ? "..." : "")
+                      : "ไม่มีเนื้อหาจดบันทึก...";
 
                       return (
                         <div
-                          key={n.id}
+                          key={`${n.id || 'note'}-${idx}`}
                           onClick={() => {
                             handleSelectNote(n);
                           }}
@@ -2352,8 +2496,8 @@ ${noteContent}`;
                           )}
                         </div>
                       );
-                    })
-                )}
+                    });
+                })()}
               </div>
 
               {/* Bottom Fade Mask */}
@@ -2809,6 +2953,137 @@ ${noteContent}`;
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* 🌙 Bedtime 3 Good Things Modal (Pro Obsidian Glass UI) */}
+      <AnimatePresence>
+        {showBedtimeModal && (
+          <div
+            onClick={() => {
+              setShowBedtimeModal(false);
+              setRandomPastNote(null);
+            }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl cursor-pointer"
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-slate-950/90 border border-white/10 rounded-[2rem] p-6 sm:p-7 max-w-md w-full shadow-[0_32px_80px_-16px_rgba(0,0,0,0.9)] text-white relative overflow-hidden backdrop-blur-2xl cursor-default"
+            >
+              {/* Subtle Ambient Radial Lighting */}
+              <div className="absolute -top-20 -left-20 w-56 h-56 bg-indigo-600/15 blur-[80px] rounded-full pointer-events-none" />
+              <div className="absolute -bottom-20 -right-20 w-56 h-56 bg-purple-600/15 blur-[80px] rounded-full pointer-events-none" />
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowBedtimeModal(false);
+                  setRandomPastNote(null);
+                }}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center cursor-pointer border border-white/5 z-50 active:scale-95"
+              >
+                <X size={15} />
+              </button>
+
+              {/* Pro Header */}
+              <div className="flex items-center justify-between mb-5 relative z-10 pr-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
+                    <Moon size={18} className="text-indigo-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white tracking-tight leading-none mb-1">3 สิ่งดีๆ วันนี้</h3>
+                    <p className="text-[11px] text-slate-400 font-medium">บันทึกความรู้สึกดีๆ สะสมพลังบวก</p>
+                  </div>
+                </div>
+                <div className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-black tracking-wider flex items-center gap-1 shadow-sm">
+                  <Sparkles size={10} className="text-amber-400" />
+                  <span>+10 XP</span>
+                </div>
+              </div>
+
+              {/* Prompt Helper Bar (AI Thought Card Style) */}
+              <div className="mb-4 p-3.5 bg-slate-900/80 border border-indigo-500/20 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-inner relative z-10">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-amber-400 to-indigo-500 shrink-0" />
+                  <span className="leading-snug text-slate-300 font-medium italic text-[11px]">{GRATITUDE_PROMPTS[gratitudePromptIndex]}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGratitudePromptIndex((prev) => (prev + 1) % GRATITUDE_PROMPTS.length)}
+                  className="text-[10px] font-bold text-indigo-300 hover:text-white transition-all shrink-0 px-2.5 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 rounded-xl border border-indigo-500/30 cursor-pointer whitespace-nowrap active:scale-95"
+                >
+                  สุ่มคำถาม 💡
+                </button>
+              </div>
+
+              {/* 3 Sleek Pro Input Lines */}
+              <div className="space-y-3 mb-6 relative z-10">
+                {[
+                  { val: goodThing1, set: setGoodThing1, ph: "เช่น วันนี้ได้กินของอร่อย / มีเวลาพักผ่อน..." },
+                  { val: goodThing2, set: setGoodThing2, ph: "เช่น ทำงานสำคัญเสร็จ / ได้คุยกับคนที่สบายใจ..." },
+                  { val: goodThing3, set: setGoodThing3, ph: "เช่น เรียนรู้เรื่องใหม่ / อากาศดี อารมณ์แจ่มใส..." }
+                ].map((item, idx) => (
+                  <div key={idx} className="group flex items-center gap-3 bg-slate-900/60 hover:bg-slate-900/90 border border-white/8 focus-within:border-indigo-500/50 focus-within:bg-slate-900 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-2xl px-4 py-3 transition-all">
+                    <span className="text-[10px] font-mono font-bold text-indigo-400/70 group-focus-within:text-indigo-400 select-none px-1.5 py-0.5 rounded-md bg-indigo-500/10">0{idx + 1}</span>
+                    <input
+                      type="text"
+                      placeholder={item.ph}
+                      value={item.val}
+                      onChange={(e) => item.set(e.target.value)}
+                      className="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Pro Save Button */}
+              <button
+                type="button"
+                disabled={isSavingBedtime}
+                onClick={handleSaveBedtimeGratitude}
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white rounded-2xl text-xs font-black tracking-wide transition-all shadow-[0_8px_25px_rgba(79,70,229,0.35)] hover:shadow-[0_12px_30px_rgba(79,70,229,0.5)] cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 relative z-10 border border-indigo-400/30"
+              >
+                {isSavingBedtime ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>กำลังบันทึกพลังบวก...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>บันทึกความรู้สึกดีๆ (+10 XP)</span>
+                  </>
+                )}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 🌙 Bedtime XP Toast Notification */}
+      <AnimatePresence>
+        {bedtimeXpToast && (
+          <motion.div
+            initial={{ opacity: 0, x: "-50%", y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, x: "-50%", y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: "-50%", y: -20, scale: 0.9 }}
+            className="fixed top-6 left-1/2 z-[999999] w-full max-w-xs sm:max-w-sm px-4"
+          >
+            <div className="flex items-center gap-3 rounded-full border border-indigo-500/40 bg-slate-950/95 px-5 py-3 text-white shadow-[0_10px_35px_-5px_rgba(79,70,229,0.4)] backdrop-blur-xl justify-center">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm border border-indigo-400/30 bg-indigo-500/20">
+                🌙
+              </div>
+              <p className="text-xs font-black tracking-wide">
+                บันทึกพลังบวกสำเร็จ! รับ <span className="text-indigo-400 font-black">+10 XP</span> ✨
+              </p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
