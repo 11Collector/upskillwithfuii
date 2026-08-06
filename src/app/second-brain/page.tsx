@@ -678,83 +678,85 @@ const GraphView: React.FC<GraphViewProps> = ({
         </g>
       </svg>
       {/* SYSTEM OVERLAYS */}
-      <div className="absolute top-4 left-4 md:left-6 z-10 flex items-center gap-2 flex-wrap">
-        {/* Mobile-Friendly Back Button to Notes */}
-        <button
-          onClick={onClose}
-          className="py-1.5 px-3 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
-        >
-          <span>←</span> กลับไปหน้าโน้ต
-        </button>
+      <div className="absolute top-3 left-3 right-3 md:top-4 md:left-6 md:right-6 z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pointer-events-none">
+        {/* Left Controls: Navigation, AI Scan & SCI-FI Stats */}
+        <div className="flex items-center gap-2 flex-wrap pointer-events-auto">
+          <button
+            onClick={onClose}
+            className="h-8 px-3.5 rounded-full bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer backdrop-blur-md whitespace-nowrap shrink-0"
+          >
+            <span>←</span> กลับไปหน้าโน้ต
+          </button>
 
-        {/* Direct AI Brain Scan Button */}
-        <button
-          onClick={() => {
-            if (!isProMember && freeScansUsed >= 3) {
-              setShowUpgradeModal(true);
-            } else {
-              onTriggerAiScan();
-            }
-          }}
-          disabled={isAiScanning}
-          className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isAiScanning ? (
-            <>
-              <Loader2 size={12} className="animate-spin" />
-              <span>กำลังสแกน...</span>
-            </>
-          ) : (
-            <>
-              <span>✨</span>
-              <span>สแกนสมอง AI</span>
-              {!isProMember && (freeScansUsed < 3 ? <span className="text-[9px] opacity-80">({3 - freeScansUsed})</span> : <span className="text-[9px] text-amber-300 font-bold">(PRO)</span>)}
-            </>
-          )}
-        </button>
+          {/* Direct AI Brain Scan Button */}
+          <button
+            onClick={() => {
+              if (!isProMember && freeScansUsed >= 3) {
+                setShowUpgradeModal(true);
+              } else {
+                onTriggerAiScan();
+              }
+            }}
+            disabled={isAiScanning}
+            className="h-8 px-3.5 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-md whitespace-nowrap shrink-0"
+          >
+            {isAiScanning ? (
+              <>
+                <Loader2 size={12} className="animate-spin" />
+                <span className="whitespace-nowrap">กำลังสแกน...</span>
+              </>
+            ) : (
+              <>
+                <span>✨</span>
+                <span className="whitespace-nowrap">สแกนสมอง AI</span>
+                {!isProMember && (freeScansUsed < 3 ? <span className="text-[9px] opacity-80 whitespace-nowrap">({3 - freeScansUsed})</span> : <span className="text-[9px] text-amber-300 font-bold whitespace-nowrap">(PRO)</span>)}
+              </>
+            )}
+          </button>
 
-        {/* SCI-FI Stats Fluff (Desktop Only) */}
-        <div className="hidden md:flex items-center gap-3 select-none pointer-events-none opacity-40">
-          <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">SYSTEM: ACTIVE</span>
-          <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">COORD: {panX.toFixed(0)}, {panY.toFixed(0)}</span>
-          <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">ZOOM: {(scale * 100).toFixed(0)}%</span>
+          {/* SCI-FI Stats Fluff (Desktop Only) */}
+          <div className="hidden lg:flex items-center gap-3 select-none pointer-events-none opacity-40 whitespace-nowrap ml-1">
+            <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">SYSTEM: ACTIVE</span>
+            <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">COORD: {panX.toFixed(0)}, {panY.toFixed(0)}</span>
+            <span className="text-[9px] font-black font-mono uppercase tracking-widest text-slate-500">ZOOM: {(scale * 100).toFixed(0)}%</span>
+          </div>
         </div>
-      </div>
 
-      <div className="absolute top-4 right-4 md:right-6 z-10 flex items-center gap-1.5 md:gap-2">
-        <button
-          onClick={() => setScale((s) => Math.min(3, s + 0.15))}
-          className="w-8 h-8 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center justify-center text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer"
-          title="Zoom In"
-        >
-          ＋
-        </button>
-        <button
-          onClick={() => setScale((s) => Math.max(0.3, s - 0.15))}
-          className="w-8 h-8 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center justify-center text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer"
-          title="Zoom Out"
-        >
-          －
-        </button>
-        <button
-          onClick={() => { setScale(1); setPanX(0); setPanY(0); }}
-          className="px-2.5 h-8 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-slate-300 flex items-center justify-center text-[9px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
-        >
-          รีเซ็ต
-        </button>
-        {/* Desktop Close Button (Redundant) */}
-        <button
-          onClick={onClose}
-          className="hidden md:flex w-8 h-8 rounded-xl bg-red-650/80 border border-red-500/40 hover:bg-red-600 hover:border-red-500 text-white items-center justify-center shadow-md transition-all active:scale-95 cursor-pointer"
-          title="Close Graph"
-        >
-          <X size={14} />
-        </button>
+        {/* Right Controls: Zoom & Close */}
+        <div className="flex items-center gap-1.5 md:gap-2 pointer-events-auto ml-auto self-end sm:self-auto">
+          <button
+            onClick={() => setScale((s) => Math.min(3, s + 0.15))}
+            className="w-8 h-8 rounded-full bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center justify-center text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
+            title="Zoom In"
+          >
+            ＋
+          </button>
+          <button
+            onClick={() => setScale((s) => Math.max(0.3, s - 0.15))}
+            className="w-8 h-8 rounded-full bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-white flex items-center justify-center text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
+            title="Zoom Out"
+          >
+            －
+          </button>
+          <button
+            onClick={() => { setScale(1); setPanX(0); setPanY(0); }}
+            className="h-8 px-3 rounded-full bg-slate-900/80 border border-slate-700/60 hover:bg-slate-850 hover:border-slate-650 text-slate-300 flex items-center justify-center text-[9px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer backdrop-blur-md whitespace-nowrap shrink-0"
+          >
+            รีเซ็ต
+          </button>
+          <button
+            onClick={onClose}
+            className="hidden md:flex w-8 h-8 rounded-full bg-red-650/80 border border-red-500/40 hover:bg-red-600 hover:border-red-500 text-white items-center justify-center shadow-md transition-all active:scale-95 cursor-pointer backdrop-blur-md shrink-0"
+            title="Close Graph"
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Interactive Mobile Tooltip: Tap node once to open edit */}
       {hoveredNode && (
-        <div className="absolute top-16 left-4 right-4 md:right-auto md:left-6 z-10 bg-slate-900/95 border border-slate-700/60 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-auto select-text text-left">
+        <div className="absolute top-24 left-4 right-4 md:right-auto md:top-16 md:left-6 z-10 bg-slate-900/95 border border-slate-700/60 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-auto select-text text-left">
           <span className="inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 mb-2">
             {hoveredNode.category}
           </span>
@@ -772,7 +774,7 @@ const GraphView: React.FC<GraphViewProps> = ({
       )}
 
       {!hoveredNode && hoveredLink?.type === "ai" && hoveredLink.reason && (
-        <div className="absolute top-16 left-4 right-4 md:right-auto md:left-6 z-10 bg-slate-950/95 border border-cyan-800 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-none select-none text-left">
+        <div className="absolute top-24 left-4 right-4 md:right-auto md:top-16 md:left-6 z-10 bg-slate-950/95 border border-cyan-800 p-4 rounded-2xl max-w-xs shadow-xl backdrop-blur-md animate-fade-in pointer-events-none select-none text-left">
           <span className="inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-700/40 mb-2">
             ✨ AI Link {hoveredLink.score ? `• สัมพันธ์ ${hoveredLink.score}%` : ""}
           </span>
@@ -786,7 +788,7 @@ const GraphView: React.FC<GraphViewProps> = ({
       {!showLegend && !showAiList && (
         <button
           onClick={() => setShowLegend(true)}
-          className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-10 px-3 py-2 bg-slate-950/90 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+          className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-10 h-8 px-3 bg-slate-950/90 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
         >
           <HelpCircle size={12} /> สัญลักษณ์
         </button>
@@ -845,7 +847,7 @@ const GraphView: React.FC<GraphViewProps> = ({
       {!showAiList && !showLegend && (
         <button
           onClick={() => setShowAiList(true)}
-          className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10 px-3 py-2 bg-slate-950/90 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+          className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10 h-8 px-3 bg-slate-950/90 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
         >
           <span>✨</span> รายการเชื่อมโยง AI {aiSuggestions.length > 0 && `(${aiSuggestions.length})`}
         </button>
