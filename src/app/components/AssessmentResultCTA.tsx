@@ -138,13 +138,15 @@ export default function AssessmentResultCTA({ currentUser, showXpModal = true, x
         {/* Row 3 — Tertiary: Line OA + กลับหน้าแรก */}
         <div className="grid grid-cols-2 gap-2.5">
           <a
-            href="https://lin.ee/rQawKUM"
+            href="https://www.instagram.com/upskillwithfuii/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 py-3.5 px-4 bg-[#00B900] text-white rounded-2xl font-bold text-[13px] hover:bg-[#00a000] active:scale-95 transition-all shadow-md"
+            className="flex items-center justify-center gap-2 py-3.5 px-4 bg-gradient-to-r from-fuchsia-600 via-rose-500 to-amber-500 text-white rounded-2xl font-bold text-[13px] hover:opacity-95 active:scale-95 transition-all shadow-md shadow-pink-500/20"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" className="shrink-0">
-              <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.65L5.5 22l3.58-1.87C10.17 20.67 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
             </svg>
             ติดตามฟุ้ย
           </a>

@@ -5,7 +5,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings, X, HelpCircle
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, NotebookPen, Lock, Settings, X, HelpCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -1890,7 +1890,7 @@ ${noteContent}`;
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-white/5 hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
             title="สลับไปหน้าสมองที่สอง"
           >
-            <Brain size={12} className="text-amber-500 animate-pulse" />
+            <NotebookPen size={12} className="text-amber-400" />
             <span>สมองที่สอง</span>
           </Link>
         </div>

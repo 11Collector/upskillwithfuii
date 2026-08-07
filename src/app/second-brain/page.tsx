@@ -5,7 +5,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Clock, ArrowRight, BookMarked, Target,
   Crown, Sparkles, LayoutGrid, Wallet, Briefcase, ChevronRight, CheckCircle2,
-  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, Lock, Settings, X, HelpCircle, Moon
+  Search, Plus, Trash2, Loader2, Copy, Check, FileText, RefreshCw, Brain, NotebookPen, Lock, Settings, X, HelpCircle, Moon
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -2151,7 +2151,7 @@ ${noteContent}`;
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600 hover:text-slate-900 whitespace-nowrap"
             title="สลับไปหน้าคลังบทความ"
           >
-            <BookOpen size={12} className="text-indigo-600 shrink-0" />
+            <BookOpen size={12} className="text-amber-500 shrink-0" />
             <span className="hidden sm:inline">คลังบทความ</span>
             <span className="sm:hidden">บทความ</span>
           </Link>
@@ -2334,7 +2334,7 @@ ${noteContent}`;
             {/* --- Notes Header --- */}
             <header className="mb-10">
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-slate-200 rounded-full text-[10px] font-black mb-6 border border-slate-950 uppercase tracking-[0.2em] shadow-sm">
-                <Brain size={14} className="text-slate-400" /> <span>SECOND BRAIN</span>
+                <NotebookPen size={14} className="text-slate-400" /> <span>SECOND BRAIN</span>
               </motion.div>
               <h1 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight mb-4">
                 สมองที่สอง <span className="text-slate-500">จดบันทึก</span>

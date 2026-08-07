@@ -33,6 +33,7 @@ interface SkillTrackBannerProps {
   onAdvanceDevDay?: () => void;
   nextTrackId?: string | null;
   isBadgeUnlocked?: boolean;
+  isQueuedForTomorrow?: boolean;
 }
 
 export default function SkillTrackBanner({
@@ -47,7 +48,8 @@ export default function SkillTrackBanner({
   onOpenInfo,
   onAdvanceDevDay,
   nextTrackId,
-  isBadgeUnlocked
+  isBadgeUnlocked,
+  isQueuedForTomorrow
 }: SkillTrackBannerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
@@ -150,7 +152,61 @@ export default function SkillTrackBanner({
   return (
     <div className="w-full mb-6">
       {activeTrack ? (
-        /* 🏆 Active Skill Track Banner - Clean Minimal Mobile Friendly Layout */
+        isQueuedForTomorrow ? (
+          /* ⏳ Queued Skill Track Banner (Starts Tomorrow 00:00) */
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-[2rem] border border-amber-500/40 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 sm:p-5 shadow-2xl"
+          >
+            {/* Background Glow Flare */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-3xl rounded-full pointer-events-none -mr-16 -mt-16" />
+
+            {/* Header Row: Icon + Track Name + Status Badge */}
+            <div className="flex items-center justify-between gap-2.5 relative z-10 mb-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-inner">
+                  {getTrackIcon(activeTrack.id, 20)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] sm:text-xs font-black text-amber-400 tracking-wider flex items-center gap-1">
+                      <Clock size={12} className="text-amber-400" /> ต่อคิวเริ่มบทเรียนแรก
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-black text-white leading-tight truncate">
+                    {activeTrack.title}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Right Action Button */}
+              <button
+                onClick={() => {
+                  setSelectedTrackForChoice(null);
+                  setIsModalOpen(true);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 border border-white/10"
+              >
+                <Sparkles size={12} className="text-amber-400" />
+                <span>เปลี่ยนวิชา</span>
+              </button>
+            </div>
+
+            {/* Queued Info Box */}
+            <div className="pt-3 border-t border-white/10 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-slate-300 font-medium">
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                <span>เนื่องจากวันนี้ทำภารกิจไปแล้ว! <strong>Day 1</strong> จะเริ่มวันพรุ่งนี้ 00:00 น.</span>
+              </div>
+              {timeLeftStr && (
+                <span className="shrink-0 px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 font-black text-[11px]">
+                  เปิดในอีก {timeLeftStr}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        ) : (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -299,6 +355,7 @@ export default function SkillTrackBanner({
             ) : null}
           </div>
         </motion.div>
+        )
       ) : (
         /* 🚀 Initial Track Selection Prompt - Minimal Responsive Card */
         <motion.div
@@ -341,12 +398,12 @@ export default function SkillTrackBanner({
       {/* 🎓 Skill Track Selector Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pb-24 sm:pb-6 bg-slate-950/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100005] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-slate-900 border border-white/10 rounded-[2rem] p-4 sm:p-5 max-w-lg w-full max-h-[75vh] sm:max-h-[80vh] flex flex-col text-white shadow-2xl relative my-auto"
+              className="bg-slate-900 border border-white/10 rounded-[2rem] p-4 sm:p-5 max-w-lg w-full max-h-[80vh] flex flex-col text-white shadow-2xl relative my-auto"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 shrink-0">

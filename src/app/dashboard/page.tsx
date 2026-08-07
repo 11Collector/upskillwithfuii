@@ -272,10 +272,9 @@ export default function DashboardPage() {
     // 🧠 Smart Check: If user has already completed quests today, start new track tomorrow.
     // If user hasn't completed any quests today (or first time), start Day 1 immediately TODAY!
     const hasCompletedQuestsToday = completedQuests.length > 0;
-    const isFirstTime = !todaySkillTrackId;
     const trackName = SKILL_TRACKS[trackId]?.title || "วิชาใหม่";
 
-    if (!hasCompletedQuestsToday || isFirstTime) {
+    if (!hasCompletedQuestsToday) {
       setActiveSkillTrackId(trackId);
       setTodaySkillTrackId(trackId);
       setSkillTrackCurrentDay(1);
@@ -1058,14 +1057,15 @@ Day 21: [กิจกรรม]
   }, [userData?.hasChattedWithFuii, userData?.lastChatTime, userData?.lastChatDate, chatQuota.used]);
 
   const isPhase1Completed = useMemo(() => {
-    const hasCoreAssessments = !!lastWheel && !!lastDisc && !!lastMoney && !!lastLibrarySoul;
-    return hasCoreAssessments && (!!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2);
-  }, [lastWheel, lastDisc, lastMoney, lastLibrarySoul, userData?.hasCompletedPhase1Quests, completedQuests.length]);
+    const hasCorePhase1 = !!lastWheel && !!lastDisc && !!lastMoney && !!lastQuote;
+    return hasCorePhase1 && (!!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2);
+  }, [lastWheel, lastDisc, lastMoney, lastQuote, userData?.hasCompletedPhase1Quests, completedQuests.length]);
 
-  const isKhomsatsatUnlocked = isPhase1Completed;
-  const isGhostUnlocked = isKhomsatsatUnlocked && !!lastQuote;
-  const isShopUnlocked = isGhostUnlocked && !!lastGhostResult;
-  const isSoulGuideUnlocked = isShopUnlocked && hasRedeemedReward;
+  const isKhomsatsatUnlocked = true;
+  const isLibrarySoulUnlocked = isPhase1Completed;
+  const isShopUnlocked = isLibrarySoulUnlocked && !!lastLibrarySoul;
+  const isGhostUnlocked = isShopUnlocked && hasRedeemedReward;
+  const isSoulGuideUnlocked = isGhostUnlocked && !!lastGhostResult;
   const isPhase2Completed = isSoulGuideUnlocked && hasChattedWithFuii;
 
   const claimedReadArticlesCount = userData?.readArticles?.length || 0;
@@ -4785,15 +4785,15 @@ Day 21: [กิจกรรม]
         {shouldShowPhaseJourney && (() => {
           const phase1Steps = [
             { done: !!lastWheel, label: "Wheel of Life", shortDesc: "เช็กสมดุลชีวิต 8 ด้าน", path: "/tools/wheel-of-life", buttonClass: "from-red-500 to-orange-500" },
+            { done: !!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2, label: `Daily Quests (${Math.min(completedQuests.length, 2)}/2)`, shortDesc: "ทำภารกิจสั้นๆ ประจำวัน", path: "/dashboard?tab=quests", buttonClass: "from-violet-500 to-cyan-400" },
             { done: !!lastDisc, label: "DISC", shortDesc: "เข้าใจสไตล์การสื่อสารของคุณ", path: "/tools/disc", buttonClass: "from-blue-500 to-indigo-500" },
             { done: !!lastMoney, label: "Money Avatar", shortDesc: "ถอดรหัสนิสัยการเงิน", path: "/tools/money-avatar", buttonClass: "from-amber-400 to-orange-500" },
-            { done: !!userData?.hasCompletedPhase1Quests || completedQuests.length >= 2, label: `Daily Quests (${Math.min(completedQuests.length, 2)}/2)`, shortDesc: "ทำภารกิจสั้นๆ ประจำวัน", path: "/dashboard?tab=quests", buttonClass: "from-violet-500 to-cyan-400" },
-            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านเพื่อจบ Phase 1", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
+            { done: !!lastQuote, label: "คมสัดสัด", shortDesc: "สร้างคำคมจากความรู้สึกวันนี้", path: "/tools/khomsatsat", buttonClass: "from-fuchsia-500 to-violet-500" },
           ];
           const phase2Steps = [
-            { done: !!lastQuote, label: "คมสัดสัด", shortDesc: "สร้างคำคมจากความรู้สึกวันนี้", path: "/tools/khomsatsat", buttonClass: "from-fuchsia-500 to-violet-500" },
-            { done: !!lastGhostResult, label: "Ghost in You", shortDesc: "เผชิญหน้าความกลัวลึกๆ", path: "/tools/ghost-in-you", buttonClass: "from-rose-500 to-red-600" },
+            { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านเฉพาะตัว", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
             { done: hasRedeemedReward, label: "Happiness Shop", shortDesc: "แลก XP เป็นรางวัลเติมใจ", path: "/shop", buttonClass: "from-pink-500 to-orange-400" },
+            { done: !!lastGhostResult, label: "Ghost in You", shortDesc: "เผชิญหน้าความกลัวลึกๆ", path: "/tools/ghost-in-you", buttonClass: "from-rose-500 to-red-600" },
             { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-violet-500 to-indigo-500" },
           ];
           const phase3Steps = [
@@ -4806,7 +4806,7 @@ Day 21: [กิจกรรม]
             {
               num: 1,
               title: "ค้นหาตัวตน",
-              desc: "ประเมินสมดุลชีวิต การสื่อสาร\nเข้าใจความรู้ทางการเงิน เลือกหนังสือที่เหมาะกับคุณ",
+              desc: "ประเมินสมดุลชีวิต ทำภารกิจประจำวัน\nเข้าใจความรู้ทางการเงิน และสร้างคำคมฮีลใจ",
               image: "/Phase1.png",
               unlocked: true,
               completed: isPhase1Completed,
@@ -4817,7 +4817,7 @@ Day 21: [กิจกรรม]
             {
               num: 2,
               title: "สุขระหว่างทาง",
-              desc: "เข้าใจความรู้สึกของตัวเอง เผชิญหน้ากับความกลัว\nความสุข และเติบโตไปกับพี่ฟุ้ย",
+              desc: "ค้นหาสไตล์การอ่าน เติมความสุขให้ตัวเอง\nเผชิญหน้าความกลัว และเติบโตไปกับพี่ฟุ้ย",
               image: "/Phase2.png",
               unlocked: isPhase1Completed,
               completed: isPhase2Completed,
@@ -5882,6 +5882,7 @@ Day 21: [กิจกรรม]
               currentDay={todaySkillTrackDay || skillTrackCurrentDay}
               completedDays={skillTrackCompletedDays}
               nextTrackId={activeSkillTrackId}
+              isQueuedForTomorrow={completedQuests.length > 0 && !!activeSkillTrackId && activeSkillTrackId !== todaySkillTrackId}
               isBadgeUnlocked={!!(userData?.completedSkillBadges?.includes(todaySkillTrackId || activeSkillTrackId || "")) }
               lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
