@@ -2151,7 +2151,7 @@ ${noteContent}`;
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all duration-300 shadow-sm active:scale-95 text-[10px] font-black uppercase tracking-wider bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600 hover:text-slate-900 whitespace-nowrap"
             title="สลับไปหน้าคลังบทความ"
           >
-            <BookOpen size={12} className="text-amber-500 shrink-0" />
+            <BookOpen size={12} className="text-indigo-600 shrink-0" />
             <span className="hidden sm:inline">คลังบทความ</span>
             <span className="sm:hidden">บทความ</span>
           </Link>
