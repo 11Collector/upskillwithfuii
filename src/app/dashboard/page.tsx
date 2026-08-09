@@ -3160,20 +3160,46 @@ Day 21: [กิจกรรม]
           }
         }
 
-        // 🛡️ Deduplication & Overlap Safeguard against Quest 1 (Wheel Anchor)
-        const isTooSimilar = (t1: string, t2: string) => {
-          if (!t1 || !t2) return false;
-          const c1 = t1.toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '');
-          const c2 = t2.toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '');
-          return (c1.length > 6 && c2.length > 6 && (c1.includes(c2) || c2.includes(c1)));
+        // 🛡️ Deduplication & Overlap Safeguard against Quest 1 (Wheel Anchor & User Goal)
+        const actionKeywords = ["ดื่มน้ำ", "น้ำเปล่า", "ออกกำลัง", "วิ่ง", "ออมเงิน", "เก็บเงิน", "นอน", "กินคลีน", "สมาธิ", "สวดมนต์"];
+        const fullGoalText = `${quest1Title} ${(lastWheel?.goal || userData?.lastWheel?.goal || '')}`.toLowerCase();
+
+        const hasActionOverlap = (targetTitle: string) => {
+          if (!targetTitle || !fullGoalText) return false;
+          const tLower = targetTitle.toLowerCase();
+          
+          const norm1 = tLower.replace(/[^\w\u0E00-\u0E7F]/g, '');
+          const norm2 = fullGoalText.replace(/[^\w\u0E00-\u0E7F]/g, '');
+          if (norm1.length > 6 && norm2.length > 6 && (norm1.includes(norm2) || norm2.includes(norm1))) {
+            return true;
+          }
+          
+          for (const kw of actionKeywords) {
+            if (tLower.includes(kw) && fullGoalText.includes(kw)) {
+              return true;
+            }
+          }
+          return false;
         };
 
-        const trackName = track.title || "วิชาชีวิต";
-        if (quest1Title && isTooSimilar(q2Title, quest1Title)) {
-          q2Title = `[${trackName}] ${q2Title}`;
+        if (hasActionOverlap(q2Title)) {
+          for (const altDay of track.days) {
+            const candidate = altDay.quests?.[0];
+            if (candidate && candidate.title && !hasActionOverlap(candidate.title)) {
+              q2Title = candidate.title;
+              break;
+            }
+          }
         }
-        if (quest1Title && isTooSimilar(q3Title, quest1Title)) {
-          q3Title = `[${trackName}] ${q3Title}`;
+
+        if (hasActionOverlap(q3Title)) {
+          for (const altDay of track.days) {
+            const candidate = altDay.quests?.[1];
+            if (candidate && candidate.title && !hasActionOverlap(candidate.title)) {
+              q3Title = candidate.title;
+              break;
+            }
+          }
         }
 
         return [
