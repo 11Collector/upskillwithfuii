@@ -28,10 +28,10 @@ const t = {
   pitchTitle1: "ระบบปฏิบัติการ",
   pitchTitle2: "พัฒนาชีวิตส่วนตัวของคุณ",
   pitchList: [
-    "Identity OS — ถอดรหัสตัวตน ค้นหาเป้าหมายชีวิต",
-    "XP & Quests — ทำเควสต์รายวัน อัพเลเวลให้เก่งขึ้น",
-    "Growth Insights — สถิติโฟกัส และการเติบโต",
-    "AI Mentor — คุยปรับ Mindset กับพี่ฟุ้ยได้ 24 ชม."
+    "Identity OS — ถอดรหัสตัวตนและเป้าหมายชีวิต",
+    "XP & Quests — เควสต์รายวัน อัปเลเวลตัวตน",
+    "Second Brain — คลังสมองอ่านสรุปและจดบันทึก",
+    "AI Mentor — ปรึกษา Mindset กับพี่ฟุ้ย 24 ชม."
   ],
   loginGoogle: "เริ่มต้นใช้งาน",
   loginRemark: "สมัครฟรีใน 5 วินาที · ข้อมูลส่วนตัวปลอดภัย 100%",
@@ -1046,7 +1046,7 @@ export default function Home() {
                 {[
                   { icon: <Users size={15} className="text-blue-400" />, text: t.pitchList[0] },
                   { icon: <Flame size={15} className="text-orange-400" />, text: t.pitchList[1] },
-                  { icon: <PieChart size={15} className="text-emerald-400" />, text: t.pitchList[2] },
+                  { icon: <BookOpen size={15} className="text-amber-400" />, text: t.pitchList[2] },
                   { icon: <MessageSquareMore size={15} className="text-purple-400" />, text: t.pitchList[3] }
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-slate-200 text-xs md:text-sm font-bold">
