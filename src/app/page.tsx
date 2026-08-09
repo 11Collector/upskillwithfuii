@@ -1046,7 +1046,7 @@ export default function Home() {
                 {[
                   { icon: <Users size={15} className="text-blue-400" />, text: t.pitchList[0] },
                   { icon: <Flame size={15} className="text-orange-400" />, text: t.pitchList[1] },
-                  { icon: <BookOpen size={15} className="text-amber-400" />, text: t.pitchList[2] },
+                  { icon: <Brain size={15} className="text-amber-400" />, text: t.pitchList[2] },
                   { icon: <MessageSquareMore size={15} className="text-purple-400" />, text: t.pitchList[3] }
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-slate-200 text-xs md:text-sm font-bold">
