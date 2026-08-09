@@ -1613,7 +1613,7 @@ export default function Home() {
                     <div className="w-full max-w-[300px] mx-auto space-y-2.5 text-left mt-1">
                       {[
                         { color: "from-orange-500 to-rose-500", name: "Phase 1 ค้นหาตัวตน", desc: "สำรวจชีวิต ความคิด การเงิน และสไตล์ตัวเอง" },
-                        { color: "from-pink-500 to-violet-500", name: "Phase 2 สุขระหว่างทาง", desc: "ค้นหาสไตล์การอ่าน อ่านสรุปบทความ เติมความสุข และเติบโตกับพี่ฟุ้ย" },
+                        { color: "from-pink-500 to-violet-500", name: "Phase 2 สุขระหว่างทาง", desc: "ค้นหาสไตล์การอ่าน อ่านบทความและจดบันทึก เติมความสุข และเติบโตกับพี่ฟุ้ย" },
                         { color: "from-amber-400 to-emerald-400", name: "Phase 3 ระลึกความตาย", desc: "เผชิญความกลัว ฝึกโฟกัส ทบทวนชีวิต และเลือกสิ่งที่สำคัญจริงๆ" },
                       ].map((item, i) => (
                         <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
