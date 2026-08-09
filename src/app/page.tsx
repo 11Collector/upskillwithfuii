@@ -30,7 +30,7 @@ const t = {
   pitchList: [
     "Identity OS — ถอดรหัสตัวตนและเป้าหมายชีวิต",
     "XP & Quests — เควสต์รายวัน อัปเลเวลตัวตน",
-    "Second Brain — คลังสมองอ่านสรุปและจดบันทึก",
+    "Upskill Brain — คลังสมองอ่านสรุปและจดบันทึก",
     "AI Mentor — ปรึกษา Mindset กับพี่ฟุ้ย 24 ชม."
   ],
   loginGoogle: "เริ่มต้นใช้งาน",
