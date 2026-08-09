@@ -822,10 +822,10 @@ export default function Home() {
                 <div className="flex flex-wrap gap-2.5 justify-center">
                   {[
                     { name: "วงล้อชีวิต (Wheel of Life)", icon: <PieChart size={18} className="text-red-600" />, color: "bg-red-50 border-red-200" },
+                    { name: "ภารกิจรายวัน (Daily Quests)", icon: <Flame size={18} className="text-orange-600" />, color: "bg-orange-50 border-orange-200" },
                     { name: "ประเมินนิสัย (DISC)", icon: <Users size={18} className="text-blue-600" />, color: "bg-blue-50 border-blue-200" },
                     { name: "สไตล์การใช้เงิน (Money Avatar)", icon: <Wallet size={18} className="text-amber-600" />, color: "bg-amber-50 border-amber-200" },
-                    { name: "ภารกิจรายวัน (Daily Quests)", icon: <Flame size={18} className="text-orange-600" />, color: "bg-orange-50 border-orange-200" },
-                    { name: "สไตล์การอ่าน (Library of Souls)", icon: <BookOpen size={18} className="text-emerald-600" />, color: "bg-emerald-50 border-emerald-100" }
+                    { name: "คมสัดสัด (Quotes)", icon: <Quote size={18} className="text-purple-600" />, color: "bg-purple-50 border-purple-200" }
                   ].map((app, idx, arr) => {
                     const isFirst = idx === 0;
                     const isLast = idx === arr.length - 1;
@@ -878,8 +878,8 @@ export default function Home() {
                 </span>
                 <div className="flex flex-wrap gap-2.5 justify-center">
                   {[
-                    { name: "คมสัดสัด (Quotes)", icon: <Quote size={18} className="text-purple-600" />, color: "bg-purple-50 border-purple-200" },
-                    { name: "ผีในตัวคุณ (Ghost In You)", icon: <Ghost size={18} className="text-red-600" />, color: "bg-red-50 border-red-200" },
+                    { name: "สไตล์การอ่าน (Library of Souls)", icon: <BookOpen size={18} className="text-emerald-600" />, color: "bg-emerald-50 border-emerald-100" },
+                    { name: "คลังสมอง (Upskill Brain)", icon: <Brain size={18} className="text-amber-600" />, color: "bg-amber-50 border-amber-200" },
                     { name: "ความสุขระหว่างทาง (Happiness Shop)", icon: <ShoppingBag size={18} className="text-pink-600" />, color: "bg-pink-50 border-pink-200" },
                     { name: "คุยกับพี่ฟุ้ย (AI Mentor)", icon: <MessageSquareMore size={18} className="text-slate-600" />, color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]" }
                   ].map((app, idx, arr) => {
@@ -934,7 +934,7 @@ export default function Home() {
                 </span>
                 <div className="flex flex-wrap gap-2.5 justify-center">
                   {[
-                    { name: "คลังสมอง (Upskill Brain)", icon: <Brain size={18} className="text-amber-600" />, color: "bg-amber-50 border-amber-200" },
+                    { name: "ผีในตัวคุณ (Ghost In You)", icon: <Ghost size={18} className="text-red-600" />, color: "bg-red-50 border-red-200" },
                     { name: "ห้องสมาธิ (Focus Room)", icon: <BrainCircuit size={18} className="text-zinc-700" />, color: "bg-zinc-50 border-zinc-200" },
                     { name: "เวลาที่เหลือ (Memento Mori)", icon: <Hourglass size={18} className="text-[#8B5A2B]" />, color: "bg-[#F4ECE1] border-[#E6D9C5]" }
                   ].map((app, idx, arr) => {
@@ -1613,8 +1613,8 @@ export default function Home() {
                     <div className="w-full max-w-[300px] mx-auto space-y-2.5 text-left mt-1">
                       {[
                         { color: "from-orange-500 to-rose-500", name: "Phase 1 ค้นหาตัวตน", desc: "สำรวจชีวิต ความคิด การเงิน และสไตล์ตัวเอง" },
-                        { color: "from-pink-500 to-violet-500", name: "Phase 2 สุขระหว่างทาง", desc: "เข้าใจอารมณ์ ความกลัว ความสุข และเติบโตกับพี่ฟุ้ย" },
-                        { color: "from-amber-400 to-emerald-400", name: "Phase 3 ระลึกความตาย", desc: "ฝึกโฟกัส ทบทวนชีวิต และเลือกสิ่งที่สำคัญจริงๆ" },
+                        { color: "from-pink-500 to-violet-500", name: "Phase 2 สุขระหว่างทาง", desc: "ค้นหาสไตล์การอ่าน อ่านสรุปบทความ เติมความสุข และเติบโตกับพี่ฟุ้ย" },
+                        { color: "from-amber-400 to-emerald-400", name: "Phase 3 ระลึกความตาย", desc: "เผชิญความกลัว ฝึกโฟกัส ทบทวนชีวิต และเลือกสิ่งที่สำคัญจริงๆ" },
                       ].map((item, i) => (
                         <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
                           <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${item.color} text-[11px] font-black text-white shadow-lg`}>

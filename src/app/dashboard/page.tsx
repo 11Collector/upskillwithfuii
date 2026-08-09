@@ -1063,17 +1063,18 @@ Day 21: [กิจกรรม]
 
   const isKhomsatsatUnlocked = true;
   const isLibrarySoulUnlocked = isPhase1Completed;
-  const isShopUnlocked = isLibrarySoulUnlocked && !!lastLibrarySoul;
-  const isGhostUnlocked = isShopUnlocked && hasRedeemedReward;
-  const isSoulGuideUnlocked = isGhostUnlocked && !!lastGhostResult;
+  const claimedReadArticlesCount = userData?.readArticles?.length || 0;
+  const isSecondBrainUnlocked = isLibrarySoulUnlocked && !!lastLibrarySoul;
+  const isShopUnlocked = isSecondBrainUnlocked && claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1;
+  const isSoulGuideUnlocked = isShopUnlocked && hasRedeemedReward;
   const isPhase2Completed = isSoulGuideUnlocked && hasChattedWithFuii;
 
-  const claimedReadArticlesCount = userData?.readArticles?.length || 0;
+  const isGhostUnlocked = isPhase2Completed;
   const hasCompletedFocusRoom = !!userData?.hasCompletedFocusRoom || (userData?.focusReflections?.length || 0) > 0;
-  const isFocusRoomUnlocked = isPhase2Completed && claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1;
+  const isFocusRoomUnlocked = isGhostUnlocked && !!lastGhostResult;
   const isMementoUnlocked = isFocusRoomUnlocked && hasCompletedFocusRoom;
   const hasCompletedMemento = !!userData?.hasCheckedMemento || !!userData?.birthdate || (userData?.mementoReflections?.length || 0) > 0;
-  const isPhase3Completed = simulatePhase3Done || (isPhase2Completed && claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1 && hasCompletedFocusRoom && hasCompletedMemento);
+  const isPhase3Completed = simulatePhase3Done || (isPhase2Completed && !!lastGhostResult && hasCompletedFocusRoom && hasCompletedMemento);
   const isRealLifeEntered = simulateEnteredRealLife || !!userData?.enteredRealLife;
   const shouldShowPhaseJourney = activeTab === "home" && !isRealLifeEntered;
   const shouldShowHomeBento = activeTab !== "home" || isRealLifeEntered;
@@ -4792,12 +4793,12 @@ Day 21: [กิจกรรม]
           ];
           const phase2Steps = [
             { done: !!lastLibrarySoul, label: "Library of Souls", shortDesc: "ค้นหาสไตล์การอ่านเฉพาะตัว", path: "/tools/library-of-souls", buttonClass: "from-emerald-400 to-teal-500" },
+            { done: claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1, label: `คลังสมอง: อ่าน ${Math.min(claimedReadArticlesCount, 2)}/2 · จด ${Math.min(secondBrainNotesCount, 1)}/1`, shortDesc: "อ่านบทความและจดบันทึก", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
             { done: hasRedeemedReward, label: "Happiness Shop", shortDesc: "แลก XP เป็นรางวัลเติมใจ", path: "/shop", buttonClass: "from-pink-500 to-orange-400" },
-            { done: !!lastGhostResult, label: "Ghost in You", shortDesc: "เผชิญหน้าความกลัวลึกๆ", path: "/tools/ghost-in-you", buttonClass: "from-rose-500 to-red-600" },
             { done: hasChattedWithFuii, label: "คุยกับพี่ฟุ้ย", shortDesc: "คุยกับ AI Mentor ส่วนตัว", path: "/tools/soul-guide", buttonClass: "from-violet-500 to-indigo-500" },
           ];
           const phase3Steps = [
-            { done: claimedReadArticlesCount >= 2 && secondBrainNotesCount >= 1, label: `คลังสมอง: อ่าน ${Math.min(claimedReadArticlesCount, 2)}/2 · จด ${Math.min(secondBrainNotesCount, 1)}/1`, shortDesc: "อ่านบทความและจดบันทึก", path: "/library", buttonClass: "from-yellow-400 to-amber-500" },
+            { done: !!lastGhostResult, label: "Ghost in You", shortDesc: "เผชิญหน้าความกลัวลึกๆ", path: "/tools/ghost-in-you", buttonClass: "from-rose-500 to-red-600" },
             { done: hasCompletedFocusRoom, label: "Focus Room", shortDesc: "ฝึกสมาธิและบันทึก reflection", path: "/tools/focus-room", buttonClass: "from-sky-500 to-blue-600" },
             { done: hasCompletedMemento, label: "Memento Mori", shortDesc: "ทบทวนเวลาชีวิตอย่างมีสติ", path: "/dashboard?memento=1", buttonClass: "from-amber-600 to-[#8B5A2B]" },
           ];
@@ -4817,7 +4818,7 @@ Day 21: [กิจกรรม]
             {
               num: 2,
               title: "สุขระหว่างทาง",
-              desc: "ค้นหาสไตล์การอ่าน เติมความสุขให้ตัวเอง\nเผชิญหน้าความกลัว และเติบโตไปกับพี่ฟุ้ย",
+              desc: "ค้นหาสไตล์การอ่าน อ่านสรุปบทความจดบันทึก\nเติมความสุขให้ตัวเอง และเติบโตไปกับพี่ฟุ้ย",
               image: "/Phase2.png",
               unlocked: isPhase1Completed,
               completed: isPhase2Completed,
@@ -4828,7 +4829,7 @@ Day 21: [กิจกรรม]
             {
               num: 3,
               title: "ระลึกความตาย",
-              desc: "ปลดล็อกสรุปบทความดีๆ ฝึกสมาธิและจิตใจ\nเพื่อระลึกถึงคุณค่าของชีวิต",
+              desc: "เผชิญหน้ากับความกลัว ฝึกสมาธิและจิตใจ\nเพื่อระลึกถึงคุณค่าของชีวิต",
               image: "/Phase3.png",
               unlocked: isPhase2Completed,
               completed: isPhase3Completed,
