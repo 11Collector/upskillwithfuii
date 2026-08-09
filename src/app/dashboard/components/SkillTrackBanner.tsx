@@ -194,9 +194,26 @@ export default function SkillTrackBanner({
   const isFailedSprint = !isBadgeUnlocked && effectiveCompletedDays.length < 5 && maxPossibleCompleted < 5;
 
   // 🧠 Smart Track Recommendation Evaluator:
-  // Priority #1: User's explicit 1-Year Goal text typed in Wheel of Life
-  // Priority #2: Quantitative lowest score category evaluated from Wheel of Life
+  // Priority #1: User's explicit Priority Focus Category selected in Wheel of Life (or Lowest Score Category)
+  // Priority #2: User's explicit 1-Year Goal text typed in Wheel of Life
+  // Priority #3: Default Fallback to "career"
   const getRecommendedTrackKey = (): string => {
+    const catMap: Record<string, string> = {
+      finance: "money", money: "money", "การเงิน": "money",
+      career: "career", work: "career", "การงาน": "career",
+      health: "health", "สุขภาพ": "health",
+      relationship: "relationship", family: "relationship", "ครอบครัว": "relationship", "เพื่อนฝูง": "relationship", "ความสัมพันธ์": "relationship",
+      mind: "mindset", growth: "mindset", "พัฒนาตนเอง": "mindset",
+      spirit: "innerpeace", peace: "innerpeace", "จิตใจ": "innerpeace",
+      society: "contribution", social: "contribution", "ช่วยเหลือสังคม": "contribution",
+      lifedesign: "lifedesign", "ออกแบบชีวิต": "lifedesign"
+    };
+
+    if (lowestWheelCategory) {
+      const key = catMap[lowestWheelCategory.toLowerCase()];
+      if (key) return key;
+    }
+
     if (userGoal && userGoal.trim()) {
       const g = userGoal.toLowerCase();
       
@@ -223,21 +240,6 @@ export default function SkillTrackBanner({
       
       // 8. Wealth & Asset Management
       if (g.includes("เก็บเงิน") || g.includes("ออม") || g.includes("ปลดหนี้") || g.includes("พอร์ต") || g.includes("ลงทุน") || g.includes("เงิน")) return "money";
-    }
-
-    if (lowestWheelCategory) {
-      const catMap: Record<string, string> = {
-        finance: "money", money: "money", "การเงิน": "money",
-        career: "career", work: "career", "การงาน": "career",
-        health: "health", "สุขภาพ": "health",
-        relationship: "relationship", family: "relationship", "ครอบครัว": "relationship", "เพื่อนฝูง": "relationship", "ความสัมพันธ์": "relationship",
-        mind: "mindset", growth: "mindset", "พัฒนาตนเอง": "mindset",
-        spirit: "innerpeace", peace: "innerpeace", "จิตใจ": "innerpeace",
-        society: "contribution", social: "contribution", "ช่วยเหลือสังคม": "contribution",
-        lifedesign: "lifedesign", "ออกแบบชีวิต": "lifedesign"
-      };
-      const key = catMap[lowestWheelCategory.toLowerCase()];
-      if (key) return key;
     }
 
     return "career";

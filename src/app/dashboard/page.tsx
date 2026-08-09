@@ -5887,7 +5887,7 @@ Day 21: [กิจกรรม]
               nextTrackId={activeSkillTrackId}
               isQueuedForTomorrow={completedQuests.length > 0 && !!activeSkillTrackId && activeSkillTrackId !== todaySkillTrackId}
               isBadgeUnlocked={!!(userData?.completedSkillBadges?.includes(todaySkillTrackId || activeSkillTrackId || "")) }
-              lowestWheelCategory={userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
+              lowestWheelCategory={userData?.lastWheel?.selectedFocusAreas?.[0] || userData?.lastWheel?.lowestCategory || (lastWheel?.currentScores ? categoryNames[lastWheel.currentScores.indexOf(Math.min(...lastWheel.currentScores))] : undefined)}
               userGoal={userData?.lastWheel?.goal || lastWheel?.goal}
               onSelectTrack={handleSelectSkillTrack}
               onRestartTrack={() => {
