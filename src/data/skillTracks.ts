@@ -26,6 +26,12 @@ export interface SkillTrack {
   description: string;
   outcomes: string[];
   days: SkillDayQuest[];
+  mentor?: {
+    name: string;
+    title: string;
+    quote: string;
+    image?: string;
+  };
 }
 
 export const SKILL_TRACKS: Record<string, SkillTrack> = {
@@ -40,6 +46,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-amber-600/20 via-orange-600/10 to-slate-900",
     description: "ฝึกบริหารเงิน อุดรอยรั่วทางการเงิน และจัดระเบียบพอร์ตความมั่งคั่งตาม Money Avatar ของคุณ",
     outcomes: ["อุดรอยรั่วทางการเงินในชีวิตประจำวัน", "รู้เท่าทันกับดักอารมณ์ช้อปปิ้ง", "สร้างระบบเงินออมฉุกเฉิน"],
+    mentor: {
+      name: "Master Marcus",
+      title: "The Wealth Architect — สถาปนิกการเงิน",
+      quote: "เงินไม่ได้อุดรอยรั่วด้วยความโลภ แต่อุดด้วยวินัยและระบบ",
+      image: "/Mentor/1.png"
+    },
     days: [
       {
         day: 1,
@@ -272,6 +284,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-purple-600/20 via-indigo-600/10 to-slate-900",
     description: "เข้าใจสไตล์บุคลิกภาพ DISC ของตนเองและคนรอบข้าง เพื่อการสื่อสารที่มีเสน่ห์ ลึกซึ้ง และลดความขัดแย้ง",
     outcomes: ["อ่านสไตล์คนรอบข้าง (D, I, S, C) ออก", "ลดข้อขัดแย้งในการทำงานและชีวิตคู่", "สร้างสายสัมพันธ์ที่จริงใจ"],
+    mentor: {
+      name: "Mentor Ava",
+      title: "The Connection Guide — โค้ชความเชื่อมโยง",
+      quote: "ความสัมพันธ์ที่ดี เริ่มต้นจากการฟังด้วยหัวใจ ไม่ใช่การเอาชนะ",
+      image: "/Mentor/4.png"
+    },
     days: [
       {
         day: 1,
@@ -504,6 +522,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-violet-600/20 via-purple-600/10 to-slate-900",
     description: "ก้าวข้าม Limiting Beliefs ปรับเปลี่ยนความคิดเชิงลบ และตกตะกอนปัญญาจาก Library of Souls",
     outcomes: ["สลัดความกลัวและความเชื่อที่จำกัดตัวเอง", "สร้าง Growth Mindset แข็งแกร่ง", "มีตรรกะความคิดที่สงบและแม่นยำ"],
+    mentor: {
+      name: "Sensei Zenji",
+      title: "The Mindfulness Guide — ผู้ชี้ทางใจ",
+      quote: "พายุภายนอกจะสงบ เมื่อใจข้างในหยุดสั่นไหว",
+      image: "/Mentor/6.png"
+    },
     days: [
       {
         day: 1,
@@ -736,6 +760,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-blue-600/20 via-cyan-600/10 to-slate-900",
     description: "เพิ่มประสิทธิภาพการทำงาน ผลิตผลงานคุณภาพสูง ขจัดความล้า และสร้างขีดความสามารถการเป็นผู้นำ",
     outcomes: ["ทำงานเสร็จไวขึ้นด้วยเทคนิค Deep Work", "จัดลำดับความสำคัญงานสำคัญสูง", "เพิ่มศักยภาพการเติบโตทางอาชีพ"],
+    mentor: {
+      name: "Coach Victor",
+      title: "The Peak Strategist — จอมยุทธ์กลยุทธ์การงาน",
+      quote: "ไม่ต้องทำงานหนักขึ้น แต่จงทำงานให้ถูกจุดและไร้สิ่งรบกวน",
+      image: "/Mentor/2.png"
+    },
     days: [
       {
         day: 1,
@@ -968,6 +998,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-emerald-600/20 via-teal-600/10 to-slate-900",
     description: "ฟื้นฟูพลังกาย ปรับปรุงการนอน การดื่มน้ำ การเคลื่อนไหวร่างกาย และเพิ่มพลังงานความสดชื่นตลอดวัน",
     outcomes: ["มีพลังงานตื่นตัวตลอดวันโดยไม่ต้องพึ่งกาแฟเยอะ", "นอนหลับลึกและฟื้นฟูร่างกายดีขึ้น", "สร้างนิสัยการออกกำลังกายสม่ำเสมอ"],
+    mentor: {
+      name: "Coach Lisa",
+      title: "The Vitality Expert — ผู้เชี่ยวชาญพลังชีวิต",
+      quote: "ร่างกายคือบ้านหลังเดียวที่คุณต้องอาศัยอยู่ไปตลอดชีวิต",
+      image: "/Mentor/3.png"
+    },
     days: [
       {
         day: 1,
@@ -1195,11 +1231,17 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     subtitle: "Inner Peace & Mindfulness",
     wheelCategory: "จิตใจ",
     icon: "🧘",
-    color: "cyan",
-    borderColor: "border-cyan-500/40",
-    bgGradient: "from-cyan-600/20 via-blue-600/10 to-slate-900",
+    color: "teal",
+    borderColor: "border-teal-500/40",
+    bgGradient: "from-teal-600/20 via-cyan-600/10 to-slate-900",
     description: "ฝึกฝนพลังสมาธิ สลัดสิ่งล่อใจ คืนความสงบเย็นให้จิตใจ ก้าวข้ามอารมณ์ลบ และสร้างความแข็งแกร่งจากภายใน",
     outcomes: ["สลัดนิสัยวอกแวกและอารมณ์ว้าวุ่น", "มีสติอยู่กับงานตรงหน้าและปล่อยวางสิ่งคุมไม่ได้", "จิตใจสงบเย็น มีพลังใจเต็มเปี่ยม"],
+    mentor: {
+      name: "Coach Leo",
+      title: "The Joy Artisan — สถาปนิกความสุข",
+      quote: "ความสุขไม่ใช่จุดหมายปลายทาง แต่คือศิลปะในการเดินทางทุกวัน",
+      image: "/Mentor/7.png"
+    },
     days: [
       {
         day: 1,
@@ -1432,6 +1474,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-pink-600/20 via-rose-600/10 to-slate-900",
     description: "สร้างคุณค่า ส่งต่อประโยชน์แก่ผู้อื่น แบ่งปันความรู้ ชุมชน และขยายผลกระทบเชิงบวกสู่สังคมรอบข้าง",
     outcomes: ["สร้างความน่าเชื่อถือและการยอมรับในสังคม", "ส่งต่อประโยชน์และช่วยเหลือผู้คนอย่างจริงใจ", "สร้างความสุขลึกซึ้งจากการเป็นผู้ให้"],
+    mentor: {
+      name: "Master Elena",
+      title: "The Legacy Builder — ผู้สร้างคุณค่าระยะยาว",
+      quote: "คุณค่าที่แท้จริง ไม่ใช่สิ่งที่เราครอบครอง แต่คือสิ่งที่เรามอบให้โลก",
+      image: "/Mentor/8.png"
+    },
     days: [
       {
         day: 1,
@@ -1664,6 +1712,12 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
     bgGradient: "from-teal-600/20 via-emerald-600/10 to-slate-900",
     description: "ออกแบบวิสัยทัศน์ชีวิต จัดสมดุล 8 ด้าน ค้นพบสิ่งที่เป็นคุณค่าหลัก และวางแผนการเติบโตอย่างยั่งยืน",
     outcomes: ["มีเป้าหมายชีวิตที่ชัดเจนและสอดคล้องกับตัวตน", "จัดสมดุลชีวิต 8 ด้านอย่างลงตัว", "มีแผนเติบโตระยะยาวที่จับต้องได้"],
+    mentor: {
+      name: "Dr. Alex",
+      title: "The Knowledge Weaver — นักร้อยเรียงปัญญา",
+      quote: "คนฉลาดเรียนรู้จากประสบการณ์ คนชาญฉลาดเรียนรู้จากทุกคน",
+      image: "/Mentor/5.png"
+    },
     days: [
       {
         day: 1,

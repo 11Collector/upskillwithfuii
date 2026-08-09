@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Sun, HeartHandshake, Compass, Clock } from "lucide-react";
+import { Sparkles, ChevronRight, Award, CheckCircle2, RotateCcw, X, BookOpen, Target, ShieldCheck, Wallet, Users, Brain, Briefcase, HeartPulse, Sun, HeartHandshake, Compass, Clock, ArrowRight } from "lucide-react";
 import { SKILL_TRACKS, SkillTrack } from "@/data/skillTracks";
 
 // Helper function to get clean Lucide vector icon per track
@@ -17,6 +17,102 @@ const getTrackIcon = (trackId: string, size = 20) => {
     case 'contribution': return <HeartHandshake size={size} className="text-pink-300" />;
     case 'lifedesign': return <Compass size={size} className="text-indigo-300" />;
     default: return <BookOpen size={size} className="text-amber-300" />;
+  }
+};
+
+// Helper function to get subject theme styles per track matching the official design guide
+const getTrackThemeStyles = (trackId: string) => {
+  switch (trackId) {
+    case 'money':
+      return {
+        cardBg: "bg-emerald-950/40 border-emerald-500/40 hover:border-emerald-400 hover:shadow-emerald-500/10",
+        activeCardBg: "bg-emerald-500/20 border-emerald-400 shadow-xl shadow-emerald-500/30 ring-2 ring-emerald-400/50",
+        avatarBorder: "border-emerald-400/70 group-hover:border-emerald-300",
+        mentorName: "text-emerald-300",
+        btnDefault: "bg-emerald-500/20 text-emerald-300 group-hover:bg-emerald-400 group-hover:text-slate-950",
+        btnActive: "bg-emerald-400 text-slate-950 shadow-md shadow-emerald-400/30",
+        btnQueued: "bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 shadow-md shadow-teal-500/30",
+      };
+    case 'career':
+      return {
+        cardBg: "bg-blue-950/40 border-blue-500/40 hover:border-blue-400 hover:shadow-blue-500/10",
+        activeCardBg: "bg-blue-500/20 border-blue-400 shadow-xl shadow-blue-500/30 ring-2 ring-blue-400/50",
+        avatarBorder: "border-blue-400/70 group-hover:border-blue-300",
+        mentorName: "text-blue-300",
+        btnDefault: "bg-blue-500/20 text-blue-300 group-hover:bg-blue-400 group-hover:text-slate-950",
+        btnActive: "bg-blue-400 text-slate-950 shadow-md shadow-blue-400/30",
+        btnQueued: "bg-gradient-to-r from-blue-400 to-indigo-400 text-slate-950 shadow-md shadow-indigo-500/30",
+      };
+    case 'health':
+      return {
+        cardBg: "bg-rose-950/40 border-rose-500/40 hover:border-rose-400 hover:shadow-rose-500/10",
+        activeCardBg: "bg-rose-500/20 border-rose-400 shadow-xl shadow-rose-500/30 ring-2 ring-rose-400/50",
+        avatarBorder: "border-rose-400/70 group-hover:border-rose-300",
+        mentorName: "text-rose-300",
+        btnDefault: "bg-rose-500/20 text-rose-300 group-hover:bg-rose-400 group-hover:text-slate-950",
+        btnActive: "bg-rose-400 text-slate-950 shadow-md shadow-rose-400/30",
+        btnQueued: "bg-gradient-to-r from-rose-400 to-red-400 text-slate-950 shadow-md shadow-red-500/30",
+      };
+    case 'relationship':
+      return {
+        cardBg: "bg-amber-950/40 border-amber-500/40 hover:border-amber-400 hover:shadow-amber-500/10",
+        activeCardBg: "bg-amber-500/20 border-amber-400 shadow-xl shadow-amber-500/30 ring-2 ring-amber-400/50",
+        avatarBorder: "border-amber-400/70 group-hover:border-amber-300",
+        mentorName: "text-amber-300",
+        btnDefault: "bg-amber-500/20 text-amber-300 group-hover:bg-amber-400 group-hover:text-slate-950",
+        btnActive: "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30",
+        btnQueued: "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-md shadow-orange-500/30",
+      };
+    case 'lifedesign':
+      return {
+        cardBg: "bg-orange-950/40 border-orange-500/40 hover:border-orange-400 hover:shadow-orange-500/10",
+        activeCardBg: "bg-orange-500/20 border-orange-400 shadow-xl shadow-orange-500/30 ring-2 ring-orange-400/50",
+        avatarBorder: "border-orange-400/70 group-hover:border-orange-300",
+        mentorName: "text-orange-300",
+        btnDefault: "bg-orange-500/20 text-orange-300 group-hover:bg-orange-400 group-hover:text-slate-950",
+        btnActive: "bg-orange-400 text-slate-950 shadow-md shadow-orange-400/30",
+        btnQueued: "bg-gradient-to-r from-orange-400 to-amber-500 text-slate-950 shadow-md shadow-amber-500/30",
+      };
+    case 'mindset':
+      return {
+        cardBg: "bg-purple-950/40 border-purple-500/40 hover:border-purple-400 hover:shadow-purple-500/10",
+        activeCardBg: "bg-purple-500/20 border-purple-400 shadow-xl shadow-purple-500/30 ring-2 ring-purple-400/50",
+        avatarBorder: "border-purple-400/70 group-hover:border-purple-300",
+        mentorName: "text-purple-300",
+        btnDefault: "bg-purple-500/20 text-purple-300 group-hover:bg-purple-400 group-hover:text-slate-950",
+        btnActive: "bg-purple-400 text-slate-950 shadow-md shadow-purple-400/30",
+        btnQueued: "bg-gradient-to-r from-purple-400 to-indigo-400 text-slate-950 shadow-md shadow-indigo-500/30",
+      };
+    case 'innerpeace':
+      return {
+        cardBg: "bg-teal-950/40 border-teal-500/40 hover:border-teal-400 hover:shadow-teal-500/10",
+        activeCardBg: "bg-teal-500/20 border-teal-400 shadow-xl shadow-teal-500/30 ring-2 ring-teal-400/50",
+        avatarBorder: "border-teal-400/70 group-hover:border-teal-300",
+        mentorName: "text-teal-300",
+        btnDefault: "bg-teal-500/20 text-teal-300 group-hover:bg-teal-400 group-hover:text-slate-950",
+        btnActive: "bg-teal-400 text-slate-950 shadow-md shadow-teal-400/30",
+        btnQueued: "bg-gradient-to-r from-teal-400 to-cyan-400 text-slate-950 shadow-md shadow-cyan-500/30",
+      };
+    case 'contribution':
+      return {
+        cardBg: "bg-pink-950/40 border-pink-500/40 hover:border-pink-400 hover:shadow-pink-500/10",
+        activeCardBg: "bg-pink-500/20 border-pink-400 shadow-xl shadow-pink-500/30 ring-2 ring-pink-400/50",
+        avatarBorder: "border-pink-400/70 group-hover:border-pink-300",
+        mentorName: "text-pink-300",
+        btnDefault: "bg-pink-500/20 text-pink-300 group-hover:bg-pink-400 group-hover:text-slate-950",
+        btnActive: "bg-pink-400 text-slate-950 shadow-md shadow-pink-400/30",
+        btnQueued: "bg-gradient-to-r from-pink-400 to-rose-400 text-slate-950 shadow-md shadow-rose-500/30",
+      };
+    default:
+      return {
+        cardBg: "bg-slate-950/80 border-white/10 hover:border-amber-400/60 hover:shadow-amber-500/10",
+        activeCardBg: "bg-amber-500/20 border-amber-400 shadow-xl shadow-amber-500/30 ring-2 ring-amber-400/50",
+        avatarBorder: "border-amber-400/70 group-hover:border-amber-300",
+        mentorName: "text-amber-300",
+        btnDefault: "bg-white/10 text-slate-300 group-hover:bg-amber-400 group-hover:text-slate-950",
+        btnActive: "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30",
+        btnQueued: "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-md shadow-orange-500/30",
+      };
   }
 };
 
@@ -403,16 +499,16 @@ export default function SkillTrackBanner({
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-slate-900 border border-white/10 rounded-[2rem] p-4 sm:p-5 max-w-lg w-full max-h-[80vh] flex flex-col text-white shadow-2xl relative my-auto"
+              className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-4 sm:p-6 max-w-4xl w-full max-h-[88vh] flex flex-col text-white shadow-2xl relative my-auto"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 shrink-0">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10 shrink-0">
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                    <BookOpen size={18} className="text-amber-400" /> เลือกวิชาชีวิต 7 วัน
+                    <BookOpen size={18} className="text-amber-400" /> เลือกอาจารย์ & วิชาชีวิต 7 วัน
                   </h3>
-                  <p className="text-[11px] text-slate-400">
-                    เลือก 1 วิชาเพื่อฝึกฝนเข้มข้นสัปดาห์นี้
+                  <p className="text-[11px] sm:text-xs text-slate-400">
+                    เลือก 1 วิชาเพื่อรับคำแนะนำจาก Mentor และฝึกฝนภารกิจประจำสัปดาห์นี้
                   </p>
                 </div>
                 <button
@@ -426,12 +522,13 @@ export default function SkillTrackBanner({
                 </button>
               </div>
 
-              {/* Sleek 1-Column List of 8 Skill Tracks - 100% Readable */}
-              <div className="overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
+              {/* 🎨 Responsive Grid Layout (2 Cols Mobile / 4 Cols Desktop) */}
+              <div className="overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 custom-scrollbar">
                 {Object.values(SKILL_TRACKS).map((track) => {
                   const isRecommended = track.id === recommendedTrackKey;
                   const isCurrentActive = track.id === activeTrackId;
                   const isQueuedNext = nextTrackId && track.id === nextTrackId && nextTrackId !== activeTrackId;
+                  const theme = getTrackThemeStyles(track.id);
 
                   return (
                     <div
@@ -440,49 +537,73 @@ export default function SkillTrackBanner({
                         onSelectTrack(track.id);
                         setIsModalOpen(false);
                       }}
-                      className={`relative p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer group flex items-start justify-between gap-3 ${
+                      className={`relative p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col items-center text-center justify-between gap-2.5 ${
                         isCurrentActive
-                          ? "bg-amber-500/20 border-amber-400 shadow-md shadow-amber-500/20"
+                          ? theme.activeCardBg
                           : isQueuedNext
-                          ? "bg-orange-500/20 border-orange-400 shadow-md shadow-orange-500/20"
-                          : "bg-slate-950/60 border-white/10 hover:border-amber-400/50 hover:bg-slate-950/90"
+                          ? "bg-orange-500/20 border-orange-400 shadow-xl ring-2 ring-orange-400/50"
+                          : theme.cardBg
                       }`}
                     >
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
-                          {getTrackIcon(track.id, 20)}
+                      {/* Top Badge: Recommended */}
+                      {isRecommended && (
+                        <div className="absolute top-2.5 right-2.5 z-10">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-lg">
+                            <Sparkles size={9} /> แนะนำ
+                          </span>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-xs sm:text-sm font-black text-white">
-                              {track.title}
-                            </h4>
-                            {isRecommended && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase border border-emerald-400/30 flex items-center gap-1">
-                                <Sparkles size={10} /> แนะนำสำหรับคุณ
-                              </span>
-                            )}
+                      )}
+
+                      {/* Mentor Big Avatar / Track Icon Frame */}
+                      <div className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 ${theme.avatarBorder} bg-slate-900 shadow-lg group-hover:scale-105 transition-all shrink-0 mt-1`}>
+                        {track.mentor?.image ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={track.mentor.image} alt={track.mentor.name} className="w-full h-full object-cover object-top" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                            {getTrackIcon(track.id, 32)}
                           </div>
-                          <p className="text-[11px] sm:text-xs text-amber-300 font-bold mt-0.5">
-                            {track.subtitle}
-                          </p>
-                          <p className="text-[11px] sm:text-xs text-slate-300 mt-1 leading-relaxed">
-                            {track.description}
-                          </p>
-                        </div>
+                        )}
                       </div>
 
-                      <div className="shrink-0 flex flex-col items-end justify-between self-stretch">
-                        <span className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 ${
-                          isCurrentActive
-                            ? "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30"
-                            : isQueuedNext
-                            ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-md shadow-orange-500/30"
-                            : "bg-white/10 text-slate-200 group-hover:bg-amber-400 group-hover:text-slate-950"
-                        }`}>
-                          {isCurrentActive ? "วิชาปัจจุบัน" : isQueuedNext ? "✨ ต่อคิวแล้ว (เริ่มพรุ่งนี้)" : "เลือกวิชานี้"}
-                        </span>
+                      {/* Track & Mentor Labels */}
+                      <div className="min-w-0 flex-1 w-full text-center">
+                        <h4 className="text-xs sm:text-sm font-black text-white truncate">
+                          {track.title}
+                        </h4>
+                        <p className={`text-[10px] sm:text-[11px] ${theme.mentorName} font-bold truncate mt-0.5`}>
+                          {track.mentor?.name || track.subtitle}
+                        </p>
+                        <p className="text-[9.5px] sm:text-[10px] text-slate-400 line-clamp-2 mt-1 leading-tight">
+                          {track.mentor?.quote ? `"${track.mentor.quote}"` : track.description}
+                        </p>
                       </div>
+
+                      {/* Action Button Badge */}
+                      <button className={`w-full py-1.5 rounded-xl text-[10px] sm:text-xs font-black transition-all flex items-center justify-center gap-1 ${
+                        isCurrentActive
+                          ? theme.btnActive
+                          : isQueuedNext
+                          ? theme.btnQueued
+                          : theme.btnDefault
+                      }`}>
+                        {isCurrentActive ? (
+                          <>
+                            <CheckCircle2 size={12} />
+                            <span>เรียนอยู่วันนี้</span>
+                          </>
+                        ) : isQueuedNext ? (
+                          <>
+                            <Clock size={12} />
+                            <span>ต่อคิวพรุ่งนี้</span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowRight size={12} />
+                            <span>เลือกเรียน</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   );
                 })}

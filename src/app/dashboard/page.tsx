@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown, Pencil, Battery, Clock } from "lucide-react";
+import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown, Pencil, Battery, Clock, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -25,7 +25,7 @@ import { MementoMoriModal } from "./_components/MementoMoriModal";
 import { WeeklySummaryModal } from "./_components/WeeklySummaryModal";
 import SkillBadgesShowcase from "./components/SkillBadgesShowcase";
 import SkillTrackBanner from "./components/SkillTrackBanner";
-import { SKILL_TRACKS } from "@/data/skillTracks";
+import { SKILL_TRACKS, SkillTrack } from "@/data/skillTracks";
 
 type ProPlan = "monthly" | "yearly" | "founding_monthly" | "founding_yearly" | "lifetime";
 
@@ -274,14 +274,17 @@ export default function DashboardPage() {
     const hasCompletedQuestsToday = completedQuests.length > 0;
     const trackName = SKILL_TRACKS[trackId]?.title || "วิชาใหม่";
 
+    const selectedTrack = SKILL_TRACKS[trackId];
+    if (selectedTrack) {
+      setMentorWelcomeTrack(selectedTrack);
+    }
+
     if (!hasCompletedQuestsToday) {
       setActiveSkillTrackId(trackId);
       setTodaySkillTrackId(trackId);
       setSkillTrackCurrentDay(1);
       setTodaySkillTrackDay(1);
       setSkillTrackCompletedDays([]);
-
-      setShowSuccessToast(`🎓 เริ่มต้นวิชา "${trackName}" บทเรียน Day 1 แล้วครับ!`);
 
       setAiSkillQuests({});
       if (user?.uid) {
@@ -315,8 +318,6 @@ export default function DashboardPage() {
       setActiveSkillTrackId(trackId);
       setSkillTrackCurrentDay(1);
 
-      setShowSuccessToast(`⏳ เนื่องจากวันนี้ทำเควสต์แล้ว วิชา "${trackName}" จะต่อคิวเริ่ม Day 1 ในวันพรุ่งนี้ 00:00 น. ครับ`);
-
       if (user?.uid) {
         if (typeof window !== "undefined") {
           localStorage.setItem(`activeSkillTrackId_${user.uid}`, trackId);
@@ -340,6 +341,7 @@ export default function DashboardPage() {
   const [improvement, setImprovement] = useState(0);
   const [isFirstWeek, setIsFirstWeek] = useState(true); // เพิ่มตัวนี้ (Default เป็น true ไว้ก่อน)
   const [showSuccessToast, setShowSuccessToast] = useState<string | null>(null);
+  const [mentorWelcomeTrack, setMentorWelcomeTrack] = useState<SkillTrack | null>(null);
   const [completedToastText, setCompletedToastText] = useState<string | null>(null);
   const [completedToastType, setCompletedToastType] = useState<string | null>(null);
   const [showProSuccessModal, setShowProSuccessModal] = useState(false);
@@ -8986,6 +8988,198 @@ Day 21: [กิจกรรม]
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* 🎓 Mentor Welcome Celebration Modal */}
+      <AnimatePresence>
+        {mentorWelcomeTrack && (() => {
+          const modalTheme = (() => {
+            switch (mentorWelcomeTrack.id) {
+              case 'money':
+                return {
+                  cardBorder: "border-emerald-500/40",
+                  glowTop: "bg-emerald-500/25",
+                  glowBottom: "bg-teal-500/25",
+                  avatarBorder: "border-emerald-400/70 shadow-[0_15px_35px_-5px_rgba(16,185,129,0.45)]",
+                  badgeBg: "bg-emerald-950/90 border-emerald-400/50 text-emerald-300",
+                  subtitleText: "text-emerald-300 font-bold",
+                  quoteBox: "bg-emerald-950/40 border-emerald-500/30 text-emerald-200/90",
+                  buttonGradient: "from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 shadow-emerald-500/30 hover:from-emerald-300 hover:to-teal-300",
+                };
+              case 'career':
+                return {
+                  cardBorder: "border-blue-500/40",
+                  glowTop: "bg-blue-500/25",
+                  glowBottom: "bg-indigo-500/25",
+                  avatarBorder: "border-blue-400/70 shadow-[0_15px_35px_-5px_rgba(59,130,246,0.45)]",
+                  badgeBg: "bg-blue-950/90 border-blue-400/50 text-blue-300",
+                  subtitleText: "text-blue-300 font-bold",
+                  quoteBox: "bg-blue-950/40 border-blue-500/30 text-blue-200/90",
+                  buttonGradient: "from-blue-400 via-indigo-400 to-blue-500 text-slate-950 shadow-blue-500/30 hover:from-blue-300 hover:to-indigo-300",
+                };
+              case 'health':
+                return {
+                  cardBorder: "border-rose-500/40",
+                  glowTop: "bg-rose-500/25",
+                  glowBottom: "bg-red-500/25",
+                  avatarBorder: "border-rose-400/70 shadow-[0_15px_35px_-5px_rgba(244,63,94,0.45)]",
+                  badgeBg: "bg-rose-950/90 border-rose-400/50 text-rose-300",
+                  subtitleText: "text-rose-300 font-bold",
+                  quoteBox: "bg-rose-950/40 border-rose-500/30 text-rose-200/90",
+                  buttonGradient: "from-rose-400 via-red-400 to-rose-500 text-slate-950 shadow-rose-500/30 hover:from-rose-300 hover:to-red-300",
+                };
+              case 'relationship':
+                return {
+                  cardBorder: "border-amber-500/40",
+                  glowTop: "bg-amber-500/25",
+                  glowBottom: "bg-orange-500/25",
+                  avatarBorder: "border-amber-400/70 shadow-[0_15px_35px_-5px_rgba(245,158,11,0.45)]",
+                  badgeBg: "bg-amber-950/90 border-amber-400/50 text-amber-300",
+                  subtitleText: "text-amber-300 font-bold",
+                  quoteBox: "bg-amber-950/40 border-amber-500/30 text-amber-200/90",
+                  buttonGradient: "from-amber-400 via-orange-400 to-amber-500 text-slate-950 shadow-amber-500/30 hover:from-amber-300 hover:to-orange-300",
+                };
+              case 'lifedesign':
+                return {
+                  cardBorder: "border-orange-500/40",
+                  glowTop: "bg-orange-500/25",
+                  glowBottom: "bg-amber-500/25",
+                  avatarBorder: "border-orange-400/70 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.45)]",
+                  badgeBg: "bg-orange-950/90 border-orange-400/50 text-orange-300",
+                  subtitleText: "text-orange-300 font-bold",
+                  quoteBox: "bg-orange-950/40 border-orange-500/30 text-orange-200/90",
+                  buttonGradient: "from-orange-400 via-amber-400 to-orange-500 text-slate-950 shadow-orange-500/30 hover:from-orange-300 hover:to-amber-300",
+                };
+              case 'mindset':
+                return {
+                  cardBorder: "border-purple-500/40",
+                  glowTop: "bg-purple-500/25",
+                  glowBottom: "bg-indigo-500/25",
+                  avatarBorder: "border-purple-400/70 shadow-[0_15px_35px_-5px_rgba(168,85,247,0.45)]",
+                  badgeBg: "bg-purple-950/90 border-purple-400/50 text-purple-300",
+                  subtitleText: "text-purple-300 font-bold",
+                  quoteBox: "bg-purple-950/40 border-purple-500/30 text-purple-200/90",
+                  buttonGradient: "from-purple-400 via-indigo-400 to-purple-500 text-slate-950 shadow-purple-500/30 hover:from-purple-300 hover:to-indigo-300",
+                };
+              case 'innerpeace':
+                return {
+                  cardBorder: "border-teal-500/40",
+                  glowTop: "bg-teal-500/25",
+                  glowBottom: "bg-cyan-500/25",
+                  avatarBorder: "border-teal-400/70 shadow-[0_15px_35px_-5px_rgba(20,184,166,0.45)]",
+                  badgeBg: "bg-teal-950/90 border-teal-400/50 text-teal-300",
+                  subtitleText: "text-teal-300 font-bold",
+                  quoteBox: "bg-teal-950/40 border-teal-500/30 text-teal-200/90",
+                  buttonGradient: "from-teal-400 via-cyan-400 to-teal-500 text-slate-950 shadow-teal-500/30 hover:from-teal-300 hover:to-cyan-300",
+                };
+              case 'contribution':
+                return {
+                  cardBorder: "border-pink-500/40",
+                  glowTop: "bg-pink-500/25",
+                  glowBottom: "bg-rose-500/25",
+                  avatarBorder: "border-pink-400/70 shadow-[0_15px_35px_-5px_rgba(236,72,153,0.45)]",
+                  badgeBg: "bg-pink-950/90 border-pink-400/50 text-pink-300",
+                  subtitleText: "text-pink-300 font-bold",
+                  quoteBox: "bg-pink-950/40 border-pink-500/30 text-pink-200/90",
+                  buttonGradient: "from-pink-400 via-rose-400 to-pink-500 text-slate-950 shadow-pink-500/30 hover:from-pink-300 hover:to-rose-300",
+                };
+              default:
+                return {
+                  cardBorder: "border-amber-400/40",
+                  glowTop: "bg-amber-500/20",
+                  glowBottom: "bg-orange-500/20",
+                  avatarBorder: "border-amber-400/60 shadow-[0_15px_35px_-5px_rgba(245,158,11,0.4)]",
+                  badgeBg: "bg-amber-950/90 border-amber-400/40 text-amber-300",
+                  subtitleText: "text-amber-300 font-bold",
+                  quoteBox: "bg-slate-950/80 border-white/10 text-amber-200/90",
+                  buttonGradient: "from-amber-400 via-orange-400 to-amber-500 text-slate-950 shadow-amber-500/25 hover:from-amber-300 hover:to-orange-400",
+                };
+            }
+          })();
+
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100010] flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-xl"
+              onClick={() => setMentorWelcomeTrack(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.85, y: 25, opacity: 0 }}
+                animate={{
+                  scale: 1, y: 0, opacity: 1,
+                  transition: { type: "spring", bounce: 0.4, duration: 0.5 }
+                }}
+                exit={{ scale: 0.85, opacity: 0 }}
+                className={`relative max-w-sm w-full bg-slate-900 border ${modalTheme.cardBorder} p-6 sm:p-8 rounded-[3rem] shadow-[0_30px_90px_rgba(0,0,0,0.7)] text-center overflow-hidden my-auto`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Subject Color Ambient Background Glow */}
+                <div className={`absolute -top-24 -left-24 w-64 h-64 ${modalTheme.glowTop} blur-[80px] rounded-full pointer-events-none`} />
+                <div className={`absolute -bottom-24 -right-24 w-64 h-64 ${modalTheme.glowBottom} blur-[80px] rounded-full pointer-events-none`} />
+
+                <div className="relative z-10 flex flex-col items-center">
+                  {/* Big Mentor Portrait Avatar Frame */}
+                  <div className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] overflow-hidden border-4 ${modalTheme.avatarBorder} bg-slate-950 mb-4 transition-all`}>
+                    {mentorWelcomeTrack.mentor?.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={mentorWelcomeTrack.mentor.image} alt={mentorWelcomeTrack.mentor.name} className="w-full h-full object-cover object-top" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-4xl">
+                        {mentorWelcomeTrack.icon}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Clean 2-Tiered Mentor Name & Title Badge */}
+                  {mentorWelcomeTrack.mentor && (
+                    <div className="flex flex-col items-center gap-1.5 mb-3 w-full">
+                      {/* Name Badge Pill */}
+                      <span className={`px-4 py-1.5 rounded-full border ${modalTheme.badgeBg} text-xs sm:text-sm font-black tracking-wide shadow-md flex items-center gap-1.5`}>
+                        <GraduationCap size={15} className="text-current shrink-0" />
+                        <span>{mentorWelcomeTrack.mentor.name}</span>
+                      </span>
+
+                      {/* Subtitle / Designation Tag */}
+                      <span className={`text-[11px] sm:text-xs ${modalTheme.subtitleText} tracking-wide max-w-[90%] leading-tight`}>
+                        {mentorWelcomeTrack.mentor.title}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Heading */}
+                  <h3 className="text-lg sm:text-xl font-black text-white leading-tight mb-1">
+                    เริ่มต้นวิชา &ldquo;{mentorWelcomeTrack.title}&rdquo;
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
+                    {completedQuests.length > 0
+                      ? "ต่อคิวเริ่มต้นบทเรียน Day 1 ในวันพรุ่งนี้ 00:00 น. ครับ!"
+                      : "พร้อมเรียนรู้และฝึกฝนบทเรียน Day 1 แล้วครับ!"}
+                  </p>
+
+                  {/* Mentor Quote Box */}
+                  {mentorWelcomeTrack.mentor?.quote && (
+                    <div className={`mt-4 p-3.5 rounded-2xl border ${modalTheme.quoteBox} text-[11px] sm:text-xs italic leading-relaxed w-full shadow-inner`}>
+                      &ldquo;{mentorWelcomeTrack.mentor.quote}&rdquo;
+                    </div>
+                  )}
+
+                  {/* Primary Action Button */}
+                  <button
+                    onClick={() => setMentorWelcomeTrack(null)}
+                    className={`mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r ${modalTheme.buttonGradient} font-black text-sm transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2`}
+                  >
+                    <Sparkles size={16} />
+                    <span>เริ่มต้นฝึกฝน Day 1 ทันที</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
       {/* 👑 PRO Upgrade Success Welcome Modal */}
       <AnimatePresence>
