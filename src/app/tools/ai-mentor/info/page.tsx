@@ -318,7 +318,7 @@ export default function AiMentorInfoPage() {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.3)] border-4 border-white relative group transition-transform hover:scale-105 cursor-default overflow-hidden">
                   <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors" />
-                  <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="w-full h-full rounded-full object-cover relative z-10 bg-white" />
+                  <img src="/fuii-avatar.webp" alt="พี่ฟุ้ย" className="w-full h-full rounded-full object-cover relative z-10 bg-white" />
                 </div>
                 <span className="text-[9px] md:text-[10px] font-black text-slate-800 mt-2 bg-white px-2.5 py-0.5 rounded-full shadow-sm border border-slate-100 z-10">คุยกับพี่ฟุ้ย</span>
               </div>

@@ -4,23 +4,39 @@ import React from 'react';
  * PreloadAssets - A component to pre-cache critical images
  * so they appear instantly when needed throughout the app.
  */
+const mentors = [
+  '/Mentor/1.webp',
+  '/Mentor/2.webp',
+  '/Mentor/3.webp',
+  '/Mentor/4.webp',
+  '/Mentor/5.webp',
+  '/Mentor/6.webp',
+  '/Mentor/7.webp',
+  '/Mentor/8.webp',
+  '/fuii-avatar.webp',
+  '/fuii-profile.webp',
+  '/Phase1.webp',
+  '/Phase2.webp',
+  '/Phase3.webp',
+];
+
 const avatars = [
-  '/avatars/rookie-static.png',
-  '/avatars/rookie-static-w.png',
-  '/avatars/master-static.png',
-  '/avatars/master-static-w.png',
-  '/avatars/architect-static.png',
-  '/avatars/architect-static-w.png',
-  '/avatars/legacy-static.png',
-  '/avatars/legacy-static-w.png',
-  '/avatars/rookie-meditation.png',
-  '/avatars/rookie-meditation-w.png',
-  '/avatars/master-meditation.png',
-  '/avatars/master-meditation-w.png',
-  '/avatars/architect-meditation.png',
-  '/avatars/architect-meditation-w.png',
-  '/avatars/legacy-meditation.png',
-  '/avatars/legacy-meditation-w.png',
+  '/avatars/rookie-static.webp',
+  '/avatars/rookie-static-w.webp',
+  '/avatars/master-static.webp',
+  '/avatars/master-static-w.webp',
+  '/avatars/architect-static.webp',
+  '/avatars/architect-static-w.webp',
+  '/avatars/legacy-static.webp',
+  '/avatars/legacy-static-w.webp',
+  '/avatars/rookie-meditation.webp',
+  '/avatars/rookie-meditation-w.webp',
+  '/avatars/master-meditation.webp',
+  '/avatars/master-meditation-w.webp',
+  '/avatars/architect-meditation.webp',
+  '/avatars/architect-meditation-w.webp',
+  '/avatars/legacy-meditation.webp',
+  '/avatars/legacy-meditation-w.webp',
 ];
 
 const logos = [
@@ -34,7 +50,7 @@ const logos = [
   '/logo-invert.png',
   '/logo-analysis.png',
   '/librarysoul.png',
-  '/money-avatar.png'
+  '/money-avatar.webp'
 ];
 
 export const PreloadAssets = () => {
@@ -51,8 +67,8 @@ export const PreloadAssets = () => {
       }} 
       aria-hidden="true"
     >
-      {[...avatars, ...logos].map((url) => (
-        <img key={url} src={url} alt="" fetchPriority="auto" />
+      {[...mentors, ...avatars, ...logos].map((url) => (
+        <img key={url} src={url} alt="" fetchPriority="high" />
       ))}
     </div>
   );

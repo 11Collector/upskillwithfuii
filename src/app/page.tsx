@@ -801,7 +801,7 @@ export default function Home() {
           >
             {/* Full Illustration Background */}
             <Image 
-              src="/Phase1.png" 
+              src="/Phase1.webp" 
               alt="Phase 1" 
               fill 
               priority
@@ -858,7 +858,7 @@ export default function Home() {
           >
             {/* Full Illustration Background */}
             <Image 
-              src="/Phase2.png" 
+              src="/Phase2.webp" 
               alt="Phase 2" 
               fill 
               priority
@@ -914,7 +914,7 @@ export default function Home() {
           >
             {/* Full Illustration Background */}
             <Image 
-              src="/Phase3.png" 
+              src="/Phase3.webp" 
               alt="Phase 3" 
               fill 
               priority
@@ -1495,9 +1495,9 @@ export default function Home() {
                 ) : guideStep === 2 ? (
                   <div className="grid w-[420px] max-w-[calc(100vw-2.5rem)] grid-cols-3 gap-3">
                     {[
-                      { src: "/Phase1.png", label: "Phase 1", title: "ค้นหาตัวตน", position: "object-[center_82%] sm:object-[center_58%]" },
-                      { src: "/Phase2.png", label: "Phase 2", title: "สุขระหว่างทาง", position: "object-[center_84%] sm:object-[center_60%]" },
-                      { src: "/Phase3.png", label: "Phase 3", title: "ระลึกความตาย", position: "object-[center_84%] sm:object-[center_60%]" },
+                      { src: "/Phase1.webp", label: "Phase 1", title: "ค้นหาตัวตน", position: "object-[center_82%] sm:object-[center_58%]" },
+                      { src: "/Phase2.webp", label: "Phase 2", title: "สุขระหว่างทาง", position: "object-[center_84%] sm:object-[center_60%]" },
+                      { src: "/Phase3.webp", label: "Phase 3", title: "ระลึกความตาย", position: "object-[center_84%] sm:object-[center_60%]" },
                     ].map((phase) => (
                       <div key={phase.label} className="relative h-48 overflow-hidden rounded-[1.65rem] border border-white/25 bg-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.36)]">
                         <Image
@@ -1751,7 +1751,7 @@ export default function Home() {
               <div className="flex justify-center pt-2">
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[2.2rem] overflow-hidden border-2 border-red-500/30 p-1 bg-slate-950/50 shadow-lg shadow-red-500/20 flex items-center justify-center">
                   <img
-                    src="/fuii-profile.png"
+                    src="/fuii-profile.webp"
                     alt="Fuii"
                     className="w-full h-full object-cover rounded-[1.8rem]"
                     onError={(e) => {

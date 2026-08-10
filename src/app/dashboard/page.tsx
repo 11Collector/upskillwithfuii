@@ -4836,7 +4836,7 @@ Day 21: [กิจกรรม]
               num: 1,
               title: "ค้นหาตัวตน",
               desc: "ประเมินสมดุลชีวิต สไตล์การสื่อสาร นิสัยการเงิน\nทำภารกิจรายวัน สำรวจความรู้สึกผ่านคำคม",
-              image: "/Phase1.png",
+              image: "/Phase1.webp",
               unlocked: true,
               completed: isPhase1Completed,
               steps: phase1Steps,
@@ -4847,7 +4847,7 @@ Day 21: [กิจกรรม]
               num: 2,
               title: "สุขระหว่างทาง",
               desc: "ค้นหาสไตล์การอ่าน อ่านบทความและจดบันทึก\nเติมความสุขให้ตัวเอง และเติบโตไปกับพี่ฟุ้ย",
-              image: "/Phase2.png",
+              image: "/Phase2.webp",
               unlocked: isPhase1Completed,
               completed: isPhase2Completed,
               steps: phase2Steps,
@@ -4858,7 +4858,7 @@ Day 21: [กิจกรรม]
               num: 3,
               title: "ระลึกความตาย",
               desc: "เผชิญหน้ากับความกลัว ฝึกสมาธิและจิตใจ\nเพื่อระลึกถึงคุณค่าของชีวิต",
-              image: "/Phase3.png",
+              image: "/Phase3.webp",
               unlocked: isPhase2Completed,
               completed: isPhase3Completed,
               steps: phase3Steps,
@@ -7639,7 +7639,7 @@ Day 21: [กิจกรรม]
                         {/* 🤖 Logo Container */}
                         <div className="relative mb-6 mt-2">
                           <div className="relative w-24 h-24 rounded-full overflow-hidden bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-100 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-                            <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="w-full h-full object-cover" />
+                            <img src="/fuii-avatar.webp" alt="พี่ฟุ้ย" className="w-full h-full object-cover" />
                           </div>
                         </div>
 
@@ -8619,7 +8619,7 @@ Day 21: [กิจกรรม]
                             <div className="flex items-center justify-between gap-3 mb-5">
                               <div className="flex items-center gap-3">
                                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white shadow-sm">
-                                  <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
+                                  <img src="/fuii-avatar.webp" alt="พี่ฟุ้ย" className="h-full w-full object-cover" />
                                 </div>
                                 <div>
                                   <h3 className="text-xl font-black text-white leading-tight">
@@ -10008,9 +10008,9 @@ Day 21: [กิจกรรม]
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center mt-4 z-10 w-full">
                   <div className="grid w-full grid-cols-3 gap-2 mb-5">
                     {[
-                      { src: "/Phase1.png", label: "Phase 1", title: "ค้นหาตัวตน" },
-                      { src: "/Phase2.png", label: "Phase 2", title: "สุขระหว่างทาง" },
-                      { src: "/Phase3.png", label: "Phase 3", title: "ระลึกความตาย" },
+                      { src: "/Phase1.webp", label: "Phase 1", title: "ค้นหาตัวตน" },
+                      { src: "/Phase2.webp", label: "Phase 2", title: "สุขระหว่างทาง" },
+                      { src: "/Phase3.webp", label: "Phase 3", title: "ระลึกความตาย" },
                     ].map((phase) => (
                       <div key={phase.label} className="relative h-24 overflow-hidden rounded-2xl border border-white/80 bg-slate-100 shadow-sm">
                         <img

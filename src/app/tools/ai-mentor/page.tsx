@@ -401,7 +401,7 @@ export default function SoulGuidePage() {
               transition={{ repeat: Infinity, duration: 2 }}
               className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"
             >
-              <img src="/fuii-avatar.png" alt="พี่ฟุ้ย" className="w-full h-full object-cover" />
+              <img src="/fuii-avatar.webp" alt="พี่ฟุ้ย" className="w-full h-full object-cover" />
             </motion.div>
           </div>
         </header>

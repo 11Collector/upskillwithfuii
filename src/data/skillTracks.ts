@@ -50,7 +50,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Master Marcus",
       title: "The Wealth Architect — สถาปนิกการเงิน",
       quote: "เงินไม่ได้อุดรอยรั่วด้วยความโลภ แต่อุดด้วยวินัยและระบบ",
-      image: "/Mentor/1.png"
+      image: "/Mentor/1.webp"
     },
     days: [
       {
@@ -288,7 +288,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Mentor Ava",
       title: "The Connection Guide — โค้ชความเชื่อมโยง",
       quote: "ความสัมพันธ์ที่ดี เริ่มต้นจากการฟังด้วยหัวใจ ไม่ใช่การเอาชนะ",
-      image: "/Mentor/4.png"
+      image: "/Mentor/4.webp"
     },
     days: [
       {
@@ -526,7 +526,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Sensei Zenji",
       title: "The Mindfulness Guide — ผู้ชี้ทางใจ",
       quote: "พายุภายนอกจะสงบ เมื่อใจข้างในหยุดสั่นไหว",
-      image: "/Mentor/6.png"
+      image: "/Mentor/6.webp"
     },
     days: [
       {
@@ -764,7 +764,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Coach Victor",
       title: "The Peak Strategist — จอมยุทธ์กลยุทธ์การงาน",
       quote: "ไม่ต้องทำงานหนักขึ้น แต่จงทำงานให้ถูกจุดและไร้สิ่งรบกวน",
-      image: "/Mentor/2.png"
+      image: "/Mentor/2.webp"
     },
     days: [
       {
@@ -1002,7 +1002,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Coach Lisa",
       title: "The Vitality Expert — ผู้เชี่ยวชาญพลังชีวิต",
       quote: "ร่างกายคือบ้านหลังเดียวที่คุณต้องอาศัยอยู่ไปตลอดชีวิต",
-      image: "/Mentor/3.png"
+      image: "/Mentor/3.webp"
     },
     days: [
       {
@@ -1240,7 +1240,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Coach Leo",
       title: "The Joy Artisan — สถาปนิกความสุข",
       quote: "ความสุขไม่ใช่จุดหมายปลายทาง แต่คือศิลปะในการเดินทางทุกวัน",
-      image: "/Mentor/7.png"
+      image: "/Mentor/7.webp"
     },
     days: [
       {
@@ -1478,7 +1478,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Master Elena",
       title: "The Legacy Builder — ผู้สร้างคุณค่าระยะยาว",
       quote: "คุณค่าที่แท้จริง ไม่ใช่สิ่งที่เราครอบครอง แต่คือสิ่งที่เรามอบให้โลก",
-      image: "/Mentor/8.png"
+      image: "/Mentor/8.webp"
     },
     days: [
       {
@@ -1716,7 +1716,7 @@ export const SKILL_TRACKS: Record<string, SkillTrack> = {
       name: "Dr. Alex",
       title: "The Knowledge Weaver — นักร้อยเรียงปัญญา",
       quote: "คนฉลาดเรียนรู้จากประสบการณ์ คนชาญฉลาดเรียนรู้จากทุกคน",
-      image: "/Mentor/5.png"
+      image: "/Mentor/5.webp"
     },
     days: [
       {
