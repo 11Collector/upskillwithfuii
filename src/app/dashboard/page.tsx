@@ -6207,7 +6207,7 @@ Day 21: [กิจกรรม]
                             {!lastWheel
                               ? 'ประเมินเริ่มต้น'
                               : wheelPlanDay > (wheelPlanTarget || 7) 
-                              ? 'COMPLETE' 
+                              ? "จบแผน " + (wheelPlanTarget || 7) + " วัน"
                               : quest.title.includes('|') 
                               ? quest.title.split('|')[0].trim() 
                               : `DAY ${Math.min(wheelPlanDay || 1, wheelPlanTarget || 7)}`
