@@ -5,7 +5,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, increment, writeBatch, updateDoc, arrayUnion, serverTimestamp, addDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { PieChart, Quote, Users, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown, Pencil, Battery, Clock, GraduationCap } from "lucide-react";
+import { PieChart, Quote, Users, ArrowDown, Wallet, ChevronRight, Sparkles, BookOpen, RefreshCw, LogOut, BrainCircuit, Target, AlertCircle, CheckCircle2, ShieldCheck, Circle, Trophy, Award, Flame, Info, Lock, Unlock, X, Zap, Star, Camera, Download, Ticket, RotateCcw, Shuffle, LayoutDashboard, MessageSquare, HelpCircle, ArrowRight, Bookmark, Ghost, PiggyBank, ShoppingBag, Vault, IdCard, Mail, Crown, Pencil, Battery, Clock, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -495,6 +495,8 @@ export default function DashboardPage() {
       console.error("Shuffle Error:", e);
     }
   };
+
+
 
   // 2. ฟังก์ชันใช้แผนเดิม
   const handleRestartCycle = async () => {
@@ -6159,6 +6161,15 @@ Day 21: [กิจกรรม]
       `}
                     // 🚩 ถ้าเป็น Notice ห้ามรันฟังก์ชัน toggleQuest
                     onClick={() => {
+                      if (quest.id === 1 && quest.title.includes('จบแผน')) {
+                        handleTabChange("identity");
+                        router.push("/dashboard?tab=identity");
+                        setTimeout(() => {
+                          const el = document.getElementById("wheel-of-life-card");
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 100);
+                        return;
+                      }
                       if (isNotice) return;
                       if (quest.id === 1 && !lastWheel) {
                         router.push("/tools/wheel-of-life");
@@ -6221,6 +6232,7 @@ Day 21: [กิจกรรม]
           ${isDone ? 'line-through text-slate-400' : isNotice ? 'text-amber-900 font-bold' : 'text-slate-700'}`}>
                         {(quest.title.includes('|') ? quest.title.split('|')[1].trim() : quest.title).replace(/^Day\s*\d+\s*:\s*/i, "")}
                       </p>
+
                       {quest.id === 1 && lastWheel && !quest.title.includes('สรุปผล') && (
                         <div
                           className="flex items-center gap-1.5 mt-2 cursor-pointer opacity-90 hover:opacity-100 transition-opacity w-fit bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100/50"
@@ -6234,9 +6246,26 @@ Day 21: [กิจกรรม]
 
                     <div className="shrink-0 text-right flex flex-col items-end gap-2">
                       {isNotice ? (
-                        <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 uppercase tracking-widest cursor-pointer">
-                          {quest.title.includes('จบแผน') ? 'จบแผน 🏆' : (quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'แจ้งเตือน 💡'}
-                        </span>
+                        quest.title.includes('จบแผน') ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTabChange("identity");
+                              router.push("/dashboard?tab=identity");
+                              setTimeout(() => {
+                                const el = document.getElementById("wheel-of-life-card");
+                                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                              }, 100);
+                            }}
+                            className="text-[10px] font-black px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white shadow-md shadow-amber-200 uppercase tracking-wider hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <span>เลือกทางเดินต่อ</span>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-black px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 uppercase tracking-widest cursor-pointer">
+                            {(quest.title.includes('พักกายพักใจ') || quest.title.includes('พักผ่อน')) ? 'พักผ่อน 💤' : 'แจ้งเตือน 💡'}
+                          </span>
+                        )
                       ) : (
                         <div className="flex flex-col items-end gap-1.5">
                           <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border shadow-sm transition-all ${isDone ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-white border-orange-100 text-orange-500 group-hover/card:bg-gradient-to-r group-hover/card:from-orange-400 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-[0_5px_15px_rgba(249,115,22,0.3)]'}`}>
@@ -6415,6 +6444,7 @@ Day 21: [กิจกรรม]
                   )}
 
                   <motion.div
+                    id="wheel-of-life-card"
                     whileHover={{ y: -6, scale: 1.01 }}
                     className="flex-1 bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-red-50 relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:border-red-200 flex flex-col justify-center group"
                   >
@@ -6443,6 +6473,7 @@ Day 21: [กิจกรรม]
                             </div>
                             <h2 className="text-2xl font-black text-slate-800">Wheel of Life</h2>
                           </div>
+
                         </div>
 
                         {lastWheel ? (
@@ -6470,7 +6501,7 @@ Day 21: [กิจกรรม]
                             </div>
 
                              {/* ⚡ ส่วนที่ 2: สถานะรายสัปดาห์ (เปลี่ยนตามสถานะ 7 วัน) */}
-                             {wheelPlanDay > wheelPlanTarget ? (
+                             {(wheelPlanDay > wheelPlanTarget || (wheelPlanDay === wheelPlanTarget && hasDoneWheelToday)) ? (
                                !hasDoneWheelToday ? (
                                  wheelPlanTarget === 7 ? (
                                    /* 🎯 CASE 1: ครบ 7 วัน -> โชว์ ปุ่มขยาย 21 วัน + ปุ่ม Audit + ปุ่มลุยแผนเดิม */
@@ -6580,18 +6611,18 @@ Day 21: [กิจกรรม]
                         )}
 
                         {/* 🔘 ปุ่ม Action หลัก (จะซ่อนตัวอัตโนมัติถ้ามีแผง 3 ปุ่มโชว์อยู่) */}
-                        {!(lastWheel && wheelPlanDay > wheelPlanTarget && !hasDoneWheelToday) && (
+                        {!(lastWheel && (wheelPlanDay > wheelPlanTarget || (wheelPlanDay === wheelPlanTarget && hasDoneWheelToday)) && !hasDoneWheelToday) && (
                           <div className={`inline-flex items-center gap-1.5 px-6 py-3 rounded-full border text-[13px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm w-fit 
                       ${!lastWheel
                               ? 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(239,68,68,0.5)] hover:scale-[1.03]'
-                              : wheelPlanDay > wheelPlanTarget
+                              : (wheelPlanDay > wheelPlanTarget || (wheelPlanDay === wheelPlanTarget && hasDoneWheelToday))
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 border-transparent text-white shadow-[0_8px_20px_-5px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_25px_-5px_rgba(16,185,129,0.5)] hover:scale-[1.03]'
                                 : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200'
                             }`}>
 
                             {!lastWheel ? (
                               <Sparkles size={14} />
-                            ) : wheelPlanDay > wheelPlanTarget ? (
+                            ) : (wheelPlanDay > wheelPlanTarget || (wheelPlanDay === wheelPlanTarget && hasDoneWheelToday)) ? (
                               <CheckCircle2 size={14} className="fill-white" />
                             ) : (
                               <RefreshCw size={14} />
@@ -6600,7 +6631,7 @@ Day 21: [กิจกรรม]
                             <span>
                               {!lastWheel
                                 ? "เริ่มประเมินครั้งแรก (+50 XP)"
-                                : wheelPlanDay > wheelPlanTarget
+                                : (wheelPlanDay > wheelPlanTarget || (wheelPlanDay === wheelPlanTarget && hasDoneWheelToday))
                                   ? "พรุ่งนี้มาลุยต่อกัน"
                                   : "ประเมินใหม่"
                               }
