@@ -2989,7 +2989,9 @@ Day 21: [กิจกรรม]
       if (!wheelQuestSet && lastWheel) {
         const maxTarget = wheelPlanTarget || 7;
         if (wheelPlanDay > maxTarget) {
-          computedWheelTitle = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
+          computedWheelTitle = maxTarget === 21
+            ? `🏆 จบแผน 21 วันแล้ว! เริ่ม Audit เพื่อสแกนคะแนนชีวิตและรับเป้าหมายรอบใหม่กันครับ`
+            : `🏆 จบแผน 7 วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
           wheelQuestSet = true;
         } else {
           const isWheelDoneToday = completedIds.includes(1);
@@ -3123,7 +3125,9 @@ Day 21: [กิจกรรม]
               if (i === 0) {
                 return {
                   ...q,
-                  title: `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`,
+                  title: maxTarget === 21
+                    ? `🏆 จบแผน 21 วันแล้ว! เริ่ม Audit เพื่อสแกนคะแนนชีวิตและรับเป้าหมายรอบใหม่กันครับ`
+                    : `🏆 จบแผน 7 วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`,
                   xp: 0,
                 };
               }
@@ -3287,7 +3291,9 @@ Day 21: [กิจกรรม]
       wheelQuestSet = true;
     } else if (currentWheelPlanDay > maxTarget) {
       // 🏆 จบแผนแล้ว (Day 8+ เมื่อ target=7 หรือ Day 22+ เมื่อ target=21)
-      qList[0].title = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
+      qList[0].title = maxTarget === 21
+        ? `🏆 จบแผน 21 วันแล้ว! เริ่ม Audit เพื่อสแกนคะแนนชีวิตและรับเป้าหมายรอบใหม่กันครับ`
+        : `🏆 จบแผน 7 วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
       qList[0].xp = 0;
       wheelQuestSet = true;
     } else {
@@ -3653,7 +3659,9 @@ Day 21: [กิจกรรม]
       if (!wheelQuestSet && lastWheel) {
         const maxTarget = wheelPlanTarget || 7;
         if (wheelPlanDay > maxTarget) {
-          computedWheelTitle = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
+          computedWheelTitle = maxTarget === 21
+            ? `🏆 จบแผน 21 วันแล้ว! เริ่ม Audit เพื่อสแกนคะแนนชีวิตและรับเป้าหมายรอบใหม่กันครับ`
+            : `🏆 จบแผน 7 วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
           wheelQuestSet = true;
         } else {
           const isWheelDoneToday = completedQuests.includes(1);
