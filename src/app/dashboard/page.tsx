@@ -6230,9 +6230,7 @@ Day 21: [กิจกรรม]
                               ? 'ประเมินเริ่มต้น'
                               : wheelPlanDay > (wheelPlanTarget || 7) 
                               ? "จบแผน " + (wheelPlanTarget || 7) + " วัน"
-                              : quest.title.includes('|') 
-                              ? quest.title.split('|')[0].trim() 
-                              : `DAY ${Math.min(wheelPlanDay || 1, wheelPlanTarget || 7)}`
+                              : `DAY ${Math.min(wheelPlanDay || 1, wheelPlanTarget || 7)}/${wheelPlanTarget || 7}`
                             }
                           </span>
                         )}
