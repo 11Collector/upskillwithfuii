@@ -449,7 +449,8 @@ export default function DashboardPage() {
         wheelPlanDay: newDay,
         wheelPlanSkips: 0,
         lastSkipDate: "",
-        completedQuestIds: [] // 🧹 ล้างเควสที่เคยทำแล้วออกเพื่อให้เริ่มวันใหม่ได้
+        completedQuestIds: [], // 🧹 ล้างเควสที่เคยทำแล้วออกเพื่อให้เริ่มวันใหม่ได้
+        currentDailyQuests: null
       });
 
       // อัปเดตใน State ทันทีเพื่อให้ UI เปลี่ยน
@@ -457,6 +458,7 @@ export default function DashboardPage() {
       setWheelPlanSkips(0);
       setLastSkipDate("");
       setCompletedQuests([]);
+      setUserData((prev: any) => prev ? { ...prev, wheelPlanDay: newDay, completedQuestIds: [], currentDailyQuests: null } : null);
 
       alert("เริ่มต้นเส้นทางเดิม วันที่ 1 อีกครั้ง ลุยเลยครับ!");
     } catch (error) {
@@ -482,13 +484,14 @@ export default function DashboardPage() {
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
         weeklySavings: 0, // 🐷 รีเซ็ตเงินออมสะสมรายสัปดาห์
+        currentDailyQuests: null
       });
 
       setWheelPlanDay(1);
       setIsRandomMode(true);
       setRandomWheelQuestTitle(randomTask);
       setWheelCompletions(0);
-      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0 } : null);
+      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0, wheelPlanDay: 1, isRandomMode: true, randomWheelQuestTitle: randomTask, completedQuestIds: [], currentDailyQuests: null } : null);
 
       alert("✨ สุ่มภารกิจใหม่จากหมวด Wheel และเริ่ม Day 1 ให้คุณแล้ว!");
     } catch (e) {
@@ -510,7 +513,7 @@ export default function DashboardPage() {
         wheelPlanTarget: 7, // รีเซ็ตเป้าหมายกลับเป็น 7 วันเสมอ
         isRandomMode: false,
         completedQuestIds: [],
-        currentDailyQuests: [],
+        currentDailyQuests: null,
         wheelCompletions: 0, // 🧹 รีเซ็ตตัวนับความสำเร็จใหม่ 
         lastActiveDate: todayStr, // 🌟 ป้องกันไม่ให้โดนบวกวันเพิ่มในวันเดียวกัน
         lastActiveAt: serverTimestamp(),
@@ -521,7 +524,7 @@ export default function DashboardPage() {
       setWheelPlanTarget(7);
       setCompletedQuests([]);
       setWheelCompletions(0);
-      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0, wheelPlanTarget: 7, completedQuestIds: [], currentDailyQuests: [] } : null);
+      setUserData((prev: any) => prev ? { ...prev, weeklySavings: 0, wheelPlanDay: 1, wheelPlanTarget: 7, completedQuestIds: [], currentDailyQuests: null } : null);
       alert("เริ่มรอบใหม่ (Day 1) ให้คุณแล้ว! ลุยกันต่อเลยครับ");
     } catch (e) { console.error(e); }
   };
@@ -551,14 +554,14 @@ export default function DashboardPage() {
           wheelPlanTarget: 21,
           wheelPlanDay: 8,
           completedQuestIds: [],
-          currentDailyQuests: [],
+          currentDailyQuests: null,
         });
 
         setWheelPlanTarget(21);
         setWheelPlanDay(8);
         setCompletedQuests([]);
         setLastWheel((prev: any) => prev ? { ...prev, analysis: lastWheel.analysis } : null);
-        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8, completedQuestIds: [], currentDailyQuests: [] } : null);
+        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8, completedQuestIds: [], currentDailyQuests: null } : null);
         alert("ขยายแผนต่อเนื่องเป็น 21 วันแล้ว! (ใช้แผนเดิมที่วิเคราะห์ไว้ก่อนหน้า) ลุยกันต่อเลยครับ");
       } else {
         // เจน AI เพิ่มเติม
@@ -626,14 +629,14 @@ Day 21: [กิจกรรม]
           wheelPlanTarget: 21,
           wheelPlanDay: 8,
           completedQuestIds: [],
-          currentDailyQuests: [],
+          currentDailyQuests: null,
         });
 
         setWheelPlanTarget(21);
         setWheelPlanDay(8);
         setCompletedQuests([]);
         setLastWheel((prev: any) => prev ? { ...prev, analysis: extendedAnalysis } : null);
-        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8, completedQuestIds: [], currentDailyQuests: [] } : null);
+        setUserData((prev: any) => prev ? { ...prev, wheelPlanTarget: 21, wheelPlanDay: 8, completedQuestIds: [], currentDailyQuests: null } : null);
         alert("✨ AI ได้วิเคราะห์และสร้างแผนสร้างนิสัยต่อเนื่อง (Day 8-21) ให้คุณเรียบร้อยแล้ว ลุยกันต่อเลยครับ!");
       }
     } catch (e: any) {
@@ -1245,6 +1248,7 @@ Day 21: [กิจกรรม]
           setCompletedQuests(userData.completedQuestIds || []);
           setCustomQuestTitle(userData.customQuestTitle || "");
           setWheelPlanDay(userData.wheelPlanDay || 0);
+          setWheelPlanTarget(userData.wheelPlanTarget || 7);
           setTodaySkillTrackId(userData.todaySkillTrackId || userData.activeSkillTrackId || null);
           setTodaySkillTrackDay(userData.todaySkillTrackDay || userData.skillTrackCurrentDay || 1);
           setActiveSkillTrackId(userData.activeSkillTrackId || null);
@@ -1373,6 +1377,7 @@ Day 21: [กิจกรรม]
           }
 
           setWheelPlanDay(nextPlanDay);
+          setWheelPlanTarget(wheelPlanTarget);
 
           // 🎓 Advance & Lock Today's Skill Track ID & Day for the New Day
           let activeTrack = userData.activeSkillTrackId || null;
@@ -3094,31 +3099,39 @@ Day 21: [กิจกรรม]
       Array.isArray(userData?.currentDailyQuests) &&
       userData.currentDailyQuests.length === 4
     ) {
-      const maxTarget = wheelPlanTarget || 7;
-      const isFinished = lastWheel && wheelPlanDay > maxTarget;
+      const maxTarget = userData?.wheelPlanTarget || wheelPlanTarget || 7;
+      const currentWheelPlanDay = userData?.wheelPlanDay ?? wheelPlanDay ?? 1;
+      const isFinished = lastWheel && currentWheelPlanDay > maxTarget;
       const storedTrackId = userData.currentDailyTrackId;
-      let isLocked = false;
+      const hasFinishedTitleInLock = userData.currentDailyQuests[0]?.title?.includes('จบแผน');
 
-      if (storedTrackId) {
-        if (storedTrackId === effectiveTrackId) isLocked = true;
+      // 🌟 ถ้าแผนปัจจุบันยังทำไม่จบ (!isFinished) แต่ในแคชยังค้างข้อความ "จบแผน" ให้ข้ามการล็อกแล้วรีเจนเควส 1 สำหรับวันปัจจุบันทันที
+      if (!isFinished && hasFinishedTitleInLock) {
+        // ไม่ล็อก — ให้คำนวณและสร้างโจทย์วันปัจจุบันใหม่ด้านล่าง
       } else {
-        if (completedQuests.length > 0) isLocked = true;
-      }
+        let isLocked = false;
 
-      if (isLocked) {
-        if (isFinished) {
-          return userData.currentDailyQuests.map((q: any, i: number) => {
-            if (i === 0) {
-              return {
-                ...q,
-                title: `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`,
-                xp: 0,
-              };
-            }
-            return q;
-          });
+        if (storedTrackId) {
+          if (storedTrackId === effectiveTrackId) isLocked = true;
+        } else {
+          if (completedQuests.length > 0) isLocked = true;
         }
-        return userData.currentDailyQuests;
+
+        if (isLocked) {
+          if (isFinished) {
+            return userData.currentDailyQuests.map((q: any, i: number) => {
+              if (i === 0) {
+                return {
+                  ...q,
+                  title: `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`,
+                  xp: 0,
+                };
+              }
+              return q;
+            });
+          }
+          return userData.currentDailyQuests;
+        }
       }
     }
 
@@ -3265,20 +3278,21 @@ Day 21: [กิจกรรม]
 
     // 🎯 [NEW LOGIC] Quest 1 MUST ALWAYS use lastWheel.analysis FIRST when available!
     let wheelQuestSet = false;
-    const maxTarget = wheelPlanTarget || 7;
+    const maxTarget = userData?.wheelPlanTarget || wheelPlanTarget || 7;
+    const currentWheelPlanDay = userData?.wheelPlanDay ?? wheelPlanDay ?? 1;
 
     if (!lastWheel) {
       qList[0].title = "ทำแบบประเมิน Wheel of Life เพื่อปลดล็อกแผนพัฒนาชีวิตของคุณ";
       qList[0].xp = 50;
       wheelQuestSet = true;
-    } else if (wheelPlanDay > maxTarget) {
+    } else if (currentWheelPlanDay > maxTarget) {
       // 🏆 จบแผนแล้ว (Day 8+ เมื่อ target=7 หรือ Day 22+ เมื่อ target=21)
       qList[0].title = `🏆 จบแผน ${maxTarget} วันแล้ว! ขยายเป็น 21 วัน หรือเริ่มรอบใหม่เพื่อรับภารกิจถัดไป`;
       qList[0].xp = 0;
       wheelQuestSet = true;
     } else {
       const isWheelDoneToday = completedQuests.includes(1);
-      const displayDay = (isWheelDoneToday && wheelPlanDay === (maxTarget + 1)) ? maxTarget : (wheelPlanDay || 1);
+      const displayDay = (isWheelDoneToday && currentWheelPlanDay === (maxTarget + 1)) ? maxTarget : (currentWheelPlanDay || 1);
 
       if (displayDay > 0 && displayDay <= maxTarget) {
         let dayText = lastWheel?.analysis ? getWheelDayTitle(lastWheel.analysis, displayDay, maxTarget) : null;

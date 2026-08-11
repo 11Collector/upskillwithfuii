@@ -387,6 +387,7 @@ const handleGenerateResult = async () => {
           // 🌟 [AUDIT RESET LOGIC]: อัปเดต User Profile โดยเก็บสะสม Quest 1 (Wheel) และวันล่าสุดไว้
           let updateData: any = {
             wheelPlanDay: 1,       
+            wheelPlanTarget: 7,
             lastActiveDate: todayStr,
             lastQuestDate: todayStr,
             completedQuestIds: newCompleted,
@@ -466,6 +467,7 @@ const handleGenerateResult = async () => {
 
           let updateData: any = {
             wheelPlanDay: 1,
+            wheelPlanTarget: 7,
             lastActiveDate: todayStr,
             lastQuestDate: todayStr,
             completedQuestIds: newCompleted,
