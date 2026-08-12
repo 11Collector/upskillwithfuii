@@ -1,24 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  MessageSquare, Trophy, RefreshCcw, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Wallet, LayoutDashboard
-} from "lucide-react";
-import { domToPng } from "modern-screenshot";
+import { 
+  MessageSquare, Trophy, RefreshCcw, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Wallet 
+} from "lucide-react"; 
+import { domToPng } from "modern-screenshot"; 
 import { Kanit } from "next/font/google";
-import AssessmentResultCTA from '@/app/components/AssessmentResultCTA';
-import Link from 'next/link';
-import { scenarios, ChatScenario } from "@/data/discScenarios";
+import { scenarios, ChatScenario } from "@/data/discScenarios"; 
+import AssessmentResultCTA from "@/app/components/AssessmentResultCTA";
 
-import { db, auth } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp, getDoc, setDoc, increment, doc } from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
+import { useAssessmentMode } from "@/context/AssessmentContext";
 
-const kanit = Kanit({
-  subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "700"]
+const kanit = Kanit({ 
+  subsets: ["thai", "latin"], 
+  weight: ["300", "400", "500", "700"] 
 });
 
 const shuffleArray = (array: any[]) => {
@@ -72,42 +72,20 @@ const themeColors: Record<string, { bg: string, border: string, title: string, n
   C: { bg: "bg-blue-50", border: "border-blue-200", title: "text-blue-700", name: "text-blue-900", desc: "text-blue-800" },
 };
 
-import { useAssessmentMode } from "@/context/AssessmentContext";
-
 type GenderType = "หนุ่ม" | "สาว" | "ตัวมัม" | "ชาว";
 
 export default function DiscClient() {
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [fromPage, setFromPage] = useState<"home" | "dashboard" | null>(null);
   const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
 
   const isAssessing = gameState === "playing" || gameState === "loading";
   useAssessmentMode(isAssessing);
 
-  const [nickname, setNickname] = useState("");
-  const [gender, setGender] = useState<GenderType | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        if (user.displayName && !nickname) {
-          setNickname(user.displayName.split(" ")[0]);
-        }
-      }
-    });
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const from = params.get("from");
-      if (from === "home" || from === "dashboard") {
-        setFromPage(from as any);
-      }
-    }
-    return () => unsubscribe();
-  }, [nickname]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<("D" | "I" | "S" | "C")[]>([]);
   const [activeScenarios, setActiveScenarios] = useState<ChatScenario[]>([]);
+  const [gender, setGender] = useState<GenderType | null>(null);
+  const [nickname, setNickname] = useState("");
   const [isCapturing, setIsCapturing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDiscInfo, setShowDiscInfo] = useState(false);
@@ -119,20 +97,31 @@ export default function DiscClient() {
   const hasMemberSaved = useRef(false);
   const TOTAL_QUESTIONS = 15;
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        if (user.displayName && !nickname) {
+          setNickname(user.displayName.split(" ")[0]);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleStart = () => {
     if (!gender) { alert("เลือกสไตล์พนักงานของคุณก่อนนะ!"); return; }
     if (!nickname.trim()) { alert("กรอกชื่อเล่นของคุณก่อนนะ!"); return; }
-
+    
     const randomScenarios = shuffleArray(scenarios).slice(0, TOTAL_QUESTIONS).map(scenario => ({
       ...scenario,
-      choices: shuffleArray(scenario.choices)
+      choices: shuffleArray(scenario.choices) 
     }));
-
+    
     setActiveScenarios(randomScenarios);
     setAnswers([]);
     setCurrentIndex(0);
     setHasSavedData(false);
-    hasMemberSaved.current = false;
     setGameState("playing");
   };
 
@@ -174,17 +163,17 @@ export default function DiscClient() {
 
   const getFinalResult = () => {
     const scores = getScores();
-    let maxType = "D";
+    let maxType: "D" | "I" | "S" | "C" = "D";
     let maxScore = scores.D;
     (["I", "S", "C"] as const).forEach((type) => {
       if (scores[type] > maxScore) { maxScore = scores[type]; maxType = type; }
     });
-    return maxType as "D" | "I" | "S" | "C";
+    return maxType;
   };
 
   const getPercentages = () => {
     const scores = getScores();
-    const total = answers.length || 1;
+    const total = answers.length || 1; 
     return {
       D: Math.round((scores.D / total) * 100),
       I: Math.round((scores.I / total) * 100),
@@ -207,57 +196,24 @@ export default function DiscClient() {
   const saveResultToFirebase = async () => {
     if (hasSavedData) return;
     try {
+      setHasSavedData(true);
       const finalResult = getFinalResult();
       const percentages = getPercentages();
-
-      const finalUserId = currentUser ? currentUser.uid : "GUEST_" + Date.now();
-      const finalUserName = currentUser ? currentUser.displayName : "Guest User";
-
-      const resultPayload = {
-        userId: finalUserId,
-        userName: finalUserName,
-        result: finalResult,
+      
+      await addDoc(collection(db, "discResults"), {
+        userId: currentUser?.uid || null,
         nickname: nickname,
         gender: gender,
         finalResult: finalResult,
+        result: finalResult,
         percentages: percentages,
+        counts: getScores(),
         title: getDynamicTitle(),
         answers: answers,
-        updatedAt: serverTimestamp(),
         createdAt: serverTimestamp()
-      };
-
-      if (currentUser) {
-        hasMemberSaved.current = true;
-        setHasSavedData(true);
-        await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
-
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          if (!userData.hasDiscXP) {
-            const oldXP = userData.totalXP || 0;
-            const newXP = oldXP + 50;
-            const oldLevel = Math.floor(oldXP / 100) + 1;
-            const newLevel = Math.floor(newXP / 100) + 1;
-            await setDoc(userRef, {
-              totalXP: increment(50),
-              hasDiscXP: true
-            }, { merge: true });
-            if (newLevel > oldLevel) {
-              sessionStorage.setItem('pendingLevelUp', String(newLevel));
-            }
-          }
-        }
-      } else {
-        setHasSavedData(true);
-        await addDoc(collection(db, "discResults"), resultPayload);
-      }
-
+      });
     } catch (error) {
-      console.error("Firebase Error: ", error);
+      console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูลทั่วไป: ", error);
       setHasSavedData(false);
     }
   };
@@ -269,34 +225,43 @@ export default function DiscClient() {
   }, [gameState]);
 
   useEffect(() => {
-    if (!currentUser || gameState !== "result" || hasMemberSaved.current) return;
+    const saveUserResult = async () => {
+      if (!currentUser || gameState !== "result" || hasMemberSaved.current) return;
 
-    const grantXPOnLogin = async () => {
-      hasMemberSaved.current = true;
       try {
-        const finalResult = getFinalResult();
-        const percentages = getPercentages();
-        const resultPayload = {
-          userId: currentUser.uid,
-          userName: currentUser.displayName,
-          result: finalResult,
-          nickname: nickname,
-          gender: gender,
-          finalResult: finalResult,
-          percentages: percentages,
-          title: getDynamicTitle(),
-          answers: answers,
-          updatedAt: serverTimestamp(),
-          createdAt: serverTimestamp()
-        };
-        await setDoc(doc(db, "discResults", currentUser.uid), resultPayload, { merge: true });
-
+        hasMemberSaved.current = true;
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
+
+        const finalResult = getFinalResult();
+        const percentages = getPercentages();
+        const discDataToSave = {
+          finalResult: finalResult,
+          result: finalResult,
+          percentages,
+          counts: getScores(),
+          nickname,
+          gender,
+          title: getDynamicTitle(),
+          updatedAt: new Date().toISOString()
+        };
+
         if (userSnap.exists()) {
-          const userData = userSnap.data();
-          if (!userData.hasDiscXP) {
-            const oldXP = userData.totalXP || 0;
+          const currentLastDisc = userSnap.data()?.lastDisc;
+          if (currentLastDisc) {
+            const subCollRef = collection(db, "users", currentUser.uid, "assessments");
+            await addDoc(subCollRef, {
+              type: "DISC",
+              data: currentLastDisc,
+              archivedAt: serverTimestamp()
+            });
+          }
+
+          await setDoc(userRef, { lastDisc: discDataToSave }, { merge: true });
+
+          const hasEarnedXP = userSnap.data()?.hasDiscXP;
+          if (!hasEarnedXP) {
+            const oldXP = userSnap.data()?.totalXP || 0;
             const oldLevel = Math.floor(oldXP / 100) + 1;
             const newLevel = Math.floor((oldXP + 50) / 100) + 1;
             await setDoc(userRef, { totalXP: increment(50), hasDiscXP: true }, { merge: true });
@@ -306,13 +271,13 @@ export default function DiscClient() {
           }
         }
       } catch (error) {
-        console.error("Firebase Error (login grant): ", error);
+        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูลสมาชิก: ", error);
         hasMemberSaved.current = false;
       }
     };
 
-    grantXPOnLogin();
-  }, [currentUser]);
+    saveUserResult();
+  }, [currentUser, gameState]);
 
   const restartGame = () => {
     setAnswers([]);
@@ -332,7 +297,6 @@ export default function DiscClient() {
       const dataUrl = await domToPng(printRef.current, { quality: 1, scale: 2, backgroundColor: "#F8FAFC" });
       
       let shared = false;
-      
       if (navigator.share && navigator.canShare) {
         try {
           const blob = await (await fetch(dataUrl)).blob();
@@ -345,8 +309,12 @@ export default function DiscClient() {
             });
             shared = true;
           }
-        } catch (shareErr) {
-          console.error("Web Share failed, fallback to modal/download:", shareErr);
+        } catch (shareErr: any) {
+          if (shareErr?.name !== 'AbortError') {
+            console.error("Web Share failed:", shareErr);
+          } else {
+            shared = true;
+          }
         }
       }
 
@@ -362,7 +330,7 @@ export default function DiscClient() {
         }
       }
     } catch (err) {
-      console.error("Capture Error:", err);
+      console.error("Image Capture Error:", err);
       alert("เกิดข้อผิดพลาดในการเซฟรูป ลองแคปหน้าจอแทนนะครับ");
     } finally {
       setIsCapturing(false);
@@ -377,10 +345,10 @@ export default function DiscClient() {
   ];
 
   return (
-    <div className={`min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
-
+    <div className={`min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
       <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
-
+        
+        {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full flex flex-col p-5 sm:p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
             <div className="flex flex-col items-center justify-center shrink-0 w-full pt-2">
@@ -407,10 +375,9 @@ export default function DiscClient() {
             <div className="w-full shrink-0 flex flex-col items-center pb-2">
               <div className="w-full mb-4">
                 <label className="block text-sm font-bold text-slate-800 mb-2 text-center">ชื่อเล่นของคุณ?</label>
-
                 <input
                   type="text"
-                  placeholder={currentUser ? "ชื่อเล่นของคุณ..." : "เช่น มายด์, ฝน, บอย"}
+                  placeholder="เช่น มายด์, ฝน, บอย"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   className="w-full px-4 py-2.5 text-center rounded-xl border-2 border-blue-300 focus:border-blue-600 focus:outline-none font-bold text-slate-800 text-[13px] transition-colors mb-4"
@@ -421,13 +388,14 @@ export default function DiscClient() {
                 <label className="block text-sm font-bold text-slate-800 mb-3 text-center">คุณคือใครใน Office?</label>
                 <div className="grid grid-cols-4 gap-2">
                   {genderOptions.map((opt) => (
-                    <button
+                    <button 
                       key={opt.id}
-                      onClick={() => setGender(opt.id)}
-                      className={`py-2 px-1 rounded-xl font-bold flex flex-col items-center justify-center transition-all duration-300 ${gender === opt.id
-                          ? "bg-slate-800 text-white shadow-md border-transparent scale-105 -translate-y-1"
-                          : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300"
-                        }`}
+                      onClick={() => setGender(opt.id)} 
+                      className={`py-2 px-1 rounded-xl font-bold flex flex-col items-center justify-center transition-all duration-300 ${
+                        gender === opt.id 
+                        ? "bg-slate-800 text-white shadow-md border-transparent scale-105 -translate-y-1" 
+                        : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300"
+                      }`}
                     >
                       <span className="text-[22px] mb-0.5">{opt.emoji}</span>
                       <span className="text-[10px] leading-tight text-center">{opt.label}</span>
@@ -437,224 +405,258 @@ export default function DiscClient() {
               </div>
 
               <div className="w-full flex flex-col items-center gap-2 mb-2">
-                <button
-                  onClick={handleStart}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 text-base flex items-center justify-center gap-2 cursor-pointer"
+                <button 
+                  onClick={handleStart} 
+                  disabled={!gender || !nickname.trim()}
+                  className={`bg-blue-600 text-white font-bold text-[16px] py-3 px-10 rounded-full shadow-md transition-all hover:scale-105 active:scale-95 w-[85%] border-b-[3px] border-blue-800 ${!gender || !nickname.trim() ? "opacity-50 grayscale cursor-not-allowed" : "hover:bg-blue-700"}`}
                 >
-                  🚀 เริ่มเล่นเกม (15 ข้อสั้นๆ)
+                  ตอกบัตรเข้างาน ⏱️
                 </button>
+                <span className="text-slate-400 text-[11px] font-medium tracking-wide">⏳ ใช้เวลา 1-2 นาที ({TOTAL_QUESTIONS} คำถาม)</span>
+              </div>
+
+              <div className="text-slate-400 text-[10px] font-medium mt-3 tracking-wide text-center">
+                Created by <span className="font-bold text-slate-400">อัพสกิลกับฟุ้ย</span>
               </div>
             </div>
           </motion.div>
         )}
 
+        {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
         {gameState === "playing" && activeScenarios.length > 0 && (
-          <div className="flex-1 w-full flex flex-col bg-slate-900 overflow-hidden relative">
-            <div className="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-                <span className="text-white font-bold text-xs tracking-wide">OFFICE SURVIVAL CHAT</span>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">
-                <span className="text-blue-400 font-bold text-xs">{currentIndex + 1}</span>
-                <span className="text-slate-500 text-[10px]">/</span>
-                <span className="text-slate-400 font-bold text-xs">{activeScenarios.length}</span>
-              </div>
-            </div>
-
-            <div className="w-full bg-slate-800/50 h-1.5">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-300 ease-out"
-                style={{ width: `${((currentIndex + 1) / activeScenarios.length) * 100}%` }}
-              ></div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col justify-start">
-              <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-white border border-slate-600 shrink-0">
-                  🤖
-                </div>
-                <div className="bg-slate-800 text-slate-100 p-3.5 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%] shadow-sm">
-                  <p className="text-xs font-bold text-blue-400 mb-1">หัวหน้า / สถานการณ์ในออฟฟิศ</p>
-                  <p className="text-sm font-medium leading-relaxed">{activeScenarios[currentIndex].message}</p>
-                </div>
-              </div>
-
-              {answers[currentIndex] && (
-                <div className="flex items-end justify-end gap-2.5 mt-2">
-                  <div className="bg-blue-600 text-white p-3.5 rounded-2xl rounded-br-none max-w-[85%] shadow-md">
-                    <p className="text-xs font-bold text-blue-200 mb-1">คุณ ({nickname})</p>
-                    <p className="text-sm font-medium leading-relaxed">
-                      {activeScenarios[currentIndex].choices.find(c => c.type === answers[currentIndex])?.text}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-slate-800 p-4 border-t border-slate-700 flex flex-col gap-2 shrink-0">
-              <p className="text-[11px] font-bold text-slate-400 mb-1 flex items-center justify-between">
-                <span>เลือกการตอบกลับของคุณ:</span>
-                <span className="text-slate-500 font-normal">แตะคำตอบเพื่อไปต่อ</span>
-              </p>
-
-              <div className="grid grid-cols-1 gap-2">
-                {activeScenarios[currentIndex].choices.map((choice, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleChoice(choice.type)}
-                    disabled={isTransitioning}
-                    className={`p-3 rounded-xl text-left text-xs font-medium transition-all duration-200 border flex items-center justify-between gap-2 active:scale-[0.98] ${
-                      answers[currentIndex] === choice.type
-                        ? "bg-blue-600 text-white border-blue-500 shadow-md"
-                        : "bg-slate-700/70 hover:bg-slate-700 text-slate-200 border-slate-600 hover:border-slate-500"
-                    }`}
-                  >
-                    <span className="leading-relaxed flex-1">{choice.text}</span>
-                    <span className="text-slate-400 text-xs shrink-0">➔</span>
+          <div className="flex flex-col h-full bg-[#E2E8F0]">
+            <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                {currentIndex > 0 && (
+                  <button onClick={handleBack} className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90 shrink-0" aria-label="ย้อนกลับ">
+                    <ArrowLeft size={16} />
                   </button>
-                ))}
+                )}
+                <div className="text-[15px] bg-slate-800 p-1.5 rounded-full w-8 h-8 flex items-center justify-center shrink-0 border border-slate-700">
+                  {activeScenarios[currentIndex].avatar}
+                </div>
+                <div className="flex flex-col justify-center overflow-hidden flex-1">
+                  <h2 className="text-white font-bold text-[13px] leading-tight truncate w-full">{activeScenarios[currentIndex].npcName}</h2>
+                  <p className="text-[10px] text-blue-300 leading-tight truncate w-full">{activeScenarios[currentIndex].role}</p>
+                </div>
               </div>
-
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-700/50">
-                <button
-                  onClick={handleBack}
-                  disabled={currentIndex === 0 || isTransitioning}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
-                    currentIndex === 0 ? "opacity-30 cursor-not-allowed text-slate-500" : "text-slate-300 hover:bg-slate-700"
-                  }`}
-                >
-                  <ArrowLeft size={14} /> ข้อก่อนหน้า
-                </button>
-
-                {answers[currentIndex] && currentIndex < activeScenarios.length - 1 && (
-                  <button
-                    onClick={handleNext}
-                    disabled={isTransitioning}
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 text-white flex items-center gap-1 hover:bg-blue-500 transition-all"
-                  >
-                    ข้ามไปข้อถัดไป <ArrowRight size={14} />
+              
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="bg-slate-800 text-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-700 shrink-0">
+                  {currentIndex + 1} / {activeScenarios.length}
+                </div>
+                {currentIndex < answers.length && (
+                  <button onClick={handleNext} className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90" aria-label="ไปข้างหน้า">
+                    <ArrowRight size={16} />
                   </button>
                 )}
               </div>
             </div>
+
+            <div className="flex-1 p-5 overflow-y-auto flex flex-col pb-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeScenarios[currentIndex].id}
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="bg-white text-slate-800 p-4 rounded-2xl rounded-tl-sm shadow-sm max-w-[85%] self-start border border-slate-200 relative break-words mt-4 ml-2"
+                >
+                  <svg className="absolute top-0 -left-[9px] w-[10px] h-[14px] text-white drop-shadow-sm" viewBox="0 0 10 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 0H0C4.5 0 8.5 4.5 10 10V0Z" />
+                  </svg>
+                  <p className="text-[14px] leading-relaxed font-medium">{activeScenarios[currentIndex].message}</p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="bg-slate-100 p-4 pt-4 border-t border-slate-200 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.06)] shrink-0 z-20 relative">
+              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
+              <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide">เลือกคำตอบสไตล์คุณ</p>
+              <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
+                {activeScenarios[currentIndex].choices.map((choice, index) => {
+                  const isSelected = answers[currentIndex] === choice.type;
+
+                  return (
+                    <button
+                      key={`${activeScenarios[currentIndex].id}-${index}`}
+                      disabled={isTransitioning && !isSelected} 
+                      onClick={(e) => {
+                        e.currentTarget.blur();
+                        handleChoice(choice.type);
+                      }}
+                      className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
+                        ${isSelected 
+                          ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" 
+                          : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm" 
+                        }
+                        ${isTransitioning && !isSelected ? "opacity-40" : "opacity-100"}
+                      `}
+                    >
+                      {choice.text}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
+        {/* ================= 3. หน้าจอ Loading ================= */}
         {gameState === "loading" && (
-          <div className="flex-1 w-full flex flex-col items-center justify-center p-6 bg-slate-900 text-white text-center">
-            <Loader2 className="animate-spin text-blue-500 mb-4" size={48} />
-            <h3 className="text-xl font-bold mb-2">กำลังประมวลผลธาตุแท้ของคุณ...</h3>
-            <p className="text-slate-400 text-sm">วิเคราะห์พฤติกรรม 15 สถานการณ์ในออฟฟิศ</p>
-          </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
+            <Loader2 size={48} className="text-blue-500 animate-spin mb-6" />
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">กำลังประมวลผลความตึง...</h2>
+            <p className="text-slate-400 text-sm text-center">แอบส่องพฤติกรรมคุณในออฟฟิศอยู่ แป๊บนึงนะ 🕵️‍♂️</p>
+          </motion.div>
         )}
 
+        {/* ================= 4. หน้าจอสรุปผล ================= */}
         {gameState === "result" && (
-          <div className="flex-1 w-full flex flex-col bg-slate-50 overflow-y-auto">
-            <div ref={printRef} className="p-5 sm:p-6 bg-slate-50 flex flex-col items-center">
-              <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-extrabold text-sm">
-                    UE
+          <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
+            <div className="w-full h-full overflow-y-auto pb-6">
+              <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
+                
+                <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-md shrink-0`}>
+                  <Trophy size={28} className="text-white/80 mb-2 mt-2" />
+                  <p className="text-white/90 text-[11px] font-bold tracking-wider mb-2">
+                    ผลลัพธ์จากแบบทดสอบ {TOTAL_QUESTIONS} ข้อ
+                  </p>
+                  <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1.5 rounded-full">{resultData[getFinalResult()].discTitle}</p>
+                </div>
+
+                <div className="p-5 pt-12 flex-1 flex flex-col relative bg-slate-50">
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-5xl w-24 h-24 rounded-full flex items-center justify-center shadow-xl border-[6px] border-slate-50 z-10">
+                    {resultData[getFinalResult()].emoji}
                   </div>
-                  <span className="font-extrabold text-slate-800 text-sm tracking-wide">UPSKILL EVERYDAY</span>
+
+                  <div className="text-center mt-2 mb-4">
+                    <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">ฉายาของคุณคือ</p>
+                    <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">{nickname}</h1>
+                    <p className={`text-lg font-black leading-tight px-2 ${resultData[getFinalResult()].titleColor}`}>
+                      {getDynamicTitle()}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-3 text-center">
+                    <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{resultData[getFinalResult()].desc}</p>
+                  </div>
+
+                  <div className="bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-200 mb-4 text-center">
+                    <p className="text-[12px] font-bold text-amber-700 mb-1.5 flex items-center justify-center gap-1.5">
+                      <AlertTriangle size={15} /> ข้อควรระวัง (จุดอ่อนของคุณ)
+                    </p>
+                    <p className="text-[12px] text-amber-900 leading-relaxed font-medium">
+                      {resultData[getFinalResult()].warning}
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
+                    <h3 className="font-bold text-slate-800 mb-4 text-sm border-b pb-2 flex items-center gap-2">
+                      <span className="text-[16px]">📊</span> ส่วนผสมความตึงของคุณ (DISC)
+                      <button onClick={() => setShowDiscInfo(true)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 transition-colors rounded hover:bg-slate-100" title="ความหมายของ D/I/S/C">
+                        <Info size={16} />
+                      </button>
+                    </h3>
+                    
+                    <div className="w-full h-4 bg-slate-100 rounded-full flex overflow-hidden mb-4 shadow-inner">
+                      {["D", "I", "S", "C"].map((type) => {
+                        const percent = getPercentages()[type as keyof typeof resultData];
+                        const data = resultData[type as keyof typeof resultData];
+                        if (percent === 0) return null; 
+                        return (
+                          <motion.div 
+                            key={type}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percent}%` }}
+                            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+                            className={`h-full ${data.barColor} border-r border-white/20 last:border-0`} 
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex justify-center flex-wrap gap-x-4 gap-y-3 px-2">
+                      {["D", "I", "S", "C"].map((type) => {
+                        const percent = getPercentages()[type as keyof typeof resultData];
+                        const data = resultData[type as keyof typeof resultData];
+                        return (
+                          <div key={type} className="flex items-center gap-1.5">
+                            <span className={`w-3 h-3 rounded-full ${data.barColor} shadow-sm`}></span>
+                            <span className="text-[11px] font-bold text-slate-700">
+                              {type} <span className="text-slate-500 font-medium">{percent}%</span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
+                    <h3 className="font-bold text-slate-800 mb-3 text-sm border-b pb-2 flex items-center gap-2">
+                      <span className="text-[16px]">🤝</span> ทำงานกับใครเวิร์คสุด?
+                    </h3>
+                    
+                    <div className={`${themeColors[resultData[getFinalResult()].bestPartner.type].bg} border ${themeColors[resultData[getFinalResult()].bestPartner.type].border} p-3 rounded-xl mb-2 transition-colors`}>
+                      <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].title} mb-1 flex items-center gap-1`}>
+                        <Zap size={14}/> คู่หูแบกงาน (Best Partner)
+                      </p>
+                      <p className={`font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].name} text-[13px] mb-0.5`}>
+                        {resultData[getFinalResult()].bestPartner.name}
+                      </p>
+                      <p className={`text-[11px] ${themeColors[resultData[getFinalResult()].bestPartner.type].desc} leading-tight`}>
+                        {resultData[getFinalResult()].bestPartner.desc}
+                      </p>
+                    </div>
+
+                    <div className={`${themeColors[resultData[getFinalResult()].kryptonite.type].bg} border ${themeColors[resultData[getFinalResult()].kryptonite.type].border} p-3 rounded-xl transition-colors`}>
+                      <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].title} mb-1 flex items-center gap-1`}>
+                        <ShieldAlert size={14}/> คู่กรรมทำปวดหัว (Kryptonite)
+                      </p>
+                      <p className={`font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].name} text-[13px] mb-0.5`}>
+                        {resultData[getFinalResult()].kryptonite.name}
+                      </p>
+                      <p className={`text-[11px] ${themeColors[resultData[getFinalResult()].kryptonite.type].desc} leading-tight`}>
+                        {resultData[getFinalResult()].kryptonite.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center text-slate-400 text-[10px] font-bold pb-2">
+                    Created by อัพสกิลกับฟุ้ย
+                  </div>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-1 rounded-full">OFFICE DISC</span>
               </div>
 
-              <div className="w-full text-center mb-4">
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs font-extrabold px-3 py-1 rounded-full mb-2">
-                  {getDynamicTitle()}
-                </span>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-1">
-                  {nickname} คือ &quot;{resultData[getFinalResult()].rpgTitle}&quot;
-                </h2>
-                <p className={`text-xs font-bold ${resultData[getFinalResult()].titleColor}`}>
-                  {resultData[getFinalResult()].discTitle} {resultData[getFinalResult()].emoji}
-                </p>
-              </div>
-
-              <div className="w-full bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
-                <p className="text-xs text-slate-700 leading-relaxed font-medium mb-3">
-                  {resultData[getFinalResult()].desc}
-                </p>
-                <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-200 flex items-start gap-2">
-                  <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={14} />
-                  <p className="text-[11px] text-amber-800 leading-normal font-medium">
-                    {resultData[getFinalResult()].warning}
-                  </p>
-                </div>
-              </div>
-
-              <div className="w-full bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
-                <h4 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-                  <PieChart size={14} className="text-blue-600" /> สัดส่วนบุคลิกภาพ DISC ของคุณ
-                </h4>
-                <div className="space-y-2">
-                  {(["D", "I", "S", "C"] as const).map((type) => {
-                    const pct = getPercentages()[type];
-                    return (
-                      <div key={type} className="flex items-center gap-2 text-xs">
-                        <span className="font-bold w-4 text-slate-700">{type}</span>
-                        <div className="flex-1 bg-slate-100 h-3 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${resultData[type].barColor} transition-all duration-500`}
-                            style={{ width: `${pct}%` }}
-                          ></div>
-                        </div>
-                        <span className="font-bold w-9 text-right text-slate-600 text-[11px]">{pct}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="w-full grid grid-cols-2 gap-2 mb-4">
-                <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
-                  <p className="text-[10px] font-bold text-emerald-700 mb-1 flex items-center gap-1">
-                    💚 คู่หูทำงานดีที่สุด
-                  </p>
-                  <p className="text-xs font-bold text-slate-800 mb-0.5">{resultData[getFinalResult()].bestPartner.name}</p>
-                  <p className="text-[10px] text-slate-600 leading-normal">{resultData[getFinalResult()].bestPartner.desc}</p>
-                </div>
-
-                <div className="bg-rose-50 p-3 rounded-2xl border border-rose-200">
-                  <p className="text-[10px] font-bold text-rose-700 mb-1 flex items-center gap-1">
-                    ⚡ คู่ปรับที่ต้องระวัง
-                  </p>
-                  <p className="text-xs font-bold text-slate-800 mb-0.5">{resultData[getFinalResult()].kryptonite.name}</p>
-                  <p className="text-[10px] text-slate-600 leading-normal">{resultData[getFinalResult()].kryptonite.desc}</p>
-                </div>
+              {/* ปุ่ม Action ท้ายหน้าผลลัพธ์ (อยู่นอก printRef จะไม่ติดไปในรูปภาพที่เซฟ) */}
+              <div className="px-5 pb-6">
+                <AssessmentResultCTA 
+                  completedType="disc" 
+                  currentUser={currentUser} 
+                  secondaryActions={
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <button 
+                        onClick={handleDownloadImage}
+                        disabled={isCapturing}
+                        className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-3 rounded-2xl transition-all text-[13px] shadow-md active:scale-95 disabled:bg-slate-400 cursor-pointer"
+                      >
+                        <Camera size={16} /> {isCapturing ? "รอแป๊บ..." : "เซฟรูปขิง Story"}
+                      </button>
+                      
+                      <button 
+                        onClick={restartGame} 
+                        className="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl text-[13px] border border-slate-200 transition-all active:scale-95 shadow-sm cursor-pointer"
+                      >
+                        <RefreshCcw size={15} /> เล่นใหม่อีกครั้ง
+                      </button>
+                    </div>
+                  }
+                />
               </div>
             </div>
 
-            <div className="p-4 bg-white border-t border-slate-200 flex flex-col gap-3 shrink-0">
-              <button
-                onClick={handleDownloadImage}
-                disabled={isCapturing}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all active:scale-95 text-xs flex items-center justify-center gap-2"
-              >
-                {isCapturing ? <Loader2 className="animate-spin" size={16} /> : <Camera size={16} />} บันทึกรูปภาพผลลัพธ์
-              </button>
-
-              <button
-                onClick={restartGame}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all active:scale-95 text-xs flex items-center justify-center gap-1.5"
-              >
-                <RefreshCcw size={14} /> ทำแบบทดสอบอีกครั้ง
-              </button>
-
-              <div className="mt-2 pt-2 border-t border-slate-100">
-                <AssessmentResultCTA currentUser={currentUser} completedType="disc" />
-              </div>
-            </div>
           </div>
         )}
-
       </div>
 
       <AnimatePresence>
@@ -663,96 +665,99 @@ export default function DiscClient() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => setShowDiscInfo(false)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 relative max-h-[85vh] overflow-y-auto"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white p-6 rounded-3xl shadow-2xl max-w-[320px] w-full border border-slate-100"
+              onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => { setShowDiscInfo(false); setSelectedDiscType(null); }}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full bg-slate-100"
-              >
-                <X size={18} />
-              </button>
-
-              <h3 className="text-lg font-extrabold text-slate-900 mb-2 flex items-center gap-2">
-                ℹ️ DISC Personality คืออะไร?
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                ทฤษฎีวิเคราะห์บุคลิกภาพที่ได้รับความนิยมระดับโลก แบ่งสไตล์การทำงานของมนุษย์ออกเป็น 4 กลุ่มหลัก:
-              </p>
-
-              <div className="space-y-2 mb-4">
-                {(["D", "I", "S", "C"] as const).map((type) => (
-                  <div
-                    key={type}
-                    onClick={() => setSelectedDiscType(selectedDiscType === type ? null : type)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                      themeColors[type].bg
-                    } ${themeColors[type].border}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-black text-xs ${themeColors[type].title}`}>
-                        {type} - {resultData[type].discTitle.split("(")[1]?.replace(")", "")} {resultData[type].emoji}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">
-                        {selectedDiscType === type ? "▲" : "▼"}
-                      </span>
-                    </div>
-                    {selectedDiscType === type && (
-                      <p className="text-[11px] text-slate-600 mt-2 leading-relaxed pt-2 border-t border-slate-200/50">
-                        {resultData[type].desc}
-                      </p>
-                    )}
-                  </div>
-                ))}
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-[16px] font-black text-slate-800">DISC คืออะไร? 🧠</h3>
+                <button onClick={() => setShowDiscInfo(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full transition-colors">
+                  <X size={16} />
+                </button>
               </div>
-
+              
+              <p className="text-[12px] text-slate-600 mb-5 leading-relaxed font-medium">
+                ทฤษฎีจิตวิทยาที่แบ่งสไตล์คนทำงานเป็น 4 แบบหลักๆ รู้ไว้ช่วยให้เราเอาตัวรอดจากเพื่อนร่วมงานได้!
+              </p>
+              
+              <div className="space-y-2.5 mb-6">
+                <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">🚀</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-red-800">D (Dominance)</p>
+                    <p className="text-[10px] text-red-600 leading-tight">สายลุย มุ่งเป้าหมาย ตัดสินใจไว เด็ดขาด</p>
+                  </div>
+                </div>
+                <div className="bg-orange-50 p-2.5 rounded-xl border border-orange-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">💃</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-orange-800">I (Influence)</p>
+                    <p className="text-[10px] text-orange-600 leading-tight">สายปาร์ตี้ ช่างพูดคุย ไอเดียฟุ้งกระจาย</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">🛡️</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-emerald-800">S (Steadiness)</p>
+                    <p className="text-[10px] text-emerald-600 leading-tight">สายซัพพอร์ต ใจเย็น เป็นผู้ฟังที่ดี รักสงบ</p>
+                  </div>
+                </div>
+                <div className="bg-blue-50 p-2.5 rounded-xl border border-blue-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">🧐</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-blue-800">C (Compliance)</p>
+                    <p className="text-[10px] text-blue-600 leading-tight">สายเป๊ะ เจ้าระเบียบ ข้อมูลและแผนต้องแน่น</p>
+                  </div>
+                </div>
+              </div>
+              
               <button
-                onClick={() => { setShowDiscInfo(false); setSelectedDiscType(null); }}
-                className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-xs hover:bg-slate-800 transition-all"
+                onClick={() => setShowDiscInfo(false)}
+                className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"
               >
-                เข้าใจแล้ว! ปิดหน้านี้
+                อ๋อออ เข้าใจละ!
               </button>
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
         {capturedImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setCapturedImage(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl flex flex-col items-center relative"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white p-5 rounded-[2rem] shadow-2xl max-w-sm w-full border border-slate-100 flex flex-col items-center gap-4 relative"
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setCapturedImage(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full bg-slate-100 z-10"
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition-all shadow-md cursor-pointer z-10"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
 
-              <div className="text-center mb-3 pr-6">
-                <h3 className="text-sm font-extrabold text-slate-900 flex items-center justify-center gap-1.5">
-                  📸 บันทึกรูปภาพผลลัพธ์
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  กดค้างที่รูปภาพด้านล่างเพื่อ <span className="text-blue-600 font-bold">&quot;บันทึกไปยังแอพรูปภาพ&quot;</span>
+              <div className="text-center">
+                <h3 className="text-base font-black text-slate-800 mb-1">✨ บันทึกรูปภาพของคุณ</h3>
+                <p className="text-[11px] text-slate-500 font-bold leading-normal">
+                  กดค้างที่รูปภาพด้านล่างเพื่อ <span className="text-blue-600 font-bold">&quot;บันทึกไปยังแอพรูปภาพ&quot;</span><br />
+                  หรือแคปหน้าจอเพื่อขิงลง Story ได้เลยครับ!
                 </p>
               </div>
 
-              <div className="relative w-full max-h-[50vh] overflow-y-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-50 mb-3">
+              <div className="relative w-full max-h-[50vh] overflow-y-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-50">
                 <img
                   src={capturedImage}
                   alt="DISC Result"
@@ -768,7 +773,7 @@ export default function DiscClient() {
                     link.href = capturedImage;
                     link.click();
                   }}
-                  className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 transition-all text-xs active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                  className="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-all text-[12px] active:scale-95 shadow-md flex items-center justify-center gap-1.5"
                 >
                   ดาวน์โหลดตรงอีกครั้ง
                 </button>

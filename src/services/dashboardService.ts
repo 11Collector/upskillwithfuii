@@ -145,6 +145,8 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   let discData = null;
   if (!discSnap.empty) {
     discData = discSnap.docs[0].data();
+  } else if (userDocSnap.exists() && userDocSnap.data().lastDisc) {
+    discData = userDocSnap.data().lastDisc;
   }
 
   let moneyData = null;
