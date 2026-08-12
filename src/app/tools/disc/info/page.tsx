@@ -28,7 +28,7 @@ export default function DiscInfoPage() {
         {/* Hero Section */}
         <header className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] mb-6 rotate-3">
-            <Mic size={40} />
+            <Users size={40} />
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
             Who Are You ? <br />
