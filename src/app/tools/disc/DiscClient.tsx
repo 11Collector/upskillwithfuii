@@ -480,7 +480,7 @@ export default function DiscClient() {
                 </div>
                 <div className="bg-slate-800 text-slate-100 p-3.5 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%] shadow-sm">
                   <p className="text-xs font-bold text-blue-400 mb-1">หัวหน้า / สถานการณ์ในออฟฟิศ</p>
-                  <p className="text-sm font-medium leading-relaxed">{activeScenarios[currentIndex].senderMessage}</p>
+                  <p className="text-sm font-medium leading-relaxed">{activeScenarios[currentIndex].message}</p>
                 </div>
               </div>
 
