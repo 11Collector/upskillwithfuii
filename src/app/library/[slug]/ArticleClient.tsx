@@ -449,6 +449,71 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
           )}
         </div>
 
+        {/* Related Tools Section for Internal Link SEO & User Engagement */}
+        <div className="mt-16 bg-slate-900/80 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur shadow-xl">
+          <div className="flex items-center gap-2 text-amber-400 text-[10px] font-black uppercase tracking-[0.25em] mb-2">
+            <Sparkles size={14} /> เครื่องมือประเมินตนเองที่เกี่ยวข้อง
+          </div>
+          <h3 className="text-xl md:text-2xl font-black text-white mb-6">
+            อยากรู้จักตัวเองลึกซึ้งยิ่งขึ้น?
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              href="/tools/wheel-of-life"
+              className="group bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-red-500/40 p-4 rounded-2xl transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                <span className="text-xs font-black text-red-400 block mb-1">Wheel of Life</span>
+                <span className="text-sm font-bold text-white group-hover:text-red-300 transition-colors">
+                  แบบประเมินวงล้อชีวิต 8 ด้าน (ฟรี)
+                </span>
+                <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                  วัดความสมดุลชีวิต พร้อม AI วางแผน 7 วัน
+                </p>
+              </div>
+              <span className="text-[10px] font-black text-red-400 mt-4 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                เริ่มทำแบบประเมิน →
+              </span>
+            </Link>
+
+            <Link
+              href="/tools/disc"
+              className="group bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500/40 p-4 rounded-2xl transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                <span className="text-xs font-black text-blue-400 block mb-1">DISC Personality</span>
+                <span className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                  แบบทดสอบ DISC บุคลิกภาพการทำงาน
+                </span>
+                <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                  วิเคราะห์ 4 นิสัยในออฟฟิศ พร้อมการ์ดสรุปผล
+                </p>
+              </div>
+              <span className="text-[10px] font-black text-blue-400 mt-4 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                เริ่มทำแบบทดสอบ →
+              </span>
+            </Link>
+
+            <Link
+              href="/tools/money-avatar"
+              className="group bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-500/40 p-4 rounded-2xl transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                <span className="text-xs font-black text-amber-400 block mb-1">Money Avatar</span>
+                <span className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
+                  แบบประเมินสไตล์การเงิน 9 แบบ
+                </span>
+                <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                  ค้นหา Money DNA และหลุมพรางการใช้เงิน
+                </p>
+              </div>
+              <span className="text-[10px] font-black text-amber-400 mt-4 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                เริ่มทำแบบประเมิน →
+              </span>
+            </Link>
+          </div>
+        </div>
+
         {/* Footer */}
         <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="mt-28 text-center pt-16 border-t border-white/5">
           <Link
