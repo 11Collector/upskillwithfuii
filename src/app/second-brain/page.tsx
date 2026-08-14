@@ -2171,19 +2171,13 @@ ${noteContent}`;
             </header>
 
             {/* --- Ebook Banner --- */}
-            {(!user || !isProMember || hasEbookAccess) && (
-              <Link href="/ebook" className="flex items-center justify-between gap-4 mb-8 px-5 py-3.5 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7 transition-colors group">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">📖</span>
-                  <span className="text-sm text-slate-400">อยากอ่านหนังสือรวมบทความเล่มแรก?</span>
-                </div>
-                {hasEbookAccess ? (
-                  <span className="text-xs font-bold text-emerald-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ดาวน์โหลดฟรี (สำหรับ PRO) →</span>
-                ) : (
-                  <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">โบนัสสำหรับสมาชิก PRO →</span>
-                )}
-              </Link>
-            )}
+            <Link href="/ebook" className="flex items-center justify-between gap-4 mb-8 px-5 py-3.5 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7 transition-colors group">
+              <div className="flex items-center gap-3">
+                <span className="text-lg">📖</span>
+                <span className="text-sm text-slate-400">อยากอ่านหนังสือรวมบทความเล่มแรก?</span>
+              </div>
+              <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ดาวน์โหลดฟรีที่นี่ →</span>
+            </Link>
 
             {/* --- Categories --- */}
             <div className="relative mb-14">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Download, CheckCircle, ChevronRight, Crown, Lock, Sparkles } from "lucide-react";
+import { Mail, Download, CheckCircle, ChevronRight, Crown, Lock, Sparkles, Users } from "lucide-react";
 import Image from "next/image";
 import { Sarabun } from "next/font/google";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
@@ -24,7 +24,7 @@ const CHAPTERS = [
 const HIGHLIGHTS = [
   "41 บทความในการพัฒนาตัวเอง ธุรกิจ ชีวิต",
   "QR Code เชื่อมไปยัง Tools ช่วย Self-awareness",
-  "โบนัส E-Book สำหรับสมาชิก PRO",
+  "แจกฟรีสำหรับทุกคน",
 ];
 
 export default function EbookPage() {
@@ -32,79 +32,34 @@ export default function EbookPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [user, setUser] = useState<User | null>(null);
-  const [checkingMember, setCheckingMember] = useState(true);
-  const [isProMember, setIsProMember] = useState(false);
-  const [hasEbookAccess, setHasEbookAccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadCount, setDownloadCount] = useState<number | null>(null);
 
   useEffect(() => {
-    let unsubSnapshot: (() => void) | null = null;
+    // Fetch total ebook lead download count
+    fetch('/api/ebook-lead')
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data?.count === 'number') {
+          setDownloadCount(data.count);
+        }
+      })
+      .catch((err) => console.error('Error fetching ebook count:', err));
 
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setIsProMember(false);
-      setHasEbookAccess(false);
-      setCheckingMember(true);
-
-      if (unsubSnapshot) {
-        unsubSnapshot();
-        unsubSnapshot = null;
+      if (currentUser?.email) {
+        setEmail(currentUser.email);
       }
-
-      if (!currentUser) {
-        setCheckingMember(false);
-        return;
-      }
-
-      unsubSnapshot = onSnapshot(doc(db, "users", currentUser.uid), (snap) => {
-        try {
-          const data = snap.exists() ? snap.data() : {};
-          const subscriptionStatus = data?.subscriptionStatus || data?.subscription_status || "";
-          const subscriptionTier = data?.subscriptionTier || data?.subscription_tier || "";
-          const isPro =
-            data?.role === "premium" ||
-            subscriptionTier === "pro" ||
-            ["active", "trialing"].includes(subscriptionStatus) ||
-            Boolean(data?.isLifetimeMember);
-
-          setIsProMember(isPro);
-
-          const hasAccess =
-            isPro && (
-              Boolean(data?.isLifetimeMember) ||
-              data?.subscriptionPlan === "lifetime" ||
-              data?.subscriptionPlan === "yearly" ||
-              data?.subscriptionPlan === "founding_yearly"
-            );
-          setHasEbookAccess(hasAccess);
-        } catch {
-          setIsProMember(false);
-          setHasEbookAccess(false);
-        } finally {
-          setCheckingMember(false);
-        }
-      }, (error) => {
-        console.error("Ebook page snapshot error:", error);
-        setIsProMember(false);
-        setHasEbookAccess(false);
-        setCheckingMember(false);
-      });
     });
 
-    return () => {
-      unsubscribeAuth();
-      if (unsubSnapshot) unsubSnapshot();
-    };
+    return () => unsubscribeAuth();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) {
-      setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book สำหรับ PRO นะครับ");
-      return;
-    }
-    if (!hasEbookAccess) {
-      setErrorMsg("E-Book เล่มนี้เป็นโบนัสสำหรับสมาชิก PRO รายปี หรือ Lifetime ครับ");
+      setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book ฟรีนะครับ");
       return;
     }
     if (!email.trim()) return;
@@ -125,6 +80,7 @@ export default function EbookPage() {
         throw new Error(data?.error || 'server error');
       }
       setStatus("done");
+      setDownloadCount(prev => (prev !== null ? prev + 1 : 1));
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะครับ");
       setStatus("error");
@@ -132,8 +88,8 @@ export default function EbookPage() {
   }
 
   async function handleDownload() {
-    if (!user || !isProMember) {
-      setErrorMsg("E-Book เล่มนี้เป็นโบนัสสำหรับสมาชิก PRO ครับ");
+    if (!user) {
+      setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book นะครับ");
       return;
     }
 
@@ -177,10 +133,10 @@ export default function EbookPage() {
           style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)", boxShadow: "0 8px 32px rgba(123,24,24,0.08)" }}
         >
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-            <Crown size={22} />
+            <Sparkles size={22} />
           </div>
-          <h2 className="text-lg font-extrabold mb-1">ปลดล็อกแล้วครับ</h2>
-          <p className="text-sm mb-6" style={{ color: "#5a5a5a" }}>กด Download ด้านล่างได้เลย</p>
+          <h2 className="text-lg font-extrabold mb-1">รับ E-Book เรียบร้อยครับ</h2>
+          <p className="text-sm mb-6" style={{ color: "#5a5a5a" }}>กด Download ด้านล่างเพื่อโหลดไฟล์ PDF ได้เลย</p>
           {errorMsg && <p className="text-xs text-center mb-3" style={{ color: "#c0392b" }}>{errorMsg}</p>}
           <button
             type="button"
@@ -202,65 +158,60 @@ export default function EbookPage() {
         >
           <div className="text-center">
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-              {hasEbookAccess ? <Crown size={20} /> : <Lock size={19} />}
+              <Sparkles size={20} />
             </div>
-            <h2 className="text-base font-extrabold">{hasEbookAccess ? "รับ E-Book สำหรับ PRO" : "E-Book สำหรับสมาชิก PRO"}</h2>
+            <h2 className="text-base font-extrabold">รับ E-Book ฟรี</h2>
             <p className="text-xs mt-1" style={{ color: "#5a5a5a" }}>
-              {hasEbookAccess ? "กรอก email เพื่อรับไฟล์เล่มนี้" : "ปลดล็อกเมื่อสมัคร PRO รายปีหรือ Lifetime"}
+              {user ? "กรอก email เพื่อรับไฟล์และดาวน์โหลด" : "เข้าสู่ระบบเพื่อรับ E-Book ฟรีได้ทันที"}
             </p>
           </div>
-          {hasEbookAccess && (
-            <div className="relative">
-              <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#aaa" }} />
-              <input
-                type="email"
-                required
-                placeholder="your@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-                style={{ background: "#faf9f7", border: "1px solid rgba(123,24,24,0.2)", color: "#1a1a1a" }}
-              />
-            </div>
-          )}
-          {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
-          {hasEbookAccess ? (
+          {user ? (
             <>
+              <div className="relative">
+                <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#aaa" }} />
+                <input
+                  type="email"
+                  required
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
+                  style={{ background: "#faf9f7", border: "1px solid rgba(123,24,24,0.2)", color: "#1a1a1a" }}
+                />
+              </div>
+              {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
               <button
                 type="submit"
-                disabled={status === "loading" || checkingMember}
+                disabled={status === "loading"}
                 className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
                 style={{ background: "#7B1818", color: "#fff", opacity: status === "loading" ? 0.6 : 1 }}
               >
                 {status === "loading" ? (
                   <span className="animate-pulse">กำลังโหลด...</span>
                 ) : (
-                  <><Download size={15} />รับ E-Book</>
+                  <><Download size={15} />รับ E-Book ฟรี</>
                 )}
               </button>
               <p className="text-xs text-center" style={{ color: "#aaa" }}>
-                ไม่มี spam · ใช้สำหรับส่งไฟล์และข่าวสาร PRO เท่านั้น
+                ไม่มี spam · ใช้สำหรับส่งไฟล์และข่าวสารพัฒนาตัวเองเท่านั้น
               </p>
             </>
           ) : (
             <>
+              {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
               <button
                 type="button"
                 onClick={async () => {
-                  if (!user) {
-                    await signInWithPopup(auth, googleProvider);
-                    return;
-                  }
-                  window.location.href = "/dashboard?membership=1";
+                  await signInWithPopup(auth, googleProvider);
                 }}
                 className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
                 style={{ background: "#111827", color: "#fff" }}
               >
-                {!user ? "เข้าสู่ระบบก่อนรับสิทธิ์" : "ดูแผน PRO เพื่อปลดล็อก"}
+                เข้าสู่ระบบเพื่อรับ E-Book ฟรี
                 <ChevronRight size={15} />
               </button>
               <p className="text-xs text-center" style={{ color: "#aaa" }}>
-                E-Book นี้เป็นโบนัสสำหรับสมาชิก PRO เท่านั้น
+                ล็อกอินด้วย Google เพื่อรับสิทธิ์และดาวน์โหลดฟรี
               </p>
             </>
           )}
@@ -307,7 +258,7 @@ export default function EbookPage() {
                 className="inline-block text-xs font-extrabold tracking-widest uppercase px-3 py-1 rounded-full mb-4"
                 style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
               >
-                Pro Member Bonus
+                Free E-Book
               </div>
               <h1 className="text-3xl lg:text-3xl font-extrabold leading-tight mb-3">
                 สร้างก่อนพร้อม
@@ -316,14 +267,27 @@ export default function EbookPage() {
                 41 บทความพัฒนาตัวเอง<br className="hidden lg:block" /> จากคนธรรมดาที่เริ่มต้นแม้ยังไม่พร้อม
               </p>
 
-              <motion.div
-                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold"
-                style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
-              >
-                <Sparkles size={12} />
-                โบนัสสำหรับสมาชิก PRO
-              </motion.div>
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                  style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
+                >
+                  <Sparkles size={12} />
+                  แจกฟรีสำหรับทุกคน
+                </motion.div>
+
+                {downloadCount !== null && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                    style={{ background: "rgba(16, 185, 129, 0.1)", color: "#047857" }}
+                  >
+                    <Users size={12} />
+                    ดาวน์โหลดไปแล้ว {downloadCount.toLocaleString()} คน
+                  </motion.div>
+                )}
+              </div>
 
               {/* Highlights — desktop only */}
               <div className="hidden lg:block mt-8 space-y-3 text-left">
