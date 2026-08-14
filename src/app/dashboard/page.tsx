@@ -8805,12 +8805,7 @@ Day 21: [กิจกรรม]
                         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ปรับ Quest วันนี้กับพี่ฟุ้ย</div>
                         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> Focus Room Lounge ห้องโฟกัสรวม</div>
                         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> บทความพิเศษจากพี่ฟุ้ย</div>
-                        {(userData?.subscriptionPlan === "yearly" ||
-                          userData?.subscriptionPlan === "founding_yearly" ||
-                          userData?.subscriptionPlan === "lifetime" ||
-                          userData?.isLifetimeMember) && (
-                          <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /> ฟรี E-Book สร้างก่อนพร้อม</div>
-                        )}
+
                       </div>
                     </div>
 
@@ -8890,7 +8885,7 @@ Day 21: [กิจกรรม]
                       <li>ปรับ Quest วันนี้กับพี่ฟุ้ย</li>
                       <li>Focus Room Lounge ห้องโฟกัสรวม</li>
                       <li>บทความพิเศษจากพี่ฟุ้ย</li>
-                      <li>ฟรี E-Book สร้างก่อนพร้อม (เฉพาะรายปี & Lifetime)</li>
+
                     </ul>
                   </div>
                 </div>
@@ -9320,16 +9315,7 @@ Day 21: [กิจกรรม]
                     <span className="text-emerald-500 font-extrabold">✓</span>
                     <span>คลังบทความสรุปและบทเรียนชีวิตพรีเมียม</span>
                   </div>
-                  {/* Show ebook perk conditionally if they got Yearly/Lifetime */}
-                  {(userData?.subscriptionPlan === "yearly" ||
-                    userData?.subscriptionPlan === "founding_yearly" ||
-                    userData?.subscriptionPlan === "lifetime" ||
-                    userData?.isLifetimeMember) && (
-                    <div className="flex gap-3 text-xs font-bold text-slate-700">
-                      <span className="text-emerald-500 font-extrabold">✓</span>
-                      <span>ฟรี E-Book “สร้างก่อนพร้อม” ดาวน์โหลดได้ทันที</span>
-                    </div>
-                  )}
+
                 </div>
 
                 <button

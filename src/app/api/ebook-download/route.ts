@@ -1,30 +1,11 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
-import { adminDb } from "@/lib/firebase-admin";
 import { verifyAuthToken, isAuthError } from "@/lib/auth-middleware";
-
-async function isProUser(uid: string) {
-  const userSnap = await adminDb.collection("users").doc(uid).get();
-  const userData = userSnap.exists ? userSnap.data() || {} : {};
-  const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || "";
-  const subscriptionTier = userData.subscriptionTier || userData.subscription_tier || "";
-
-  return (
-    userData.role === "premium" ||
-    subscriptionTier === "pro" ||
-    ["active", "trialing"].includes(subscriptionStatus) ||
-    Boolean(userData.isLifetimeMember)
-  );
-}
 
 export async function GET(req: Request) {
   const authResult = await verifyAuthToken(req);
   if (isAuthError(authResult)) return authResult;
-
-  if (!(await isProUser(authResult.uid))) {
-    return NextResponse.json({ error: "E-Book นี้เป็นโบนัสสำหรับสมาชิก PRO ครับ" }, { status: 403 });
-  }
 
   try {
     const filePath = path.join(process.cwd(), "private", "ebooks", "สร้างก่อนพร้อม-A5.pdf");

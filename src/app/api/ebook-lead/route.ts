@@ -33,20 +33,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    const userSnap = await adminDb.collection('users').doc(authResult.uid).get();
-    const userData = userSnap.exists ? userSnap.data() || {} : {};
-    const subscriptionStatus = userData.subscriptionStatus || userData.subscription_status || '';
-    const subscriptionTier = userData.subscriptionTier || userData.subscription_tier || '';
-    const isProMember =
-      userData.role === 'premium' ||
-      subscriptionTier === 'pro' ||
-      ['active', 'trialing'].includes(subscriptionStatus) ||
-      Boolean(userData.isLifetimeMember);
-
-    if (!isProMember) {
-      return NextResponse.json({ error: 'E-Book นี้เป็นโบนัสสำหรับสมาชิก PRO ครับ' }, { status: 403 });
-    }
-
     const body = await req.json();
     const { email } = Schema.parse(body);
     const normalised = email.trim().toLowerCase();
@@ -61,7 +47,7 @@ export async function POST(req: Request) {
     if (existing.empty) {
       await adminDb.collection('ebook_leads').add({
         email: normalised,
-        source: 'pro-ebook',
+        source: 'free-ebook',
         userId: authResult.uid,
         createdAt: FieldValue.serverTimestamp(),
       });
@@ -71,18 +57,18 @@ export async function POST(req: Request) {
     const emailResult = await resend.emails.send({
       from: 'ฟุ้ย <fuii@upskilleveryday.com>',
       to: normalised,
-      subject: 'สร้างก่อนพร้อม — E-Book สำหรับสมาชิก PRO',
+      subject: 'สร้างก่อนพร้อม — E-Book แจกฟรีจาก Upskill with Fuii',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#1a1a1a;">
           <div style="height:4px;background:#7B1818;border-radius:2px;margin-bottom:32px;"></div>
-          <h2 style="margin:0 0 8px;font-size:20px;">ขอบคุณที่เป็นสมาชิก PRO ครับ</h2>
+          <h2 style="margin:0 0 8px;font-size:20px;">ขอบคุณที่สนใจ E-Book สร้างก่อนพร้อมครับ</h2>
           <p style="color:#5a5a5a;margin:0 0 24px;line-height:1.6;">
-            กลับไปที่หน้า E-Book แล้วกด Download ด้วยบัญชี PRO ของคุณได้เลยครับ
+            กลับไปที่หน้า E-Book แล้วกด Download ไฟล์ PDF ได้ทันทีครับ
           </p>
           <a href="https://upskilleveryday.com/ebook"
              style="display:inline-block;background:#7B1818;color:#fff;text-decoration:none;
                     padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;">
-            เปิดหน้า PRO E-Book
+            เปิดหน้าดาวน์โหลด E-Book
           </a>
           <p style="color:#aaa;font-size:12px;margin-top:32px;line-height:1.6;">
             หวังว่าจะมีอย่างน้อยหนึ่งหน้าที่ทำให้คุณ "เอะใจ" ครับ<br/>
