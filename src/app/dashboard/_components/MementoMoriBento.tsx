@@ -105,6 +105,14 @@ export const MementoMoriBento: React.FC<MementoMoriBentoProps> = ({ userData, on
 
   const hasSetup = !!userData?.birthdate;
   const showTime = mounted && timeLeft;
+  const currentAge = userData?.birthdate ? (new Date().getTime() - new Date(userData.birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365.25) : null;
+  const currentSeason = (() => {
+    if (currentAge === null || isNaN(currentAge)) return null;
+    if (currentAge < 20) return { name: "ฤดูใบไม้ผลิ", icon: "🌱", color: "bg-emerald-500/10 text-emerald-800 border-emerald-500/30" };
+    if (currentAge < 40) return { name: "ฤดูร้อน", icon: "☀️", color: "bg-amber-500/10 text-amber-900 border-amber-500/30" };
+    if (currentAge < 60) return { name: "ฤดูใบไม้ร่วง", icon: "🍂", color: "bg-orange-500/10 text-orange-900 border-orange-500/30" };
+    return { name: "ฤดูหนาว", icon: "❄️", color: "bg-sky-500/10 text-sky-900 border-sky-500/30" };
+  })();
 
   return (
     <div className="group flex flex-col h-full relative cursor-pointer" onClick={onOpenModal}>
@@ -229,10 +237,18 @@ export const MementoMoriBento: React.FC<MementoMoriBentoProps> = ({ userData, on
             <>
               {/* Description & XP Badge */}
               <div className="flex flex-col items-center mb-8 px-6 max-w-[320px] w-full">
-                {/* Lived percentage pill */}
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF5ED] text-[#5C4033] rounded-full border border-[#D2B48C]/40 text-[11px] font-black mb-2 shadow-sm">
-                  ผ่านไปแล้ว {percentLived !== null ? percentLived.toFixed(1) : "0.0"}% ของชีวิต
-                </span>
+                {/* Lived percentage & Season pill */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF5ED] text-[#5C4033] rounded-full border border-[#D2B48C]/40 text-[11px] font-black shadow-2xs">
+                    ผ่านไปแล้ว {percentLived !== null ? percentLived.toFixed(1) : "0.0"}% ของชีวิต
+                  </span>
+                  {currentSeason && (
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-black shadow-2xs ${currentSeason.color}`}>
+                      <span>{currentSeason.icon}</span>
+                      <span>{currentSeason.name}</span>
+                    </span>
+                  )}
+                </div>
 
                 {/* Weeks/Months/Years Remaining Title & Large Stat (Clickable) */}
                 <div 
