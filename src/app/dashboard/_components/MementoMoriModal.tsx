@@ -398,10 +398,42 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
                     {(() => {
                       const age = daysLived / 365.25;
                       const seasons = [
-                        { name: "ฤดูใบไม้ผลิ", label: "0-20 ปี: เรียนรู้และเติบโต", icon: "🌱", range: [0, 20], color: "from-green-500/10 to-green-600/5", border: "border-green-200/50" },
-                        { name: "ฤดูร้อน", label: "20-40 ปี: สร้างตัวและลุยชีวิต", icon: "☀️", range: [20, 40], color: "from-amber-500/10 to-amber-600/5", border: "border-amber-200/50" },
-                        { name: "ฤดูใบไม้ร่วง", label: "40-60 ปี: มั่นคงและตกตะกอน", icon: "🍂", range: [40, 60], color: "from-orange-500/10 to-orange-600/5", border: "border-orange-200/50" },
-                        { name: "ฤดูหนาว", label: "60 ปีขึ้นไป: สงบและส่งมรดกชีวิต", icon: "❄️", range: [60, 150], color: "from-blue-500/10 to-blue-600/5", border: "border-blue-200/50" }
+                        {
+                          name: "ฤดูใบไม้ผลิ",
+                          label: "0-20 ปี: เรียนรู้และเติบโต",
+                          icon: "🌱",
+                          range: [0, 20],
+                          activeBg: "bg-gradient-to-tr from-emerald-500/15 via-emerald-400/5 to-teal-500/10 border-emerald-600/50 shadow-[0_4px_16px_-4px_rgba(16,185,129,0.25)]",
+                          badgeBg: "bg-emerald-600 text-white",
+                          titleColor: "text-emerald-950"
+                        },
+                        {
+                          name: "ฤดูร้อน",
+                          label: "20-40 ปี: สร้างตัวและลุยชีวิต",
+                          icon: "☀️",
+                          range: [20, 40],
+                          activeBg: "bg-gradient-to-tr from-amber-500/15 via-orange-400/5 to-yellow-500/10 border-amber-600/50 shadow-[0_4px_16px_-4px_rgba(245,158,11,0.25)]",
+                          badgeBg: "bg-amber-600 text-white",
+                          titleColor: "text-amber-950"
+                        },
+                        {
+                          name: "ฤดูใบไม้ร่วง",
+                          label: "40-60 ปี: มั่นคงและตกตะกอน",
+                          icon: "🍂",
+                          range: [40, 60],
+                          activeBg: "bg-gradient-to-tr from-orange-500/15 via-amber-600/5 to-rose-500/10 border-orange-600/50 shadow-[0_4px_16px_-4px_rgba(249,115,22,0.25)]",
+                          badgeBg: "bg-orange-600 text-white",
+                          titleColor: "text-orange-950"
+                        },
+                        {
+                          name: "ฤดูหนาว",
+                          label: "60 ปีขึ้นไป: สงบและส่งมรดกชีวิต",
+                          icon: "❄️",
+                          range: [60, 150],
+                          activeBg: "bg-gradient-to-tr from-sky-500/15 via-blue-400/5 to-indigo-500/10 border-sky-600/50 shadow-[0_4px_16px_-4px_rgba(14,165,233,0.25)]",
+                          badgeBg: "bg-sky-600 text-white",
+                          titleColor: "text-sky-950"
+                        }
                       ];
 
                       return (
@@ -411,21 +443,23 @@ export const MementoMoriModal: React.FC<MementoMoriModalProps> = ({
                             return (
                               <div
                                 key={idx}
-                                className={`p-3 rounded-2xl border transition-all duration-500 flex flex-col justify-between ${
+                                className={`p-3.5 rounded-2xl border transition-all duration-500 flex flex-col justify-between ${
                                   isActive
-                                    ? "bg-gradient-to-tr from-[#8B5A2B]/10 to-[#D2B48C]/5 border-[#8B5A2B] shadow-sm scale-[1.02]"
-                                    : `bg-slate-500/5 ${season.border} opacity-50`
+                                    ? `${season.activeBg} scale-[1.02] relative z-10`
+                                    : "bg-[#FAF7F2]/60 border-[#E3D9CC]/60 opacity-40 hover:opacity-75"
                                 }`}
                               >
                                 <div className="flex items-center gap-1.5 justify-between">
-                                  <span className="text-xs font-black text-[#3E2723]">{season.name}</span>
+                                  <span className={`text-xs font-black ${isActive ? season.titleColor : "text-[#3E2723]"}`}>
+                                    {season.name}
+                                  </span>
                                   <span className="text-sm">{season.icon}</span>
                                 </div>
                                 <span className="text-[9px] font-bold text-[#6F5B4E] mt-2 block leading-snug">
                                   {season.label}
                                 </span>
                                 {isActive && (
-                                  <span className="inline-block self-start mt-2 px-1.5 py-0.5 bg-[#8B5A2B] text-white text-[7px] font-black uppercase tracking-wider rounded-md">
+                                  <span className={`inline-block self-start mt-2 px-1.5 py-0.5 ${season.badgeBg} text-white text-[7px] font-black uppercase tracking-wider rounded-md shadow-2xs`}>
                                     ช่วงอายุของคุณ
                                   </span>
                                 )}
