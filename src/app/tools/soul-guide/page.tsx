@@ -926,6 +926,13 @@ export default function SoulGuidePage() {
                   className="flex-1 bg-transparent outline-none text-sm text-zinc-300 placeholder:text-zinc-600 ml-2"
                 />
                 <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    // Prevent blur on mobile touch before click
+                    if (input.trim() && !isLoading) {
+                      e.preventDefault();
+                    }
+                  }}
                   onClick={() => handleSendMessage()}
                   disabled={isLoading || !input.trim()}
                   className="w-11 h-11 bg-zinc-200 text-black rounded-full flex items-center justify-center hover:bg-white active:scale-95 transition-all disabled:opacity-20"
