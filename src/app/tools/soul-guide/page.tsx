@@ -108,8 +108,7 @@ export default function SoulGuidePage() {
 
   useEffect(() => {
     messagesRef.current = messages;
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages]);
 
   const cleanMessageContent = (text: string) => {
     if (!text) return "";
@@ -220,17 +219,9 @@ export default function SoulGuidePage() {
         });
         unsubs.push(unsubQuote);
 
-        // 7. Load Chat History once (robust fetching & fallback sorting)
+        // 7. Listen to Chat History with Realtime onSnapshot
         const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
-        let historyDocs: any[] = [];
-        try {
-          // Fetch up to 100 recent messages
-          const historySnap = await getDocs(query(chatHistoryRef, limit(100)));
-          historyDocs = historySnap.docs;
-        } catch (e) {
-          console.error("Failed to load chat history:", e);
-        }
-
+        
         const getDocTime = (data: any) => {
           if (typeof data.createdAtMillis === 'number') return data.createdAtMillis;
           if (data.createdAt?.toMillis) return data.createdAt.toMillis();
@@ -245,23 +236,23 @@ export default function SoulGuidePage() {
           return 0;
         };
 
-        const sortedDocs = [...historyDocs].sort((a, b) => {
-          const timeA = getDocTime(a.data());
-          const timeB = getDocTime(b.data());
-          if (timeA !== 0 && timeB !== 0) return timeA - timeB;
-          if (timeA !== 0) return 1;
-          if (timeB !== 0) return -1;
-          return 0;
-        });
+        const unsubChat = onSnapshot(chatHistoryRef, (historySnap) => {
+          const sortedDocs = [...historySnap.docs].sort((a, b) => {
+            const timeA = getDocTime(a.data());
+            const timeB = getDocTime(b.data());
+            if (timeA !== 0 && timeB !== 0) return timeA - timeB;
+            if (timeA !== 0) return 1;
+            if (timeB !== 0) return -1;
+            return 0;
+          });
 
-        const history: Message[] = sortedDocs
-          .map(doc => ({
-            role: doc.data().role as "user" | "assistant",
-            content: doc.data().content,
-          }))
-          .filter(msg => msg.content && (msg.role === "user" || msg.role === "assistant"));
+          const history: Message[] = sortedDocs
+            .map(d => ({
+              role: d.data().role as "user" | "assistant",
+              content: d.data().content,
+            }))
+            .filter(msg => msg.content && (msg.role === "user" || msg.role === "assistant"));
 
-        if (!messagesInitialized.current) {
           messagesInitialized.current = true;
 
           const welcomeMessage: Message = {
@@ -269,17 +260,9 @@ export default function SoulGuidePage() {
             content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
           };
 
-          setMessages((prev) => {
-            if (prev.length > 0) {
-              // If user already typed messages locally before history finished loading, merge history before local messages
-              const newLocalMessages = prev.filter(
-                (p) => !history.some((h) => h.role === p.role && h.content === p.content)
-              );
-              return [...(history.length > 0 ? history : [welcomeMessage]), ...newLocalMessages];
-            }
-            return history.length > 0 ? history : [welcomeMessage];
-          });
-        }
+          setMessages(history.length > 0 ? history : [welcomeMessage]);
+        });
+        unsubs.push(unsubChat);
 
       } else {
         router.push("/");
@@ -351,13 +334,7 @@ export default function SoulGuidePage() {
     }
   }, [messages.length]);
 
-  useEffect(() => {
-    const handleViewportChange = () => {
-      setTimeout(() => scrollToBottom("smooth"), 100);
-    };
-    window.visualViewport?.addEventListener("resize", handleViewportChange);
-    return () => window.visualViewport?.removeEventListener("resize", handleViewportChange);
-  }, []);
+
 
   useEffect(() => {
     if (userData) {
