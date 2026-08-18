@@ -131,8 +131,8 @@ export default function HeroSection({
         />
       </picture>
       <div className="absolute inset-0 bg-gradient-to-r from-amber-50/96 via-amber-50/70 to-transparent z-10 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_28%_76%,rgba(15,23,42,0.22),transparent_42%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/28 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_28%_76%,rgba(15,23,42,0.22),transparent_42%)] pointer-events-none" />
 
       {(deferredPrompt || isIOS) && (
         <motion.button

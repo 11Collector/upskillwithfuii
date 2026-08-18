@@ -1,0 +1,112 @@
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  User,
+} from "firebase/auth";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { auth, googleProvider, db } from "@/lib/firebase";
+
+export const isStandalonePWA = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return (
+    (window.navigator as any).standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches
+  );
+};
+
+export const isMobileDevice = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+};
+
+export const loginWithGoogle = async (): Promise<User | null> => {
+  // In standalone PWA mode on iOS/Android, popups are blocked by OS — must use redirect
+  if (isStandalonePWA()) {
+    await signInWithRedirect(auth, googleProvider);
+    return null;
+  }
+
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    if (user) {
+      await syncUserDocument(user);
+    }
+    return user;
+  } catch (error: any) {
+    if (
+      error?.code === "auth/popup-blocked" ||
+      error?.code === "auth/cancelled-popup-request" ||
+      error?.code === "auth/operation-not-supported-in-this-environment"
+    ) {
+      // Fallback to redirect
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+
+    if (error?.code === "auth/popup-closed-by-user") {
+      return null;
+    }
+
+    // If mobile error, try redirect as last resort
+    if (isMobileDevice()) {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return null;
+      } catch (redirectErr) {
+        console.error("Redirect login failed:", redirectErr);
+      }
+    }
+
+    throw error;
+  }
+};
+
+export const syncUserDocument = async (user: User) => {
+  try {
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(
+      userRef,
+      {
+        lastLoginAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        subscription_tier: "free",
+        createdAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.error("Error syncing user document:", err);
+  }
+};
+
+export const checkRedirectLoginResult = async (): Promise<User | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      await syncUserDocument(result.user);
+      return result.user;
+    }
+    return null;
+  } catch (err: any) {
+    if (err?.code !== "auth/credential-already-in-use") {
+      console.error("getRedirectResult error:", err);
+    }
+    return null;
+  }
+};
+
+export const logoutUser = () => signOut(auth);

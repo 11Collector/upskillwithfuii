@@ -4,8 +4,9 @@ import Link from "next/link";
 import { PieChart, Users, Wallet, Brain } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, User } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { loginWithGoogle } from "@/lib/auth-helpers";
 
 const dashboardTabs = [
   { id: 'home',     label: 'หน้าหลัก',           path: '/dashboard?tab=home' },
@@ -50,19 +51,10 @@ function HeaderInner() {
 
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await loginWithGoogle();
     } catch (e: any) {
-      if (
-        e?.code === 'auth/popup-blocked' ||
-        e?.code === 'auth/cancelled-popup-request'
-      ) {
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (redirectErr) {
-          console.error("Redirect login error:", redirectErr);
-        }
-      } else if (e?.code !== 'auth/popup-closed-by-user') {
-        console.error(e);
+      if (e?.code !== 'auth/popup-closed-by-user') {
+        console.error("Header login error:", e);
       }
     }
   };

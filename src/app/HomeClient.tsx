@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  signOut,
-  onAuthStateChanged,
-  User,
-} from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { auth, googleProvider, db } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { usePWAInstall } from "@/lib/pwa";
+import {
+  loginWithGoogle,
+  checkRedirectLoginResult,
+  logoutUser,
+} from "@/lib/auth-helpers";
 
 // Modular Home Components
 import HeroSection from "@/components/home/HeroSection";
@@ -83,6 +82,15 @@ export default function HomeClient() {
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [billingPlan, setBillingPlan] = useState<ProPlan>("monthly");
   const [showIOSInstallGuide, setShowIOSInstallGuide] = useState(false);
+
+  useEffect(() => {
+    // Process redirect result if returning from Google redirect on mobile/PWA
+    checkRedirectLoginResult().then((redirectUser) => {
+      if (redirectUser) {
+        setUser(redirectUser);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -179,64 +187,11 @@ export default function HomeClient() {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
     try {
-      let loggedInUser: User | null = null;
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        loggedInUser = result.user;
-      } catch (popupError: any) {
-        if (
-          popupError?.code === "auth/popup-blocked" ||
-          popupError?.code === "auth/cancelled-popup-request"
-        ) {
-          await signInWithRedirect(auth, googleProvider);
-          return;
-        } else if (popupError?.code === "auth/popup-closed-by-user") {
-          return;
-        } else {
-          throw popupError;
-        }
+      const loggedInUser = await loginWithGoogle();
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
-
-      if (!loggedInUser) return;
-
-      const userRef = doc(db, "users", loggedInUser.uid);
-
-      await setDoc(
-        userRef,
-        {
-          lastLoginAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      const userSnap = await getDoc(userRef);
-
-      let isPremium = false;
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          uid: loggedInUser.uid,
-          email: loggedInUser.email,
-          displayName: loggedInUser.displayName,
-          photoURL: loggedInUser.photoURL,
-          subscription_tier: "free",
-          createdAt: serverTimestamp(),
-        });
-      } else {
-        const data = userSnap.data() || {};
-        const subscriptionStatus =
-          data.subscriptionStatus || data.subscription_status || "";
-        const subscriptionTier =
-          data.subscriptionTier || data.subscription_tier || "";
-        isPremium =
-          data.role === "premium" ||
-          subscriptionTier === "pro" ||
-          ["active", "trialing"].includes(subscriptionStatus) ||
-          Boolean(data.isLifetimeMember);
-      }
-      setIsPro(isPremium);
-      setIsProLoaded(true);
-
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error: any) {
       setIsProLoaded(true);
       if (error?.code !== "auth/popup-closed-by-user") {
@@ -247,7 +202,7 @@ export default function HomeClient() {
     }
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = () => logoutUser();
 
   if (loading) {
     return (
