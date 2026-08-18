@@ -1766,57 +1766,80 @@ Day 21: [กิจกรรม]
   }, [isSoulGuideUnlocked]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        // 🧹 Clear state of previous user to prevent account cross-contamination
-        setUserData(null);
-        setLastWheel(null);
-        setLastDisc(null);
-        setLastMoney(null);
-        setLastLibrarySoul(null);
-        setLastGhostResult(null);
-        setActiveSkillTrackId(null);
-        setSkillTrackCurrentDay(1);
-        setSkillTrackCompletedDays([]);
-        setAiSkillQuests({});
-        setCompletedQuests([]);
+    let isMounted = true;
+    let unsubAuth: (() => void) | undefined;
 
-        setUser(currentUser);
-        setNewName(currentUser.displayName || "");
-        
-        try {
-          await loadDashboardData(currentUser);
-          await loadPlaylistBooks(currentUser.uid);
-        } catch (err) {
-          console.error("Error loading dashboard data:", err);
-        } finally {
-          setLoading(false);
-        }
-
-        // Update lastLoginAt once per session in the background after data loads
-        try {
-          const hasUpdatedLogin = sessionStorage.getItem("hasUpdatedLogin");
-          if (!hasUpdatedLogin) {
-            await updateDoc(doc(db, "users", currentUser.uid), {
-              lastLoginAt: serverTimestamp()
-            });
-            sessionStorage.setItem("hasUpdatedLogin", "true");
-          }
-        } catch (e) {
-          console.error("Failed to update lastLoginAt:", e);
-        }
-      } else {
-        setUserData(null);
-        setActiveSkillTrackId(null);
-        setSkillTrackCurrentDay(1);
-        setSkillTrackCompletedDays([]);
-        setAiSkillQuests({});
-        setUser(null);
-        router.push("/");
+    const setupAuth = async () => {
+      try {
+        await auth.authStateReady();
+      } catch (e) {
+        console.error("authStateReady error:", e);
       }
-    });
 
-    return () => unsubscribe();
+      if (!isMounted) return;
+
+      unsubAuth = onAuthStateChanged(auth, async (currentUser) => {
+        if (!isMounted) return;
+
+        if (currentUser) {
+          // 🧹 Clear state of previous user to prevent account cross-contamination
+          setUserData(null);
+          setLastWheel(null);
+          setLastDisc(null);
+          setLastMoney(null);
+          setLastLibrarySoul(null);
+          setLastGhostResult(null);
+          setActiveSkillTrackId(null);
+          setSkillTrackCurrentDay(1);
+          setSkillTrackCompletedDays([]);
+          setAiSkillQuests({});
+          setCompletedQuests([]);
+
+          setUser(currentUser);
+          setNewName(currentUser.displayName || "");
+
+          try {
+            await loadDashboardData(currentUser);
+            await loadPlaylistBooks(currentUser.uid);
+          } catch (err) {
+            console.error("Error loading dashboard data:", err);
+          } finally {
+            if (isMounted) setLoading(false);
+          }
+
+          // Update lastLoginAt once per session in the background after data loads
+          try {
+            const hasUpdatedLogin = sessionStorage.getItem("hasUpdatedLogin");
+            if (!hasUpdatedLogin) {
+              await updateDoc(doc(db, "users", currentUser.uid), {
+                lastLoginAt: serverTimestamp(),
+              });
+              sessionStorage.setItem("hasUpdatedLogin", "true");
+            }
+          } catch (e) {
+            console.error("Failed to update lastLoginAt:", e);
+          }
+        } else {
+          setUserData(null);
+          setActiveSkillTrackId(null);
+          setSkillTrackCurrentDay(1);
+          setSkillTrackCompletedDays([]);
+          setAiSkillQuests({});
+          setUser(null);
+          if (isMounted) {
+            setLoading(false);
+            router.push("/");
+          }
+        }
+      });
+    };
+
+    setupAuth();
+
+    return () => {
+      isMounted = false;
+      if (unsubAuth) unsubAuth();
+    };
   }, [router, loadDashboardData]);
 
   // 🛡️ [UI Control]: ซ่อน Header และ Bottom Navigation และ Lock Scroll เมื่อมี Modal สำคัญเด้งขึ้นมา

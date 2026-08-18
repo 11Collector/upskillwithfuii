@@ -90,7 +90,7 @@ export default function HomeClient() {
     checkRedirectLoginResult().then((redirectUser) => {
       if (redirectUser) {
         setUser(redirectUser);
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     });
   }, [router]);
@@ -193,7 +193,7 @@ export default function HomeClient() {
       const loggedInUser = await loginWithGoogle();
       if (loggedInUser) {
         setUser(loggedInUser);
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch (error: any) {
       setIsProLoaded(true);
@@ -228,8 +228,6 @@ export default function HomeClient() {
           handleInstallClick={handleInstallClick}
           onOpenIOSInstallGuide={() => setShowIOSInstallGuide(true)}
           handleLogout={handleLogout}
-          handleLogin={handleLogin}
-          isLoggingIn={isLoggingIn}
           t={{
             authWelcome: t.authWelcome,
             authSub: t.authSub,

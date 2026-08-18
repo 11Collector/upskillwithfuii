@@ -54,7 +54,7 @@ function HeaderInner() {
     try {
       const loggedInUser = await loginWithGoogle();
       if (loggedInUser) {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch (e: any) {
       if (e?.code !== 'auth/popup-closed-by-user') {
