@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "@/lib/firebase";
 import { usePWAInstall } from "@/lib/pwa";
@@ -173,8 +179,25 @@ export default function HomeClient() {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const loggedInUser = result.user;
+      let loggedInUser: User | null = null;
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        loggedInUser = result.user;
+      } catch (popupError: any) {
+        if (
+          popupError?.code === "auth/popup-blocked" ||
+          popupError?.code === "auth/cancelled-popup-request"
+        ) {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } else if (popupError?.code === "auth/popup-closed-by-user") {
+          return;
+        } else {
+          throw popupError;
+        }
+      }
+
+      if (!loggedInUser) return;
 
       const userRef = doc(db, "users", loggedInUser.uid);
 
@@ -216,9 +239,11 @@ export default function HomeClient() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error: any) {
       setIsProLoaded(true);
-      if (error.code !== "auth/popup-closed-by-user") {
+      if (error?.code !== "auth/popup-closed-by-user") {
         console.error("Login failed:", error);
       }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
