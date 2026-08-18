@@ -139,36 +139,15 @@ export default function HomeClient() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
       if (currentUser) {
-        setIsProLoaded(false);
-        try {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const data = userSnap.data() || {};
-            const subscriptionStatus =
-              data.subscriptionStatus || data.subscription_status || "";
-            const subscriptionTier =
-              data.subscriptionTier || data.subscription_tier || "";
-            const isPremium =
-              data.role === "premium" ||
-              subscriptionTier === "pro" ||
-              ["active", "trialing"].includes(subscriptionStatus) ||
-              Boolean(data.isLifetimeMember);
-            setIsPro(isPremium);
-          } else {
-            setIsPro(false);
-          }
-        } catch (e) {
-          console.error(e);
-          setIsPro(false);
-        }
-        setIsProLoaded(true);
-      } else {
-        setIsPro(false);
-        setIsProLoaded(true);
+        setUser(currentUser);
+        // Automatically take logged in user into Dashboard
+        window.location.href = "/dashboard";
+        return;
       }
+      setUser(null);
+      setIsPro(false);
+      setIsProLoaded(true);
       setLoading(false);
     });
     const timer = setTimeout(() => setLoading(false), 5000);
