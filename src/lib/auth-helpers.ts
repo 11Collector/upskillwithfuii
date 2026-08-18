@@ -35,9 +35,29 @@ export const loginWithGoogle = async (): Promise<User | null> => {
     }
     return user;
   } catch (error: any) {
-    if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+    if (
+      error?.code === "auth/popup-closed-by-user" ||
+      error?.code === "auth/cancelled-popup-request"
+    ) {
       return null;
     }
+
+    // On Android PWA (WebAPK) / Standalone mode, popups throw auth/internal-error or auth/popup-blocked
+    // Automatically switch to Redirect flow seamlessly!
+    if (
+      error?.code === "auth/internal-error" ||
+      error?.code === "auth/popup-blocked" ||
+      error?.code === "auth/operation-not-supported-in-this-environment"
+    ) {
+      console.log("Popup unavailable on this environment, falling back to redirect...");
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return null;
+      } catch (redirectErr) {
+        console.error("Redirect login fallback error:", redirectErr);
+      }
+    }
+
     console.error("Google sign-in error:", error);
     if (typeof window !== "undefined") {
       alert(`เข้าสู่ระบบไม่สำเร็จ: ${error?.code || error?.message || error}`);
