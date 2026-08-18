@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     siteName: "Upskill Everyday",
     locale: "th_TH",
     type: "website",
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Wheel of Life ภาษาไทย" }],
+    images: [{ url: "/Wallpaper.png", width: 1920, height: 1080, alt: "Wheel of Life ภาษาไทย" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "แบบประเมิน Wheel of Life ฟรี 2026 | วัดระดับชีวิต 8 ด้าน รู้ผลทันที",
     description: "ประเมินความสมดุลชีวิต 8 ด้านฟรี พร้อม AI ช่วยวางแผน 7 วันเพื่อชีวิตที่สมดุลและเติบโต",
-    images: ["/og-default.png"],
+    images: ["/Wallpaper.png"],
   },
 };
 
