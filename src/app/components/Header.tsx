@@ -52,10 +52,7 @@ function HeaderInner() {
 
   const handleLogin = async () => {
     try {
-      const loggedInUser = await loginWithGoogle();
-      if (loggedInUser) {
-        window.location.href = "/dashboard";
-      }
+      await loginWithGoogle();
     } catch (e: any) {
       if (e?.code !== 'auth/popup-closed-by-user') {
         console.error("Header login error:", e);

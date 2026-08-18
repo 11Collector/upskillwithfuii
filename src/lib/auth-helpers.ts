@@ -24,12 +24,6 @@ export const isMobileDevice = (): boolean => {
 };
 
 export const loginWithGoogle = async (): Promise<User | null> => {
-  // In standalone PWA mode on iOS/Android, popups are blocked by OS — must use redirect
-  if (isStandalonePWA()) {
-    await signInWithRedirect(auth, googleProvider);
-    return null;
-  }
-
   try {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
@@ -38,30 +32,10 @@ export const loginWithGoogle = async (): Promise<User | null> => {
     }
     return user;
   } catch (error: any) {
-    if (
-      error?.code === "auth/popup-blocked" ||
-      error?.code === "auth/cancelled-popup-request" ||
-      error?.code === "auth/operation-not-supported-in-this-environment"
-    ) {
-      // Fallback to redirect
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
-
     if (error?.code === "auth/popup-closed-by-user") {
       return null;
     }
-
-    // If mobile error, try redirect as last resort
-    if (isMobileDevice()) {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        return null;
-      } catch (redirectErr) {
-        console.error("Redirect login failed:", redirectErr);
-      }
-    }
-
+    console.error("Google sign-in error:", error);
     throw error;
   }
 };
