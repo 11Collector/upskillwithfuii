@@ -1276,7 +1276,7 @@ export default function HomeClient() {
 
       {/* --- Upgrade Modal --- */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 pb-24 sm:pb-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1391,14 +1391,14 @@ export default function HomeClient() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 pb-28 sm:pb-4 bg-slate-950/80 backdrop-blur-md"
           onClick={() => setShowStoryModal(false)}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="relative max-w-md w-full max-h-[85vh] flex flex-col bg-slate-900/90 border border-slate-800 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl text-center overflow-hidden"
+            className="relative max-w-md w-full max-h-[82vh] flex flex-col bg-slate-900/95 border border-slate-800 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl text-center overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute top-0 left-1/4 w-32 h-32 bg-red-700/10 blur-[40px] rounded-full pointer-events-none" />
@@ -1472,7 +1472,7 @@ export default function HomeClient() {
 
       {/* --- 📱 iOS Install Guide Modal --- */}
       {showIOSInstallGuide && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 pb-24 sm:pb-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
