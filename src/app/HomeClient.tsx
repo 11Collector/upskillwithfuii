@@ -87,7 +87,7 @@ export default function HomeClient() {
   useEffect(() => {
     const ua = navigator.userAgent;
     const inApp =
-      /FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat|GSA\/|Gmail/i.test(
+      /FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat/i.test(
         ua
       );
     setIsInAppBrowser(inApp);
@@ -270,6 +270,8 @@ export default function HomeClient() {
           handleInstallClick={handleInstallClick}
           onOpenIOSInstallGuide={() => setShowIOSInstallGuide(true)}
           handleLogout={handleLogout}
+          handleLogin={handleLogin}
+          isLoggingIn={isLoggingIn}
           t={{
             authWelcome: t.authWelcome,
             authSub: t.authSub,

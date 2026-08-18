@@ -45,15 +45,17 @@ function HeaderInner() {
 
   useEffect(() => {
     const ua = navigator.userAgent;
-    setIsInAppBrowser(/FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat|GSA\/|Gmail/i.test(ua));
+    setIsInAppBrowser(/FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat/i.test(ua));
   }, []);
 
   const handleLogin = async () => {
-    if (isInAppBrowser) return;
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (e: any) {
-      if (e?.code === 'auth/popup-blocked') {
+      if (
+        e?.code === 'auth/popup-blocked' ||
+        e?.code === 'auth/cancelled-popup-request'
+      ) {
         try {
           await signInWithRedirect(auth, googleProvider);
         } catch (redirectErr) {
