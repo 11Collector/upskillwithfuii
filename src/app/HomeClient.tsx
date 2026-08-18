@@ -137,34 +137,39 @@ export default function HomeClient() {
     }
   };
 
+  const checkProStatus = async (uid: string) => {
+    setIsProLoaded(false);
+    try {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const data = userSnap.data() || {};
+        const subscriptionStatus =
+          data.subscriptionStatus || data.subscription_status || "";
+        const subscriptionTier =
+          data.subscriptionTier || data.subscription_tier || "";
+        const isPremium =
+          data.role === "premium" ||
+          subscriptionTier === "pro" ||
+          ["active", "trialing"].includes(subscriptionStatus) ||
+          Boolean(data.isLifetimeMember);
+        setIsPro(isPremium);
+      } else {
+        setIsPro(false);
+      }
+    } catch (e) {
+      console.error("Error checking pro status:", e);
+      setIsPro(false);
+    } finally {
+      setIsProLoaded(true);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        setIsProLoaded(false);
-        try {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const data = userSnap.data() || {};
-            const subscriptionStatus =
-              data.subscriptionStatus || data.subscription_status || "";
-            const subscriptionTier =
-              data.subscriptionTier || data.subscription_tier || "";
-            const isPremium =
-              data.role === "premium" ||
-              subscriptionTier === "pro" ||
-              ["active", "trialing"].includes(subscriptionStatus) ||
-              Boolean(data.isLifetimeMember);
-            setIsPro(isPremium);
-          } else {
-            setIsPro(false);
-          }
-        } catch (e) {
-          console.error(e);
-          setIsPro(false);
-        }
-        setIsProLoaded(true);
+        await checkProStatus(currentUser.uid);
       } else {
         setIsPro(false);
         setIsProLoaded(true);
@@ -193,6 +198,7 @@ export default function HomeClient() {
       const loggedInUser = await loginWithGoogle();
       if (loggedInUser) {
         setUser(loggedInUser);
+        await checkProStatus(loggedInUser.uid);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (error: any) {
