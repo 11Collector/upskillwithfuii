@@ -278,7 +278,7 @@ export default function HomeClient() {
     },
     {
       id: "ai-mentor", name: "คุยกับพี่ฟุ้ย", desc: "ที่ปรึกษาพัฒนาตัวเองส่วนตัวระดับโปร", gimmick: "Personalized วิเคราะห์ตัวคุณ",
-      icon: <MessageSquareMore size={28} className="text-slate-600" />, path: "/tools/ai-mentor", color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
+      icon: <MessageSquareMore size={28} className="text-slate-600" />, path: "/tools/soul-guide", color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
       gimmickUI: (
         <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-200 via-zinc-100 to-slate-200 text-slate-700 rounded-full text-[10px] font-black tracking-widest border border-slate-300 shadow-sm group-hover:from-slate-300 group-hover:to-zinc-200 group-hover:text-slate-900 transition-all duration-300">
           <Zap size={12} className="text-slate-500 group-hover:text-slate-900 transition-colors animate-pulse" />
@@ -477,6 +477,476 @@ export default function HomeClient() {
         </motion.div>
       )}
 
+      {/* --- 1.5. Interactive 1% Everyday Section --- */}
+      {!user && (() => {
+        const improveVal = Math.pow(1.01, onePercentDay);
+        const declineVal = Math.pow(0.99, onePercentDay);
+        const generatePath = (base: number) => {
+          const points = [];
+          for (let d = 0; d <= 365; d += 10) {
+            const val = Math.pow(base, d);
+            const clampedVal = Math.min(val, 40);
+            const x = 30 + (d / 365) * 280;
+            const y = 185 - (clampedVal / 40) * 165;
+            points.push(`${x},${y}`);
+          }
+          return `M ${points.join(" L ")}`;
+        };
+
+        return (
+          <section data-nosnippet className="relative w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] mx-auto mb-12 max-w-6xl overflow-hidden rounded-[2.5rem] border border-slate-800 bg-slate-900 p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-10">
+            {/* Glow Effects */}
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-red-500/10 blur-[100px] rounded-full pointer-events-none" />
+            
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                  <span className="text-[10px] font-black text-red-400 uppercase tracking-[0.25em] bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+                    THE 1% RULE
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-2.5">
+                    พลังของการเก่งขึ้นวันละ 1%
+                  </h2>
+                  <p className="text-slate-400 text-xs sm:text-sm font-medium mt-1">
+                    การพัฒนาตัวเองแค่วันละนิด สะสมกันไปเรื่อยๆ จะสร้างผลลัพธ์มหาศาล
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/50 px-4 py-2 rounded-2xl self-stretch md:self-auto justify-center shadow-inner">
+                  <span className="text-xs text-slate-400 font-bold">เป้าหมาย:</span>
+                  <span className="text-sm text-amber-400 font-black">{onePercentDay} วัน</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                {/* Left Column: Slider and Metrics */}
+                <div className="md:col-span-6 space-y-6 order-2 md:order-1">
+                  {/* Interactive Slider */}
+                  <div className="space-y-3 bg-slate-950/40 border border-slate-800/50 rounded-3xl p-5">
+                    <div className="flex justify-between text-[10px] text-slate-500 font-black tracking-wider">
+                      <span>เริ่มต้น</span>
+                      <span>ครึ่งปี (180 วัน)</span>
+                      <span>ครบปี (365 วัน)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="365"
+                      value={onePercentDay}
+                      onChange={(e) => setOnePercentDay(parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-red-500 focus:outline-none"
+                    />
+                    <div className="flex justify-between items-center pt-2">
+                      <span className="text-[10px] text-slate-500 font-bold">เลื่อนเพื่อสลับวันและเห็นผลคูณสะสม</span>
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => setOnePercentDay(30)} 
+                          className={`text-[9px] px-2.5 py-1.5 rounded-xl font-black border transition-all ${onePercentDay === 30 ? 'bg-white text-slate-900 border-white shadow-md' : 'bg-slate-800/50 text-slate-400 border-slate-700/30 hover:bg-slate-800'}`}
+                        >
+                          30 วัน
+                        </button>
+                        <button 
+                          onClick={() => setOnePercentDay(180)} 
+                          className={`text-[9px] px-2.5 py-1.5 rounded-xl font-black border transition-all ${onePercentDay === 180 ? 'bg-white text-slate-900 border-white shadow-md' : 'bg-slate-800/50 text-slate-400 border-slate-700/30 hover:bg-slate-800'}`}
+                        >
+                          180 วัน
+                        </button>
+                        <button 
+                          onClick={() => setOnePercentDay(365)} 
+                          className={`text-[9px] px-2.5 py-1.5 rounded-xl font-black border transition-all ${onePercentDay === 365 ? 'bg-white text-slate-900 border-white shadow-md' : 'bg-slate-800/50 text-slate-400 border-slate-700/30 hover:bg-slate-800'}`}
+                        >
+                          365 วัน
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Path Cards */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Improvement Card */}
+                    <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between hover:border-emerald-500/30 transition-all duration-300 group">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider">เก่งขึ้นวันละ 1%</span>
+                        <span className="text-[9px] text-slate-500 font-mono">1.01^{onePercentDay}</span>
+                      </div>
+                      <div className="my-1.5">
+                        <span className="text-3xl font-black text-emerald-400 tracking-tight">
+                          {improveVal.toFixed(2)}
+                        </span>
+                        <span className="text-xs text-slate-400 font-bold ml-1">เท่า</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-normal border-t border-slate-800/80 pt-2 mt-1">
+                        {improveVal >= 37.0 
+                          ? "ศักยภาพก้าวกระโดดมหาศาล! 🚀" 
+                          : improveVal >= 5.0 
+                            ? "ศักยภาพงอกเงยอย่างเห็นได้ชัด" 
+                            : improveVal >= 1.5 
+                              ? "เริ่มเห็นพัฒนาการชัดเจน" 
+                              : "เริ่มต้นสะสมผลลัพธ์"}
+                      </p>
+                    </div>
+
+                    {/* Decline Card */}
+                    <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between hover:border-rose-500/30 transition-all duration-300 group">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[9px] font-black uppercase text-rose-400 tracking-wider">ถดถอยวันละ 1%</span>
+                        <span className="text-[9px] text-slate-500 font-mono">0.99^{onePercentDay}</span>
+                      </div>
+                      <div className="my-1.5">
+                        <span className="text-3xl font-black text-rose-400 tracking-tight">
+                          {declineVal.toFixed(2)}
+                        </span>
+                        <span className="text-xs text-slate-400 font-bold ml-1">เท่า</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-normal border-t border-slate-800/80 pt-2 mt-1">
+                        {declineVal <= 0.03 
+                          ? "ศักยภาพดิ่งลงเกือบศูนย์ 🥀" 
+                          : declineVal <= 0.25 
+                            ? "ศักยภาพถดถอยอย่างมีนัยสำคัญ" 
+                            : declineVal <= 0.75 
+                              ? "ทักษะเดิมเริ่มจางหายไปเยอะ" 
+                              : "แทบไม่เห็นความแตกต่าง"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Multiplier Comparison Banner */}
+                  <div className="bg-gradient-to-r from-red-600/10 via-purple-600/10 to-indigo-600/10 border border-slate-800 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">แก๊ปความแตกต่าง</p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-200">
+                        สองทางเลือก ห่างกันมหาศาลถึง
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400">
+                        {(improveVal / Math.max(declineVal, 0.001)).toFixed(0)}
+                      </span>
+                      <span className="text-sm font-black text-amber-400 ml-1">เท่า!</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Custom SVG Graph */}
+                <div className="md:col-span-6 flex flex-col justify-center items-center order-1 md:order-2">
+                  <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-3xl p-4 sm:p-5 relative overflow-hidden shadow-inner">
+                    {/* SVG Graph */}
+                    <svg viewBox="0 0 320 220" className="w-full h-auto overflow-visible">
+                      {/* Grid Lines */}
+                      <line x1="30" y1="20" x2="310" y2="20" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="61.25" x2="310" y2="61.25" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="102.5" x2="310" y2="102.5" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      <line x1="30" y1="143.75" x2="310" y2="143.75" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.4" />
+                      
+                      {/* Y-Axis Labels */}
+                      <text x="24" y="23" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">40</text>
+                      <text x="24" y="64" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">30</text>
+                      <text x="24" y="105" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">20</text>
+                      <text x="24" y="146" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">10</text>
+                      <text x="24" y="183" fill="#475569" textAnchor="end" className="text-[8px] font-mono font-semibold">1</text>
+                      
+                      {/* Baseline (1.0) */}
+                      <line 
+                        x1="30" 
+                        y1="180.875" 
+                        x2="310" 
+                        y2="180.875" 
+                        stroke="#475569" 
+                        strokeWidth="1" 
+                        strokeDasharray="4 4" 
+                        opacity="0.8"
+                      />
+
+                      {/* Decline Path (0.99) */}
+                      <path 
+                        d={generatePath(0.99)} 
+                        fill="none" 
+                        stroke="url(#declineGradient)" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round" 
+                      />
+
+                      {/* Improvement Path (1.01) */}
+                      <path 
+                        d={generatePath(1.01)} 
+                        fill="none" 
+                        stroke="url(#improveGradient)" 
+                        strokeWidth="3.5" 
+                        strokeLinecap="round" 
+                      />
+
+                      {/* Time vertical indicator line */}
+                      <line
+                        x1={30 + (onePercentDay / 365) * 280}
+                        y1="20"
+                        x2={30 + (onePercentDay / 365) * 280}
+                        y2="185"
+                        stroke="#475569"
+                        strokeWidth="1"
+                        strokeDasharray="2 2"
+                        opacity="0.8"
+                      />
+
+                      {/* Glow/Ping circle around current position of Improvement path */}
+                      <circle
+                        cx={30 + (onePercentDay / 365) * 280}
+                        cy={185 - (Math.min(improveVal, 40) / 40) * 165}
+                        r="6"
+                        className="fill-emerald-400/30 stroke-emerald-400 stroke-1 animate-pulse"
+                      />
+                      <circle
+                        cx={30 + (onePercentDay / 365) * 280}
+                        cy={185 - (Math.min(improveVal, 40) / 40) * 165}
+                        r="3"
+                        className="fill-emerald-400"
+                      />
+
+                      {/* Circle around current position of Decline path */}
+                      <circle
+                        cx={30 + (onePercentDay / 365) * 280}
+                        cy={185 - (Math.min(declineVal, 40) / 40) * 165}
+                        r="5"
+                        className="fill-rose-500/30 stroke-rose-500 stroke-1"
+                      />
+                      <circle
+                        cx={30 + (onePercentDay / 365) * 280}
+                        cy={185 - (Math.min(declineVal, 40) / 40) * 165}
+                        r="2.5"
+                        className="fill-rose-500"
+                      />
+
+                      {/* Active Day moving label at the top of vertical line */}
+                      <text
+                        x={30 + (onePercentDay / 365) * 280}
+                        y="12"
+                        fill="#fbbf24"
+                        stroke="#020617"
+                        strokeWidth="3"
+                        paintOrder="stroke"
+                        strokeLinejoin="round"
+                        textAnchor="middle"
+                        className="text-[9px] font-black font-mono"
+                      >
+                        วันที่ {onePercentDay}
+                      </text>
+
+                      {/* Axis Ticks */}
+                      <line x1="30" y1="185" x2="30" y2="190" stroke="#475569" strokeWidth="1" />
+                      <line x1="310" y1="185" x2="310" y2="190" stroke="#475569" strokeWidth="1" />
+
+                      {/* X-Axis Labels inside SVG */}
+                      <text x="30" y="212" fill="#64748b" textAnchor="middle" className="text-[8px] font-mono font-bold">Day 0</text>
+                      <text x="310" y="212" fill="#64748b" textAnchor="middle" className="text-[8px] font-mono font-bold">Day 365</text>
+
+                      {/* Gradients definitions */}
+                      <defs>
+                        <linearGradient id="improveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#818cf8" />
+                          <stop offset="50%" stopColor="#6366f1" />
+                          <stop offset="100%" stopColor="#10b981" />
+                        </linearGradient>
+                        <linearGradient id="declineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#fb923c" />
+                          <stop offset="100%" stopColor="#f43f5e" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* --- 1.8. The Journey Section --- */}
+      {!user && (
+        <section className="mx-auto mb-12 w-[calc(100%-2rem)] max-w-6xl sm:w-[calc(100%-4rem)] px-4">
+          <div className="mb-10 flex flex-col items-center md:items-start text-center md:text-left">
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#8b1a0f] bg-[#FFF5F5] px-3.5 py-1.5 rounded-full border border-red-500/20 shadow-sm z-10 flex items-center gap-1.5">
+              <Map size={12} className="stroke-[2.5] text-[#8b1a0f]" />
+              THE JOURNEY
+            </span>
+            <h2 className="mt-3.5 text-2xl font-black leading-tight text-slate-900 md:text-4xl">
+              เส้นทางพัฒนาตัวเอง 3 Phase
+            </h2>
+            <p className="mt-2 text-sm font-bold text-slate-500 max-w-2xl leading-relaxed">
+              ที่ช่วยให้คุณค้นหาตัวเอง สร้างนิสัย และเติบโตทุกวัน
+            </p>
+          </div>
+
+          <div className="flex flex-row md:grid md:grid-cols-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none gap-6 lg:gap-8 pt-4 -mt-4 pb-6 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* Phase 1 Card */}
+            <motion.div 
+              whileHover={{ y: -6 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="relative min-h-[500px] md:min-h-[540px] w-[85vw] max-w-[340px] md:max-w-none md:w-full shrink-0 snap-center border-2 border-[#2D231E] rounded-[2rem] shadow-[4px_4px_0px_#2D231E] overflow-hidden group flex flex-col justify-end select-none"
+            >
+              {/* Full Illustration Background */}
+              <Image 
+                src="/Phase1.webp" 
+                alt="Phase 1" 
+                fill 
+                priority
+                className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-500 z-0" 
+              />
+              {/* Dark Overlay Gradient for Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent z-10" />
+
+              {/* Holographic Shine Overlay */}
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0)_10%,rgba(255,255,255,0.15)_25%,rgba(147,51,234,0.12)_40%,rgba(59,130,246,0.12)_55%,rgba(16,185,129,0.08)_70%,rgba(252,211,77,0.12)_85%,rgba(255,255,255,0)_100%)] bg-[length:200%_100%] bg-[position:100%_0] opacity-0 group-hover:opacity-100 group-hover:bg-[position:-100%_0] transition-all duration-1000 ease-out pointer-events-none mix-blend-overlay z-15" />
+
+              {/* Overlaid Text & Icons */}
+              <div className="relative z-20 p-6 mt-auto">
+                <div className="pt-2">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider block mb-2.5 text-center">
+                    เครื่องมือในเฟสนี้
+                  </span>
+                  <div className="flex flex-wrap gap-2.5 justify-center">
+                    {[
+                      { name: "วงล้อชีวิต (Wheel of Life)", icon: <PieChart size={18} className="text-red-600" />, color: "bg-red-50 border-red-200" },
+                      { name: "ประเมินนิสัย (DISC)", icon: <Users size={18} className="text-blue-600" />, color: "bg-blue-50 border-blue-200" },
+                      { name: "สไตล์การเงิน (Money Avatar)", icon: <Wallet size={18} className="text-amber-600" />, color: "bg-amber-50 border-amber-200" },
+                      { name: "คมสัดสัด (Quotes)", icon: <Quote size={18} className="text-purple-600" />, color: "bg-purple-50 border-purple-200" }
+                    ].map((app, idx, arr) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === arr.length - 1;
+                      const positionClass = isFirst 
+                        ? "left-0 -translate-x-0" 
+                        : isLast 
+                          ? "right-0 left-auto translate-x-0" 
+                          : "left-1/2 -translate-x-1/2";
+                      return (
+                        <div key={app.name} className="relative group/app hover:-translate-y-0.5 transition-all cursor-help">
+                          <div className={`w-10 h-10 rounded-xl border-2 border-[#2D231E] shadow-[1.5px_1.5px_0px_#2D231E] flex items-center justify-center shrink-0 ${app.color}`}>
+                            {app.icon}
+                          </div>
+                          <div className={`absolute bottom-full ${positionClass} mb-2 bg-slate-950 text-white text-[8px] font-black px-2.5 py-1 rounded opacity-0 pointer-events-none group-hover/app:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-md z-30`}>
+                            {app.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Phase 2 Card */}
+            <motion.div 
+              whileHover={{ y: -6 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="relative min-h-[500px] md:min-h-[540px] w-[85vw] max-w-[340px] md:max-w-none md:w-full shrink-0 snap-center border-2 border-[#2D231E] rounded-[2rem] shadow-[4px_4px_0px_#2D231E] overflow-hidden group flex flex-col justify-end select-none"
+            >
+              {/* Full Illustration Background */}
+              <Image 
+                src="/Phase2.webp" 
+                alt="Phase 2" 
+                fill 
+                priority
+                className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-500 z-0" 
+              />
+              {/* Dark Overlay Gradient for Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent z-10" />
+
+              {/* Holographic Shine Overlay */}
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0)_10%,rgba(255,255,255,0.15)_25%,rgba(147,51,234,0.12)_40%,rgba(59,130,246,0.12)_55%,rgba(16,185,129,0.08)_70%,rgba(252,211,77,0.12)_85%,rgba(255,255,255,0)_100%)] bg-[length:200%_100%] bg-[position:100%_0] opacity-0 group-hover:opacity-100 group-hover:bg-[position:-100%_0] transition-all duration-1000 ease-out pointer-events-none mix-blend-overlay z-15" />
+
+              {/* Overlaid Text & Icons */}
+              <div className="relative z-20 p-6 mt-auto">
+                <div className="pt-2">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider block mb-2.5 text-center">
+                    เครื่องมือในเฟสนี้
+                  </span>
+                  <div className="flex flex-wrap gap-2.5 justify-center">
+                    {[
+                      { name: "สไตล์การอ่าน (Library of Souls)", icon: <BookOpen size={18} className="text-emerald-600" />, color: "bg-emerald-50 border-emerald-100" },
+                      { name: "คลังสมอง (Upskill Brain)", icon: <Brain size={18} className="text-amber-600" />, color: "bg-amber-50 border-amber-200" },
+                      { name: "ความสุขระหว่างทาง (Happiness Shop)", icon: <ShoppingBag size={18} className="text-pink-600" />, color: "bg-pink-50 border-pink-200" },
+                      { name: "คุยกับพี่ฟุ้ย (AI Mentor)", icon: <MessageSquareMore size={18} className="text-slate-600" />, color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]" }
+                    ].map((app, idx, arr) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === arr.length - 1;
+                      const positionClass = isFirst 
+                        ? "left-0 -translate-x-0" 
+                        : isLast 
+                          ? "right-0 left-auto translate-x-0" 
+                          : "left-1/2 -translate-x-1/2";
+                      return (
+                        <div key={app.name} className="relative group/app hover:-translate-y-0.5 transition-all cursor-help">
+                          <div className={`w-10 h-10 rounded-xl border-2 border-[#2D231E] shadow-[1.5px_1.5px_0px_#2D231E] flex items-center justify-center shrink-0 ${app.color}`}>
+                            {app.icon}
+                          </div>
+                          <div className={`absolute bottom-full ${positionClass} mb-2 bg-slate-950 text-white text-[8px] font-black px-2.5 py-1 rounded opacity-0 pointer-events-none group-hover/app:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-md z-30`}>
+                            {app.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Phase 3 Card */}
+            <motion.div 
+              whileHover={{ y: -6 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="relative min-h-[500px] md:min-h-[540px] w-[85vw] max-w-[340px] md:max-w-none md:w-full shrink-0 snap-center border-2 border-[#2D231E] rounded-[2rem] shadow-[4px_4px_0px_#2D231E] overflow-hidden group flex flex-col justify-end select-none"
+            >
+              {/* Full Illustration Background */}
+              <Image 
+                src="/Phase3.webp" 
+                alt="Phase 3" 
+                fill 
+                priority
+                className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-500 z-0" 
+              />
+              {/* Dark Overlay Gradient for Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent z-10" />
+
+              {/* Holographic Shine Overlay */}
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0)_10%,rgba(255,255,255,0.15)_25%,rgba(147,51,234,0.12)_40%,rgba(59,130,246,0.12)_55%,rgba(16,185,129,0.08)_70%,rgba(252,211,77,0.12)_85%,rgba(255,255,255,0)_100%)] bg-[length:200%_100%] bg-[position:100%_0] opacity-0 group-hover:opacity-100 group-hover:bg-[position:-100%_0] transition-all duration-1000 ease-out pointer-events-none mix-blend-overlay z-15" />
+
+              {/* Overlaid Text & Icons */}
+              <div className="relative z-20 p-6 mt-auto">
+                <div className="pt-2">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider block mb-2.5 text-center">
+                    เครื่องมือในเฟสนี้
+                  </span>
+                  <div className="flex flex-wrap gap-2.5 justify-center">
+                    {[
+                      { name: "ผีในตัวคุณ (Ghost In You)", icon: <Ghost size={18} className="text-red-600" />, color: "bg-red-50 border-red-200" },
+                      { name: "ห้องสมาธิ (Focus Room)", icon: <BrainCircuit size={18} className="text-zinc-700" />, color: "bg-zinc-50 border-zinc-200" },
+                      { name: "เวลาที่เหลือ (Memento Mori)", icon: <Hourglass size={18} className="text-[#8B5A2B]" />, color: "bg-[#F4ECE1] border-[#E6D9C5]" }
+                    ].map((app, idx, arr) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === arr.length - 1;
+                      const positionClass = isFirst 
+                        ? "left-0 -translate-x-0" 
+                        : isLast 
+                          ? "right-0 left-auto translate-x-0" 
+                          : "left-1/2 -translate-x-1/2";
+                      return (
+                        <div key={app.name} className="relative group/app hover:-translate-y-0.5 transition-all cursor-help">
+                          <div className={`w-10 h-10 rounded-xl border-2 border-[#2D231E] shadow-[1.5px_1.5px_0px_#2D231E] flex items-center justify-center shrink-0 ${app.color}`}>
+                            {app.icon}
+                          </div>
+                          <div className={`absolute bottom-full ${positionClass} mb-2 bg-slate-950 text-white text-[8px] font-black px-2.5 py-1 rounded opacity-0 pointer-events-none group-hover/app:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-md z-30`}>
+                            {app.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       <section className="mx-auto mb-12 w-[calc(100%-2rem)] max-w-6xl rounded-[2.5rem] border border-slate-100/80 bg-white/70 px-4 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] backdrop-blur sm:w-[calc(100%-4rem)] md:px-7 md:py-8">
         <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
@@ -611,7 +1081,122 @@ export default function HomeClient() {
                 <p className="text-[10px] text-slate-500 font-medium ml-2 mb-2">
                   {t.loginRemark}
                 </p>
+
+                <div className="w-full max-w-sm pt-5 border-t border-white/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldCheck size={14} className="text-emerald-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Privacy & Security</span>
+                  </div>
+                  <p className="text-[10.5px] text-slate-500 leading-relaxed font-bold tracking-tight">
+                    Personalized insights only. Industry-standard security. <br className="hidden sm:block" />
+                    <span className="text-slate-400">Zero individual data sharing. Anonymous aggregate trends only.</span>
+                  </p>
+                </div>
               </div>
+            </div>
+
+            {/* Right Side: Decorative Mockup with Effects */}
+            <div className="hidden md:flex justify-end relative h-full items-center">
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="w-80 h-[520px] bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] border border-white/10 p-4 shadow-2xl relative rotate-3 hover:rotate-1 transition-transform duration-500"
+              >
+                <div className="w-full h-full bg-slate-950/50 rounded-[2.5rem] p-6 flex flex-col gap-5 overflow-hidden border border-white/5 relative">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                        <div className="h-4 w-4 rounded-full bg-blue-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="h-2 w-16 bg-white/20 rounded-full" />
+                        <div className="h-1.5 w-10 bg-white/10 rounded-full" />
+                      </div>
+                    </div>
+                    <div className="h-7 px-3 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-[10px] font-bold flex items-center gap-1.5">
+                      <Flame size={12} className="text-amber-400 fill-amber-400" /> 7 Days
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800/40 rounded-3xl border border-white/5 p-5 flex items-center gap-5">
+                    <div className="relative w-24 h-24 flex-shrink-0">
+                      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                        <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-800" />
+                        <motion.circle
+                          cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="12" fill="transparent"
+                          strokeDasharray="263.9" strokeDashoffset={263.9}
+                          animate={{ strokeDashoffset: 66 }}
+                          transition={{ duration: 1.5, delay: 1 }}
+                          className="text-blue-500" strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-white font-black text-xl">75%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2.5">
+                      <div className="h-2 w-16 bg-white/10 rounded-full" />
+                      <div className="h-2 w-24 bg-white/5 rounded-full" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="bg-slate-800/30 rounded-2xl border border-white/5 p-4 space-y-2">
+                      <div className="h-2 w-20 bg-white/10 rounded-full" />
+                      <div className="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '85%' }} transition={{ duration: 1, delay: 1.5 }} className="h-full bg-emerald-500" />
+                      </div>
+                    </div>
+                    <div className="bg-slate-800/30 rounded-2xl border border-white/5 p-4 space-y-2">
+                      <div className="h-2 w-16 bg-white/10 rounded-full" />
+                      <div className="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '40%' }} transition={{ duration: 1, delay: 1.7 }} className="h-full bg-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 🌟 Level Up Badge */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0, rotate: -20 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  transition={{ delay: 2.2, duration: 0.6, type: "spring", bounce: 0.6 }}
+                  className="absolute -top-12 -right-8 z-50"
+                >
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="bg-blue-600 px-6 py-4 rounded-[2rem] border-4 border-slate-900 shadow-[0_20px_40px_rgba(37,99,235,0.4)] flex items-center gap-3"
+                  >
+                    <div className="bg-white p-2 rounded-full shadow-lg">
+                      <Award size={22} className="text-blue-600 fill-current" />
+                    </div>
+                    <div className="flex flex-col pr-2">
+                      <span className="text-blue-100 font-bold text-[9px] uppercase tracking-widest leading-tight">New Status</span>
+                      <span className="text-white font-black text-lg leading-tight">LEVEL UP!</span>
+                    </div>
+
+                    <motion.div
+                      animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute -top-2 -right-2 text-amber-300"
+                    >
+                      <Star size={20} className="fill-current" />
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+
+                {/* ⚡ XP Badge */}
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -bottom-6 -left-12 bg-white/10 backdrop-blur-xl px-5 py-3.5 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 z-30"
+                >
+                  <Zap size={18} className="text-amber-400 fill-current" />
+                  <span className="text-white font-black text-sm">+150 XP</span>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         </section>

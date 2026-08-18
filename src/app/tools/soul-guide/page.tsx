@@ -220,13 +220,43 @@ export default function SoulGuidePage() {
         });
         unsubs.push(unsubQuote);
 
-        // 7. Load Chat History once (no real-time listener to avoid race conditions)
+        // 7. Load Chat History once (robust fetching & fallback sorting)
         const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
-        const historySnap = await getDocs(query(chatHistoryRef, orderBy("createdAt", "desc"), limit(50)));
-        let history = historySnap.docs.map(doc => ({
+        let historyDocs: any[] = [];
+        try {
+          const historySnap = await getDocs(query(chatHistoryRef, orderBy("createdAt", "desc"), limit(100)));
+          historyDocs = historySnap.docs;
+        } catch (e) {
+          console.warn("Ordered chat history query failed, attempting unindexed query:", e);
+        }
+
+        if (historyDocs.length === 0) {
+          try {
+            const fallbackSnap = await getDocs(query(chatHistoryRef, limit(100)));
+            historyDocs = fallbackSnap.docs;
+          } catch (e) {
+            console.error("Failed to load chat history:", e);
+          }
+        }
+
+        const getDocTime = (data: any) => {
+          if (data.createdAt?.toMillis) return data.createdAt.toMillis();
+          if (data.createdAt?.seconds) return data.createdAt.seconds * 1000;
+          if (typeof data.createdAt === 'number') return data.createdAt;
+          if (typeof data.createdAtMillis === 'number') return data.createdAtMillis;
+          if (data.timestamp?.toMillis) return data.timestamp.toMillis();
+          if (typeof data.timestamp === 'number') return data.timestamp;
+          if (data.created_at?.toMillis) return data.created_at.toMillis();
+          if (typeof data.created_at === 'number') return data.created_at;
+          return 0;
+        };
+
+        const sortedDocs = [...historyDocs].sort((a, b) => getDocTime(a.data()) - getDocTime(b.data()));
+
+        let history = sortedDocs.map(doc => ({
           role: doc.data().role as "user" | "assistant",
           content: doc.data().content,
-        })).filter(msg => msg.content).reverse();
+        })).filter(msg => msg.content && (msg.role === "user" || msg.role === "assistant"));
 
         if (!messagesInitialized.current) {
           messagesInitialized.current = true;
@@ -472,30 +502,32 @@ export default function SoulGuidePage() {
     setTimeout(() => scrollToBottom("auto"), 10);
     setTimeout(() => scrollToBottom("auto"), 50);
 
-    if (!user) {
+    const currentUser = user || auth.currentUser;
+    if (!currentUser) {
       setIsLoading(false);
       setIsTyping(false);
       return;
     }
 
     try {
-      const chatHistoryRef = collection(db, "users", user.uid, "chat_history");
+      const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
 
       // 1. Save User Message
       await addDoc(chatHistoryRef, {
         role: "user",
         content: userMessage.content,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        createdAtMillis: Date.now()
       });
 
       // Write lastChatDate once per day to enable AI Mentor quest auto-complete
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       if (userData?.lastChatDate !== todayStr) {
-        const userRef = doc(db, "users", user.uid);
+        const userRef = doc(db, "users", currentUser.uid);
         updateDoc(userRef, { lastChatDate: todayStr }).catch(() => {});
       }
 
-      const idToken = await user.getIdToken();
+      const idToken = await currentUser.getIdToken();
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 25000);
@@ -571,7 +603,7 @@ export default function SoulGuidePage() {
         if (questPrefsMatch && isQuestMode) {
           try {
             const prefs = JSON.parse(questPrefsMatch[1]);
-            const userRef = doc(db, "users", user.uid);
+            const userRef = doc(db, "users", currentUser.uid);
             const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
             await updateDoc(userRef, {
               questPreferences: { ...prefs, savedAt: todayCA },
@@ -621,7 +653,8 @@ export default function SoulGuidePage() {
         await addDoc(chatHistoryRef, {
           role: "assistant",
           content: cleanReply,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          createdAtMillis: Date.now()
         });
 
       } else {
