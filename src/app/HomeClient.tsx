@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -69,6 +70,7 @@ const t = {
 };
 
 export default function HomeClient() {
+  const router = useRouter();
   const { deferredPrompt, isIOS, handleInstallClick } = usePWAInstall();
   const [user, setUser] = useState<User | null>(null);
   const [isPro, setIsPro] = useState(false);
@@ -88,9 +90,10 @@ export default function HomeClient() {
     checkRedirectLoginResult().then((redirectUser) => {
       if (redirectUser) {
         setUser(redirectUser);
+        router.push("/dashboard");
       }
     });
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -190,7 +193,7 @@ export default function HomeClient() {
       const loggedInUser = await loginWithGoogle();
       if (loggedInUser) {
         setUser(loggedInUser);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        router.push("/dashboard");
       }
     } catch (error: any) {
       setIsProLoaded(true);

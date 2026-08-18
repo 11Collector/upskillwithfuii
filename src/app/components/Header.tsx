@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PieChart, Users, Wallet, Brain } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -26,6 +26,7 @@ const GoogleSVG = ({ size = 13 }: { size?: number }) => (
 );
 
 function HeaderInner() {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -51,7 +52,10 @@ function HeaderInner() {
 
   const handleLogin = async () => {
     try {
-      await loginWithGoogle();
+      const loggedInUser = await loginWithGoogle();
+      if (loggedInUser) {
+        router.push("/dashboard");
+      }
     } catch (e: any) {
       if (e?.code !== 'auth/popup-closed-by-user') {
         console.error("Header login error:", e);
