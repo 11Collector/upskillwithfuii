@@ -97,13 +97,17 @@ export const checkRedirectLoginResult = async (): Promise<User | null> => {
   try {
     const result = await getRedirectResult(auth);
     if (result?.user) {
-      await syncUserDocument(result.user);
+      alert(`เข้าสู่ระบบสำเร็จ: ${result.user.displayName || result.user.email}`);
+      syncUserDocument(result.user).catch(console.error);
       return result.user;
     }
     return null;
   } catch (err: any) {
     if (err?.code !== "auth/credential-already-in-use") {
       console.error("getRedirectResult error:", err);
+      if (typeof window !== "undefined") {
+        alert(`Redirect Error: ${err?.code || err?.message || err}`);
+      }
     }
     return null;
   }
