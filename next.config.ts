@@ -48,14 +48,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/__/auth/:path*",
-        destination: "https://upskillwithfuiiweb.firebaseapp.com/__/auth/:path*",
-      },
-    ];
-  },
   async headers() {
     return [
       {

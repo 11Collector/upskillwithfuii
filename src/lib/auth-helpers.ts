@@ -28,10 +28,7 @@ export const loginWithGoogle = async (): Promise<User | null> => {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
     if (user) {
-      // Sync user document non-blocking in the background
-      syncUserDocument(user).catch((err) =>
-        console.error("Background syncUserDocument error:", err)
-      );
+      syncUserDocument(user).catch(console.error);
     }
     return user;
   } catch (error: any) {
@@ -41,27 +38,7 @@ export const loginWithGoogle = async (): Promise<User | null> => {
     ) {
       return null;
     }
-
-    // On Android PWA (WebAPK) / Standalone mode, popups throw auth/internal-error or auth/popup-blocked
-    // Automatically switch to Redirect flow seamlessly!
-    if (
-      error?.code === "auth/internal-error" ||
-      error?.code === "auth/popup-blocked" ||
-      error?.code === "auth/operation-not-supported-in-this-environment"
-    ) {
-      console.log("Popup unavailable on this environment, falling back to redirect...");
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        return null;
-      } catch (redirectErr) {
-        console.error("Redirect login fallback error:", redirectErr);
-      }
-    }
-
     console.error("Google sign-in error:", error);
-    if (typeof window !== "undefined") {
-      alert(`เข้าสู่ระบบไม่สำเร็จ: ${error?.code || error?.message || error}`);
-    }
     throw error;
   }
 };
@@ -97,18 +74,11 @@ export const checkRedirectLoginResult = async (): Promise<User | null> => {
   try {
     const result = await getRedirectResult(auth);
     if (result?.user) {
-      alert(`เข้าสู่ระบบสำเร็จ: ${result.user.displayName || result.user.email}`);
       syncUserDocument(result.user).catch(console.error);
       return result.user;
     }
     return null;
   } catch (err: any) {
-    if (err?.code !== "auth/credential-already-in-use") {
-      console.error("getRedirectResult error:", err);
-      if (typeof window !== "undefined") {
-        alert(`Redirect Error: ${err?.code || err?.message || err}`);
-      }
-    }
     return null;
   }
 };
