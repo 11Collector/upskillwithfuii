@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle, ShoppingBag, Ghost, Hourglass, Brain, Map, Copy } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle, ShoppingBag, Ghost, Hourglass, Brain, Map, Copy, Music, Play, Pause } from "lucide-react";
 import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "@/lib/firebase";
@@ -56,6 +56,31 @@ export default function HomeClient() {
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [onePercentDay, setOnePercentDay] = useState(365);
 
+  // Audio State for Theme Song (begins.mp3)
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
+  const [showMusicToast, setShowMusicToast] = useState(false);
+
+  const toggleMusic = async () => {
+    if (!audioRef.current) return;
+    try {
+      if (isPlayingMusic) {
+        audioRef.current.pause();
+        setIsPlayingMusic(false);
+        setShowMusicToast(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlayingMusic(true);
+        setShowMusicToast(true);
+        setTimeout(() => {
+          setShowMusicToast(false);
+        }, 3000);
+      }
+    } catch (err) {
+      console.error("Audio playback error:", err);
+    }
+  };
+
   useEffect(() => {
     const ua = navigator.userAgent;
     const inApp = /FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat|GSA\/|Gmail/i.test(ua);
@@ -66,6 +91,9 @@ export default function HomeClient() {
     document.body.classList.add("bg-polkadot-white");
     return () => {
       document.body.classList.remove("bg-polkadot-white");
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
     };
   }, []);
 
@@ -1174,7 +1202,399 @@ export default function HomeClient() {
           </div>
         </section>
       )}
+
+      {/* --- Footer --- */}
+      <footer className="mx-auto mt-12 flex max-w-5xl flex-col items-center pb-12 sm:pb-16">
+        <div className="mb-5 flex items-center justify-center gap-7 text-slate-500 sm:gap-8">
+          <Link
+            href="https://x.com/FuiiThanawat"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="X"
+            className="group grid h-11 w-11 place-items-center rounded-full transition-all duration-300 hover:-translate-y-1 hover:bg-slate-900 hover:text-white hover:shadow-xl"
+          >
+            <svg viewBox="0 0 1200 1227" className="h-6 w-6" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M714.16 519.28 1160.89 0h-105.86L667.14 450.89 357.33 0H0l468.49 681.82L0 1226.37h105.87l409.62-476.15 327.18 476.15H1200L714.16 519.28Zm-144.99 168.55-47.47-67.9L144.01 79.69h162.6l304.8 435.99 47.47 67.9 396.2 566.72h-162.6L569.17 687.83Z"
+              />
+            </svg>
+          </Link>
+
+          <Link
+            href="https://www.instagram.com/upskillwithfuii/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="group grid h-11 w-11 place-items-center rounded-full transition-all duration-300 hover:-translate-y-1 hover:bg-gradient-to-br hover:from-fuchsia-500 hover:via-rose-500 hover:to-amber-400 hover:text-white hover:shadow-xl"
+          >
+            <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Z"
+              />
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"
+              />
+              <path fill="currentColor" d="M17.5 6.5h.01" />
+            </svg>
+          </Link>
+
+          <Link
+            href="https://www.tiktok.com/@upskillwithfuii"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="TikTok"
+            className="group grid h-11 w-11 place-items-center rounded-full transition-all duration-300 hover:-translate-y-1 hover:bg-slate-950 hover:text-white hover:shadow-xl"
+          >
+            <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M16.6 3c.35 2.03 1.55 3.45 3.4 3.64v3.12a7.3 7.3 0 0 1-3.34-.9v5.86c0 3.1-2.3 5.28-5.32 5.28C8.56 20 6 18.08 6 15.18c0-3.28 2.88-5.36 6.15-4.78v3.17c-1.3-.42-2.73.2-2.73 1.6 0 .98.82 1.62 1.85 1.62 1.12 0 1.9-.72 1.9-2.1V3h3.43Z"
+              />
+            </svg>
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowStoryModal(true)}
+          className="cursor-pointer text-center text-xs font-bold tracking-wide text-slate-400 transition-colors hover:text-indigo-600"
+        >
+          {t.footer}
+        </button>
+      </footer>
+
+      {/* --- Upgrade Modal --- */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowUpgradeModal(false)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+          />
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative w-full max-w-[360px] bg-slate-900/90 border border-white/10 rounded-[2.5rem] p-1 shadow-[0_0_50px_-12px_rgba(245,158,11,0.25)] overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+
+            <div className="relative p-7 text-center">
+              <div className="relative mx-auto w-16 h-16 mb-6">
+                <div className="absolute inset-0 bg-amber-500/30 blur-2xl rounded-full" />
+                <div className="relative w-full h-full bg-slate-800 border border-white/10 rounded-2xl flex items-center justify-center shadow-inner">
+                  <Zap size={30} className="text-amber-400 fill-amber-400/20" />
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-black text-white mb-1 tracking-tight">
+                เลือกแผนที่เหมาะกับคุณ
+              </h2>
+              <p className="text-slate-400 text-[11px] font-bold leading-relaxed mb-6">
+                ค่าสมาชิกช่วยจ่ายต้นทุน AI และเซิร์ฟเวอร์จริง เพื่อให้ฟุ้ยพัฒนา Upskill Everyday ต่อได้ทุกเดือนครับ
+              </p>
+
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                {[
+                  { id: "monthly" as ProPlan, label: "PRO รายเดือน", price: "฿149", sub: "ช่วยค่า AI รายเดือน" },
+                  { id: "yearly" as ProPlan, label: "PRO รายปี", price: "฿990", sub: "BEST VALUE" },
+                  { id: "lifetime" as ProPlan, label: "LIFETIME", price: "฿2,490", sub: "จ่ายครั้งเดียวจบ" },
+                ].map((plan) => (
+                  <button
+                    key={plan.id}
+                    onClick={() => setBillingPlan(plan.id)}
+                    className={`rounded-2xl border p-3 text-left transition-all duration-300 ${billingPlan === plan.id
+                      ? "border-amber-300 bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950 shadow-[0_18px_30px_-16px_rgba(245,158,11,0.8)]"
+                      : "border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.07]"
+                    } ${plan.id === "lifetime" ? "col-span-2" : ""}`}
+                  >
+                    <span className="block text-[9px] font-black uppercase tracking-[0.2em] opacity-80">{plan.label}</span>
+                    <span className="mt-1 block text-2xl font-black tracking-tight">{plan.price}</span>
+                    <span className="block text-[10px] font-bold opacity-70">{plan.sub}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-slate-800/40 rounded-2xl p-4 mb-6 border border-white/5 text-left">
+                <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2">สิทธิพิเศษที่คุณจะได้รับ</p>
+                <ul className="text-[11px] font-bold text-slate-300 space-y-1.5">
+                  {billingPlan === "monthly" && (
+                    <>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-400 shrink-0" /> ปลดล็อกระบบและเควสต์ทั้งหมด</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-400 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
+                    </>
+                  )}
+                  {billingPlan === "yearly" && (
+                    <>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ปลดล็อกระบบและเควสต์ทั้งหมด</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ฟรี Ebook “สร้างก่อนพร้อม” + Badge ยุคบุกเบิก</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> คลังออมมีสติ, Book Shelf และล็อกราคานี้ตลอดชีพ</li>
+                    </>
+                  )}
+                  {billingPlan === "lifetime" && (
+                    <>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> สนับสนุนเต็มสูบ ปลดล็อกถาวรตลอดชีพ</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ได้รับสิทธิ์และโบนัสพิเศษทั้งหมดเหมือนแพ็กเกจรายปี</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              <button
+                onClick={() => handleUpgrade()}
+                className="w-full bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 text-slate-950 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all duration-300 shadow-[0_18px_40px_-18px_rgba(245,158,11,0.9)] active:scale-95 flex items-center justify-center gap-2 group"
+              >
+                สนับสนุนและไปต่อ
+                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="mt-5 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-slate-300 transition-colors"
+              >
+                ใช้ Free ต่อ
+              </button>
+
+              <div className="mt-8 pt-6 border-t border-white/5 flex justify-center gap-6">
+                <div className="flex items-center gap-1.5">
+                  <Star size={12} className="text-amber-400" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Full Access</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Award size={12} className="text-amber-400" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Pro Status</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* --- 📖 Story Modal --- */}
+      {showStoryModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          onClick={() => setShowStoryModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="relative max-w-md w-full max-h-[85vh] flex flex-col bg-slate-900/90 border border-slate-800 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl text-center overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute top-0 left-1/4 w-32 h-32 bg-red-700/10 blur-[40px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-red-800/10 blur-[40px] rounded-full pointer-events-none" />
+
+            {/* Scrollable body content area */}
+            <div className="flex-1 overflow-y-auto space-y-6 pr-1 my-3 text-center scrollbar-thin">
+              <div className="flex justify-center pt-2">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[2.2rem] overflow-hidden border-2 border-red-500/30 p-1 bg-slate-950/50 shadow-lg shadow-red-500/20 flex items-center justify-center">
+                  <img
+                    src="/fuii-profile.webp"
+                    alt="Fuii"
+                    className="w-full h-full object-cover rounded-[1.8rem]"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextElementSibling as HTMLDivElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-3xl" style={{ display: 'none' }}>
+                    💡
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  จุดเริ่มต้นของ "อัพสกิลกับฟุ้ย"
+                </h3>
+                <p className="text-red-400 text-xs font-bold uppercase tracking-wider mt-1.5">
+                  1% Better Everyday
+                </p>
+              </div>
+
+              <div className="text-sm text-slate-300 leading-relaxed space-y-4 text-left font-medium bg-slate-950/40 p-5 rounded-2xl border border-slate-800/80">
+                <p>
+                  ผมเชื่อในการ<span className="text-red-400 font-black">พัฒนาตัวเอง</span> และเชื่อว่าทุกๆ คนเก่งขึ้นได้
+                </p>
+                <p>
+                  เลยทำคอนเทนต์ ทั้งใน <span className="text-white font-semibold">IG, TikTok, X</span> เพื่อส่งต่อเรื่องราวเหล่านี้ผ่านความชอบที่ผมมี ทั้งการเขียน, ธุรกิจ, การพัฒนาตัวเอง และเกม ในชื่อของ <span className="text-red-400 font-bold">"อัพสกิลกับฟุ้ย"</span>
+                </p>
+                <p>
+                  และพอเทคโนโลยี AI เกิดขึ้น เลยได้นำเอา Logic และสกิลที่เรียนจบด้าน <span className="text-white font-semibold">วิศวะคอมฯ</span> มาใช้พัฒนาแอปนี้ขึ้นมา
+                </p>
+                
+                <div className="border-t border-slate-800/80 my-3" />
+                
+                <p>
+                  จนเกิดเป็น <span className="text-red-400 font-black">Upskill Everyday</span> แพลตฟอร์ม <span className="text-white font-bold">Personal Growth OS เฉพาะบุคคล</span> ที่จะช่วยให้พวกเราเก่งขึ้นได้ในทุกๆ วัน ⚡
+                </p>
+                <p>
+                  หวังว่าแอปนี้จะเป็นประโยชน์กับทุกคนนะครับ
+                </p>
+                <p className="text-slate-400 italic text-center font-bold border-t border-slate-800/80 pt-4 mt-2">
+                  "ขอบคุณทุกคนที่มาร่วมอัพสกิลไปด้วยกันนะครับ 🙏"
+                  <span className="block text-[11px] text-red-500 uppercase tracking-widest mt-1.5 font-black">— ฟุ้ย</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Action button fixed at the bottom */}
+            <button
+              onClick={() => setShowStoryModal(false)}
+              className="w-full py-4 bg-gradient-to-r from-red-700 to-red-900 text-white font-black rounded-2xl shadow-xl hover:from-red-600 hover:to-red-800 transition-all active:scale-95 text-sm uppercase tracking-wider shrink-0 mt-2"
+            >
+              เติบโตไปด้วยกัน 🌱
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* --- 📱 iOS Install Guide Modal --- */}
+      {showIOSInstallGuide && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowIOSInstallGuide(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-[360px] bg-[#0A0B10]/95 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-6 shadow-[0_0_80px_rgba(0,0,0,0.8)] text-left flex flex-col text-white"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/10 text-red-400 ring-1 ring-red-400/20">
+                  <Download size={14} />
+                </span>
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-100">ติดตั้งแอป iOS</h3>
+              </div>
+              <button
+                onClick={() => setShowIOSInstallGuide(false)}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-[12px] text-slate-300 font-bold mb-4 leading-relaxed">
+              สำหรับ iPhone และ iPad น้าสามารถติดตั้งแอปได้ง่ายๆ ตามขั้นตอนดังนี้ครับ:
+            </p>
+
+            <div className="space-y-3.5 text-[11px] font-bold text-slate-200">
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-850 text-[10px] font-black text-slate-300">1</span>
+                <div>
+                  กดปุ่ม <span className="text-red-400 font-black">แชร์ (Share)</span> ที่แถบด้านล่างของบราวเซอร์ Safari
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">ลักษณะเป็นรูปกล่องสี่เหลี่ยมมีลูกศรชี้ขึ้น [↑]</div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-850 text-[10px] font-black text-slate-300">2</span>
+                <div>
+                  เลื่อนลงมาด้านล่างแล้วเลือก <span className="text-red-400 font-black">"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</span>
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">ลักษณะเป็นรูปเครื่องหมายบวก [+] ในกรอบสี่เหลี่ยม</div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-850 text-[10px] font-black text-slate-300">3</span>
+                <div>
+                  กดปุ่ม <span className="text-red-400 font-black">"เพิ่ม" (Add)</span> ที่มุมขวาบนของหน้าจอ
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">แอปจะปรากฏเป็นไอคอนบนหน้าจอโฮมพร้อมใช้งานทันทีครับ 📱✨</div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowIOSInstallGuide(false)}
+              className="mt-6 py-3 w-full text-center bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors border border-white/5"
+            >
+              เข้าใจแล้ว 👌
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
+
+    {/* 💿 Clean Maroon Vinyl Button with Auto-Fade Toast (BEGINS - FU11) */}
+    <audio ref={audioRef} src="/sounds/begins.mp3" loop preload="metadata" />
+
+    {!showUpgradeModal && !showStoryModal && !showIOSInstallGuide && !showGuide && (
+      <div className="fixed bottom-24 right-4 sm:bottom-24 sm:right-6 md:bottom-6 md:right-6 z-[200] flex flex-col items-end gap-2 pointer-events-auto">
+        {/* 3-Second Auto-Fade Toast */}
+        <AnimatePresence>
+          {showMusicToast && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 8 }}
+              transition={{ duration: 0.3 }}
+              className="px-3.5 py-1.5 rounded-full bg-slate-950/95 border border-red-500/30 backdrop-blur-xl shadow-[0_4px_15px_rgba(139,30,45,0.4)] text-[10.5px] font-black tracking-wide flex items-center gap-2 whitespace-nowrap"
+            >
+              <Music size={12} className="text-rose-400 animate-pulse shrink-0" />
+              <span className="bg-gradient-to-r from-red-200 via-rose-100 to-amber-100 bg-clip-text text-transparent">
+                BEGINS - FU11
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={toggleMusic}
+          title="BEGINS - FU11"
+          className="relative w-11 h-11 rounded-full bg-gradient-to-tr from-[#2a050a] via-[#4d0c17] to-[#1f0307] border border-red-500/30 shadow-[0_4px_20px_rgba(139,30,45,0.4)] cursor-pointer flex items-center justify-center overflow-hidden group hover:border-red-400/50 transition-all"
+        >
+          {/* Subtle Gloss Sheen Reflection */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.25),transparent_65%)] pointer-events-none z-10" />
+
+          {/* Maroon Glossy Vinyl Grooves */}
+          <div className={`absolute inset-0 flex items-center justify-center ${isPlayingMusic ? "animate-spin" : ""}`} style={{ animationDuration: '6s' }}>
+            <div className="absolute inset-[3px] rounded-full border border-red-200/15 pointer-events-none" />
+            <div className="absolute inset-[7px] rounded-full border border-red-200/10 pointer-events-none" />
+            <div className="w-3.5 h-3.5 rounded-full bg-[#8b1e2d] border border-red-300/40 flex items-center justify-center shadow-inner">
+              <div className="w-1 h-1 rounded-full bg-[#1f0307]" />
+            </div>
+          </div>
+
+          {/* Play / Pause Icon */}
+          <div className="relative z-20 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            {isPlayingMusic ? (
+              <Pause size={13} fill="white" className="text-white" />
+            ) : (
+              <Play size={13} fill="white" className="text-white ml-0.5" />
+            )}
+          </div>
+        </motion.button>
+      </div>
+    )}
     </>
   );
 }
