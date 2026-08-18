@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "แบบประเมิน Wheel of Life ฟรี 2026 | วัดระดับชีวิต 8 ด้าน รู้ผลทันที",
     description: "ประเมินความสมดุลชีวิต 8 ด้านฟรี พร้อม AI ช่วยวางแผน 7 วันเพื่อชีวิตที่สมดุลและเติบโต",
+    images: ["/og-default.png"],
   },
 };
 

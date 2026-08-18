@@ -30,6 +30,7 @@ export default function WheelOfLifeLayout({ children }: { children: React.ReactN
     "@type": "WebApplication",
     "name": "Wheel of Life Assessment | เครื่องมือเช็คสมดุลชีวิต 8 ด้าน",
     "url": "https://www.upskilleveryday.com/tools/wheel-of-life",
+    "image": "https://www.upskilleveryday.com/og-default.png",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "All",
     "browserRequirements": "Requires HTML5 support",

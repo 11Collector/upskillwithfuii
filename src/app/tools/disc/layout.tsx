@@ -30,6 +30,7 @@ export default function DiscLayout({ children }: { children: React.ReactNode }) 
     "@type": "WebApplication",
     "name": "DISC Assessment | แบบทดสอบสไตล์การทำงานและการสื่อสาร",
     "url": "https://www.upskilleveryday.com/tools/disc",
+    "image": "https://www.upskilleveryday.com/og-default.png",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "All",
     "browserRequirements": "Requires HTML5 support",

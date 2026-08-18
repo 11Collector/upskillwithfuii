@@ -30,6 +30,7 @@ export default function MoneyAvatarLayout({ children }: { children: React.ReactN
     "@type": "WebApplication",
     "name": "Money Avatar | เครื่องมือประเมินทัศนคติและพฤติกรรมทางการเงิน",
     "url": "https://www.upskilleveryday.com/tools/money-avatar",
+    "image": "https://www.upskilleveryday.com/og-default.png",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "All",
     "browserRequirements": "Requires HTML5 support",

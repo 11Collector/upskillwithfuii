@@ -1,10 +1,13 @@
-import React from 'react';
+"use client";
+
+import { useEffect } from 'react';
 
 /**
- * PreloadAssets - A component to pre-cache critical images
- * so they appear instantly when needed throughout the app.
+ * PreloadAssets - Pre-cache critical images in the browser cache via JavaScript
+ * without injecting <img> tags into the DOM (which causes search engine bots
+ * and social scrapers to accidentally pick them up as page thumbnail images).
  */
-const mentors = [
+const ASSETS_TO_PRELOAD = [
   '/Mentor/1.webp',
   '/Mentor/2.webp',
   '/Mentor/3.webp',
@@ -18,9 +21,6 @@ const mentors = [
   '/Phase1.webp',
   '/Phase2.webp',
   '/Phase3.webp',
-];
-
-const avatars = [
   '/avatars/rookie-static.webp',
   '/avatars/rookie-static-w.webp',
   '/avatars/master-static.webp',
@@ -37,9 +37,6 @@ const avatars = [
   '/avatars/architect-meditation-w.webp',
   '/avatars/legacy-meditation.webp',
   '/avatars/legacy-meditation-w.webp',
-];
-
-const logos = [
   '/logo-upskill.png',
   '/logo-wheel.png',
   '/office-personality.png',
@@ -54,22 +51,23 @@ const logos = [
 ];
 
 export const PreloadAssets = () => {
-  return (
-    <div 
-      style={{ 
-        position: 'absolute', 
-        width: 0, 
-        height: 0, 
-        overflow: 'hidden', 
-        zIndex: -1, 
-        pointerEvents: 'none',
-        visibility: 'hidden' 
-      }} 
-      aria-hidden="true"
-    >
-      {[...mentors, ...avatars, ...logos].map((url) => (
-        <img key={url} src={url} alt="" fetchPriority="high" />
-      ))}
-    </div>
-  );
+  useEffect(() => {
+    const preload = () => {
+      ASSETS_TO_PRELOAD.forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        (window as unknown as { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(preload);
+      } else {
+        setTimeout(preload, 1500);
+      }
+    }
+  }, []);
+
+  return null;
 };
+

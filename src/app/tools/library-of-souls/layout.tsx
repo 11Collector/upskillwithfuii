@@ -30,6 +30,7 @@ export default function LibraryOfSoulsLayout({ children }: { children: React.Rea
     "@type": "WebApplication",
     "name": "Library of Souls | เครื่องมือค้นหาหนังสือพัฒนาตัวเองที่ใช่สำหรับคุณ",
     "url": "https://www.upskilleveryday.com/tools/library-of-souls",
+    "image": "https://www.upskilleveryday.com/og-default.png",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "All",
     "browserRequirements": "Requires HTML5 support",
