@@ -9,6 +9,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Basic fetch handler to satisfy PWA requirements
+  const url = event.request.url;
+  // Never intercept Firebase Auth handlers, Google OAuth, or Firebase backend APIs
+  if (
+    url.includes('/__/auth/') ||
+    url.includes('accounts.google.com') ||
+    url.includes('apis.google.com') ||
+    url.includes('firebaseapp.com') ||
+    url.includes('identitytoolkit.googleapis.com') ||
+    url.includes('securetoken.googleapis.com')
+  ) {
+    return;
+  }
   event.respondWith(fetch(event.request));
 });

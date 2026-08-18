@@ -1,6 +1,13 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import {
+  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  GoogleAuthProvider,
+} from "firebase/auth";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 const requiredEnvVars = [
@@ -30,7 +37,20 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 import { getStorage } from "firebase/storage";
 
 const db = getFirestore(app);
-const auth = getAuth(app);
+
+let auth: any;
+if (typeof window !== "undefined") {
+  try {
+    auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+    });
+  } catch (e) {
+    auth = getAuth(app);
+  }
+} else {
+  auth = getAuth(app);
+}
+
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
