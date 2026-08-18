@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle, ShoppingBag, Ghost, Hourglass, Brain, Map, Copy, Music, Play, Pause, Minimize2 } from "lucide-react";
+import { PieChart, Users, Wallet, Quote, ChevronRight, LogOut, Loader2, LayoutDashboard, Star, Flame, BrainCircuit, MessageSquareMore, Sparkles, ShieldCheck, Zap, Award, BookOpen, Download, X, ArrowRight, HelpCircle, ShoppingBag, Ghost, Hourglass, Brain, Map, Copy } from "lucide-react";
 import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "@/lib/firebase";
@@ -56,30 +56,6 @@ export default function HomeClient() {
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [onePercentDay, setOnePercentDay] = useState(365);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
-  const [showMusicToast, setShowMusicToast] = useState(false);
-
-  const toggleMusic = async () => {
-    if (!audioRef.current) return;
-    try {
-      if (isPlayingMusic) {
-        audioRef.current.pause();
-        setIsPlayingMusic(false);
-        setShowMusicToast(false);
-      } else {
-        await audioRef.current.play();
-        setIsPlayingMusic(true);
-        setShowMusicToast(true);
-        setTimeout(() => {
-          setShowMusicToast(false);
-        }, 3000);
-      }
-    } catch (err) {
-      console.error("Audio playback error:", err);
-    }
-  };
-
   useEffect(() => {
     const ua = navigator.userAgent;
     const inApp = /FBAN|FBAV|FB_IAB|Instagram|Threads|Line\/|MicroMessenger|BytedanceWebview|musical_ly|Twitter|Snapchat|GSA\/|Gmail/i.test(ua);
@@ -90,9 +66,6 @@ export default function HomeClient() {
     document.body.classList.add("bg-polkadot-white");
     return () => {
       document.body.classList.remove("bg-polkadot-white");
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
     };
   }, []);
 
