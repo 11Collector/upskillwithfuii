@@ -224,62 +224,60 @@ export default function SoulGuidePage() {
         const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
         let historyDocs: any[] = [];
         try {
-          const historySnap = await getDocs(query(chatHistoryRef, orderBy("createdAt", "desc"), limit(100)));
+          // Fetch up to 100 recent messages
+          const historySnap = await getDocs(query(chatHistoryRef, limit(100)));
           historyDocs = historySnap.docs;
         } catch (e) {
-          console.warn("Ordered chat history query failed, attempting unindexed query:", e);
-        }
-
-        if (historyDocs.length === 0) {
-          try {
-            const fallbackSnap = await getDocs(query(chatHistoryRef, limit(100)));
-            historyDocs = fallbackSnap.docs;
-          } catch (e) {
-            console.error("Failed to load chat history:", e);
-          }
+          console.error("Failed to load chat history:", e);
         }
 
         const getDocTime = (data: any) => {
+          if (typeof data.createdAtMillis === 'number') return data.createdAtMillis;
           if (data.createdAt?.toMillis) return data.createdAt.toMillis();
           if (data.createdAt?.seconds) return data.createdAt.seconds * 1000;
           if (typeof data.createdAt === 'number') return data.createdAt;
-          if (typeof data.createdAtMillis === 'number') return data.createdAtMillis;
           if (data.timestamp?.toMillis) return data.timestamp.toMillis();
+          if (data.timestamp?.seconds) return data.timestamp.seconds * 1000;
           if (typeof data.timestamp === 'number') return data.timestamp;
           if (data.created_at?.toMillis) return data.created_at.toMillis();
+          if (data.created_at?.seconds) return data.created_at.seconds * 1000;
           if (typeof data.created_at === 'number') return data.created_at;
           return 0;
         };
 
-        const sortedDocs = [...historyDocs].sort((a, b) => getDocTime(a.data()) - getDocTime(b.data()));
+        const sortedDocs = [...historyDocs].sort((a, b) => {
+          const timeA = getDocTime(a.data());
+          const timeB = getDocTime(b.data());
+          if (timeA !== 0 && timeB !== 0) return timeA - timeB;
+          if (timeA !== 0) return 1;
+          if (timeB !== 0) return -1;
+          return 0;
+        });
 
-        let history = sortedDocs.map(doc => ({
-          role: doc.data().role as "user" | "assistant",
-          content: doc.data().content,
-        })).filter(msg => msg.content && (msg.role === "user" || msg.role === "assistant"));
+        const history: Message[] = sortedDocs
+          .map(doc => ({
+            role: doc.data().role as "user" | "assistant",
+            content: doc.data().content,
+          }))
+          .filter(msg => msg.content && (msg.role === "user" || msg.role === "assistant"));
 
         if (!messagesInitialized.current) {
           messagesInitialized.current = true;
 
           const welcomeMessage: Message = {
-              role: "assistant",
-              content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
+            role: "assistant",
+            content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
           };
 
-          // Clear is now handled solely in the mount useEffect to prevent race conditions
-
           setMessages((prev) => {
-            const base = history.length > 0 ? history : [welcomeMessage];
-            if (!hasLocalChatActivityRef.current && prev.length === 0) return base;
-
-            const merged = [...base];
-            prev.forEach((message) => {
-              const alreadyExists = merged.some(
-                (existing) => existing.role === message.role && existing.content === message.content
+            if (prev.length > 0) {
+              // If user already typed messages locally before history finished loading, merge history before local messages
+              const newLocalMessages = prev.filter(
+                (p) => !history.some((h) => h.role === p.role && h.content === p.content)
               );
-              if (!alreadyExists) merged.push(message);
-            });
-            return merged;
+              return [...(history.length > 0 ? history : [welcomeMessage]), ...newLocalMessages];
+            }
+            return history.length > 0 ? history : [welcomeMessage];
           });
         }
 
@@ -342,28 +340,16 @@ export default function SoulGuidePage() {
   };
 
   useEffect(() => {
-    const scrollWithBehavior = (isInitial: boolean) => {
-      const behavior = isInitial ? "auto" : "smooth";
-      scrollToBottom(behavior);
-    };
-
     if (messages.length > 0) {
       if (isFirstScroll.current) {
-        // Snap immediately on first load
-        scrollWithBehavior(true);
+        scrollToBottom("auto");
         isFirstScroll.current = false;
-        
-        // Short delay snap to catch late-rendering elements (Markdown/Images)
-        setTimeout(() => scrollToBottom("auto"), 50);
-        setTimeout(() => scrollToBottom("auto"), 150);
+        setTimeout(() => scrollToBottom("auto"), 100);
       } else {
-        // Smooth scroll for new messages
-        scrollWithBehavior(false);
-        const timers = [150, 300, 600].map(ms => setTimeout(() => scrollWithBehavior(false), ms));
-        return () => timers.forEach(clearTimeout);
+        scrollToBottom("smooth");
       }
     }
-  }, [messages, isTyping]);
+  }, [messages.length]);
 
   useEffect(() => {
     const handleViewportChange = () => {
@@ -492,8 +478,13 @@ export default function SoulGuidePage() {
 
     const userMessage: Message = { role: "user", content: messageText.trim() };
     hasLocalChatActivityRef.current = true;
-    const nextMessages = [...messagesRef.current, userMessage];
-    setMessages(nextMessages);
+    
+    // Always use current messages + new user message
+    const currentList = messagesRef.current.length > 0 ? messagesRef.current : messages;
+    const nextMessages = [...currentList, userMessage];
+    
+    // Update local UI immediately
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
     setIsTyping(true);
@@ -512,12 +503,14 @@ export default function SoulGuidePage() {
     try {
       const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
 
-      // 1. Save User Message
+      // 1. Save User Message with full timestamp compatibility
+      const now = Date.now();
       await addDoc(chatHistoryRef, {
         role: "user",
         content: userMessage.content,
         createdAt: serverTimestamp(),
-        createdAtMillis: Date.now()
+        createdAtMillis: now,
+        timestamp: serverTimestamp(),
       });
 
       // Write lastChatDate once per day to enable AI Mentor quest auto-complete
@@ -650,11 +643,13 @@ export default function SoulGuidePage() {
         setMessages(prev => [...prev, { role: "assistant", content: cleanReply }]);
 
         // 2. Save Assistant Reply
+        const replyNow = Date.now();
         await addDoc(chatHistoryRef, {
           role: "assistant",
           content: cleanReply,
           createdAt: serverTimestamp(),
-          createdAtMillis: Date.now()
+          createdAtMillis: replyNow,
+          timestamp: serverTimestamp(),
         });
 
       } else {
@@ -755,92 +750,96 @@ export default function SoulGuidePage() {
         className="flex-1 w-full overflow-y-auto no-scrollbar"
       >
         <div className="max-w-3xl mx-auto flex flex-col gap-6 p-4 sm:p-6 pt-4 sm:pt-6 pb-8">
-          <AnimatePresence>
-            {messages.map((msg, idx) => (
-              <motion.div
-                key={`msg-${idx}-${msg.role}-${msg.content.slice(0, 15)}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          {messages.map((msg, idx) => (
+            <div
+              key={`msg-${idx}-${msg.role}`}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[85%] px-6 py-4 rounded-[2rem] border relative transition-all duration-300 ${msg.role === "user"
+                  ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
+                  : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
+                  }`}
               >
-                <div
-                  className={`max-w-[85%] px-6 py-4 rounded-[2rem] border relative transition-all duration-300 ${msg.role === "user"
-                    ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
-                    : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
-                    }`}
-                >
-                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white prose-blockquote:quotes-none prose-blockquote:not-italic">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        blockquote: ({ node, ...props }) => (
-                          <blockquote className="border-l-2 border-indigo-500/80 pl-4 py-1.5 my-3 bg-indigo-500/10 rounded-r-xl text-zinc-200 not-italic quotes-none" {...props} />
-                        )
-                      }}
-                    >
-                      {cleanMessageContent(msg.content)}
-                    </ReactMarkdown>
-                  </div>
+                <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white prose-blockquote:quotes-none prose-blockquote:not-italic">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      blockquote: ({ node, ...props }) => (
+                        <blockquote className="border-l-2 border-indigo-500/80 pl-4 py-1.5 my-3 bg-indigo-500/10 rounded-r-xl text-zinc-200 not-italic quotes-none" {...props} />
+                      )
+                    }}
+                  >
+                    {cleanMessageContent(msg.content)}
+                  </ReactMarkdown>
+                </div>
 
-                  {msg.role === "assistant" && (
-                    <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-white/5 text-zinc-500">
-                      {/* Copy Message Button */}
-                      <button
-                        onClick={() => handleCopyMessage(msg.content, idx)}
-                        className="hover:text-white transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-wider active:scale-95"
-                        title="คัดลอกข้อความ"
+                {msg.role === "assistant" && (
+                  <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-white/5 text-zinc-500">
+                    {/* Copy Message Button */}
+                    <button
+                      onClick={() => handleCopyMessage(msg.content, idx)}
+                      className="hover:text-white transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-wider active:scale-95"
+                      title="คัดลอกข้อความ"
+                    >
+                      {copiedMessageIdx === idx ? (
+                        <>
+                          <Check size={11} className="text-emerald-500" />
+                          <span className="text-emerald-500">คัดลอกแล้ว</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={11} />
+                          <span>คัดลอก</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Save to Second Brain Button */}
+                    {savedNotesMap[idx] ? (
+                      <Link
+                        href={`/second-brain?noteId=${savedNotesMap[idx]}`}
+                        className="hover:text-amber-400 text-amber-500 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-widest active:scale-95"
                       >
-                        {copiedMessageIdx === idx ? (
+                        <Brain size={11} />
+                        <span>เปิดดูบันทึก 🧠</span>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => handleSaveToSecondBrain(msg.content, idx)}
+                        disabled={savingMessageIdx !== null}
+                        className="hover:text-sky-400 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-wider active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="บันทึกลงคลังสมองที่สอง"
+                      >
+                        {savingMessageIdx === idx ? (
                           <>
-                            <Check size={11} className="text-emerald-500" />
-                            <span className="text-emerald-500">คัดลอกแล้ว</span>
+                            <Loader2 size={11} className="animate-spin text-sky-400" />
+                            <span className="text-sky-400">กำลังจดบันทึก...</span>
                           </>
                         ) : (
-                          <>
-                            <Copy size={11} />
-                            <span>คัดลอก</span>
-                          </>
+                          <span className="flex items-center gap-1">
+                            <Brain size={11} />
+                            <span>บันทึกลงสมองที่สอง</span>
+                            {!isProMember && <Lock size={9} className="text-zinc-500/70" />}
+                          </span>
                         )}
                       </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
 
-                      {/* Save to Second Brain Button */}
-                      {savedNotesMap[idx] ? (
-                        <Link
-                          href={`/second-brain?noteId=${savedNotesMap[idx]}`}
-                          className="hover:text-amber-400 text-amber-500 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-widest active:scale-95"
-                        >
-                          <Brain size={11} />
-                          <span>เปิดดูบันทึก 🧠</span>
-                        </Link>
-                      ) : (
-                        <button
-                          onClick={() => handleSaveToSecondBrain(msg.content, idx)}
-                          disabled={savingMessageIdx !== null}
-                          className="hover:text-sky-400 transition-colors flex items-center gap-1 text-[9px] font-black uppercase tracking-wider active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="บันทึกลงคลังสมองที่สอง"
-                        >
-                          {savingMessageIdx === idx ? (
-                            <>
-                              <Loader2 size={11} className="animate-spin text-sky-400" />
-                              <span className="text-sky-400">กำลังจดบันทึก...</span>
-                            </>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Brain size={11} />
-                              <span>บันทึกลงสมองที่สอง</span>
-                              {!isProMember && <Lock size={9} className="text-zinc-500/70" />}
-                            </span>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+          <AnimatePresence>
             {isTyping && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+              <motion.div
+                key="typing-indicator"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex justify-start"
+              >
                 <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-[2rem] rounded-tl-none backdrop-blur-xl flex gap-1.5 items-center">
                   <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
                   <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
