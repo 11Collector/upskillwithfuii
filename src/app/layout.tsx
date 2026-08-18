@@ -22,7 +22,12 @@ const kanit = Kanit({
 export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
-    apple: '/logoapp.png',
+    icon: [
+      { url: '/logoapp-maskable.png', sizes: '512x512', type: 'image/png' },
+      { url: '/logoapp.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/logoapp-maskable.png',
+    apple: '/logoapp-maskable.png',
   },
   title: { default: "Upskill Everyday | อัพสกิลกับฟุ้ย - พัฒนาตัวเองและทักษะชีวิตทุกวัน", template: "%s | Upskill Everyday" },
   description: "การพัฒนาตัวเองสนุกกว่าที่คิด - Personal Growth OS ที่พาคุณสำรวจตัวเอง สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม",
@@ -50,6 +55,7 @@ export default function RootLayout({
     "name": "Upskill Everyday",
     "alternateName": ["อัพสกิลกับฟุ้ย", "Upskill with Fuii"],
     "url": "https://www.upskilleveryday.com",
+    "image": "https://www.upskilleveryday.com/logoapp-maskable.png",
     "description": "การพัฒนาตัวเองสนุกกว่าที่คิด - Personal Growth OS ที่พาคุณสำรวจตัวเอง สะสม XP และ Level Up สู่เวอร์ชันที่เก่งกว่าเดิม",
     "potentialAction": {
       "@type": "SearchAction",
