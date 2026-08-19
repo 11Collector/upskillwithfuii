@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { usePWAInstall } from "@/lib/pwa";
 import {
@@ -137,48 +137,86 @@ export default function HomeClient() {
     }
   };
 
-  const checkProStatus = async (uid: string) => {
-    setIsProLoaded(false);
-    try {
-      const userRef = doc(db, "users", uid);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        const data = userSnap.data() || {};
-        const subscriptionStatus =
-          data.subscriptionStatus || data.subscription_status || "";
-        const subscriptionTier =
-          data.subscriptionTier || data.subscription_tier || "";
-        const isPremium =
-          data.role === "premium" ||
-          subscriptionTier === "pro" ||
-          ["active", "trialing"].includes(subscriptionStatus) ||
-          Boolean(data.isLifetimeMember);
-        setIsPro(isPremium);
-      } else {
-        setIsPro(false);
-      }
-    } catch (e) {
-      console.error("Error checking pro status:", e);
-      setIsPro(false);
-    } finally {
-      setIsProLoaded(true);
-    }
+  const computeIsPro = (data: any, email: string | null | undefined): boolean => {
+    const adminEmails = Array.from(
+      new Set([
+        "emotion.tuii@gmail.com",
+        "upskillwithfuii@gmail.com",
+        ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "").toLowerCase().split(","),
+      ].filter(Boolean))
+    );
+    const isUserAdmin = !!(email && adminEmails.includes(email.toLowerCase()));
+
+    if (!data) return isUserAdmin;
+
+    const subscriptionStatus =
+      data.subscriptionStatus || data.subscription_status || data.status || "";
+    const subscriptionTier =
+      data.subscriptionTier || data.subscription_tier || data.tier || "";
+    const role = data.role || "";
+    const plan = data.subscriptionPlan || data.plan || "";
+
+    return Boolean(
+      isUserAdmin ||
+      role === "premium" ||
+      role === "admin" ||
+      role === "pro" ||
+      subscriptionTier === "pro" ||
+      subscriptionTier === "premium" ||
+      ["active", "trialing"].includes(subscriptionStatus) ||
+      Boolean(data.isLifetimeMember) ||
+      Boolean(data.isFoundingMember) ||
+      Boolean(data.isPro) ||
+      plan.startsWith("founding") ||
+      plan === "yearly" ||
+      plan === "lifetime" ||
+      plan === "pro"
+    );
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubUserDoc: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        await checkProStatus(currentUser.uid);
+        setIsProLoaded(false);
+
+        const userRef = doc(db, "users", currentUser.uid);
+        unsubUserDoc = onSnapshot(
+          userRef,
+          (userSnap) => {
+            if (userSnap.exists()) {
+              const data = userSnap.data() || {};
+              setIsPro(computeIsPro(data, currentUser.email));
+            } else {
+              setIsPro(computeIsPro(null, currentUser.email));
+            }
+            setIsProLoaded(true);
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Home user snapshot error:", err);
+            setIsPro(computeIsPro(null, currentUser.email));
+            setIsProLoaded(true);
+            setLoading(false);
+          }
+        );
       } else {
+        if (unsubUserDoc) {
+          unsubUserDoc();
+          unsubUserDoc = null;
+        }
         setIsPro(false);
         setIsProLoaded(true);
+        setLoading(false);
       }
-      setLoading(false);
     });
+
     const timer = setTimeout(() => setLoading(false), 5000);
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
+      if (unsubUserDoc) unsubUserDoc();
       clearTimeout(timer);
     };
   }, []);
@@ -198,7 +236,6 @@ export default function HomeClient() {
       const loggedInUser = await loginWithGoogle();
       if (loggedInUser) {
         setUser(loggedInUser);
-        await checkProStatus(loggedInUser.uid);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (error: any) {
