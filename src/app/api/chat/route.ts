@@ -147,24 +147,43 @@ export async function POST(req: Request) {
     // 🧠 1. Fetch relevant data (notes & quest log) in parallel to optimize latency
     const notesRef = adminDb.collection("users").doc(authResult.uid).collection("second_brain");
     const questLogRef = adminDb.collection("users").doc(authResult.uid).collection("quest_log");
+    const chatHistoryRef = adminDb.collection("users").doc(authResult.uid).collection("chat_history");
 
-    let notesSnap = await notesRef.orderBy("updatedAt", "desc").limit(30).get().catch(() => null);
+    let notesSnap = await notesRef.orderBy("updatedAt", "desc").limit(100).get().catch(() => null);
     if (!notesSnap || notesSnap.empty) {
-      notesSnap = await notesRef.limit(30).get().catch(() => null);
+      notesSnap = await notesRef.limit(100).get().catch(() => null);
     }
     const questLogSnap = await questLogRef.orderBy("createdAt", "desc").limit(10).get().catch(() => null);
     
-    let relevantNotesContext = "";
-
-    // Check if the user's message is a simple greeting or short talk to skip RAG retrieval
+    // Save user message to chat_history via adminDb to ensure it is always saved reliably
     const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const userMsgNow = Date.now();
+    if (lastUserMessage.trim()) {
+      chatHistoryRef.add({
+        role: "user",
+        content: lastUserMessage.trim(),
+        createdAt: FieldValue.serverTimestamp(),
+        createdAtMillis: userMsgNow,
+        timestamp: FieldValue.serverTimestamp(),
+      }).catch(err => console.error("Failed to save user msg via adminDb:", err));
+    }
+
+    let relevantNotesContext = "";
+    let allNotesIndexStr = "";
+
+    if (notesSnap && !notesSnap.empty) {
+      const validNotes = notesSnap.docs
+        .map(d => ({ id: d.id, title: (d.data().title || "").trim(), category: d.data().category || "ทั่วไป" }))
+        .filter(n => n.title && n.title !== "บันทึกที่ไม่มีชื่อ");
+      if (validNotes.length > 0) {
+        allNotesIndexStr = validNotes.map(n => `- "${n.title}" [หมวดหมู่: ${n.category}]`).join("\n");
+      }
+    }
+
     const cleanedMessage = lastUserMessage.trim().toLowerCase();
-    const isGreeting = /^(hello|hi|hey|สวัสดี|หวัดดี|ทักทาย|ดีครับ|ดีค่ะ|ครับ|ค่ะ|ok|โอเค|yes|no|ใช่|ไม่|เริ่ม)/i.test(cleanedMessage);
-    const skipRAG = isGreeting || cleanedMessage.length < 8;
+    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก|พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ|มีอะไรบ้าง|โน้ตทั้งหมด|บันทึกทั้งหมด)/i.test(cleanedMessage);
 
-    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก|พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ)/i.test(cleanedMessage);
-
-    if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && (!skipRAG || isOverviewQuery)) {
+    if (notesSnap && !notesSnap.empty && !noteContext && !articleContext) {
       const matchedDocsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
 
       if (isOverviewQuery) {
@@ -176,9 +195,15 @@ export async function POST(req: Request) {
           }
         });
       } else {
-        // Fast in-memory keyword & title match (0ms latency, eliminates redundant AI Router API call)
-        const queryWords = cleanedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 2);
-        
+        // Smart Thai & Multi-word Keyword Search
+        // Remove common Thai stopwords to isolate core query keywords
+        const stopWordsRegex = /(ใน|มี|เรื่อง|เกี่ยว|กับ|ให้|หน่อย|มั้ย|ไหม|ครับ|ค่ะ|บ้าง|ช่วย|หา|โน้ต|บันทึก|ที่|ของ|และ|หรือ|ดู|หน่อยนะ|อะไร|ตรงไหน|ลอง|ค้นหา|เปิด)/g;
+        const strippedMessage = cleanedMessage.replace(stopWordsRegex, " ").trim();
+        const queryTokens = Array.from(new Set([
+          ...cleanedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 2),
+          ...strippedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 2)
+        ]));
+
         notesSnap.docs.forEach((doc) => {
           const data = doc.data();
           const title = (data.title || "").trim().toLowerCase();
@@ -186,20 +211,25 @@ export async function POST(req: Request) {
           const content = (data.content || "").toLowerCase();
 
           if (title && title !== "บันทึกที่ไม่มีชื่อ") {
+            // Direct title or category matches
             if (cleanedMessage.includes(title) || title.includes(cleanedMessage) || (category === "พลังบวก" && cleanedMessage.includes("พลังบวก"))) {
               matchedDocsMap.set(doc.id, doc);
               return;
             }
-            const matchesWord = queryWords.some(w => title.includes(w) || (w.length >= 3 && content.includes(w)));
-            if (matchesWord && matchedDocsMap.size < 3) {
-              matchedDocsMap.set(doc.id, doc);
+
+            // Keyword token matching
+            for (const token of queryTokens) {
+              if (token.length >= 2 && (title.includes(token) || (token.length >= 3 && content.includes(token)))) {
+                matchedDocsMap.set(doc.id, doc);
+                break;
+              }
             }
           }
         });
       }
 
       if (matchedDocsMap.size > 0) {
-        relevantNotesContext = Array.from(matchedDocsMap.values()).slice(0, 3).map(doc => {
+        relevantNotesContext = Array.from(matchedDocsMap.values()).slice(0, 5).map(doc => {
           const data = doc.data();
           return `--- บันทึกย่อ: ${data.title} ---\nหมวดหมู่: ${data.category || 'ทั่วไป'}\nเนื้อหา:\n${data.content || 'ไม่มีเนื้อหา'}\n`;
         }).join("\n\n");
@@ -289,8 +319,13 @@ ${noteContext.content}
      2/ [กิจกรรมย่อยที่ 2 (ถ้ามี) - สั้นกระชับมาก]
 2. หากข้อความล่าสุดของผู้ใช้ไม่มีความเกี่ยวข้องกับโน้ตนี้เลย (คุยเรื่องอื่นภายนอกทั่วไป เช่น "วันนี้กินอะไรดี", "เหนื่อยจังเลย"):
    - โปรดมองข้ามคู่มือการวิเคราะห์โน้ตนี้ และตอบกลับพูดคุยตามปกติอย่างเป็นกันเองทั่วไป โดยไม่ต้องแบ่งเป็นหัวข้อ Reality Check / Action Plan เสมือนเป็นการพูดคุยนอกรอบทั่วไป\n`;
-    } else if (relevantNotesContext) {
-      notesInfoStr = `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องกับบทสนทนา:\n${relevantNotesContext}\n`;
+    } else {
+      if (relevantNotesContext) {
+        notesInfoStr += `- ข้อมูลบันทึกส่วนตัวของผู้ใช้ (Second Brain) ที่เกี่ยวข้องและดึงเนื้อหามาให้พิจารณา:\n${relevantNotesContext}\n`;
+      }
+      if (allNotesIndexStr) {
+        notesInfoStr += `- สารบัญหัวข้อบันทึกทั้งหมดใน Second Brain ของผู้ใช้ (Second Brain Index):\n${allNotesIndexStr}\n(หากผู้ใช้ถามถึงบันทึกอื่นๆ ในนี้ ให้ตอบรับและให้คำแนะนำตามหัวข้อได้เลย)\n`;
+      }
     }
 
     let articleInfoStr = "";
@@ -450,6 +485,7 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     let buffer = "";
+    let fullStreamedReply = "";
 
     const stream = new ReadableStream({
       async start(streamController) {
@@ -480,6 +516,7 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
                   const json = JSON.parse(trimmed.slice(6));
                   const delta = json.choices?.[0]?.delta?.content || "";
                   if (delta) {
+                    fullStreamedReply += delta;
                     streamController.enqueue(encoder.encode(delta));
                   }
                 } catch {
@@ -494,6 +531,21 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
         } finally {
           clearTimeout(timeout);
           streamController.close();
+
+          // Save assistant message to chat_history via adminDb
+          if (fullStreamedReply.trim()) {
+            const cleanAssistantReply = fullStreamedReply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
+            if (cleanAssistantReply) {
+              const assistantMsgNow = userMsgNow + 1000;
+              chatHistoryRef.add({
+                role: "assistant",
+                content: cleanAssistantReply,
+                createdAt: FieldValue.serverTimestamp(),
+                createdAtMillis: assistantMsgNow,
+                timestamp: FieldValue.serverTimestamp(),
+              }).catch(err => console.error("Failed to save assistant msg via adminDb:", err));
+            }
+          }
         }
       }
     });

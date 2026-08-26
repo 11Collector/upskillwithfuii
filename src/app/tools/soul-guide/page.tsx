@@ -227,21 +227,40 @@ export default function SoulGuidePage() {
           if (data.createdAt?.toMillis) return data.createdAt.toMillis();
           if (data.createdAt?.seconds) return data.createdAt.seconds * 1000;
           if (typeof data.createdAt === 'number' && data.createdAt > 0) return data.createdAt;
+          if (typeof data.createdAt === 'string') {
+            const t = Date.parse(data.createdAt);
+            if (!isNaN(t) && t > 0) return t;
+          }
           if (data.timestamp?.toMillis) return data.timestamp.toMillis();
           if (data.timestamp?.seconds) return data.timestamp.seconds * 1000;
           if (typeof data.timestamp === 'number' && data.timestamp > 0) return data.timestamp;
+          if (typeof data.timestamp === 'string') {
+            const t = Date.parse(data.timestamp);
+            if (!isNaN(t) && t > 0) return t;
+          }
           if (data.created_at?.toMillis) return data.created_at.toMillis();
           if (data.created_at?.seconds) return data.created_at.seconds * 1000;
           if (typeof data.created_at === 'number' && data.created_at > 0) return data.created_at;
-          // Fallback for pending local writes in Firestore: treat as latest (Date.now()) so it doesn't jump to the top
-          return Date.now();
+          if (typeof data.created_at === 'string') {
+            const t = Date.parse(data.created_at);
+            if (!isNaN(t) && t > 0) return t;
+          }
+          // Fallback for old documents with no timestamp: treat as 0 (oldest), NEVER Date.now()
+          return 0;
         };
 
         const unsubChat = onSnapshot(chatHistoryRef, (historySnap) => {
           const sortedDocs = [...historySnap.docs].sort((a, b) => {
             const timeA = getDocTime(a.data());
             const timeB = getDocTime(b.data());
-            return timeA - timeB;
+            if (timeA !== timeB) return timeA - timeB;
+
+            // If timestamps are equal, user message MUST appear before assistant message
+            const roleA = a.data().role || "user";
+            const roleB = b.data().role || "user";
+            if (roleA === "user" && roleB === "assistant") return -1;
+            if (roleA === "assistant" && roleB === "user") return 1;
+            return a.id.localeCompare(b.id);
           });
 
           const history: Message[] = sortedDocs
@@ -260,11 +279,13 @@ export default function SoulGuidePage() {
 
           setMessages((prev) => {
             if (history.length === 0) return [welcomeMessage];
-            // If local state has a pending user message that hasn't arrived in Firestore snapshot yet, retain it
+            // If local state has a pending local message (e.g. streaming), preserve it
             const lastLocal = prev[prev.length - 1];
-            const hasLastInHistory = history.some(h => h.role === lastLocal?.role && h.content === lastLocal?.content);
-            if (lastLocal && lastLocal.role === "user" && !hasLastInHistory) {
-              return [...history, lastLocal];
+            if (lastLocal) {
+              const hasLastInHistory = history.some(h => h.role === lastLocal.role && h.content === lastLocal.content);
+              if (!hasLastInHistory && lastLocal.content) {
+                return [...history, lastLocal];
+              }
             }
             return history;
           });
@@ -484,18 +505,6 @@ export default function SoulGuidePage() {
     }
 
     try {
-      const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
-
-      // 1. Save User Message with full timestamp compatibility
-      const now = Date.now();
-      await addDoc(chatHistoryRef, {
-        role: "user",
-        content: userMessage.content,
-        createdAt: serverTimestamp(),
-        createdAtMillis: now,
-        timestamp: serverTimestamp(),
-      });
-
       // Write lastChatDate once per day to enable AI Mentor quest auto-complete
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       if (userData?.lastChatDate !== todayStr) {
@@ -669,18 +678,6 @@ export default function SoulGuidePage() {
           return copy;
         });
       }
-
-      // Save Assistant Reply to Firestore
-      if (cleanReply) {
-        const replyNow = Date.now();
-        await addDoc(chatHistoryRef, {
-          role: "assistant",
-          content: cleanReply,
-          createdAt: serverTimestamp(),
-          createdAtMillis: replyNow,
-          timestamp: serverTimestamp(),
-        });
-      }
     } catch (error: any) {
       console.error("Chat Error:", error);
       const msg = error?.name === "AbortError"
@@ -778,7 +775,7 @@ export default function SoulGuidePage() {
         <div className="max-w-3xl mx-auto flex flex-col gap-6 p-4 sm:p-6 pt-4 sm:pt-6 pb-8">
           {messages.map((msg, idx) => (
             <div
-              key={`msg-${idx}-${msg.role}-${msg.content.slice(0, 15)}`}
+              key={`msg-${idx}-${msg.role}`}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
