@@ -223,33 +223,31 @@ export default function SoulGuidePage() {
         const chatHistoryRef = collection(db, "users", currentUser.uid, "chat_history");
         
         const getDocTime = (data: any) => {
-          if (typeof data.createdAtMillis === 'number') return data.createdAtMillis;
+          if (typeof data.createdAtMillis === 'number' && data.createdAtMillis > 0) return data.createdAtMillis;
           if (data.createdAt?.toMillis) return data.createdAt.toMillis();
           if (data.createdAt?.seconds) return data.createdAt.seconds * 1000;
-          if (typeof data.createdAt === 'number') return data.createdAt;
+          if (typeof data.createdAt === 'number' && data.createdAt > 0) return data.createdAt;
           if (data.timestamp?.toMillis) return data.timestamp.toMillis();
           if (data.timestamp?.seconds) return data.timestamp.seconds * 1000;
-          if (typeof data.timestamp === 'number') return data.timestamp;
+          if (typeof data.timestamp === 'number' && data.timestamp > 0) return data.timestamp;
           if (data.created_at?.toMillis) return data.created_at.toMillis();
           if (data.created_at?.seconds) return data.created_at.seconds * 1000;
-          if (typeof data.created_at === 'number') return data.created_at;
-          return 0;
+          if (typeof data.created_at === 'number' && data.created_at > 0) return data.created_at;
+          // Fallback for pending local writes in Firestore: treat as latest (Date.now()) so it doesn't jump to the top
+          return Date.now();
         };
 
         const unsubChat = onSnapshot(chatHistoryRef, (historySnap) => {
           const sortedDocs = [...historySnap.docs].sort((a, b) => {
             const timeA = getDocTime(a.data());
             const timeB = getDocTime(b.data());
-            if (timeA !== 0 && timeB !== 0) return timeA - timeB;
-            if (timeA !== 0) return 1;
-            if (timeB !== 0) return -1;
-            return 0;
+            return timeA - timeB;
           });
 
           const history: Message[] = sortedDocs
             .map(d => ({
-              role: d.data().role as "user" | "assistant",
-              content: d.data().content,
+              role: (d.data().role || "user") as "user" | "assistant",
+              content: d.data().content || d.data().text || d.data().message || "",
             }))
             .filter(msg => msg.content && (msg.role === "user" || msg.role === "assistant"));
 
@@ -260,7 +258,16 @@ export default function SoulGuidePage() {
             content: `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
           };
 
-          setMessages(history.length > 0 ? history : [welcomeMessage]);
+          setMessages((prev) => {
+            if (history.length === 0) return [welcomeMessage];
+            // If local state has a pending user message that hasn't arrived in Firestore snapshot yet, retain it
+            const lastLocal = prev[prev.length - 1];
+            const hasLastInHistory = history.some(h => h.role === lastLocal?.role && h.content === lastLocal?.content);
+            if (lastLocal && lastLocal.role === "user" && !hasLastInHistory) {
+              return [...history, lastLocal];
+            }
+            return history;
+          });
         });
         unsubs.push(unsubChat);
 
@@ -305,20 +312,19 @@ export default function SoulGuidePage() {
   const messagesInitialized = useRef(false);
   const isFirstScroll = useRef(true);
 
-  // 🔄 Persistent Scroll Logic
+  // 🔄 Persistent Scroll Logic (Mobile-safe container scrolling)
   const scrollToBottom = (behavior: "smooth" | "auto" = "smooth") => {
     const container = mainRef.current;
     if (!container) return;
 
-    // Use a more aggressive approach for the 'bottom'
-    // 10000 is safe to ensure we hit the real end of the scrollHeight
     container.scrollTo({
       top: container.scrollHeight + 10000,
       behavior
     });
-    
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior, block: "end" });
+
+    // Ensure outer mobile window isn't offset by mobile keyboard shifts
+    if (typeof window !== "undefined" && window.scrollY !== 0) {
+      window.scrollTo(0, 0);
     }
   };
 
@@ -617,7 +623,13 @@ export default function SoulGuidePage() {
           cleanReply = data.reply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
         }
 
-        setMessages(prev => [...prev, { role: "assistant", content: cleanReply }]);
+        setMessages(prev => {
+          const hasUserMsg = prev.some(m => m.role === "user" && m.content === userMessage.content);
+          if (!hasUserMsg) {
+            return [...prev, userMessage, { role: "assistant", content: cleanReply }];
+          }
+          return [...prev, { role: "assistant", content: cleanReply }];
+        });
 
         // 2. Save Assistant Reply
         const replyNow = Date.now();
@@ -659,7 +671,7 @@ export default function SoulGuidePage() {
   };
 
   return (
-    <div className={`fixed inset-0 bg-zinc-950 text-white flex flex-col items-center overflow-hidden z-[9999] ${inter.className}`}>
+    <div className={`fixed inset-0 h-[100dvh] bg-zinc-950 text-white flex flex-col items-center overflow-hidden overscroll-none z-[9999] ${inter.className}`}>
 
       {/* 🌈 Background Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -724,32 +736,38 @@ export default function SoulGuidePage() {
       {/* Chat Area (Scrollable) */}
       <div 
         ref={mainRef} 
-        className="flex-1 w-full overflow-y-auto no-scrollbar"
+        className="flex-1 w-full overflow-y-auto overscroll-contain no-scrollbar"
       >
         <div className="max-w-3xl mx-auto flex flex-col gap-6 p-4 sm:p-6 pt-4 sm:pt-6 pb-8">
           {messages.map((msg, idx) => (
             <div
-              key={`msg-${idx}-${msg.role}`}
+              key={`msg-${idx}-${msg.role}-${msg.content.slice(0, 15)}`}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`max-w-[85%] px-6 py-4 rounded-[2rem] border relative transition-all duration-300 ${msg.role === "user"
-                  ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-200"
-                  : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl"
+                  ? "bg-zinc-800 border-white/10 rounded-tr-none text-zinc-100 shadow-md"
+                  : "bg-white/5 border-white/5 rounded-tl-none text-zinc-300 backdrop-blur-xl shadow-lg"
                   }`}
               >
-                <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white prose-blockquote:quotes-none prose-blockquote:not-italic">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      blockquote: ({ node, ...props }) => (
-                        <blockquote className="border-l-2 border-indigo-500/80 pl-4 py-1.5 my-3 bg-indigo-500/10 rounded-r-xl text-zinc-200 not-italic quotes-none" {...props} />
-                      )
-                    }}
-                  >
-                    {cleanMessageContent(msg.content)}
-                  </ReactMarkdown>
-                </div>
+                {msg.role === "user" ? (
+                  <p className="text-[15px] leading-relaxed sm:text-base whitespace-pre-wrap break-words text-zinc-100 font-normal select-text">
+                    {msg.content}
+                  </p>
+                ) : (
+                  <div className="prose prose-invert max-w-none text-[15px] leading-relaxed sm:text-base prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-white prose-blockquote:quotes-none prose-blockquote:not-italic">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote className="border-l-2 border-indigo-500/80 pl-4 py-1.5 my-3 bg-indigo-500/10 rounded-r-xl text-zinc-200 not-italic quotes-none" {...props} />
+                        )
+                      }}
+                    >
+                      {cleanMessageContent(msg.content)}
+                    </ReactMarkdown>
+                  </div>
+                )}
 
                 {msg.role === "assistant" && (
                   <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-white/5 text-zinc-500">
