@@ -549,89 +549,129 @@ export default function SoulGuidePage() {
 
       clearTimeout(timeout);
 
-      const data = await response.json();
-      if (data.success) {
-        if (hasNoteContext) {
-          setNoteTitle("");
-          setNoteContent("");
-          if (incomingContextRef.current) {
-            incomingContextRef.current.noteTitle = "";
-            incomingContextRef.current.noteContent = "";
-          }
-        }
-        if (hasArticleContext) {
-          if (typeof window !== "undefined") {
-            sessionStorage.removeItem("last_viewed_article_title");
-          }
-          setArticleTitle("");
-          if (incomingContextRef.current) {
-            incomingContextRef.current.articleTitle = "";
-          }
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setMessages(prev => [...prev, { role: "assistant", content: errorData.error || "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
+        setIsLoading(false);
+        setIsTyping(false);
+        return;
+      }
 
-        if (typeof data.remainingFreeMessages === "number") {
-          setChatQuota({ used: 3 - data.remainingFreeMessages, total: 3 });
+      const remainingHeader = response.headers.get("X-Remaining-Free-Messages");
+      if (remainingHeader && remainingHeader !== "null" && remainingHeader !== "") {
+        const rem = parseInt(remainingHeader, 10);
+        if (!isNaN(rem)) {
+          setChatQuota({ used: 3 - rem, total: 3 });
         }
+      }
 
-        // ตรวจหา [QUEST_PREFS:{...}] ใน AI response
-        const questPrefsMatch = data.reply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
-        let cleanReply = data.reply;
-        if (questPrefsMatch && isQuestMode) {
-          try {
-            const prefs = JSON.parse(questPrefsMatch[1]);
-            const userRef = doc(db, "users", currentUser.uid);
-            const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-            await updateDoc(userRef, {
-              questPreferences: { ...prefs, savedAt: todayCA },
-              questPrefsBlockDate: "",
-              lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
-            });
-            setQuestSaved(true);
-            setIsQuestAnalyzing(true);
+      if (hasNoteContext) {
+        setNoteTitle("");
+        setNoteContent("");
+        if (incomingContextRef.current) {
+          incomingContextRef.current.noteTitle = "";
+          incomingContextRef.current.noteContent = "";
+        }
+      }
+      if (hasArticleContext) {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("last_viewed_article_title");
+        }
+        setArticleTitle("");
+        if (incomingContextRef.current) {
+          incomingContextRef.current.articleTitle = "";
+        }
+      }
 
-            // 🎯 Trigger AI quest analysis immediately so it is pre-generated when user goes back to Dashboard
-            const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
-            fetch('/api/quest-analysis', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${idToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ level: currentLevel })
-            }).then(async (res) => {
-              if (res.ok) {
-                const result = await res.json();
-                if (result.questTitle || result.discTitle || result.moneyTitle) {
-                  await updateDoc(userRef, {
-                    lastQuestAnalysisDate: todayCA,
-                    aiGeneratedQuestTitle: result.questTitle || "",
-                    aiGeneratedDiscTitle: result.discTitle || "",
-                    aiGeneratedMoneyTitle: result.moneyTitle || ""
-                  });
-                }
+      // Initialize assistant bubble for realtime streaming
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          if (chunk) {
+            fullReply += chunk;
+            setIsTyping(false); // Stop typing indicator as soon as first stream token arrives
+
+            setMessages(prev => {
+              const copy = [...prev];
+              if (copy.length > 0 && copy[copy.length - 1].role === "assistant") {
+                copy[copy.length - 1] = { role: "assistant", content: fullReply };
               }
-            }).catch(err => {
-              console.error("Immediate quest analysis failed:", err);
-            }).finally(() => {
-              setIsQuestAnalyzing(false);
+              return copy;
             });
-          } catch {}
-        } else if (questPrefsMatch) {
-          setQuestSaved(false);
-        }
-        if (questPrefsMatch) {
-          cleanReply = data.reply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
-        }
-
-        setMessages(prev => {
-          const hasUserMsg = prev.some(m => m.role === "user" && m.content === userMessage.content);
-          if (!hasUserMsg) {
-            return [...prev, userMessage, { role: "assistant", content: cleanReply }];
+            scrollToBottom("auto");
           }
-          return [...prev, { role: "assistant", content: cleanReply }];
-        });
+        }
+      }
 
-        // 2. Save Assistant Reply
+      // Check quest preferences marker
+      const questPrefsMatch = fullReply.match(/\[QUEST_PREFS:([\s\S]*?)\]/);
+      let cleanReply = fullReply;
+      if (questPrefsMatch && isQuestMode) {
+        try {
+          const prefs = JSON.parse(questPrefsMatch[1]);
+          const userRef = doc(db, "users", currentUser.uid);
+          const todayCA = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          await updateDoc(userRef, {
+            questPreferences: { ...prefs, savedAt: todayCA },
+            questPrefsBlockDate: "",
+            lastQuestAnalysisDate: '',      // reset เพื่อให้พรุ่งนี้ analysis วิ่งได้
+          });
+          setQuestSaved(true);
+          setIsQuestAnalyzing(true);
+
+          // 🎯 Trigger AI quest analysis immediately so it is pre-generated when user goes back to Dashboard
+          const currentLevel = Math.floor((userData?.totalXP || 0) / 100) + 1;
+          fetch('/api/quest-analysis', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${idToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ level: currentLevel })
+          }).then(async (res) => {
+            if (res.ok) {
+              const result = await res.json();
+              if (result.questTitle || result.discTitle || result.moneyTitle) {
+                await updateDoc(userRef, {
+                  lastQuestAnalysisDate: todayCA,
+                  aiGeneratedQuestTitle: result.questTitle || "",
+                  aiGeneratedDiscTitle: result.discTitle || "",
+                  aiGeneratedMoneyTitle: result.moneyTitle || ""
+                });
+              }
+            }
+          }).catch(err => {
+            console.error("Immediate quest analysis failed:", err);
+          }).finally(() => {
+            setIsQuestAnalyzing(false);
+          });
+        } catch {}
+      } else if (questPrefsMatch) {
+        setQuestSaved(false);
+      }
+
+      if (questPrefsMatch) {
+        cleanReply = fullReply.replace(/\[QUEST_PREFS:[\s\S]*?\]/, '').trim();
+        setMessages(prev => {
+          const copy = [...prev];
+          if (copy.length > 0 && copy[copy.length - 1].role === "assistant") {
+            copy[copy.length - 1] = { role: "assistant", content: cleanReply };
+          }
+          return copy;
+        });
+      }
+
+      // Save Assistant Reply to Firestore
+      if (cleanReply) {
         const replyNow = Date.now();
         await addDoc(chatHistoryRef, {
           role: "assistant",
@@ -640,9 +680,6 @@ export default function SoulGuidePage() {
           createdAtMillis: replyNow,
           timestamp: serverTimestamp(),
         });
-
-      } else {
-        setMessages(prev => [...prev, { role: "assistant", content: data.error || "ขออภัยครับ ระบบขัดข้องนิดหน่อย ลองส่งใหม่อีกครั้งนะครับ 🙏" }]);
       }
     } catch (error: any) {
       console.error("Chat Error:", error);

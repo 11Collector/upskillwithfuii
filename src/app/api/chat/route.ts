@@ -165,7 +165,6 @@ export async function POST(req: Request) {
     const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก|พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ)/i.test(cleanedMessage);
 
     if (notesSnap && !notesSnap.empty && !noteContext && !articleContext && (!skipRAG || isOverviewQuery)) {
-      // 1. First, check direct title/category keyword matches (case-insensitive)
       const matchedDocsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
 
       if (isOverviewQuery) {
@@ -177,82 +176,30 @@ export async function POST(req: Request) {
           }
         });
       } else {
+        // Fast in-memory keyword & title match (0ms latency, eliminates redundant AI Router API call)
+        const queryWords = cleanedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 2);
+        
         notesSnap.docs.forEach((doc) => {
           const data = doc.data();
           const title = (data.title || "").trim().toLowerCase();
           const category = (data.category || "").trim().toLowerCase();
-          if (title && title !== "บันทึกที่ไม่มีชื่อ" && (cleanedMessage.includes(title) || title.includes(cleanedMessage.split(" ")[0]) || (category === "พลังบวก" && cleanedMessage.includes("พลังบวก")))) {
-            matchedDocsMap.set(doc.id, doc);
+          const content = (data.content || "").toLowerCase();
+
+          if (title && title !== "บันทึกที่ไม่มีชื่อ") {
+            if (cleanedMessage.includes(title) || title.includes(cleanedMessage) || (category === "พลังบวก" && cleanedMessage.includes("พลังบวก"))) {
+              matchedDocsMap.set(doc.id, doc);
+              return;
+            }
+            const matchesWord = queryWords.some(w => title.includes(w) || (w.length >= 3 && content.includes(w)));
+            if (matchesWord && matchedDocsMap.size < 3) {
+              matchedDocsMap.set(doc.id, doc);
+            }
           }
         });
-      }
-
-      // 2. If no direct match or for broader semantic matching, call AI Router
-      const noteSummaries = notesSnap.docs.map((doc, index) => ({
-        index,
-        title: doc.data().title || "บันทึกที่ไม่มีชื่อ",
-        category: doc.data().category || "ทั่วไป",
-        excerpt: (doc.data().content || "").substring(0, 150)
-      }));
-
-      try {
-        const retrievalResponse = await fetch("https://api.deepseek.com/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
-            messages: [
-              {
-                role: "system",
-                content: `คุณคือระบบวิเคราะห์ความเกี่ยวข้องของข้อมูล (Strict Context Router)
-หน้าที่ของคุณคือวิเคราะห์ข้อความล่าสุดของผู้ใช้ และเลือกโน้ตที่ "มีความจำเป็นในการตอบคำถามนี้โดยตรงเท่านั้น" จากรายการโน้ตที่กำหนดให้
-
-กฎเกณฑ์ในการตัดสินใจ:
-1. ลำดับความสำคัญสูงสุด (Title & Subject Match): หากคำถามระบุชื่อหัวข้อหรือชื่อคน (เช่น "พี่เอ") ให้พิจารณาโน้ตที่มีชื่อ (Title) ตรงกับคำนั้นก่อนเป็นอันดับแรก หากไม่มี จึงเลือกโน้ตที่มีเนื้อหาหลักพูดถึงเรื่องนั้นโดยตรง
-2. เลือกโน้ตเฉพาะเมื่อผู้ใช้ถามถึงเนื้อหาในโน้ตนั้นๆ หรือต้องการให้ประมวลผล/อ้างอิงข้อมูลส่วนตัวที่ระบุในโน้ตนั้นโดยตรง
-3. ห้ามเลือกโน้ตหากผู้ใช้เพียงแค่คุยทักทายทั่วไป ถามสารทุกข์สุกดิบ หรือคุยประเด็นที่ไม่ได้มีความเกี่ยวข้องโดยตรงกับตัวบันทึก
-4. หากเกี่ยวเพียงเล็กน้อย หรือไม่มั่นใจ ให้ปัดตกเป็นไม่เกี่ยวข้องทันที
-
-การตอบกลับ:
-- ตอบกลับด้วย JSON Array ของรหัสดัชนี (index) เช่น [0, 2]
-- หากไม่มีโน้ตใดเกี่ยวข้องเลย หรือผู้ใช้คุยเรื่องทั่วไป ให้ตอบกลับด้วย [] เท่านั้น
-- ห้ามตอบข้อความพูดคุย วิเคราะห์ หรือข้อความอธิบายใดๆ นอกเหนือจากตัว JSON Array เด็ดขาด (Strict JSON Output)`
-              },
-              {
-                role: "user",
-                content: `ข้อความล่าสุดของผู้ใช้: "${lastUserMessage}"\n\nรายการโน้ตส่วนตัวที่มี:\n${JSON.stringify(noteSummaries)}`
-              }
-            ],
-            stream: false,
-            temperature: 0.1,
-            max_tokens: 50
-          })
-        });
-
-        if (retrievalResponse.ok) {
-          const retrievalData = await retrievalResponse.json();
-          const retrievalText = retrievalData.choices[0]?.message?.content?.trim() || "";
-          const matchedArrayMatch = retrievalText.match(/\[[\s\S]*?\]/);
-          const matchedIndexes = matchedArrayMatch ? JSON.parse(matchedArrayMatch[0]) : [];
-          
-          if (Array.isArray(matchedIndexes) && matchedIndexes.length > 0) {
-            matchedIndexes.forEach((idx: number) => {
-              const doc = notesSnap.docs[idx];
-              if (doc) {
-                matchedDocsMap.set(doc.id, doc);
-              }
-            });
-          }
-        }
-      } catch (err) {
-        console.error("RAG Retrieval Failed:", err);
       }
 
       if (matchedDocsMap.size > 0) {
-        relevantNotesContext = Array.from(matchedDocsMap.values()).map(doc => {
+        relevantNotesContext = Array.from(matchedDocsMap.values()).slice(0, 3).map(doc => {
           const data = doc.data();
           return `--- บันทึกย่อ: ${data.title} ---\nหมวดหมู่: ${data.category || 'ทั่วไป'}\nเนื้อหา:\n${data.content || 'ไม่มีเนื้อหา'}\n`;
         }).join("\n\n");
@@ -465,7 +412,7 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
     };
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
@@ -481,35 +428,81 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
           ...messages,
           contextReminder
         ],
-        stream: false,
+        stream: true,
         temperature: 0.7,
         max_tokens: 450,
       })
     });
 
-    clearTimeout(timeout);
-
     if (!response.ok) {
+      clearTimeout(timeout);
       if (quota.reserved) {
         releaseFreeChatQuota(authResult.uid).catch(() => {});
       }
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json({ error: errorData.error?.message || "DeepSeek API Error" }, { status: response.status });
     }
 
-    const data = await response.json();
-    let reply = data.choices[0].message.content.trim();
-
-    // Clean redundant quotes inside blockquotes (e.g. > ""text"" or > "text" or > """text""")
-    reply = reply
-      .replace(/["”'“]{2,}/g, '"')
-      .replace(/(^|\n)(\s*>\s*)["'”«“]+/g, '$1$2')
-      .replace(/["'”»“]+(\s*)(\n|$)/g, '$1$2')
-      .replace(/^(\s*>\s*)["'”«“]+([\s\S]*?)["'”»“]+\s*$/gm, '$1$2');
-
     logAiCall(authResult.uid, "ai_mentor").catch(() => {});
 
-    return NextResponse.json({ success: true, reply, remainingFreeMessages: quota.remaining });
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    const stream = new ReadableStream({
+      async start(streamController) {
+        const reader = response.body?.getReader();
+        if (!reader) {
+          clearTimeout(timeout);
+          streamController.close();
+          return;
+        }
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || trimmed.startsWith(":")) continue;
+              if (trimmed === "data: [DONE]") {
+                continue;
+              }
+              if (trimmed.startsWith("data: ")) {
+                try {
+                  const json = JSON.parse(trimmed.slice(6));
+                  const delta = json.choices?.[0]?.delta?.content || "";
+                  if (delta) {
+                    streamController.enqueue(encoder.encode(delta));
+                  }
+                } catch {
+                  // ignore JSON parse error on partial chunks
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Stream reading error:", err);
+          streamController.error(err);
+        } finally {
+          clearTimeout(timeout);
+          streamController.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Remaining-Free-Messages": String(quota.remaining ?? ""),
+      }
+    });
 
   } catch (error: any) {
     if (quota.reserved) {
