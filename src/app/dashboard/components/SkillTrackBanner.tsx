@@ -182,11 +182,8 @@ export default function SkillTrackBanner({
     return () => clearInterval(interval);
   }, []);
 
-  // 🧠 Fail-Fast Sprint Evaluator & Completed Days Sync:
-  // If badge is unlocked, merge actual completedDays with 5-day fallback so newly completed days (e.g. D7) immediately render checked
-  const effectiveCompletedDays = isBadgeUnlocked
-    ? Array.from(new Set([...completedDays, ...(completedDays.length < 5 ? [1, 2, 3, 4, 5] : [])]))
-    : completedDays;
+  // 🧠 Fail-Fast Sprint Evaluator:
+  const effectiveCompletedDays = completedDays || [];
 
   const isTodayCompleted = effectiveCompletedDays.includes(currentDay);
   const remainingDaysCount = isTodayCompleted ? Math.max(0, 7 - currentDay) : Math.max(0, 7 - currentDay + 1);
