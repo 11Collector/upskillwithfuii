@@ -150,7 +150,7 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : {};
       if (!isBrainLibraryUnlocked(userData)) {
-        alert("เคลม XP จากคลังสมองได้หลังจบ Phase 2 และเข้าสู่ Phase 3 ก่อนครับ");
+        alert("เคลม XP จากคลังสมองได้หลังจบ Phase 1 และเข้าสู่ Phase 2 ก่อนครับ");
         setCanClaimXP(false);
         return;
       }
@@ -200,7 +200,7 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
         setXpClaimed(true);
         setIsClaiming(false);
       } else if (!canClaimAfterLogin) {
-        alert("เข้าสู่ระบบแล้วครับ อ่านบทความได้เลย ส่วน XP จะเคลมได้หลังเข้าสู่ Phase 3");
+        alert("เข้าสู่ระบบแล้วครับ อ่านบทความได้เลย ส่วน XP จะเคลมได้หลังเข้าสู่ Phase 2");
       } else {
         setXpClaimed(true);
       }
@@ -431,7 +431,7 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
                     </button>
                     {!canClaimXP && (
                       <p className="text-center text-xs font-bold leading-relaxed text-slate-500">
-                        อ่านได้เลยครับ ส่วน XP จะเคลมได้หลังจบ Phase 2 และเข้าสู่ Phase 3
+                        อ่านได้เลยครับ ส่วน XP จะเคลมได้หลังจบ Phase 1 และเข้าสู่ Phase 2
                       </p>
                     )}
                   </div>

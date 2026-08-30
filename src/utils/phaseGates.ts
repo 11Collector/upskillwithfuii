@@ -8,33 +8,57 @@ export const isBrainLibraryUnlocked = (userData: any, phaseData?: {
 }) => {
   if (!userData) return false;
 
-  const hasCompletedPhase1 =
-    (
-      !!phaseData?.wheelData &&
-      !!phaseData?.discData &&
-      !!phaseData?.moneyData &&
-      !!phaseData?.librarySoulData
-    ) || (
-      !!userData.hasWheelXP &&
-      !!userData.hasDiscXP &&
-      !!userData.hasMoneyXP &&
-      !!userData.hasLibrarySoulXP
-    );
+  // Fast-track if already in Phase 2/3 or beyond
+  if (
+    !!userData.enteredRealLife ||
+    !!userData.hasLibrarySoulXP ||
+    !!userData.lastLibrarySoul ||
+    !!phaseData?.librarySoulData ||
+    !!userData.lastGhostResult ||
+    !!userData.hasCompletedFocusRoom ||
+    !!userData.hasChattedWithFuii ||
+    (Array.isArray(userData.redeemedHistory) && userData.redeemedHistory.length > 0)
+  ) {
+    return true;
+  }
+
+  const hasWheel =
+    !!phaseData?.wheelData ||
+    !!userData.hasWheelXP ||
+    !!userData.lastWheel ||
+    !!userData.lastWheelDate ||
+    !!userData.wheelGoal;
+
+  const hasDisc =
+    !!phaseData?.discData ||
+    !!userData.hasDiscXP ||
+    !!userData.lastDisc ||
+    !!userData.lastDiscResult ||
+    !!userData.discResult ||
+    !!userData.discType;
+
+  const hasMoney =
+    !!phaseData?.moneyData ||
+    !!userData.hasMoneyXP ||
+    !!userData.lastMoney ||
+    !!userData.lastMoneyResult ||
+    !!userData.moneyResult ||
+    !!userData.moneyType;
+
+  const hasQuote =
+    !!phaseData?.quoteData ||
+    !!userData.hasQuoteXP ||
+    !!userData.lastQuote ||
+    !!userData.lastQuoteDate ||
+    !!userData.lastQuoteTime;
 
   const hasCompletedPhase1Quests =
     !!userData.hasCompletedPhase1Quests ||
-    (Array.isArray(userData.completedQuestIds) && userData.completedQuestIds.length >= 2);
+    (Array.isArray(userData.completedQuestIds) && userData.completedQuestIds.length >= 2) ||
+    (Array.isArray(userData.completedQuests) && userData.completedQuests.length >= 2) ||
+    (typeof userData.totalXP === "number" && userData.totalXP >= 200 && hasWheel && hasDisc);
 
-  const hasQuote = !!(phaseData?.quoteData || userData.lastQuoteDate || userData.lastQuote || userData.lastQuoteTime);
-  const hasGhost = !!(phaseData?.ghostResultData || userData.lastGhostResult || userData.lastGhostResultFull);
+  const hasCompletedPhase1 = hasWheel && hasDisc && hasMoney && hasQuote && hasCompletedPhase1Quests;
 
-  const hasCompletedPhase2 =
-    hasCompletedPhase1 &&
-    hasCompletedPhase1Quests &&
-    hasQuote &&
-    hasGhost &&
-    !!(userData.redeemedHistory && userData.redeemedHistory.length > 0) &&
-    !!(userData.hasChattedWithFuii || userData.lastChatTime || userData.lastChatDate);
-
-  return hasCompletedPhase2;
+  return hasCompletedPhase1;
 };
