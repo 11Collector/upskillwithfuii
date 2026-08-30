@@ -56,12 +56,6 @@ export default function ArticleClient({ slug, initialArticle }: Props) {
     setIsInAppBrowser(inApp);
   }, []);
 
-  // Save article title in sessionStorage when loaded
-  useEffect(() => {
-    if (typeof window !== "undefined" && article?.title) {
-      sessionStorage.setItem("last_viewed_article_title", article.title);
-    }
-  }, [article]);
 
 
   // Only fetch from Firestore when article was not pre-rendered (Firestore-only articles)

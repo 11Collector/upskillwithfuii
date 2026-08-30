@@ -27,16 +27,14 @@ export default function SoulGuidePage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const incomingContextRef = useRef<{ noteTitle: string; noteContent: string; articleTitle: string } | null>(null);
+  const incomingContextRef = useRef<{ noteTitle: string; noteContent: string } | null>(null);
   const isQuestMode = searchParams.get('quest') === '1';
-  const [articleTitle, setArticleTitle] = useState("");
   const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
 
-  // Retrieve note and article context from sessionStorage on route/search parameter change
+  // Retrieve note context from sessionStorage on route/search parameter change (when user explicitly requests coaching on a note)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // 1. Handle Note Context
       const storedNoteTitle = sessionStorage.getItem("pendingNoteCoaching_title") || "";
       const storedNoteContent = sessionStorage.getItem("pendingNoteCoaching_content") || "";
       let currentNoteTitle = "";
@@ -53,33 +51,15 @@ export default function SoulGuidePage() {
       } else {
         const ref = searchParams.get('ref');
         if (ref !== "note") {
-          // If not routed via note reference and storage is empty, reset states
           setNoteTitle("");
           setNoteContent("");
         }
       }
 
-      // 2. Handle Article Context
-      let currentArticleTitle = "";
-      const urlArticleTitle = searchParams.get('articleTitle') || "";
-      if (urlArticleTitle) {
-        currentArticleTitle = urlArticleTitle;
-        setArticleTitle(urlArticleTitle);
-      } else {
-        const storedArticleTitle = sessionStorage.getItem("last_viewed_article_title") || "";
-        if (storedArticleTitle) {
-          currentArticleTitle = storedArticleTitle;
-          setArticleTitle(storedArticleTitle);
-        } else {
-          setArticleTitle("");
-        }
-      }
-
-      if (currentNoteTitle || currentArticleTitle) {
+      if (currentNoteTitle) {
         incomingContextRef.current = {
           noteTitle: currentNoteTitle,
-          noteContent: currentNoteContent,
-          articleTitle: currentArticleTitle
+          noteContent: currentNoteContent
         };
       }
     }
@@ -90,7 +70,7 @@ export default function SoulGuidePage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [dynamicButtons, setDynamicButtons] = useState<string[]>([]);
+  const [dynamicButtons, setDynamicButtons] = useState<{ label: string; prompt: string }[]>([]);
   const [chatQuota, setChatQuota] = useState({ used: 0, total: 0 });
   const [isProMember, setIsProMember] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -121,15 +101,11 @@ export default function SoulGuidePage() {
 
   useEffect(() => {
     if (!user || isLoading) return;
-    if (messagesInitialized.current && (noteTitle || articleTitle) && !autoSentRef.current) {
+    if (messagesInitialized.current && noteTitle && !autoSentRef.current) {
       autoSentRef.current = true;
-      if (noteTitle) {
-        handleSendMessage(`ช่วยวิเคราะห์และให้คำแนะนำจากบันทึก "${noteTitle}" หน่อยครับ 🧠`);
-      } else if (articleTitle) {
-        handleSendMessage(`ช่วยวิเคราะห์และถอดบทเรียนจากบทความ "${articleTitle}" หน่อยครับ 📚`);
-      }
+      handleSendMessage(`ช่วยวิเคราะห์และให้คำแนะนำจากบันทึก "${noteTitle}" หน่อยครับ 🧠`);
     }
-  }, [messages, noteTitle, articleTitle, user, isLoading]);
+  }, [messages, noteTitle, user, isLoading]);
 
   useEffect(() => {
     let unsubs: (() => void)[] = [];
@@ -367,16 +343,41 @@ export default function SoulGuidePage() {
     if (userData) {
       generateDynamicButtons(userData);
     }
-  }, [userData, articleTitle, noteTitle]);
+  }, [userData, noteTitle]);
 
   const generateDynamicButtons = (data: any) => {
-    const buttons = [];
-    if (isQuestMode) buttons.push("อยากปรับ Quest วันนี้ครับ 🎯");
-    if (data.lastMood) buttons.push(`คุยเรื่องความรู้สึกตอนนี้`);
-    if (data.lastWheel?.goal) buttons.push(`สรุปเป้าหมาย`);
+    const buttons: { label: string; prompt: string }[] = [];
+    if (isQuestMode) {
+      buttons.push({
+        label: "อยากปรับ Quest วันนี้ครับ 🎯",
+        prompt: "อยากปรึกษาเรื่องการปรับ Quest ภารกิจวันนี้หน่อยครับ 🎯"
+      });
+    }
+    if (data.lastMood) {
+      buttons.push({
+        label: "คุยเรื่องความรู้สึกตอนนี้",
+        prompt: "อยากชวนคุยเรื่องความรู้สึกและอารมณ์จากคำคมในวันนี้หน่อยครับ"
+      });
+    }
+    if (data.lastWheel?.goal || data.wheelGoal) {
+      buttons.push({
+        label: "สรุปเป้าหมาย",
+        prompt: "ช่วยสรุปภาพรวมเป้าหมายชีวิตและทิศทางการพัฒนาตัวเอง จากข้อมูลแบบประเมินและประวัติทั้งหมดที่ผมเคยทำไว้ (Wheel of Life, DISC, Money Avatar, Ghost in You, คลังสมอง) ให้หน่อยครับ"
+      });
+    }
     const discType = data.lastDisc?.finalResult || data.lastDisc?.result || "";
-    if (discType.includes("D")) buttons.push("สรุปสั้นๆ ตรงประเด็น");
-    if (buttons.length < 3) buttons.push("วางแผนพัฒนาตัวเองให้ที");
+    if (discType.includes("D")) {
+      buttons.push({
+        label: "สรุปสั้นๆ ตรงประเด็น",
+        prompt: "ช่วยสรุปประเด็นสำคัญและ Action Plan สั้นๆ ตรงไปตรงมาให้ทีครับ"
+      });
+    }
+    if (buttons.length < 3) {
+      buttons.push({
+        label: "วางแผนพัฒนาตัวเองให้ที",
+        prompt: "ช่วยวิเคราะห์จุดที่ควรโฟกัสและวางแผนพัฒนาตัวเองจากข้อมูลประเมินทั้งหมดให้หน่อยครับ"
+      });
+    }
     setDynamicButtons(buttons.slice(0, 3));
   };
 
@@ -405,8 +406,6 @@ export default function SoulGuidePage() {
         role: "assistant",
         content: noteTitle
           ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณต้องการคำแนะนำจากพี่เกี่ยวกับบันทึกเรื่อง **"${noteTitle}"**\n\nพี่พร้อมช่วยวิเคราะห์และเสนอแนวทางการลงมือทำ (Action Plan) จากบันทึกนี้แล้วครับ กดปุ่มสีม่วงไฮไลต์ด้านล่างเพื่อเริ่มคุยกันได้เลย!`
-          : articleTitle
-          ? `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ เห็นว่าคุณกำลังสนใจและอ่านบทความเรื่อง **"${articleTitle}"** อยู่\n\nบทความนี้ให้มุมคิดยังไงกับคุณบ้าง หรือมีส่วนไหนในเนื้อหาที่อยากชวนพี่วิเคราะห์เป็นพิเศษมั้ยครับ? บอกพี่ได้เลยนะ`
           : `ยินดีที่ได้คุยกันครับคุณ **${userName}** ✨ พี่พร้อมที่จะแชร์ประสบการณ์และช่วยวิเคราะห์แนวทางการพัฒนาตัวเองให้เราแล้วในวันนี้\n\nช่วงนี้มีเรื่องไหนที่กำลังติดขัด หรือมีเป้าหมายอะไรที่อยากชวนพี่คุยเป็นพิเศษมั้ย? บอกพี่ได้เลยนะ`
       }]);
 
@@ -518,7 +517,6 @@ export default function SoulGuidePage() {
       const timeout = setTimeout(() => controller.abort(), 25000);
 
       const hasNoteContext = !!noteTitle;
-      const hasArticleContext = !!articleTitle;
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -529,9 +527,6 @@ export default function SoulGuidePage() {
           isQuestMode,
           noteContext: hasNoteContext && noteTitle 
             ? { title: noteTitle, content: noteContent || "" } 
-            : undefined,
-          articleContext: hasArticleContext && articleTitle 
-            ? { title: articleTitle } 
             : undefined,
           userData: {
             displayName: userData?.displayName,
@@ -580,15 +575,6 @@ export default function SoulGuidePage() {
         if (incomingContextRef.current) {
           incomingContextRef.current.noteTitle = "";
           incomingContextRef.current.noteContent = "";
-        }
-      }
-      if (hasArticleContext) {
-        if (typeof window !== "undefined") {
-          sessionStorage.removeItem("last_viewed_article_title");
-        }
-        setArticleTitle("");
-        if (incomingContextRef.current) {
-          incomingContextRef.current.articleTitle = "";
         }
       }
 
@@ -908,11 +894,11 @@ export default function SoulGuidePage() {
                 {dynamicButtons.map((btn) => {
                   return (
                     <button
-                      key={btn}
-                      onClick={() => handleSendMessage(btn)}
+                      key={btn.label}
+                      onClick={() => handleSendMessage(btn.prompt)}
                       className="whitespace-nowrap flex-shrink-0 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-bold text-zinc-400 hover:text-white hover:bg-white/10 hover:border-blue-500/30 transition-all uppercase tracking-wider shadow-lg text-center active:scale-95"
                     >
-                      {btn}
+                      {btn.label}
                     </button>
                   );
                 })}
