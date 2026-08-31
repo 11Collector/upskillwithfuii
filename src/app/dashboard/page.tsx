@@ -4998,7 +4998,7 @@ Day 21: [กิจกรรม]
                           >
                             <span>
                               <span className="block text-[9px] sm:text-[10px] uppercase tracking-widest text-slate-400">ถัดไป</span>
-                              <span className="block mt-0.5 text-xs sm:text-sm">{nextStep.label}</span>
+                              <span className="block mt-0.5 text-xs sm:text-sm font-black">{nextStep.label}</span>
                               <span className="mt-1 block text-[10px] sm:text-[11px] font-bold leading-snug text-slate-400">{nextStep.shortDesc}</span>
                             </span>
                             <span className={`inline-flex shrink-0 items-center gap-1 rounded-xl bg-gradient-to-r ${currentButtonClass} px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs text-white shadow-sm`}>

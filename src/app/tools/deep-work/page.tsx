@@ -564,8 +564,8 @@ export default function DeepWorkPage() {
       }
 
       // 📊 Sync to weekly_stats collection for Dashboard consistency
-      const { calculateRelativeWeek } = await import("@/utils/dashboardHelpers");
-      const joinDate = userData.joinDate ? new Date(userData.joinDate) : new Date();
+      const { calculateRelativeWeek, parseJoinDate } = await import("@/utils/dashboardHelpers");
+      const joinDate = parseJoinDate(userData);
       const relWeek = calculateRelativeWeek(joinDate);
       const weeklyStatsRef = doc(db, "users", user.uid, "weekly_stats", relWeek.id);
       

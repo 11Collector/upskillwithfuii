@@ -1,6 +1,6 @@
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, DocumentData, QuerySnapshot, DocumentSnapshot } from "firebase/firestore";
-import { calculateRelativeWeek } from "@/utils/dashboardHelpers";
+import { calculateRelativeWeek, parseJoinDate } from "@/utils/dashboardHelpers";
 
 export const fetchDashboardData = async (uid: string, email: string | null, displayName?: string | null) => {
   try {
@@ -20,11 +20,13 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
       let totalQuota = (email && adminEmails.includes(email.toLowerCase()) || level > 10) ? Infinity : level;
       chatQuota = { used: usedToday, total: totalQuota };
 
-      if (userData.createdAt) {
-        joinDate = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
-      } else {
+      joinDate = parseJoinDate(userData);
+
+      // If user document didn't have any createdAt field stored yet
+      if (!userData.createdAt && !userData.created_at && !userData.joinDate) {
         await setDoc(doc(db, "users", uid), { createdAt: joinDate }, { merge: true }).catch(() => {});
       }
+
       // backfill email/displayName ถ้ายังไม่มีใน doc
       const needsUpdate: Record<string, string> = {};
       if (email && !userData.email) needsUpdate.email = email;
@@ -83,17 +85,7 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
     }, { merge: true });
   }
 
-  // คำนวณสัปดาห์ปัจจุบัน และ สัปดาห์ก่อนหน้า แบบ Relative
-  const currentWeekInfo = calculateRelativeWeek(joinDate);
-  const prevWeekTargetDate = new Date();
-  prevWeekTargetDate.setDate(prevWeekTargetDate.getDate() - 7);
-  const prevWeekInfo = calculateRelativeWeek(joinDate, prevWeekTargetDate);
-
-  const prevPrevWeekTargetDate = new Date();
-  prevPrevWeekTargetDate.setDate(prevPrevWeekTargetDate.getDate() - 14);
-  const prevPrevWeekInfo = calculateRelativeWeek(joinDate, prevPrevWeekTargetDate);
-
-  // 💡 2. ดึงข้อมูล Assessments และ Weekly Stats อย่างปลอดภัย
+  // 💡 1. ดึงข้อมูล Assessments เพื่อนำมาตรวจสอบและคำนวณวันเริ่มต้นอย่างถูกต้อง
   const authWheelRef = collection(db, "users", uid, "assessments");
 
   const emptyQuery = { empty: true, docs: [] } as unknown as QuerySnapshot<DocumentData>;
@@ -104,9 +96,6 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   let moneySnap: QuerySnapshot<DocumentData> = emptyQuery;
   let librarySoulSnap: QuerySnapshot<DocumentData> = emptyQuery;
   let quoteSnap: QuerySnapshot<DocumentData> = emptyQuery;
-  let thisWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
-  let prevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
-  let prevPrevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
 
   try {
     const results = await Promise.all([
@@ -115,9 +104,6 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
       getDocs(query(collection(db, "quiz_results"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(1))),
       getDocs(query(collection(db, "users", uid, "library_souls"), orderBy("createdAt", "desc"), limit(1))),
       getDocs(query(collection(db, "quotes"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(1))),
-      getDoc(doc(db, "users", uid, "weekly_stats", currentWeekInfo.id)),
-      getDoc(doc(db, "users", uid, "weekly_stats", prevWeekInfo.id)),
-      getDoc(doc(db, "users", uid, "weekly_stats", prevPrevWeekInfo.id))
     ]);
     
     authWheelSnap = results[0];
@@ -125,11 +111,61 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
     moneySnap = results[2];
     librarySoulSnap = results[3];
     quoteSnap = results[4];
-    thisWeekSnap = results[5];
-    prevWeekSnap = results[6];
-    prevPrevWeekSnap = results[7];
   } catch (error) {
-    console.error("Error fetching sub-collections, falling back to empty data:", error);
+    console.error("Error fetching assessment collections:", error);
+  }
+
+  // 💡 ตรวจสอบวันเริ่มกิจกรรมแรกสุด (Earliest Activity) เพื่อป้องกันปัญหา User เก่าแต่ createdAt เพิ่งถูกสร้าง
+  let earliestActivityDate: Date | null = null;
+  const checkDocDate = (docSnap: any) => {
+    if (!docSnap) return;
+    const data = typeof docSnap.data === 'function' ? docSnap.data() : docSnap;
+    if (!data) return;
+    const d = parseJoinDate(data);
+    if (d && !isNaN(d.getTime())) {
+      if (!earliestActivityDate || d.getTime() < earliestActivityDate.getTime()) {
+        earliestActivityDate = d;
+      }
+    }
+  };
+
+  if (!authWheelSnap.empty) authWheelSnap.docs.forEach(checkDocDate);
+  if (!discSnap.empty) discSnap.docs.forEach(checkDocDate);
+  if (!moneySnap.empty) moneySnap.docs.forEach(checkDocDate);
+  if (!librarySoulSnap.empty) librarySoulSnap.docs.forEach(checkDocDate);
+  if (!quoteSnap.empty) quoteSnap.docs.forEach(checkDocDate);
+
+  if (earliestActivityDate && earliestActivityDate.getTime() < joinDate.getTime()) {
+    joinDate = earliestActivityDate;
+    await setDoc(doc(db, "users", uid), { createdAt: joinDate }, { merge: true }).catch(() => {});
+  }
+
+  // คำนวณสัปดาห์ปัจจุบัน และ สัปดาห์ก่อนหน้า แบบ Relative ตาม joinDate ที่แท้จริง
+  const currentWeekInfo = calculateRelativeWeek(joinDate);
+  const prevWeekTargetDate = new Date();
+  prevWeekTargetDate.setDate(prevWeekTargetDate.getDate() - 7);
+  const prevWeekInfo = calculateRelativeWeek(joinDate, prevWeekTargetDate);
+
+  const prevPrevWeekTargetDate = new Date();
+  prevPrevWeekTargetDate.setDate(prevPrevWeekTargetDate.getDate() - 14);
+  const prevPrevWeekInfo = calculateRelativeWeek(joinDate, prevPrevWeekTargetDate);
+
+  // 💡 2. ดึงข้อมูล Weekly Stats ตาม Week ID ที่ถูกต้อง
+  let thisWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
+  let prevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
+  let prevPrevWeekSnap: DocumentSnapshot<DocumentData> = emptyDoc;
+
+  try {
+    const statsResults = await Promise.all([
+      getDoc(doc(db, "users", uid, "weekly_stats", currentWeekInfo.id)),
+      getDoc(doc(db, "users", uid, "weekly_stats", prevWeekInfo.id)),
+      getDoc(doc(db, "users", uid, "weekly_stats", prevPrevWeekInfo.id))
+    ]);
+    thisWeekSnap = statsResults[0];
+    prevWeekSnap = statsResults[1];
+    prevPrevWeekSnap = statsResults[2];
+  } catch (error) {
+    console.error("Error fetching weekly_stats sub-collections, falling back to empty data:", error);
   }
 
   // --- จัดการข้อมูลแบบประเมิน ---

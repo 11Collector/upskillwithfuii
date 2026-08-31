@@ -28,7 +28,7 @@ export default function ClientMainWrapper({ children }: { children: React.ReactN
               displayName: user.displayName || "ไม่ระบุชื่อ",
               photoURL: user.photoURL || "",
               subscription_tier: data?.subscription_tier || "free",
-              createdAt: data?.createdAt || serverTimestamp(),
+              createdAt: data?.createdAt || data?.created_at || data?.joinDate || serverTimestamp(),
               lastLoginAt: serverTimestamp()
             }, { merge: true });
             console.log(`[AuthSync] Synced Firestore profile for UID: ${user.uid}`);

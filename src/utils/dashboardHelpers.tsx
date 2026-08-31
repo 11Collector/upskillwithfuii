@@ -154,9 +154,38 @@ const AvatarImage = ({ src, alt, isCompact }: { src: string; alt: string; isComp
   );
 };
 
+// 🛡️ Helper สำหรับแปลงวันที่สมัครจากทุกรูปแบบข้อมูล Firestore อย่างปลอดภัย
+export const parseJoinDate = (userData: any): Date => {
+  if (!userData) return new Date();
+  const candidate = userData.createdAt || userData.created_at || userData.joinDate || userData.joinedAt;
+  if (!candidate) return new Date();
+
+  if (typeof candidate.toDate === 'function') {
+    const d = candidate.toDate();
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (typeof candidate.seconds === 'number') {
+    const d = new Date(candidate.seconds * 1000);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (typeof candidate === 'number' && candidate > 0) {
+    const d = new Date(candidate);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (typeof candidate === 'string') {
+    const d = new Date(candidate);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (candidate instanceof Date && !isNaN(candidate.getTime())) {
+    return candidate;
+  }
+  return new Date();
+};
+
 // 📅 ฟังก์ชันหา "วันจันทร์" ของสัปดาห์นั้นๆ
 export const getStartOfMonday = (date: Date) => {
   const d = new Date(date);
+  if (isNaN(d.getTime())) return new Date();
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1); // ปรับให้เป็นวันจันทร์ (ถ้าเป็นวันอาทิตย์ให้ลบไป 6 วัน)
   d.setDate(diff);
@@ -167,6 +196,7 @@ export const getStartOfMonday = (date: Date) => {
 // 🆔 ฟังก์ชันสร้าง ID สัปดาห์ตามปฏิทิน (เช่น 2024-W19)
 export const getCalendarWeekId = (date = new Date()) => {
   const d = new Date(date);
+  if (isNaN(d.getTime())) return "2024-W01";
   d.setHours(0, 0, 0, 0);
   // หาพฤหัสบดีของสัปดาห์นี้เพื่อคำนวณเลขสัปดาห์ ISO
   d.setDate(d.getDate() + 4 - (d.getDay() || 7));
@@ -177,8 +207,11 @@ export const getCalendarWeekId = (date = new Date()) => {
 
 // 🌟 [NEW LOGIC] ฟังก์ชันคำนวณ Relative Week (อิงตามปฏิทินจันทร์-อาทิตย์)
 export const calculateRelativeWeek = (joinDate: Date, targetDate = new Date()) => {
-  const startMonday = getStartOfMonday(joinDate);
-  const targetMonday = getStartOfMonday(targetDate);
+  const safeJoinDate = (joinDate instanceof Date && !isNaN(joinDate.getTime())) ? joinDate : new Date();
+  const safeTargetDate = (targetDate instanceof Date && !isNaN(targetDate.getTime())) ? targetDate : new Date();
+
+  const startMonday = getStartOfMonday(safeJoinDate);
+  const targetMonday = getStartOfMonday(safeTargetDate);
 
   const diffTime = targetMonday.getTime() - startMonday.getTime();
   const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));

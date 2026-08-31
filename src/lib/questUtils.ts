@@ -1,28 +1,6 @@
 import { QUEST_POOL, categoryNames } from "@/data/quests";
 
-export const calculateRelativeWeek = (joinDate: Date, targetDate = new Date()) => {
-  const start = new Date(joinDate);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(targetDate);
-  end.setHours(0, 0, 0, 0);
-  const diffTime = end.getTime() - start.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const weekNumber = Math.max(1, Math.floor(diffDays / 7) + 1);
-
-  const weekStart = new Date(start);
-  weekStart.setDate(start.getDate() + (weekNumber - 1) * 7);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-
-  const format = (d: Date) => d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-
-  return {
-    id: `week-${weekNumber}`,
-    label: `สัปดาห์ที่ ${weekNumber}`,
-    range: `${format(weekStart)} - ${format(weekEnd)}`,
-    num: weekNumber
-  };
-};
+export { calculateRelativeWeek } from "@/utils/dashboardHelpers";
 
 export const getWheelArea = (lastWheel: any, todayDateStr: string) => {
   const scores = lastWheel?.currentScores || lastWheel?.scores;
