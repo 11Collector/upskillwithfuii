@@ -116,24 +116,25 @@ export const fetchDashboardData = async (uid: string, email: string | null, disp
   }
 
   // 💡 ตรวจสอบวันเริ่มกิจกรรมแรกสุด (Earliest Activity) เพื่อป้องกันปัญหา User เก่าแต่ createdAt เพิ่งถูกสร้าง
+  const allDocs = [
+    ...(!authWheelSnap.empty ? authWheelSnap.docs : []),
+    ...(!discSnap.empty ? discSnap.docs : []),
+    ...(!moneySnap.empty ? moneySnap.docs : []),
+    ...(!librarySoulSnap.empty ? librarySoulSnap.docs : []),
+    ...(!quoteSnap.empty ? quoteSnap.docs : []),
+  ];
+
   let earliestActivityDate: Date | null = null;
-  const checkDocDate = (docSnap: any) => {
-    if (!docSnap) return;
+  for (const docSnap of allDocs) {
     const data = typeof docSnap.data === 'function' ? docSnap.data() : docSnap;
-    if (!data) return;
+    if (!data) continue;
     const d = parseJoinDate(data);
     if (d && !isNaN(d.getTime())) {
       if (!earliestActivityDate || d.getTime() < earliestActivityDate.getTime()) {
         earliestActivityDate = d;
       }
     }
-  };
-
-  if (!authWheelSnap.empty) authWheelSnap.docs.forEach(checkDocDate);
-  if (!discSnap.empty) discSnap.docs.forEach(checkDocDate);
-  if (!moneySnap.empty) moneySnap.docs.forEach(checkDocDate);
-  if (!librarySoulSnap.empty) librarySoulSnap.docs.forEach(checkDocDate);
-  if (!quoteSnap.empty) quoteSnap.docs.forEach(checkDocDate);
+  }
 
   if (earliestActivityDate && earliestActivityDate.getTime() < joinDate.getTime()) {
     joinDate = earliestActivityDate;
