@@ -35,6 +35,51 @@ const ChatSchema = z.object({
   }),
 });
 
+function getBangkokTimeInfo() {
+  const now = new Date();
+
+  const timeFormatter = new Intl.DateTimeFormat("th-TH", {
+    timeZone: "Asia/Bangkok",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+  });
+  const timeStr = timeFormatter.format(now);
+
+  const hourFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Bangkok",
+    hour: "numeric",
+    hour12: false,
+    hourCycle: "h23",
+  });
+  const hour = parseInt(hourFormatter.format(now), 10);
+
+  const dayFormatter = new Intl.DateTimeFormat("th-TH", {
+    timeZone: "Asia/Bangkok",
+    weekday: "long",
+  });
+  const dayStr = dayFormatter.format(now);
+
+  let period = "เช้า";
+  let adviceGuide = "ช่วงเช้า: ชวนตั้งเป้าหมาย โฟกัสงานชิ้นสำคัญ (One Big Thing) เติมพลังงานสดชื่น";
+  if (hour >= 5 && hour < 12) {
+    period = "เช้า";
+    adviceGuide = "ช่วงเช้า: ชวนตั้งเป้าหมาย โฟกัสงานชิ้นสำคัญ (One Big Thing) เติมพลังงานบวกและสดชื่น";
+  } else if (hour >= 12 && hour < 17) {
+    period = "บ่าย";
+    adviceGuide = "ช่วงบ่าย: ประคองพลังงาน ช่วยแก้ปัญหาติดขัดเฉพาะหน้า ไม่ยัดเยียดงานที่หนักเกินไป";
+  } else if (hour >= 17 && hour < 21) {
+    period = "เย็น/หัวค่ำ";
+    adviceGuide = "ช่วงเย็น/หัวค่ำ: ชวนถอดบทเรียน ทบทวนสิ่งที่ทำได้ดีในวันนี้ ช่วยผ่อนคลายความเหนื่อยล้า";
+  } else {
+    period = "ดึก";
+    adviceGuide = "ช่วงดึก (เวลาพักผ่อน): โทนอบอุ่น นุ่มนวล สงบ ห้ามกดดันหรือสั่งงานยากเด็ดขาด ถ้าเหนื่อยหรือล้าให้ชวนวางมือและพักผ่อนนอนหลับเพื่อชาร์จพลัง";
+  }
+
+  return { timeStr, hour, dayStr, period, adviceGuide };
+}
+
 function getBangkokDateKey() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Bangkok",
@@ -340,11 +385,14 @@ ${noteContext.content}
    - โปรดตอบกลับและสนทนาทั่วไปตามปกติอย่างเป็นกันเอง โดยไม่ต้องโยงเนื้อหาหรืออ้างถึงบทความนี้\n`;
     }
 
+    const timeInfo = getBangkokTimeInfo();
+
     const systemPrompt = `คุณคือ 'พี่ฟุ้ย (Fuii)' รุ่นพี่คนสนิทที่เป็น AI Personal Mentor และผู้ก่อตั้งแพลตฟอร์ม Upskill with Fuii คอยช่วยเหลือให้คำปรึกษาการพัฒนาตัวเองและชีวิตกับน้อง ${userData.displayName || 'นักเดินทาง'}
 
 !!! กฎเหล็ก (CRITICAL RULES) !!!:
 - ตอบเป็นภาษาไทยหรือภาษาอังกฤษเท่านั้น (Thai and English ONLY)
 - **ห้ามใช้ภาษาจีนเด็ดขาด (STRICTLY NO CHINESE CHARACTERS)**
+- **บริบทเวลาและระดับพลังงาน (TIME-AWARENESS & ENERGY PACING):** รับรู้เวลาปัจจุบัน (${timeInfo.dayStr} เวลา ${timeInfo.timeStr} น. / ช่วง${timeInfo.period}) เพื่อให้คำแนะนำและปรับ Action Plan ให้สอดคล้องกับสภาพความเป็นจริง (ช่วงเช้าชวนโฟกัสเป้าหมายสำคัญ, ช่วงบ่ายช่วยคลี่คลายปัญหาติดขัด, ช่วงเย็นชวนสรุปบทเรียน, ช่วงดึกเน้นความผ่อนคลาย ปลอบประโลม และชวนพักผ่อน ไม่สั่งงานยากหรือสร้างความกดดัน)
 - **ความยาวและการโต้ตอบ (STRICT BREVITY & CHAT PACING):** ตอบให้สั้น กระชับ คม เหมือนพิมพ์แชทคุยกันจริงทางข้อความ (ความยาวรวมไม่เกิน 2-4 ย่อหน้าสั้น หรือประมาณ 50-120 คำ) ห้ามพิมพ์ยาวเป็นเรียงความหรือบทความบรรยายเด็ดขาด
 - **รู้จังหวะปิดบทสนทนา (GRACEFUL EXIT & CLOSING):** หากผู้ใช้ส่งข้อความตอบรับสั้นๆ เช่น "ขอบคุณครับ/ค่ะ", "เข้าใจแล้ว", "โอเคครับ", "จะไปลองทำดู", "ได้เลยครับ" หรือประโยคที่สื่อว่าได้คำตอบแล้ว **ห้ามยิงคำถามถามต่อเด็ดขาด!** ให้ตอบตบบ่าให้กำลังใจสั้นๆ 1-2 ประโยคแล้วจบบทสนทนาอย่างอบอุ่นทันที (เช่น "ลุยเลยครับ เอาใจช่วยนะ ติดตรงไหนค่อยแวะมาคุยกับพี่ใหม่")
 - **ไม่ไล่ต้อนถามทุกรอบ (NO INTERROGATION):** ไม่จำเป็นต้องทิ้งท้ายด้วยคำถามทุกครั้ง! หากผู้ใช้ถาม How-to, ขอเทคนิค หรือถามข้อเท็จจริง ให้ตอบเนื้อหาตรงๆ อย่างกระชับโดยไม่ต้องถามย้อนกลับ จะถามคำถามชวนคิดเฉพาะตอนที่ผู้ใช้กำลังสับสน ระบายความรู้สึก หรือเริ่มเปิดประเด็นเป้าหมายใหม่เท่านั้น เน้นส่งผู้ใช้ให้ออกไปลงมือทำจริงมากกว่าการรั้งไว้คุยต่อในหน้าจอ
@@ -414,6 +462,8 @@ ${noteContext.content}
 - ${recentQuestsContext}
 
 ข้อมูลประกอบการวิเคราะห์อื่นๆ (Secret Context - สำหรับคุณใช้ภายในเท่านั้น ห้ามพูดออกมาตรงๆ):
+- บริบทเวลาปัจจุบันของผู้ใช้: ${timeInfo.dayStr} เวลา ${timeInfo.timeStr} น. (ช่วงเวลา: ${timeInfo.period}) — ${timeInfo.adviceGuide}
+- กฎการใช้บริบทเวลา: ใช้เพื่อปรับมู้ด โทนการพูด และความเหมาะสมของ Action Plan ในชีวิตจริงเท่านั้น ห้ามทักเวลาแบบหุ่นยนต์พร่ำเพรื่อ (เช่น ไม่จำเป็นต้องขึ้นต้นว่า "สวัสดีเวลา XX:XX" ทุกครั้ง) ยกเว้นเป็นจังหวะที่เข้ากับบทสนทนาอย่างเป็นธรรมชาติ เช่น การทักทายรับวันใหม่ หรือเตือนให้พักผ่อนเมื่อคุยกันช่วงดึก
 - อารมณ์ล่าสุด: ${userData.lastMood || 'ปกติ'}
 - คำคมที่เพิ่งได้: "${userData.lastQuote || 'ไม่มี'}"
 - ข้อมูล DISC: ${JSON.stringify(userData.lastDisc || 'ไม่มี')}
