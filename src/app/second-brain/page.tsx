@@ -1133,8 +1133,11 @@ function SecondBrainContent() {
   }, [showBedtimeModal, notes]);
 
   const handleSaveBedtimeGratitude = async () => {
-    if (!goodThing1.trim() && !goodThing2.trim() && !goodThing3.trim()) {
-      alert("กรุณากรอกสิ่งดีๆ อย่างน้อย 1 ข้อนะครับ 😊");
+    const items = [goodThing1.trim(), goodThing2.trim(), goodThing3.trim()].filter(Boolean);
+    const totalChars = items.reduce((sum, item) => sum + item.length, 0);
+
+    if (items.length === 0 || totalChars < 10) {
+      alert("กรุณากรอกสิ่งดีๆ อย่างน้อย 1 ข้อ (มีความยาวข้อความเล็กน้อย) ก่อนบันทึกนะครับ 😊");
       return;
     }
     setIsSavingBedtime(true);
@@ -1146,7 +1149,6 @@ function SecondBrainContent() {
     });
 
     const title = `🌙 3 สิ่งดีๆ ประจำวันที่ ${todayStr}`;
-    const items = [goodThing1.trim(), goodThing2.trim(), goodThing3.trim()].filter(Boolean);
     const content = items.map((item, idx) => `${idx + 1}. ${item}`).join('\n\n');
 
     const createdAtStr = new Date().toISOString();
@@ -1176,10 +1178,13 @@ function SecondBrainContent() {
           });
           targetNoteId = docRef.id;
 
+          const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
           const userRef = doc(db, "users", user.uid);
           await updateDoc(userRef, {
-            totalXP: increment(10)
+            totalXP: increment(10),
+            lastNoteXpDate: todayDateStr,
           });
+          setLastNoteXpDate(todayDateStr);
         }
       } catch (e) {
         console.error("Error saving gratitude note:", e);
@@ -1667,6 +1672,28 @@ function SecondBrainContent() {
   }, [isMounted, selectedNote?.id, searchParams]);
 
   const lastLoadedNoteRef = useRef<{ id: string; title: string; content: string; category: string } | null>(null);
+  const initialLoadedContentLengthRef = useRef<number>(0);
+
+  const getCleanUserContentLength = (text: string): number => {
+    if (!text) return 0;
+    return text
+      .replace(/={5,}/g, "")
+      .replace(/📚\s*สรุปหนังสือ:?/g, "")
+      .replace(/🌅\s*บันทึกรายวัน\s*&\s*ทบทวนความรู้สึก/g, "")
+      .replace(/💡\s*ไอเดียแล่น\s*\(Idea Spark\)/g, "")
+      .replace(/\d+\.\s*จุดที่ชอบที่สุด\s*\(Key Takeaways\)/g, "")
+      .replace(/\d+\.\s*ประโยคทองคำ\s*\(Favorite Quotes\)/g, "")
+      .replace(/\d+\.\s*แผนที่จะเอาไปทำจริง\s*\(Action Plan\)/g, "")
+      .replace(/\d+\.\s*วันนี้มีอะไรดีๆ\s*เกิดขึ้นบ้าง\s*\(Daily Wins\)/g, "")
+      .replace(/\d+\.\s*3\s*เรื่องที่รู้สึกขอบคุณวันนี้\s*\(3 Gratitudes\)/g, "")
+      .replace(/\d+\.\s*สิ่งที่ควรพัฒนาให้ดียิ่งขึ้นพรุ่งนี้\s*\(Lessons\)/g, "")
+      .replace(/\d+\.\s*รายละเอียดไอเดีย\s*\(Concept\)/g, "")
+      .replace(/\d+\.\s*ทำไมไอเดียนี้ถึงน่าสนใจ/g, "")
+      .replace(/\d+\.\s*ขั้นตอนเล็กๆ\s*แรกสุดที่จะเริ่มลงมือทำ\s*\(First Step\)/g, "")
+      .replace(/\[\s*\]/g, "")
+      .replace(/^\s*-\s*$/gm, "")
+      .trim().length;
+  };
 
   // Sync selected note fields to local input states
   useEffect(() => {
@@ -1685,11 +1712,13 @@ function SecondBrainContent() {
         content: initialContent,
         category: initialCategory
       };
+      initialLoadedContentLengthRef.current = initialContent.length;
     } else {
       setNoteTitle("");
       setNoteContent("");
       setNoteCategory("พัฒนาตัวเอง");
       lastLoadedNoteRef.current = null;
+      initialLoadedContentLengthRef.current = 0;
     }
   }, [selectedNote?.id]);
 
@@ -1726,11 +1755,22 @@ function SecondBrainContent() {
           category: noteCategory
         };
 
-        // Award +10 XP bonus for first note of the day (minimum 100 characters, non-default title)
+        // Award +10 XP bonus for first note of the day (minimum 100 characters of meaningful content, non-default title)
         const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
         const cleanTitle = noteTitle.trim();
-        const cleanContent = noteContent.trim();
-        const isMeaningful = cleanTitle !== "บันทึกที่ไม่มีชื่อ" && cleanTitle.length > 0 && cleanContent.length >= 100;
+        const isTitleValid = cleanTitle !== "บันทึกที่ไม่มีชื่อ" && cleanTitle.length >= 2;
+
+        const isCreatedToday = !!(
+          selectedNote?.createdAt &&
+          new Date(selectedNote.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) === todayDateStr
+        );
+
+        const cleanUserLength = getCleanUserContentLength(noteContent);
+        const userEffectiveChars = isCreatedToday
+          ? cleanUserLength
+          : Math.max(0, cleanUserLength - initialLoadedContentLengthRef.current);
+
+        const isMeaningful = isTitleValid && userEffectiveChars >= 100;
         const isXpAlreadyAwarded = lastNoteXpDate === todayDateStr;
 
         if (isMeaningful && !isXpAlreadyAwarded) {
@@ -1956,6 +1996,15 @@ ${noteContent}`;
   const charCount = noteContent.length;
   const wordCount = noteContent.trim() ? noteContent.trim().split(/\s+/).length : 0;
   const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+  const isSelectedNoteCreatedToday = !!(
+    selectedNote?.createdAt &&
+    new Date(selectedNote.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) === todayDateStr
+  );
+  const cleanUserCharLength = getCleanUserContentLength(noteContent);
+  const userEffectiveChars = isSelectedNoteCreatedToday
+    ? cleanUserCharLength
+    : Math.max(0, cleanUserCharLength - initialLoadedContentLengthRef.current);
 
   // 1. Fetch Articles from Firestore
   useEffect(() => {
@@ -2758,14 +2807,14 @@ ${noteContent}`;
                           <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wide px-2.5 py-0.5 rounded-full select-none border transition-all duration-300 ${
                             lastNoteXpDate === todayDateStr
                               ? "text-yellow-600 bg-yellow-50 border-yellow-200/40"
-                              : charCount >= 100
+                              : userEffectiveChars >= 100
                                 ? "text-green-600 bg-green-50 border-green-200/40 animate-pulse"
                                 : "text-slate-400 bg-slate-100 border-slate-200/40"
                           }`}>
                             {lastNoteXpDate === todayDateStr ? (
                               <span>🎉 รับ +10 XP วันนี้แล้ว</span>
                             ) : (
-                              <span>✍️ เขียนครบ 100 ตัวอักษรเพื่อรับ 10 XP ({charCount}/100)</span>
+                              <span>✍️ เขียนครบ 100 ตัวอักษรเพื่อรับ 10 XP ({Math.min(100, userEffectiveChars)}/100)</span>
                             )}
                           </div>
                         )}
@@ -3089,7 +3138,7 @@ ${noteContent}`;
                     {/* Pro Save Button */}
                     <button
                       type="button"
-                      disabled={isSavingBedtime}
+                      disabled={isSavingBedtime || [goodThing1, goodThing2, goodThing3].every(val => val.trim().length === 0)}
                       onClick={handleSaveBedtimeGratitude}
                       className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white rounded-2xl text-sm font-black tracking-wide transition-all shadow-[0_8px_25px_rgba(79,70,229,0.35)] hover:shadow-[0_12px_30px_rgba(79,70,229,0.5)] cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 relative z-10 border border-indigo-400/30"
                     >
