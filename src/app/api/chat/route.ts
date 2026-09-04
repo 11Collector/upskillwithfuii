@@ -213,10 +213,14 @@ export async function POST(req: Request) {
       }).catch(err => console.error("Failed to save user msg via adminDb:", err));
     }
 
+    const cleanedMessage = lastUserMessage.trim().toLowerCase();
+    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก|พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ|มีอะไรบ้าง|โน้ตทั้งหมด|บันทึกทั้งหมด)/i.test(cleanedMessage);
+
     let relevantNotesContext = "";
     let allNotesIndexStr = "";
 
-    if (notesSnap && !notesSnap.empty) {
+    // Only inject all notes index when user explicitly asks for an overview of their Second Brain
+    if (notesSnap && !notesSnap.empty && isOverviewQuery) {
       const validNotes = notesSnap.docs
         .map(d => ({ id: d.id, title: (d.data().title || "").trim(), category: d.data().category || "ทั่วไป" }))
         .filter(n => n.title && n.title !== "บันทึกที่ไม่มีชื่อ");
@@ -224,9 +228,6 @@ export async function POST(req: Request) {
         allNotesIndexStr = validNotes.map(n => `- "${n.title}" [หมวดหมู่: ${n.category}]`).join("\n");
       }
     }
-
-    const cleanedMessage = lastUserMessage.trim().toLowerCase();
-    const isOverviewQuery = /(แผนผัง|ผังความคิด|สมองที่สอง|second\s*brain|mindmap|ภาพรวม|ความเชื่อมโยง|คลังโน้ต|คลังบันทึก|พลังบวก|สิ่งดีๆ|เรื่องดีๆ|3\s*สิ่งดีๆ|มีอะไรบ้าง|โน้ตทั้งหมด|บันทึกทั้งหมด)/i.test(cleanedMessage);
 
     if (notesSnap && !notesSnap.empty && !noteContext && !articleContext) {
       const matchedDocsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
@@ -242,11 +243,11 @@ export async function POST(req: Request) {
       } else {
         // Smart Thai & Multi-word Keyword Search
         // Remove common Thai stopwords to isolate core query keywords
-        const stopWordsRegex = /(ใน|มี|เรื่อง|เกี่ยว|กับ|ให้|หน่อย|มั้ย|ไหม|ครับ|ค่ะ|บ้าง|ช่วย|หา|โน้ต|บันทึก|ที่|ของ|และ|หรือ|ดู|หน่อยนะ|อะไร|ตรงไหน|ลอง|ค้นหา|เปิด)/g;
+        const stopWordsRegex = /(ใน|มี|เรื่อง|เกี่ยว|กับ|ให้|หน่อย|มั้ย|ไหม|ครับ|ค่ะ|บ้าง|ช่วย|หา|โน้ต|บันทึก|ที่|ของ|และ|หรือ|ดู|หน่อยนะ|อะไร|ตรงไหน|ลอง|ค้นหา|เปิด|ตอน|นี้|ว่า|ดี|คิด|แล้ว|ยัง|จะ|ได้|กัน)/g;
         const strippedMessage = cleanedMessage.replace(stopWordsRegex, " ").trim();
         const queryTokens = Array.from(new Set([
-          ...cleanedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 2),
-          ...strippedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 2)
+          ...cleanedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 3),
+          ...strippedMessage.split(/[\s,，、/]+/).filter(w => w.length >= 3)
         ]));
 
         notesSnap.docs.forEach((doc) => {
@@ -255,16 +256,17 @@ export async function POST(req: Request) {
           const category = (data.category || "").trim().toLowerCase();
           const content = (data.content || "").toLowerCase();
 
-          if (title && title !== "บันทึกที่ไม่มีชื่อ") {
-            // Direct title or category matches
-            if (cleanedMessage.includes(title) || title.includes(cleanedMessage) || (category === "พลังบวก" && cleanedMessage.includes("พลังบวก"))) {
+          // Only match notes that actually have content (prevent referencing empty notes)
+          if (title && title !== "บันทึกที่ไม่มีชื่อ" && content && content.trim().length >= 5) {
+            // Direct title or category matches (require title to be distinct, >= 4 chars)
+            if ((title.length >= 4 && cleanedMessage.includes(title)) || (cleanedMessage.length >= 4 && title.includes(cleanedMessage)) || (category === "พลังบวก" && cleanedMessage.includes("พลังบวก"))) {
               matchedDocsMap.set(doc.id, doc);
               return;
             }
 
-            // Keyword token matching
+            // Keyword token matching (token >= 3 chars for title, token >= 4 chars for content)
             for (const token of queryTokens) {
-              if (token.length >= 2 && (title.includes(token) || (token.length >= 3 && content.includes(token)))) {
+              if ((token.length >= 3 && title.includes(token)) || (token.length >= 4 && content.includes(token))) {
                 matchedDocsMap.set(doc.id, doc);
                 break;
               }
@@ -398,6 +400,7 @@ ${noteContext.content}
 - **ไม่ไล่ต้อนถามทุกรอบ (NO INTERROGATION):** ไม่จำเป็นต้องทิ้งท้ายด้วยคำถามทุกครั้ง! หากผู้ใช้ถาม How-to, ขอเทคนิค หรือถามข้อเท็จจริง ให้ตอบเนื้อหาตรงๆ อย่างกระชับโดยไม่ต้องถามย้อนกลับ จะถามคำถามชวนคิดเฉพาะตอนที่ผู้ใช้กำลังสับสน ระบายความรู้สึก หรือเริ่มเปิดประเด็นเป้าหมายใหม่เท่านั้น เน้นส่งผู้ใช้ให้ออกไปลงมือทำจริงมากกว่าการรั้งไว้คุยต่อในหน้าจอ
 - **ยืดหยุ่นตามบริบท (NO FORCED ACTION PLANS):** ไม่ต้องยัดเยียด Action Plan หรือขั้นตอน 1/ 2/ 3/ ตลอดเวลา! หากผู้ใช้เพียงแค่ชวนคุยทั่วไป ทักทาย ระบายความรู้สึก หรือคุยสารทุกข์สุกดิบ ให้ตอบกลับด้วยบทสนทนาที่เป็นธรรมชาติ อบอุ่น เป็นกันเอง เหมือนรุ่นพี่ชวนคุยเรื่องทั่วไป โดยเน้นการรับฟังและถามไถ่ จะใส่ Action Plan สั้นๆ (ไม่เกิน 1-2 ข้อสั้น) เฉพาะเมื่อผู้ใช้ขอคำแนะนำ หรือต้องการวิธีแก้ปัญหาที่ชัดเจนเท่านั้น!
 - **ห้ามเดาหรือมโนขยายความหมายตัวย่อ/ศัพท์เฉพาะเด็ดขาด (STRICTLY NO HALLUCINATED DEFINITIONS):** หากผู้ใช้ถามถึงตัวย่อ, ชื่อคน, หรือเคสเฉพาะ (เช่น EDC, ชื่อคอร์สเฉพาะ, ชื่อโปรเจกต์ ฯลฯ) ที่ไม่มีข้อมูลใน Second Brain หรือไม่แน่ใจบริบท **ห้ามมโนเดาขยายความหมายเองเด็ดขาด!** ให้ตอบรับอย่างสุภาพแล้วถามยืนยันบริบทตรงๆ จากผู้ใช้ก่อน เช่น "สำหรับเรื่องนี้ ในมุมของคุณฟุ้ยหมายถึง EDC บริบทไหนครับ? เล่าให้พี่ฟังเพิ่มอีกนิด พี่จะได้ช่วยถอดบทเรียนร่วมกันได้ตรงจุดครับ"
+- **ความถูกต้องของบันทึกส่วนตัว (STRICT NOTE INTEGRITY & NO FORCED REFERENCES):** อ้างถึงบันทึกส่วนตัวของผู้ใช้เฉพาะเมื่อเนื้อหาในบันทึกที่ส่งมา (Relevant Notes) มีข้อมูลที่เกี่ยวข้องและตรงกับเรื่องที่คุยอยู่จริง 100% เท่านั้น ห้ามเดาหรือมโนเนื้อหาในบันทึกเด็ดขาด หากผู้ใช้ถามเรื่องหุ้น แล้วมีโน้ตที่มีคำว่า 'เมกา' แต่เนื้อหาข้างในไม่ได้เกี่ยวกับหุ้น ห้ามเอ่ยชื่อโน้ตหรือทึกทักว่าโน้ตนั้นมีเรื่องหุ้นเด็ดขาด ให้ตอบคำถามตรงๆ ตามปกติโดยไม่ต้องพยายามโยงเข้าโน้ต
 - **ห้ามใส่เครื่องหมายอัญประกาศซ้ำ เช่น "" หรือ """ ครอบข้อความใน Blockquote (>):** ให้เขียนข้อความเน้นย้ำลงใน > ได้เลยโดยไม่ต้องใส่เครื่องหมายคำพูดครอบซ้ำ เนื่องจาก UI จะแสดงผลเป็นกล่องโควทให้อัตโนมัติอยู่แล้ว
 
 บุคลิกภาพ (Persona):
@@ -502,6 +505,9 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
+    // Sliding window: Send only recent 12 messages to prevent payload bloat & 25s timeout
+    const recentMessages = messages.slice(-12);
+
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
@@ -513,7 +519,7 @@ ${isQuestMode ? `โหมดปรับ Quest (เมื่อผู้ใช�
         model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...recentMessages,
           contextReminder
         ],
         stream: true,
