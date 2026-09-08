@@ -41,6 +41,26 @@ const updateUserSubscription = async ({
   const isLifetime = plan === "lifetime";
   const isActive = isLifetime || ["active", "trialing"].includes(status);
 
+  // Safeguard: Check if the user already has an active subscription in Firestore.
+  // If the incoming event is for an old/different subscription with a non-active status (e.g. past_due, canceled),
+  // do NOT let it downgrade an active user!
+  const userDoc = await adminDb.collection("users").doc(userId).get();
+  const userData = userDoc.data();
+
+  if (
+    userData &&
+    userData.stripeSubscriptionId &&
+    stripeSubscriptionId &&
+    userData.stripeSubscriptionId !== stripeSubscriptionId &&
+    ["active", "trialing"].includes(userData.subscriptionStatus) &&
+    !isActive
+  ) {
+    console.warn(
+      `[Webhook] Ignored downgrade for user ${userId}: incoming subscription ${stripeSubscriptionId} status is '${status}', but user has active subscription ${userData.stripeSubscriptionId}`
+    );
+    return;
+  }
+
   await adminDb.collection("users").doc(userId).set(
     {
       role: isActive ? "premium" : "free",

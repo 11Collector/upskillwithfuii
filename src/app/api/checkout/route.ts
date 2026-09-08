@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
 import { verifyAuthToken, isAuthError } from "@/lib/auth-middleware";
+import { adminDb } from "@/lib/firebase-admin";
 
 const PlanSchema = z.enum([
   "monthly",
@@ -69,8 +70,15 @@ export async function POST(req: Request) {
     const price = await stripe.prices.retrieve(priceId);
     const isRecurring = price?.type === "recurring";
 
+    const userSnap = await adminDb.collection("users").doc(authResult.uid).get();
+    const existingCustomerId = userSnap.data()?.stripeCustomerId;
+
     const sessionConfig: any = {
-      ...(authResult.email ? { customer_email: authResult.email } : {}),
+      ...(existingCustomerId
+        ? { customer: existingCustomerId }
+        : authResult.email
+        ? { customer_email: authResult.email }
+        : {}),
       line_items: [{ price: priceId, quantity: 1 }],
       mode: isRecurring ? "subscription" : "payment",
       success_url: `${origin}/dashboard?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
