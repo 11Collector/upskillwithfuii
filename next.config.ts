@@ -56,6 +56,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/tools/soul-guide/info",
+        destination: "/tools/ai-mentor/info",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

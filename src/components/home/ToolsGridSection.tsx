@@ -104,6 +104,7 @@ export default function ToolsGridSection({ t }: ToolsGridSectionProps) {
       desc: "ที่ปรึกษาพัฒนาตัวเองส่วนตัวระดับโปร",
       icon: <MessageSquareMore size={28} className="text-slate-600" />,
       path: "/tools/soul-guide",
+      infoPath: "/tools/ai-mentor/info",
       color: "bg-slate-100 border-slate-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
       gimmickUI: (
         <div className="tool-gimmick mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-200 via-zinc-100 to-slate-200 text-slate-700 rounded-full text-[10px] font-black tracking-widest border border-slate-300 shadow-sm group-hover:from-slate-300 group-hover:to-zinc-200 group-hover:text-slate-900 transition-all duration-300">
@@ -132,7 +133,7 @@ export default function ToolsGridSection({ t }: ToolsGridSectionProps) {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
         {tools.map((tool, index) => (
-          <Link key={tool.id} href={`${tool.path}/info`} className="block h-full group">
+          <Link key={tool.id} href={(tool as any).infoPath || `${tool.path}/info`} className="block h-full group">
             <div className="relative flex h-full min-h-[210px] cursor-pointer flex-col overflow-hidden rounded-[1.65rem] border border-white bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:min-h-[230px] sm:rounded-[2rem] sm:p-6 [&_.tool-gimmick]:mt-2 [&_.tool-gimmick]:max-w-full [&_.tool-gimmick]:px-2 [&_.tool-gimmick]:py-1 [&_.tool-gimmick]:text-[8px] [&_.tool-gimmick_span]:whitespace-nowrap sm:[&_.tool-gimmick]:mt-3 sm:[&_.tool-gimmick]:px-3 sm:[&_.tool-gimmick]:py-1.5 sm:[&_.tool-gimmick]:text-[10px]">
               <div
                 className={`absolute inset-0 opacity-70 ${
