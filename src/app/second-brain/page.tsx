@@ -2225,7 +2225,7 @@ ${noteContent}`;
                 <span className="text-lg">📖</span>
                 <span className="text-sm text-slate-400">อยากอ่านหนังสือรวมบทความเล่มแรก?</span>
               </div>
-              <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ดาวน์โหลดฟรีที่นี่ →</span>
+              <span className="text-xs font-bold text-amber-400 whitespace-nowrap group-hover:translate-x-0.5 transition-transform">ซื้อ E-Book 450 บาท →</span>
             </Link>
 
             {/* --- Categories --- */}

@@ -89,7 +89,7 @@ export default function UpgradeModal({
                 <>
                   <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ปลดล็อกระบบและเควสต์ทั้งหมด</li>
                   <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> เข้า Focus Room Lounge ห้องโฟกัสรวมสำหรับ PRO</li>
-                  <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> ฟรี Ebook “สร้างก่อนพร้อม” + Badge ยุคบุกเบิก</li>
+                  <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> สิทธิ์ซื้อ Ebook “สร้างก่อนพร้อม” ราคา 450 บาท + Badge ยุคบุกเบิก</li>
                   <li className="flex gap-2"><ShieldCheck size={15} className="text-emerald-300 shrink-0" /> คลังออมมีสติ, Book Shelf และล็อกราคานี้ตลอดชีพ</li>
                 </>
               )}

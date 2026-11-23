@@ -110,6 +110,14 @@ export async function POST(req: Request) {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.type === "ebook" && session.metadata.userId && session.payment_status === "paid") {
+        await adminDb.collection("users").doc(session.metadata.userId).set({
+          ebookPurchased: true,
+          ebookPurchasedAt: FieldValue.serverTimestamp(),
+          ebookStripeSessionId: session.id,
+        }, { merge: true });
+        return NextResponse.json({ received: true });
+      }
       if (session.metadata?.type === "pro_membership" && session.metadata.userId) {
         if (session.mode === "payment") {
           const priceId = session.metadata.priceId || null;
@@ -143,6 +151,17 @@ export async function POST(req: Request) {
           currentPeriodEnd: subscriptionData?.current_period_end,
           cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
         });
+      }
+    }
+
+    if (event.type === "checkout.session.async_payment_succeeded") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.type === "ebook" && session.metadata.userId) {
+        await adminDb.collection("users").doc(session.metadata.userId).set({
+          ebookPurchased: true,
+          ebookPurchasedAt: FieldValue.serverTimestamp(),
+          ebookStripeSessionId: session.id,
+        }, { merge: true });
       }
     }
 

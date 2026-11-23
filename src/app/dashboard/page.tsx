@@ -5999,17 +5999,20 @@ Day 21: [กิจกรรม]
                 setShowSuccessToast(`🔄 เริ่มต้นแก้ตัววิชา "${trackName}" บทเรียน Day 1 เรียบร้อยครับ! ลุยกันใหม่!`);
               }}
               onResetTrack={() => {
+                const resetTrackData = {
+                  activeSkillTrackId: null,
+                  todaySkillTrackId: null,
+                  skillTrackCurrentDay: 1,
+                  todaySkillTrackDay: 1,
+                  skillTrackCompletedDays: [],
+                  currentDailyQuests: null,
+                  currentDailyTrackId: null,
+                  aiSkillQuests: null,
+                };
                 if (user?.uid) {
                   const userRef = doc(db, "users", user.uid);
-                  updateDoc(userRef, {
-                    activeSkillTrackId: null,
-                    todaySkillTrackId: null,
-                    skillTrackCurrentDay: 1,
-                    todaySkillTrackDay: 1,
-                    skillTrackCompletedDays: [],
-                    currentDailyQuests: null
-                  }).catch(() => {});
-                  setUserData((u: any) => u ? { ...u, currentDailyQuests: null } : null);
+                  updateDoc(userRef, resetTrackData).catch((err) => console.error("Error resetting skill track:", err));
+                  setUserData((u: any) => u ? { ...u, ...resetTrackData } : null);
                 }
                 setActiveSkillTrackId(null);
                 setTodaySkillTrackId(null);
@@ -6017,10 +6020,17 @@ Day 21: [กิจกรรม]
                 setTodaySkillTrackDay(1);
                 setSkillTrackCompletedDays([]);
                 if (typeof window !== "undefined") {
-                  localStorage.removeItem("activeSkillTrackId");
-                  localStorage.removeItem("todaySkillTrackId");
-                  localStorage.removeItem("skillTrackCurrentDay");
-                  localStorage.removeItem("skillTrackCompletedDays");
+                  const trackStorageKeys = [
+                    "activeSkillTrackId",
+                    "todaySkillTrackId",
+                    "skillTrackCurrentDay",
+                    "todaySkillTrackDay",
+                    "skillTrackCompletedDays",
+                  ];
+                  for (const key of trackStorageKeys) {
+                    localStorage.removeItem(key);
+                    if (user?.uid) localStorage.removeItem(`${key}_${user.uid}`);
+                  }
                 }
               }}
               onOpenInfo={() => setShowQuestEnergyPopup(true)}

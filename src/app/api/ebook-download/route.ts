@@ -2,10 +2,21 @@ import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
 import { verifyAuthToken, isAuthError } from "@/lib/auth-middleware";
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function GET(req: Request) {
   const authResult = await verifyAuthToken(req);
   if (isAuthError(authResult)) return authResult;
+
+  try {
+    const userDoc = await adminDb.collection("users").doc(authResult.uid).get();
+    if (userDoc.data()?.ebookPurchased !== true) {
+      return NextResponse.json({ error: "ดาวน์โหลดได้หลังชำระค่า E-Book 450 บาทแล้วครับ" }, { status: 403 });
+    }
+  } catch (error) {
+    console.error("[ebook-download access]", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "ตรวจสอบสิทธิ์ดาวน์โหลดไม่สำเร็จ" }, { status: 500 });
+  }
 
   try {
     const filePath = path.join(process.cwd(), "private", "ebooks", "สร้างก่อนพร้อม-A5.pdf");

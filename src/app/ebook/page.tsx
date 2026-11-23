@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Download, CheckCircle, ChevronRight, Crown, Lock, Sparkles, Users } from "lucide-react";
+import { Download, CheckCircle, ChevronRight, Lock, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Sarabun } from "next/font/google";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
-import { auth, db, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider } from "@/lib/firebase";
 
 const sarabun = Sarabun({
   subsets: ["thai", "latin"],
@@ -24,72 +23,91 @@ const CHAPTERS = [
 const HIGHLIGHTS = [
   "41 บทความในการพัฒนาตัวเอง ธุรกิจ ชีวิต",
   "QR Code เชื่อมไปยัง Tools ช่วย Self-awareness",
-  "แจกฟรีสำหรับทุกคน",
+  "ซื้อครั้งเดียว ดาวน์โหลดได้ตลอด",
 ];
 
 export default function EbookPage() {
-  const [email, setEmail]   = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [user, setUser] = useState<User | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [downloadCount, setDownloadCount] = useState<number | null>(null);
 
   useEffect(() => {
-    // Fetch total ebook lead download count
-    fetch('/api/ebook-lead')
-      .then((res) => res.json())
-      .then((data) => {
-        if (typeof data?.count === 'number') {
-          setDownloadCount(data.count);
-        }
-      })
-      .catch((err) => console.error('Error fetching ebook count:', err));
-
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser?.email) {
-        setEmail(currentUser.email);
+      if (!currentUser) {
+        setHasAccess(false);
+        setCheckingAccess(false);
       }
     });
-
     return () => unsubscribeAuth();
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const checkAccess = async () => {
+      setCheckingAccess(true);
+      try {
+        const token = await user.getIdToken();
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("session_id");
+        if (params.get("checkout") === "success" && sessionId) {
+          const confirmRes = await fetch("/api/ebook-confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ sessionId }),
+          });
+          if (!confirmRes.ok) {
+            const data = await confirmRes.json().catch(() => null);
+            if (!cancelled) setErrorMsg(data?.error || "ยังยืนยันการชำระเงินไม่สำเร็จ");
+          } else {
+            window.history.replaceState({}, "", "/ebook");
+          }
+        } else if (params.get("checkout") === "cancelled") {
+          if (!cancelled) setErrorMsg("ยกเลิกการชำระเงินแล้ว สามารถซื้อได้เมื่อต้องการครับ");
+          window.history.replaceState({}, "", "/ebook");
+        }
+        const accessRes = await fetch("/api/ebook-access", { headers: { Authorization: `Bearer ${token}` } });
+        const data = await accessRes.json().catch(() => null);
+        if (!cancelled) setHasAccess(accessRes.ok && data?.hasAccess === true);
+      } catch {
+        if (!cancelled) setErrorMsg("ตรวจสอบสถานะการซื้อไม่สำเร็จ กรุณารีเฟรชหน้า");
+      } finally {
+        if (!cancelled) setCheckingAccess(false);
+      }
+    };
+    void checkAccess();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  async function handlePurchase() {
     if (!user) {
-      setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book ฟรีนะครับ");
+      await signInWithPopup(auth, googleProvider);
       return;
     }
-    if (!email.trim()) return;
-    setStatus("loading");
+    setCheckoutLoading(true);
     setErrorMsg("");
     try {
       const token = await user.getIdToken();
-      const res = await fetch('/api/ebook-lead', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ email: email.trim() }),
+      const res = await fetch("/api/ebook-checkout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || 'server error');
-      }
-      setStatus("done");
-      setDownloadCount(prev => (prev !== null ? prev + 1 : 1));
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.url) throw new Error(data?.error || "เปิดหน้าชำระเงินไม่สำเร็จ");
+      window.location.assign(data.url);
     } catch (error) {
-      setErrorMsg(error instanceof Error ? error.message : "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะครับ");
-      setStatus("error");
+      setErrorMsg(error instanceof Error ? error.message : "เปิดหน้าชำระเงินไม่สำเร็จ");
+      setCheckoutLoading(false);
     }
   }
 
   async function handleDownload() {
     if (!user) {
-      setErrorMsg("เข้าสู่ระบบก่อนรับ E-Book นะครับ");
+      setErrorMsg("เข้าสู่ระบบเพื่อดาวน์โหลด E-Book ที่ซื้อไว้ครับ");
       return;
     }
 
@@ -124,7 +142,7 @@ export default function EbookPage() {
 
   const form = (
     <AnimatePresence mode="wait">
-      {status === "done" ? (
+      {hasAccess ? (
         <motion.div
           key="done"
           initial={{ opacity: 0, scale: 0.97 }}
@@ -135,8 +153,8 @@ export default function EbookPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
             <Sparkles size={22} />
           </div>
-          <h2 className="text-lg font-extrabold mb-1">รับ E-Book เรียบร้อยครับ</h2>
-          <p className="text-sm mb-6" style={{ color: "#5a5a5a" }}>กด Download ด้านล่างเพื่อโหลดไฟล์ PDF ได้เลย</p>
+          <h2 className="text-lg font-extrabold mb-1">คุณเป็นเจ้าของ E-Book แล้ว</h2>
+          <p className="text-sm mb-6" style={{ color: "#5a5a5a" }}>ดาวน์โหลดไฟล์ PDF ได้ทุกเมื่อจากหน้านี้</p>
           {errorMsg && <p className="text-xs text-center mb-3" style={{ color: "#c0392b" }}>{errorMsg}</p>}
           <button
             type="button"
@@ -150,9 +168,8 @@ export default function EbookPage() {
           </button>
         </motion.div>
       ) : (
-        <motion.form
-          key="form"
-          onSubmit={handleSubmit}
+        <motion.div
+          key="purchase"
           className="rounded-2xl p-6 lg:p-8 space-y-4"
           style={{ background: "#fff", border: "1px solid rgba(123,24,24,0.12)", boxShadow: "0 8px 32px rgba(123,24,24,0.08)" }}
         >
@@ -160,62 +177,23 @@ export default function EbookPage() {
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-700">
               <Sparkles size={20} />
             </div>
-            <h2 className="text-base font-extrabold">รับ E-Book ฟรี</h2>
+            <h2 className="text-base font-extrabold">เป็นเจ้าของ E-Book</h2>
             <p className="text-xs mt-1" style={{ color: "#5a5a5a" }}>
-              {user ? "กรอก email เพื่อรับไฟล์และดาวน์โหลด" : "เข้าสู่ระบบเพื่อรับ E-Book ฟรีได้ทันที"}
+              จ่ายครั้งเดียว ดาวน์โหลดไฟล์ PDF ได้ตลอด
             </p>
           </div>
-          {user ? (
-            <>
-              <div className="relative">
-                <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#aaa" }} />
-                <input
-                  type="email"
-                  required
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-                  style={{ background: "#faf9f7", border: "1px solid rgba(123,24,24,0.2)", color: "#1a1a1a" }}
-                />
-              </div>
-              {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
-                style={{ background: "#7B1818", color: "#fff", opacity: status === "loading" ? 0.6 : 1 }}
-              >
-                {status === "loading" ? (
-                  <span className="animate-pulse">กำลังโหลด...</span>
-                ) : (
-                  <><Download size={15} />รับ E-Book ฟรี</>
-                )}
-              </button>
-              <p className="text-xs text-center" style={{ color: "#aaa" }}>
-                ไม่มี spam · ใช้สำหรับส่งไฟล์และข่าวสารพัฒนาตัวเองเท่านั้น
-              </p>
-            </>
-          ) : (
-            <>
-              {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
-              <button
-                type="button"
-                onClick={async () => {
-                  await signInWithPopup(auth, googleProvider);
-                }}
-                className="flex items-center justify-center gap-2 w-full font-extrabold py-3 rounded-xl text-sm"
-                style={{ background: "#111827", color: "#fff" }}
-              >
-                เข้าสู่ระบบเพื่อรับ E-Book ฟรี
-                <ChevronRight size={15} />
-              </button>
-              <p className="text-xs text-center" style={{ color: "#aaa" }}>
-                ล็อกอินด้วย Google เพื่อรับสิทธิ์และดาวน์โหลดฟรี
-              </p>
-            </>
-          )}
-        </motion.form>
+          {errorMsg && <p className="text-xs text-center" style={{ color: "#c0392b" }}>{errorMsg}</p>}
+          <button
+            type="button"
+            onClick={handlePurchase}
+            disabled={checkoutLoading || checkingAccess}
+            className="flex items-center justify-center gap-2 w-full font-extrabold py-4 rounded-xl text-sm"
+            style={{ background: "#7B1818", color: "#fff", opacity: checkoutLoading || checkingAccess ? 0.65 : 1 }}
+          >
+            {checkoutLoading ? "กำลังเปิดหน้าชำระเงิน..." : user ? <><Lock size={15} />ซื้อ E-Book · 450 บาท</> : <>เข้าสู่ระบบเพื่อซื้อ · 450 บาท<ChevronRight size={15} /></>}
+          </button>
+          <p className="text-xs text-center" style={{ color: "#aaa" }}>ชำระเงินผ่าน Stripe ด้วยบัตรหรือ PromptPay</p>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -258,7 +236,7 @@ export default function EbookPage() {
                 className="inline-block text-xs font-extrabold tracking-widest uppercase px-3 py-1 rounded-full mb-4"
                 style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
               >
-                Free E-Book
+                E-BOOK · 450 บาท
               </div>
               <h1 className="text-3xl lg:text-3xl font-extrabold leading-tight mb-3">
                 สร้างก่อนพร้อม
@@ -274,19 +252,17 @@ export default function EbookPage() {
                   style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
                 >
                   <Sparkles size={12} />
-                  แจกฟรีสำหรับทุกคน
+                  ราคา 450 บาท ซื้อครั้งเดียว
                 </motion.div>
 
-                {downloadCount !== null && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
-                    style={{ background: "rgba(16, 185, 129, 0.1)", color: "#047857" }}
-                  >
-                    <Users size={12} />
-                    ดาวน์โหลดไปแล้ว {downloadCount.toLocaleString()} คน
-                  </motion.div>
-                )}
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 1 }} transition={{ delay: 0.2 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                  style={{ background: "rgba(123,24,24,0.08)", color: "#7B1818" }}
+                >
+                  <Lock size={12} />
+                  ดาวน์โหลดหลังชำระเงิน
+                </motion.div>
               </div>
 
               {/* Highlights — desktop only */}

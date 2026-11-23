@@ -148,6 +148,7 @@ export default function SkillTrackBanner({
   isQueuedForTomorrow
 }: SkillTrackBannerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedTrackForChoice, setSelectedTrackForChoice] = useState<string | null>(null);
   const [timeLeftStr, setTimeLeftStr] = useState<string>("");
   const activeTrack = activeTrackId ? SKILL_TRACKS[activeTrackId] : null;
@@ -243,6 +244,16 @@ export default function SkillTrackBanner({
   };
 
   const recommendedTrackKey = getRecommendedTrackKey();
+  const resetTrackButton = onResetTrack ? (
+    <button
+      type="button"
+      onClick={() => setShowResetConfirm(true)}
+      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 border border-white/10"
+    >
+      <X size={12} />
+      <span>ไม่เลือกวิชา</span>
+    </button>
+  ) : null;
 
   return (
     <div className="w-full mb-6">
@@ -276,16 +287,20 @@ export default function SkillTrackBanner({
               </div>
 
               {/* Right Action Button */}
-              <button
-                onClick={() => {
-                  setSelectedTrackForChoice(null);
-                  setIsModalOpen(true);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 border border-white/10"
-              >
-                <Sparkles size={12} className="text-amber-400" />
-                <span>เปลี่ยนวิชา</span>
-              </button>
+              <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTrackForChoice(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-[11px] transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 border border-white/10"
+                >
+                  <Sparkles size={12} className="text-amber-400" />
+                  <span>เปลี่ยนวิชา</span>
+                </button>
+                {resetTrackButton}
+              </div>
             </div>
 
             {/* Queued Info Box */}
@@ -336,7 +351,7 @@ export default function SkillTrackBanner({
             </div>
 
             {/* Right Action Buttons */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:flex-row sm:items-center">
               {isFailedSprint ? (
                 <div className="px-2.5 py-1 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-300 text-[10px] font-black tracking-wider flex items-center gap-1 shrink-0">
                   <RotateCcw size={12} className="text-rose-400" />
@@ -360,6 +375,7 @@ export default function SkillTrackBanner({
                   <span>{nextTrackId && nextTrackId !== activeTrackId ? "เปลี่ยนวิชาที่ต่อคิว" : "สลับวิชา"}</span>
                 </button>
               )}
+              {resetTrackButton}
             </div>
           </div>
 
@@ -609,6 +625,53 @@ export default function SkillTrackBanner({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100006] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+            onClick={() => setShowResetConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="reset-skill-track-title"
+              className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900 p-6 text-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3 id="reset-skill-track-title" className="text-lg font-black">กลับไปใช้เควสต์ทั่วไป?</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                ความคืบหน้า Sprint 7 วันของวิชานี้จะเริ่มใหม่เมื่อเลือกวิชาอีกครั้ง แต่ XP และตราที่ได้รับแล้วจะยังอยู่ครับ
+              </p>
+              <div className="mt-5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-slate-200 hover:bg-white/10"
+                >
+                  กลับไปก่อน
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onResetTrack?.();
+                    setShowResetConfirm(false);
+                  }}
+                  className="flex-1 rounded-xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 hover:bg-amber-300"
+                >
+                  กลับไปเควสต์ทั่วไป
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
